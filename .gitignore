@@ -1,0 +1,38 @@
+*.class
+*.log
+
+# Build directory#
+build/
+bin/
+
+# sbt specific
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+
+# Scala-IDE specific
+.scala_dependencies
+
+# Gradle
+.gradle
+
+# Package Files #
+*.war
+*.ear
+
+# Eclipse Project Files #
+.settings
+.cache
+.classpath
+.project
+.metadata/
+
+# IDEA Project Files #
+.idea/*
+*.iml
+*.ipr
+*.iws
+out/
