@@ -16,16 +16,28 @@
 
 package org.reveno.atp.core.api;
 
-import org.reveno.atp.api.domain.Repository;
-import org.reveno.atp.core.api.storage.JournalsStorage.JournalStore;
-import org.reveno.atp.core.api.storage.SnapshotStorage.SnapshotStore;
+import org.reveno.atp.api.domain.RepositoryData;
 
-public interface Replayer {
+public interface SystemStateRestorer {
 	
-	/** * @return last transaction ID */
-	long replayLatest(Repository repository);
+	SystemState restore();
 	
-	/** * @return last transaction ID */
-	long replay(SnapshotStore lastSnapshotStore, JournalStore[] latestJournalStores, Repository repository);
+	
+	public static class SystemState {
+		private RepositoryData repositoryData;
+		public RepositoryData getRepositoryData() {
+			return repositoryData;
+		}
+		
+		private long lastTransactionId;
+		public long getLastTransactionId() {
+			return lastTransactionId;
+		}
+		
+		public SystemState(RepositoryData repositoryData, long lastTransactionId) {
+			this.repositoryData = repositoryData;
+			this.lastTransactionId = lastTransactionId;
+		}
+	}
 	
 }
