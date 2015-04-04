@@ -24,7 +24,7 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 
 	@Override
 	public SystemState restore() {
-		return null;
+		return new SystemState(null, 0L);
 	}
 	
 	
