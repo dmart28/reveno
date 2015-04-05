@@ -16,26 +16,20 @@
 
 package org.reveno.atp.core.api;
 
-import org.reveno.atp.api.domain.RepositoryData;
+import java.util.function.Consumer;
 
 public interface SystemStateRestorer {
 	
-	SystemState restore();
+	void restore(Consumer<SystemState> handler);
 	
 	
 	public static class SystemState {
-		private RepositoryData repositoryData;
-		public RepositoryData getRepositoryData() {
-			return repositoryData;
-		}
-		
 		private long lastTransactionId;
 		public long getLastTransactionId() {
 			return lastTransactionId;
 		}
 		
-		public SystemState(RepositoryData repositoryData, long lastTransactionId) {
-			this.repositoryData = repositoryData;
+		public SystemState(long lastTransactionId) {
 			this.lastTransactionId = lastTransactionId;
 		}
 	}

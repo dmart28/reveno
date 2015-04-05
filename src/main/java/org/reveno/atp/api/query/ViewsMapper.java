@@ -16,11 +16,11 @@
 
 package org.reveno.atp.api.query;
 
-import org.reveno.atp.api.domain.ReadOnlyRepository;
+import org.reveno.atp.api.domain.Repository;
 
 @FunctionalInterface
 public interface ViewsMapper<Entity, View> {
 
-	View map(Entity entity, ReadOnlyRepository repository);
+	View map(Entity entity, Repository repository);
 	
 }

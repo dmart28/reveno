@@ -21,7 +21,7 @@ import org.reveno.atp.core.api.channel.Channel;
 
 public interface FoldersStorage {
 	
-	Channel сhannel(String address);
+	Channel channel(String address);
 
 	Folder nextFolder(String prefix);
 

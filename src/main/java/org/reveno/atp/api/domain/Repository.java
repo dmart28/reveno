@@ -16,18 +16,16 @@
 
 package org.reveno.atp.api.domain;
 
+import java.util.Collection;
 import java.util.Map;
 
-public interface Repository extends ReadOnlyRepository {
-	
-	// TODO void entityUpdated(long entityId, Object entity);
-	
+public interface Repository {
 
-	void store(long entityId, Object entity);
+	<T> T get(Class<T> entityType, long key);
 	
-	void remove(Class<?> entityClass, long entityId);
+	<T> Collection<T> getAll(Class<T> entityType);
 	
 	
-	void load(Map<Class<?>, Map<Long, Object>> map);
+	Map<Class<?>, Map<Long, Object>> getAll();
 	
 }

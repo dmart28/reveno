@@ -20,7 +20,7 @@ import org.reveno.atp.core.api.channel.Channel;
 
 public interface JournalsStorage {
 
-	Channel сhannel(String address);
+	Channel channel(String address);
 
 	JournalStore[] getLastStores();
 

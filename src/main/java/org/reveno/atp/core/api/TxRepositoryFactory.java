@@ -14,10 +14,14 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.core.restore;
+package org.reveno.atp.core.api;
 
-import org.reveno.atp.api.events.EventBus;
+import org.reveno.atp.api.domain.RepositoryData;
 
-public class ReplayEventBus implements EventBus {
+public interface TxRepositoryFactory {
+
+	TxRepository create();
+	
+	TxRepository create(RepositoryData data);
 	
 }

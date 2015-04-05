@@ -41,8 +41,7 @@ public class NettyBasedBuffer implements Buffer {
 	@Override
 	public byte[] getBytes() {
 		byte[] bytes = new byte[buffer.writerIndex()];
-		buffer.readBytes(bytes, 0, buffer.writerIndex());
-		buffer.resetReaderIndex();
+		buffer.getBytes(0, bytes);
 		
 		return bytes;
 	}
@@ -50,6 +49,11 @@ public class NettyBasedBuffer implements Buffer {
 	@Override
 	public int length() {
 		return buffer.writerIndex();
+	}
+	
+	@Override
+	public boolean isAvailable() {
+		return buffer.writerIndex() - buffer.readerIndex() > 0;
 	}
 
 	@Override
@@ -84,7 +88,9 @@ public class NettyBasedBuffer implements Buffer {
 
 	@Override
 	public byte[] readBytes(int length) {
-		throw new UnsupportedOperationException("Current implementation is using Direct Unpooled buffers, use getBytes() instead.");
+		byte[] data = new byte[length];
+		buffer.readBytes(data);
+		return data;
 	}
 
 	@Override

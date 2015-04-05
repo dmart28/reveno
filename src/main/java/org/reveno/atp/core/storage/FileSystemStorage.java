@@ -45,7 +45,7 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 		SnapshotStorage {
 
 	@Override
-	public Channel сhannel(String address) {
+	public Channel channel(String address) {
 		return new FileChannel(new File(baseDir, address), "rw");
 	}
 

@@ -16,11 +16,11 @@
 
 package org.reveno.atp.api.commands;
 
-import org.reveno.atp.api.domain.ReadOnlyRepository;
+import org.reveno.atp.api.domain.Repository;
 
 public interface CommandContext {
 
-	ReadOnlyRepository repository();
+	Repository repository();
 	
 	CommandContext asPartOfTransaction(Object transactionParam);
 	

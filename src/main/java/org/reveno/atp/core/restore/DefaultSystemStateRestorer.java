@@ -16,25 +16,50 @@
 
 package org.reveno.atp.core.restore;
 
+import java.util.function.Consumer;
+
+import org.reveno.atp.api.RepositorySnapshooter;
 import org.reveno.atp.core.api.SystemStateRestorer;
+import org.reveno.atp.core.api.TxRepository;
+import org.reveno.atp.core.api.TxRepositoryFactory;
+import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.reveno.atp.core.api.storage.JournalsStorage;
-import org.reveno.atp.core.api.storage.SnapshotStorage;
+import org.reveno.atp.core.snapshots.SnapshotsManager;
 
 public class DefaultSystemStateRestorer implements SystemStateRestorer {
 
 	@Override
-	public SystemState restore() {
-		return new SystemState(null, 0L);
+	public void restore(Consumer<SystemState> handler) {
+		TxRepository repository = combineRepository();
+		
+		// TODO further implementation
 	}
-	
-	
-	public DefaultSystemStateRestorer(JournalsStorage journalStorage, SnapshotStorage snapshotStorage) {
-		this.journalStorage = journalStorage;
-		this.snapshotStorage = snapshotStorage;
-	}
-	
-	
-	protected final JournalsStorage journalStorage;
-	protected final SnapshotStorage snapshotStorage;
 
+	
+	protected TxRepository combineRepository() {
+		if (snapshooter().hasAny()) {
+			return repoFactory.create(snapshooter().load());
+		} else return repoFactory.create();
+	}
+	
+	protected RepositorySnapshooter snapshooter() {
+		return snapshotsManager.defaultSnapshooter();
+	}
+	
+	
+	public DefaultSystemStateRestorer(JournalsStorage journalStorage,
+			TransactionInfoSerializer txSerializer,
+			TxRepositoryFactory repoFactory,
+			SnapshotsManager snapshotsManager) {
+		this.journalStorage = journalStorage;
+		this.txSerializer = txSerializer;
+		this.repoFactory = repoFactory;
+		this.snapshotsManager = snapshotsManager;
+	}
+
+	protected final JournalsStorage journalStorage;
+	protected final TransactionInfoSerializer txSerializer;
+	protected final TxRepositoryFactory repoFactory;
+	protected final SnapshotsManager snapshotsManager;
+	
 }

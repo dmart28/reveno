@@ -20,6 +20,10 @@ import org.reveno.atp.api.domain.RepositoryData;
 
 public interface RepositorySnapshooter {
 
+	long getType();
+	
+	boolean hasAny();
+	
 	void snapshoot(RepositoryData repo);
 	
 	RepositoryData load();

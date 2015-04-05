@@ -20,7 +20,7 @@ import org.reveno.atp.core.api.channel.Channel;
 
 public interface SnapshotStorage {
 
-	Channel сhannel(String address);
+	Channel channel(String address);
 
 	SnapshotStore getLastSnapshotStore();
 	
@@ -43,6 +43,11 @@ public interface SnapshotStorage {
 		public SnapshotStore(String path, long time) {
 			this.snapshotPath = path;
 			this.snapshotTime = time;
+		}
+		
+		@Override
+		public String toString() {
+			return String.format("[store:%s]", snapshotPath);
 		}
 	}
 	

@@ -71,15 +71,12 @@ public class FileChannel implements Channel {
 	}
 
 	@Override
-	public void write(Buffer data) {
-		if (isOpen())
+	public void write(Buffer data, boolean withIndex) {
+		if (isOpen()) {
+			if (withIndex)
+				write(longToBytes(data.length()));
 			write(data.getBytes());
-	}
-	
-	@Override 
-	public void writeIndex() {
-		if (isOpen())
-			write(longToBytes(currentPosition()));
+		}
 	}
 
 	@Override

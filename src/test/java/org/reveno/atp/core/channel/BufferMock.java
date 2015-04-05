@@ -27,6 +27,11 @@ public class BufferMock implements Buffer {
 	public int length() {
 		return bytes.length;
 	}
+	
+	@Override
+	public boolean isAvailable() {
+		return bytes.length > 0;
+	}
 
 	@Override
 	public void clear() {

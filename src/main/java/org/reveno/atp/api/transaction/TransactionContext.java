@@ -16,13 +16,13 @@
 
 package org.reveno.atp.api.transaction;
 
-import org.reveno.atp.api.domain.Repository;
+import org.reveno.atp.api.domain.MutableRepository;
 import org.reveno.atp.api.events.EventBus;
 
 public interface TransactionContext {
 	
 	EventBus eventBus();
 	
-	Repository repository();
+	MutableRepository repository();
 	
 }

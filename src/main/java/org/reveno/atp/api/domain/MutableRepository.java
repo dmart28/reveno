@@ -14,11 +14,20 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.core.api;
+package org.reveno.atp.api.domain;
 
-// TODO remove?
-public interface Snapshooter {
+import java.util.Map;
+
+public interface MutableRepository extends Repository {
 	
-	void snapCurrent();
+	// TODO void entityUpdated(long entityId, Object entity);
+	
+
+	void store(long entityId, Object entity);
+	
+	void remove(Class<?> entityClass, long entityId);
+	
+	
+	void load(Map<Class<?>, Map<Long, Object>> map);
 	
 }

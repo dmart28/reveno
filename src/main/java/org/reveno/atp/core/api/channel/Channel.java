@@ -16,19 +16,15 @@
 
 package org.reveno.atp.core.api.channel;
 
-import java.io.Closeable;
-
 import org.reveno.atp.core.api.AutoRecoverable;
 
-public interface Channel extends Closeable, AutoRecoverable {
+public interface Channel extends AutoCloseable, AutoRecoverable {
 	
 	boolean isReadAvailable();
 	
 	public void read(Buffer buffer);
 	
-	public void write(Buffer buffer);
-	
-	public void writeIndex();
+	public void write(Buffer buffer, boolean withIndex);
 	
 	public boolean isOpen();
 	
