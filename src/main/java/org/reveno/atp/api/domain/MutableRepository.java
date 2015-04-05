@@ -19,14 +19,10 @@ package org.reveno.atp.api.domain;
 import java.util.Map;
 
 public interface MutableRepository extends Repository {
-	
-	// TODO void entityUpdated(long entityId, Object entity);
-	
 
 	void store(long entityId, Object entity);
 	
-	void remove(Class<?> entityClass, long entityId);
-	
+	Object remove(Class<?> entityClass, long entityId);
 	
 	void load(Map<Class<?>, Map<Long, Object>> map);
 	

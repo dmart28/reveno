@@ -20,12 +20,13 @@ import java.util.Collection;
 import java.util.Map;
 
 public interface Repository {
-
-	<T> T get(Class<T> entityType, long key);
+	
+	<T> T get(Class<T> entityType, long id);
 	
 	<T> Collection<T> getAll(Class<T> entityType);
 	
-	
 	Map<Class<?>, Map<Long, Object>> getAll();
+	
+	Map<Long, Object> getEntities(Class<?> entityType);
 	
 }
