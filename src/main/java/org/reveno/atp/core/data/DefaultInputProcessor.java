@@ -25,8 +25,7 @@ import org.reveno.atp.core.api.InputProcessor;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
-
-import com.google.common.base.Preconditions;
+import org.reveno.atp.utils.Preconditions;
 
 public class DefaultInputProcessor implements InputProcessor, Closeable {
 	

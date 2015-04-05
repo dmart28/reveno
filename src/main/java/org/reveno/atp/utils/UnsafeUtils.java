@@ -23,8 +23,6 @@ import java.nio.ByteBuffer;
 
 import sun.misc.Unsafe;
 
-import com.google.common.base.Preconditions;
-
 public abstract class UnsafeUtils {
 
 	public static Unsafe getUnsafe() {
