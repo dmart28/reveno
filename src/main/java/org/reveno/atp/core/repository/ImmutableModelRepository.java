@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.reveno.atp.api.domain.MutableRepository;
+import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.exceptions.EntityNotFoundException;
 import org.reveno.atp.core.api.TxRepository;
 
@@ -138,13 +138,13 @@ public class ImmutableModelRepository implements TxRepository {
 		return removed.containsKey(type) && removed.get(type).contains(key);
 	}
 
-	public ImmutableModelRepository(MutableRepository underlyingRepository) {
+	public ImmutableModelRepository(WriteableRepository underlyingRepository) {
 		this.repository = underlyingRepository;
 	}
 
 	protected Map<Class<?>, Map<Long, Object>> added = new HashMap<>();
 	protected Map<Class<?>, Set<Long>> removed = new HashMap<>();
-	protected final MutableRepository repository;
+	protected final WriteableRepository repository;
 	protected final ThreadLocal<Boolean> isTransaction = new ThreadLocal<Boolean>() {
 		protected Boolean initialValue() {
 			return false;

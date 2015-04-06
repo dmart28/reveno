@@ -16,8 +16,81 @@
 
 package org.reveno.atp.core.repository;
 
-public class RepositoryTest {
+import java.util.HashSet;
+import java.util.Set;
 
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.reveno.atp.api.domain.WriteableRepository;
+
+public class RepositoryTest {
 	
+	private WriteableRepository repository;
+	
+	@Before
+	public void setUp() {
+		repository = new HashMapRepository();
+	}
+	
+	@Test
+	public void testBasic() {
+		Bin item1 = new Bin("item1", "value1");
+		Bin item2 = new Bin("item2", "value2");
+		
+		repository.store(1L, item1);
+		repository.store(2L, item2);
+		
+		Assert.assertNotNull(repository.get(Bin.class, 1L));
+		Assert.assertNotNull(repository.get(Bin.class, 2L));
+		Assert.assertNull(repository.get(Bin.class, 3L));
+		
+		Assert.assertNotNull(repository.get(Bin.class, 1L));
+		Assert.assertNotNull(repository.get(Bin.class, 2L));
+		
+		repository.remove(Bin.class, 2L);
+		Assert.assertEquals(1, repository.getAll(Bin.class).size());
+		
+		Record rec = new Record();
+		repository.store(1L, rec);
+		repository.store(2L, item2);
+		
+		Assert.assertEquals(2, repository.getAll().size());
+		Assert.assertEquals(2, repository.getAll(Bin.class).size());
+		Assert.assertEquals(1, repository.getAll(Record.class).size());
+	}
+	
+	public static class Record {
+		private final Set<Long> bins;
+		
+		public void addBin(long bin) {
+			bins.add(bin);
+		}
+		
+		public void removeBin(long bin) {
+			bins.remove(bin);
+		}
+		
+		public Record() {
+			this.bins = new HashSet<>();
+		}
+	}
+	
+	public static class Bin {
+		private String name;
+		public String getName() {
+			return name;
+		}
+		
+		private Object value;
+		public Object getValue() {
+			return value;
+		}
+		
+		public Bin(String name, Object value) {
+			this.name = name;
+			this.value = value;
+		}
+	}
 	
 }

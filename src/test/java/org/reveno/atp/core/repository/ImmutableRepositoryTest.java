@@ -22,12 +22,12 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.reveno.atp.api.domain.MutableRepository;
+import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.exceptions.EntityNotFoundException;
 
 public class ImmutableRepositoryTest {
 
-	private MutableRepository underlyingRepository;
+	private WriteableRepository underlyingRepository;
 	private ImmutableModelRepository repository;
 	
 	@Before

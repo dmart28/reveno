@@ -16,9 +16,9 @@
 
 package org.reveno.atp.core.api;
 
-import org.reveno.atp.api.domain.MutableRepository;
+import org.reveno.atp.api.domain.WriteableRepository;
 
-public interface TxRepository extends MutableRepository {
+public interface TxRepository extends WriteableRepository {
 
 	void begin();
 	

@@ -18,7 +18,7 @@ package org.reveno.atp.api.domain;
 
 import java.util.Map;
 
-public interface MutableRepository extends Repository {
+public interface WriteableRepository extends Repository {
 
 	<T> T store(long entityId, T entity);
 	

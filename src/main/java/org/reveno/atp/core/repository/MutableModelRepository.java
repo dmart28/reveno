@@ -25,7 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.reveno.atp.api.domain.MutableRepository;
+import org.reveno.atp.api.domain.WriteableRepository;
+import org.reveno.atp.api.exceptions.EntityNotFoundException;
 import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.core.serialization.protostuff.InputOutputHolder;
 
@@ -58,6 +59,9 @@ public class MutableModelRepository implements TxRepository {
 	@Override
 	public <T> T get(Class<T> entityType, long id) {
 		T entity = repository.get(entityType, id);
+		if (entity == null)
+			throw new EntityNotFoundException(id, entityType);
+		
 		if (isTransaction.get() && entity != null)
 			saveEntityState(id, entity, EntityRecoveryState.UPDATE);
 		return entity;
@@ -171,16 +175,17 @@ public class MutableModelRepository implements TxRepository {
 		bufferMapping.values().forEach(List::clear);
 		bufferMapping.clear();
 		fixedEntities.clear();
+		states.clear();
 	}
 	
-	public MutableModelRepository(MutableRepository repository) {
+	public MutableModelRepository(WriteableRepository repository) {
 		this.repository = repository;
 	}
 	
 	protected final Map<Class<?>, List<InputOutputHolder>> bufferMapping = new HashMap<>();
 	protected final Map<Class<?>, Set<Long>> fixedEntities = new HashMap<>();
 	protected final Map<Class<?>, Map<Long, EntityRecoveryState>> states = new HashMap<>();
-	protected final MutableRepository repository;
+	protected final WriteableRepository repository;
 	protected final ThreadLocal<Boolean> isTransaction = new ThreadLocal<Boolean>() {
 		protected Boolean initialValue() {
 			return false;

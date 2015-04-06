@@ -21,9 +21,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.reveno.atp.api.domain.MutableRepository;
+import org.reveno.atp.api.domain.WriteableRepository;
 
-public class HashMapRepository implements MutableRepository {
+public class HashMapRepository implements WriteableRepository {
 
 	@SuppressWarnings("unchecked")
 	@Override

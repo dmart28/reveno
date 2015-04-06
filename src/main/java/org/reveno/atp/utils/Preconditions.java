@@ -14,8 +14,6 @@
 
 package org.reveno.atp.utils;
 
-import com.google.common.annotations.GwtCompatible;
-
 /**
  * Static convenience methods that help a method or constructor check whether it was invoked
  * correctly (whether its <i>preconditions</i> have been met). These methods generally accept a
@@ -91,7 +89,6 @@ import com.google.common.annotations.GwtCompatible;
  * @author Kevin Bourrillion
  * @since 2.0 (imported from Google Collections Library)
  */
-@GwtCompatible
 public final class Preconditions {
   private Preconditions() {}
 
