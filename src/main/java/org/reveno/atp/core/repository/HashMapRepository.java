@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.reveno.atp.api.domain.MutableRepository;
-import org.reveno.atp.api.exceptions.EntityNotFoundException;
 
 public class HashMapRepository implements MutableRepository {
 
@@ -30,8 +29,6 @@ public class HashMapRepository implements MutableRepository {
 	@Override
 	public <T> T get(Class<T> entityType, long id) {
 		T entity =  (T) getEntities(entityType).get(id);
-		if (entity == null)
-			throw new EntityNotFoundException(id, entityType);
 		
 		return entity;
 	}
@@ -48,8 +45,9 @@ public class HashMapRepository implements MutableRepository {
 	}
 
 	@Override
-	public void store(long entityId, Object entity) {
+	public <T> T store(long entityId, T entity) {
 		getEntities(entity.getClass()).put(entityId, entity);
+		return entity;
 	}
 
 	@Override
@@ -67,13 +65,13 @@ public class HashMapRepository implements MutableRepository {
 	@Override
 	public Map<Long, Object> getEntities(Class<?> entityType) {
 		if (!map.containsKey(entityType))
-			map.put(entityType.getClass(), new HashMap<>(capacity, loadFactor));
+			map.put(entityType, new HashMap<>(capacity, loadFactor));
 		return map.get(entityType);
 	}
 	
 	
 	public HashMapRepository() {
-		this(1 << 4, 0.75f);
+		this(1 << 6, 0.75f);
 	}
 	
 	public HashMapRepository(int capacity, float loadFactor) {

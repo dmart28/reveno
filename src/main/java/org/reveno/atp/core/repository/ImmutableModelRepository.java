@@ -37,28 +37,20 @@ public class ImmutableModelRepository implements TxRepository {
 		if (isTransaction.get()) {
 			if (entity != null && isDeleted(entityType, id))
 				return null;
-			else if (added.containsKey(id))
-				return (T) added.get(id);
+			else if (getAddedEntities(entityType).containsKey(id))
+				return (T) getAddedEntities(entityType).get(id);
 			else
 				throw new EntityNotFoundException(id, entityType);
-		} else
+		} else if (entity != null)
 			return entity;
+		else 
+			throw new EntityNotFoundException(id, entityType);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> Collection<T> getAll(Class<T> entityType) {
-		Map<Long, Object> entities = repository.getEntities(entityType);
-
-		if (isTransaction.get()) {
-			List<Map.Entry<Long, Object>> notRemoved = entities.entrySet()
-					.stream().filter(e -> !isDeleted(e.getValue().getClass(), e.getKey()))
-					.collect(Collectors.toList());
-			notRemoved.addAll(getEntities(entityType).entrySet());
-			return (Collection<T>) notRemoved.stream().map(e -> e.getValue())
-					.collect(Collectors.toList());
-		} else
-			return (Collection<T>) entities.values();
+		return (Collection<T>) getEntities(entityType).values();
 	}
 
 	@Override
@@ -68,19 +60,34 @@ public class ImmutableModelRepository implements TxRepository {
 			map.forEach((k,v) -> v.forEach((k1, v1) -> {
 				if (!isDeleted(v1.getClass(), k1))
 					v.remove(k1);
-				getEntities(k).forEach((id, e) -> v.put(id, e));
+				getAddedEntities(k).forEach((id, e) -> v.put(id, e));
 			}));
 			return map;
 		} else
 			return repository.getAll();
 	}
+	
+	@Override
+	public Map<Long, Object> getEntities(Class<?> entityType) {
+		Map<Long, Object> entities = repository.getEntities(entityType);
+
+		if (isTransaction.get()) {
+			List<Map.Entry<Long, Object>> notRemoved = entities.entrySet()
+					.stream().filter(e -> !isDeleted(e.getValue().getClass(), e.getKey()))
+					.collect(Collectors.toList());
+			notRemoved.addAll(getAddedEntities(entityType).entrySet());
+			return notRemoved.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+		} else
+			return entities;
+	}
 
 	@Override
-	public void store(long entityId, Object entity) {
+	public <T> T store(long entityId, T entity) {
 		if (isTransaction.get()) {
-			getEntities(entity.getClass()).put(entityId, entity);
+			getAddedEntities(entity.getClass()).put(entityId, entity);
+			return entity;
 		} else
-			repository.store(entityId, entity);
+			return repository.store(entityId, entity);
 	}
 
 	@Override
@@ -92,15 +99,6 @@ public class ImmutableModelRepository implements TxRepository {
 			return repository.get(entityType, entityId);
 		} else
 			return repository.remove(entityType, entityId);
-	}
-	
-	public Map<Long, Object> getEntities(Class<?> entityType) {
-		if (isTransaction.get()) {
-			if (!added.containsKey(entityType))
-				added.put(entityType.getClass(), new HashMap<>());
-			return added.get(entityType);
-		} else
-			return repository.getEntities(entityType);
 	}
 
 	@Override
@@ -122,11 +120,18 @@ public class ImmutableModelRepository implements TxRepository {
 	public void commit() {
 		added.forEach((k,v) -> v.forEach((i,e) -> repository.store(i, e)));
 		removed.forEach((k,v) -> v.forEach(id -> repository.remove(k, id)));
+		isTransaction.set(false);
 	}
 
 	@Override
 	public void rollback() {
 		isTransaction.set(false);
+	}
+	
+	protected Map<Long, Object> getAddedEntities(Class<?> entityType) {
+		if (!added.containsKey(entityType))
+			added.put(entityType, new HashMap<>());
+		return added.get(entityType);
 	}
 
 	protected boolean isDeleted(Class<?> type, long key) {
@@ -140,7 +145,7 @@ public class ImmutableModelRepository implements TxRepository {
 	protected Map<Class<?>, Map<Long, Object>> added = new HashMap<>();
 	protected Map<Class<?>, Set<Long>> removed = new HashMap<>();
 	protected final MutableRepository repository;
-	protected ThreadLocal<Boolean> isTransaction = new ThreadLocal<Boolean>() {
+	protected final ThreadLocal<Boolean> isTransaction = new ThreadLocal<Boolean>() {
 		protected Boolean initialValue() {
 			return false;
 		}

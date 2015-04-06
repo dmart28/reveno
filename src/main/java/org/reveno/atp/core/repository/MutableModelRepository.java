@@ -35,10 +35,11 @@ import com.dyuproject.protostuff.runtime.RuntimeSchema;
 public class MutableModelRepository implements TxRepository {
 
 	@Override
-	public void store(long entityId, Object entity) {
+	public <T> T store(long entityId, T entity) {
 		repository.store(entityId, entity);
 		if (isTransaction.get() && entity != null)
 			saveEntityState(entityId, entity, EntityRecoveryState.REMOVE);
+		return entity;
 	}
 
 	@Override

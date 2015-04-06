@@ -20,7 +20,7 @@ import java.util.Map;
 
 public interface MutableRepository extends Repository {
 
-	void store(long entityId, Object entity);
+	<T> T store(long entityId, T entity);
 	
 	Object remove(Class<?> entityClass, long entityId);
 	
