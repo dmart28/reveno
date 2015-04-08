@@ -17,8 +17,6 @@
 package org.reveno.atp.core.repository;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,6 +25,7 @@ import java.util.stream.Collectors;
 import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.exceptions.EntityNotFoundException;
 import org.reveno.atp.core.api.TxRepository;
+import org.reveno.atp.utils.MapUtils;
 
 public class ImmutableModelRepository implements TxRepository {
 
@@ -37,8 +36,8 @@ public class ImmutableModelRepository implements TxRepository {
 		if (isTransaction.get()) {
 			if (entity != null && isDeleted(entityType, id))
 				return null;
-			else if (getAddedEntities(entityType).containsKey(id))
-				return (T) getAddedEntities(entityType).get(id);
+			else if (added.get(entityType).containsKey(id))
+				return (T) added.get(entityType).get(id);
 			else
 				throw new EntityNotFoundException(id, entityType);
 		} else if (entity != null)
@@ -60,7 +59,7 @@ public class ImmutableModelRepository implements TxRepository {
 			map.forEach((k,v) -> v.forEach((k1, v1) -> {
 				if (!isDeleted(v1.getClass(), k1))
 					v.remove(k1);
-				getAddedEntities(k).forEach((id, e) -> v.put(id, e));
+				added.get(k).forEach((id, e) -> v.put(id, e));
 			}));
 			return map;
 		} else
@@ -75,7 +74,7 @@ public class ImmutableModelRepository implements TxRepository {
 			List<Map.Entry<Long, Object>> notRemoved = entities.entrySet()
 					.stream().filter(e -> !isDeleted(e.getValue().getClass(), e.getKey()))
 					.collect(Collectors.toList());
-			notRemoved.addAll(getAddedEntities(entityType).entrySet());
+			notRemoved.addAll(added.get(entityType).entrySet());
 			return notRemoved.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 		} else
 			return entities;
@@ -84,7 +83,7 @@ public class ImmutableModelRepository implements TxRepository {
 	@Override
 	public <T> T store(long entityId, T entity) {
 		if (isTransaction.get()) {
-			getAddedEntities(entity.getClass()).put(entityId, entity);
+			added.get(entity.getClass()).put(entityId, entity);
 			return entity;
 		} else
 			return repository.store(entityId, entity);
@@ -93,8 +92,6 @@ public class ImmutableModelRepository implements TxRepository {
 	@Override
 	public Object remove(Class<?> entityType, long entityId) {
 		if (isTransaction.get()) {
-			if (!removed.containsKey(entityType))
-				removed.put(entityType, new HashSet<>());
 			removed.get(entityType).add(entityId);
 			return repository.get(entityType, entityId);
 		} else
@@ -127,12 +124,6 @@ public class ImmutableModelRepository implements TxRepository {
 	public void rollback() {
 		isTransaction.set(false);
 	}
-	
-	protected Map<Long, Object> getAddedEntities(Class<?> entityType) {
-		if (!added.containsKey(entityType))
-			added.put(entityType, new HashMap<>());
-		return added.get(entityType);
-	}
 
 	protected boolean isDeleted(Class<?> type, long key) {
 		return removed.containsKey(type) && removed.get(type).contains(key);
@@ -142,8 +133,8 @@ public class ImmutableModelRepository implements TxRepository {
 		this.repository = underlyingRepository;
 	}
 
-	protected Map<Class<?>, Map<Long, Object>> added = new HashMap<>();
-	protected Map<Class<?>, Set<Long>> removed = new HashMap<>();
+	protected final Map<Class<?>, Map<Long, Object>> added = MapUtils.repositoryMap();
+	protected final Map<Class<?>, Set<Long>> removed = MapUtils.repositorySet();
 	protected final WriteableRepository repository;
 	protected final ThreadLocal<Boolean> isTransaction = new ThreadLocal<Boolean>() {
 		protected Boolean initialValue() {

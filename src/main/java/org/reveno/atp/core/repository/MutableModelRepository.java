@@ -19,8 +19,6 @@ package org.reveno.atp.core.repository;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +27,7 @@ import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.exceptions.EntityNotFoundException;
 import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.core.serialization.protostuff.InputOutputHolder;
+import org.reveno.atp.utils.MapUtils;
 
 import com.dyuproject.protostuff.Schema;
 import com.dyuproject.protostuff.runtime.RuntimeSchema;
@@ -101,7 +100,7 @@ public class MutableModelRepository implements TxRepository {
 	@Override
 	public void rollback() {
 		restoreEntities().forEach(se -> {
-			switch (states(se.getEntity().getClass()).get(se.getEntityId())) {
+			switch (states.get(se.getEntity().getClass()).get(se.getEntityId())) {
 			case ADD: case UPDATE: repository.store(se.getEntityId(), se.getEntity()); break;
 			case REMOVE: repository.remove(se.getEntity().getClass(), se.getEntityId()); break;
 			}
@@ -110,10 +109,10 @@ public class MutableModelRepository implements TxRepository {
 	}
 	
 	protected boolean saveEntityState(long entityId, Object entity, EntityRecoveryState state) {
-		if (!isFixed(entity.getClass(), entityId)) {
+		if (!states.get(entity.getClass()).containsKey(entityId)) {
 			marshallEntity(new SavedEntity(entity, entityId));
-			fixedEntities(entity.getClass()).add(entityId);
-			states(entity.getClass()).put(entityId, state);
+			fixedEntities.get(entity.getClass()).add(entityId);
+			states.get(entity.getClass()).put(entityId, state);
 			return true;
 		} else
 			return false;
@@ -144,31 +143,7 @@ public class MutableModelRepository implements TxRepository {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		bufferMapping(entity.getClass()).add(holder);
-	}
-	
-	protected boolean isFixed(Class<?> type, long entityId) {
-		if (!states.containsKey(type))
-			states.put(type, new HashMap<>());
-		return states.get(type).containsKey(entityId);
-	}
-	
-	protected Set<Long> fixedEntities(Class<?> type) {
-		if (!fixedEntities.containsKey(type))
-			fixedEntities.put(type, new HashSet<>());
-		return fixedEntities.get(type);
-	}
-	
-	protected List<InputOutputHolder> bufferMapping(Class<?> type) {
-		if (!bufferMapping.containsKey(type))
-			bufferMapping.put(type, new ArrayList<>());
-		return bufferMapping.get(type);
-	}
-	
-	protected Map<Long, EntityRecoveryState> states(Class<?> type) {
-		if (!states.containsKey(type))
-			states.put(type, new HashMap<>());
-		return states.get(type);
+		bufferMapping.get(entity.getClass()).add(holder);
 	}
 	
 	protected void clearResources() {
@@ -182,9 +157,9 @@ public class MutableModelRepository implements TxRepository {
 		this.repository = repository;
 	}
 	
-	protected final Map<Class<?>, List<InputOutputHolder>> bufferMapping = new HashMap<>();
-	protected final Map<Class<?>, Set<Long>> fixedEntities = new HashMap<>();
-	protected final Map<Class<?>, Map<Long, EntityRecoveryState>> states = new HashMap<>();
+	protected final Map<Class<?>, List<InputOutputHolder>> bufferMapping = MapUtils.repositoryList();
+	protected final Map<Class<?>, Set<Long>> fixedEntities = MapUtils.repositorySet();
+	protected final Map<Class<?>, Map<Long, EntityRecoveryState>> states = MapUtils.repositoryMap();
 	protected final WriteableRepository repository;
 	protected final ThreadLocal<Boolean> isTransaction = new ThreadLocal<Boolean>() {
 		protected Boolean initialValue() {
