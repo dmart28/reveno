@@ -32,8 +32,7 @@ public class WorkflowEngine {
 					.then(inputHandlers::replication)
 					.then(inputHandlers::transactionExecution)
 					.then(inputHandlers::serialization)
-					.then(inputHandlers::journaling)
-					.then(inputHandlers::viewsUpdate)
+					.then(inputHandlers::journaling, inputHandlers::viewsUpdate)
 					.then(this::outputTransmitter);
 		outputProcessor.pipe(outputHandlers::resultOutput, outputHandlers::publishEvents)
 					.then(outputHandlers::serilalization)
