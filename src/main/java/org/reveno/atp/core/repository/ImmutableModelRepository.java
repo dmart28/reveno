@@ -40,8 +40,9 @@ public class ImmutableModelRepository implements TxRepository {
 				return (T) added.get(entityType).get(id);
 			else
 				throw new EntityNotFoundException(id, entityType);
-		} else if (entity != null)
+		} else if (entity != null) {
 			return entity;
+		}
 		else 
 			throw new EntityNotFoundException(id, entityType);
 	}
