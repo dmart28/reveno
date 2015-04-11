@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -28,9 +27,9 @@ import java.util.stream.Collectors;
 import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
-import org.reveno.atp.core.engine.processor.ProcessorContext;
 import org.reveno.atp.core.engine.processor.ActivityHandler;
 import org.reveno.atp.core.engine.processor.PipeProcessor;
+import org.reveno.atp.core.engine.processor.ProcessorContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,9 +47,10 @@ import com.lmax.disruptor.dsl.ProducerType;
 public class DisruptorPipeProcessor implements PipeProcessor {
 
 	public DisruptorPipeProcessor(CpuConsumption cpuConsumption,
-			boolean singleProducer) {
+			boolean singleProducer, Executor executor) {
 		this.cpuConsumption = cpuConsumption;
 		this.singleProducer = singleProducer;
+		this.executor = executor;
 	}
 
 	@Override
@@ -155,9 +155,8 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 	protected List<ActivityHandler[]> handlers = new ArrayList<>();
 	protected final boolean singleProducer;
 	protected final CpuConsumption cpuConsumption;
-	protected final Executor executor = Executors.newCachedThreadPool();
+	protected final Executor executor;
 	protected static final EventFactory<ProcessorContext> eventFactory = () -> new ProcessorContext();
-	private static final Logger log = LoggerFactory
-			.getLogger(DisruptorPipeProcessor.class);
+	private static final Logger log = LoggerFactory.getLogger(DisruptorPipeProcessor.class);
 
 }

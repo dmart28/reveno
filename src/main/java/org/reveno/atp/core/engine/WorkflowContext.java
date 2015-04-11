@@ -16,32 +16,15 @@
 
 package org.reveno.atp.core.engine;
 
-import org.reveno.atp.core.engine.processor.ProcessorContext;
+import java.util.List;
 
-public class InputHandlers {
+import org.reveno.atp.core.api.serialization.EventsInfoSerializer;
+import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 
-	public void marshalling(ProcessorContext context, boolean endOfBatch) {
-		
-	}
+public interface WorkflowContext {
+
+	public List<EventsInfoSerializer> eventsSerializers();
 	
-	public void journaling(ProcessorContext context, boolean endOfBatch) {
-		
-	}
-	
-	public void serialization(ProcessorContext context, boolean endOfBatch) {
-		
-	}
-	
-	public void replication(ProcessorContext context, boolean endOfBatch) {
-		
-	}
-	
-	public void transactionExecution(ProcessorContext context, boolean endOfBatch) {
-		
-	}
-	
-	public void viewsUpdate(ProcessorContext context, boolean endOfBatch) {
-		
-	}
+	public List<TransactionInfoSerializer> transactionSerializers();
 	
 }

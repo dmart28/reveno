@@ -21,15 +21,18 @@ import org.reveno.atp.core.engine.processor.ProcessorContext;
 
 public class WorkflowEngine {
 	
-	public WorkflowEngine(PipeProcessor inputProcessor, PipeProcessor outputProcessor) {
+	public WorkflowEngine(PipeProcessor inputProcessor, PipeProcessor outputProcessor, 
+			WorkflowContext context) {
 		this.inputProcessor = inputProcessor;
 		this.outputProcessor = outputProcessor;
 	}
 	
 	public void init() {
-		inputProcessor.pipe(inputHandlers::serialization)
-					.then(inputHandlers::journaling, inputHandlers::replication)
+		inputProcessor.pipe(inputHandlers::marshalling)
+					.then(inputHandlers::replication)
 					.then(inputHandlers::transactionExecution)
+					.then(inputHandlers::serialization)
+					.then(inputHandlers::journaling)
 					.then(inputHandlers::viewsUpdate)
 					.then(this::outputTransmitter);
 		outputProcessor.pipe(outputHandlers::resultOutput, outputHandlers::publishEvents)
