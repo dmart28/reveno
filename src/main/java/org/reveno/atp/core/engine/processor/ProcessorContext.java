@@ -23,13 +23,13 @@ import java.util.stream.IntStream;
 
 import sun.misc.Contended;
 
-public class Activity {
+public class ProcessorContext {
 
 	private CompletableFuture<?> future;
 	public CompletableFuture<?> getFuture() {
 		return future;
 	}
-	public Activity future(CompletableFuture<?> future) {
+	public ProcessorContext future(CompletableFuture<?> future) {
 		this.future = future;
 		return this;
 	}
@@ -39,7 +39,7 @@ public class Activity {
 	public boolean isJournalingSuccess() {
 		return journalingSuccess;
 	}
-	public Activity journalingSuccessful() {
+	public ProcessorContext journalingSuccessful() {
 		this.journalingSuccess = true;
 		return this;
 	}
@@ -49,7 +49,7 @@ public class Activity {
 	public boolean isReplicationSuccess() {
 		return replicationSuccess;
 	}
-	public Activity replicationSuccessful() {
+	public ProcessorContext replicationSuccessful() {
 		this.replicationSuccess = true;
 		return this;
 	}
@@ -58,7 +58,7 @@ public class Activity {
 	public boolean hasResult() {
 		return hasResult;
 	}
-	public Activity withResult() {
+	public ProcessorContext withResult() {
 		this.hasResult = true;
 		return this;
 	}
@@ -75,7 +75,7 @@ public class Activity {
 	public boolean isReplicated() {
 		return isReplicated;
 	}
-	public Activity replicated() {
+	public ProcessorContext replicated() {
 		isReplicated = true;
 		return this;
 	}
@@ -84,17 +84,17 @@ public class Activity {
 	public List<Object> getCommands() {
 		return commands;
 	}
-	public Activity addCommand(Object cmd) {
+	public ProcessorContext addCommand(Object cmd) {
 		commands.add(cmd);
 		return this;
 	}
-	public Activity addCommands(Object[] cmds) {
+	public ProcessorContext addCommands(Object[] cmds) {
 		IntStream.range(0, cmds.length).forEach((i) -> commands.add(cmds[i]));
 		return this;
 	}
 	
 	
-	public Activity reset() {
+	public ProcessorContext reset() {
 		commands.clear();
 		hasResult = false;
 		isAborted = false;

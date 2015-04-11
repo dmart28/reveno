@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
-import org.reveno.atp.core.engine.processor.Activity;
+import org.reveno.atp.core.engine.processor.ProcessorContext;
 import org.reveno.atp.core.engine.processor.ActivityHandler;
 import org.reveno.atp.core.engine.processor.PipeProcessor;
 import org.slf4j.Logger;
@@ -57,7 +57,7 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 	public void start() {
 		if (isStarted) throw new IllegalStateException("The Pipe Processor is alredy started.");
 		
-		disruptor = new Disruptor<Activity>(eventFactory, 4 * 1024, executor,
+		disruptor = new Disruptor<ProcessorContext>(eventFactory, 4 * 1024, executor,
 				singleProducer ? ProducerType.SINGLE : ProducerType.MULTI,
 				createWaitStrategy());
 
@@ -122,12 +122,12 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 		return null;
 	}
 	
-	protected void attachHandlers(Disruptor<Activity> disruptor) {
-		List<EventHandler<Activity>[]> disruptorHandlers = handlers.stream()
-				.<EventHandler<Activity>[]> map(this::convert)
+	protected void attachHandlers(Disruptor<ProcessorContext> disruptor) {
+		List<EventHandler<ProcessorContext>[]> disruptorHandlers = handlers.stream()
+				.<EventHandler<ProcessorContext>[]> map(this::convert)
 				.collect(Collectors.toList());
 		
-		EventHandlerGroup<Activity> h = disruptor.handleEventsWith(disruptorHandlers.get(0));
+		EventHandlerGroup<ProcessorContext> h = disruptor.handleEventsWith(disruptorHandlers.get(0));
 		for (int i = 1; i < disruptorHandlers.size(); i++)
 			h = h.then(disruptorHandlers.get(i));
 	}
@@ -141,8 +141,8 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected EventHandler<Activity>[] convert(ActivityHandler[] h) {
-		EventHandler<Activity>[] acs = new EventHandler[h.length];
+	protected EventHandler<ProcessorContext>[] convert(ActivityHandler[] h) {
+		EventHandler<ProcessorContext>[] acs = new EventHandler[h.length];
 		for (int i = 0; i < h.length; i++) {
 			final ActivityHandler hh = h[i];
 			acs[i] = (e, c, eob) -> hh.handle(e, eob);
@@ -151,12 +151,12 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 	}
 
 	protected volatile boolean isStarted = false;
-	protected Disruptor<Activity> disruptor;
+	protected Disruptor<ProcessorContext> disruptor;
 	protected List<ActivityHandler[]> handlers = new ArrayList<>();
 	protected final boolean singleProducer;
 	protected final CpuConsumption cpuConsumption;
 	protected final Executor executor = Executors.newCachedThreadPool();
-	protected static final EventFactory<Activity> eventFactory = () -> new Activity();
+	protected static final EventFactory<ProcessorContext> eventFactory = () -> new ProcessorContext();
 	private static final Logger log = LoggerFactory
 			.getLogger(DisruptorPipeProcessor.class);
 

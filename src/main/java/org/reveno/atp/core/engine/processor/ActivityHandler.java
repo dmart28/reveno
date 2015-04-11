@@ -19,6 +19,6 @@ package org.reveno.atp.core.engine.processor;
 @FunctionalInterface
 public interface ActivityHandler {
 	
-	void handle(Activity activity, boolean endOfBatch);
+	void handle(ProcessorContext activity, boolean endOfBatch);
 	
 }
