@@ -17,6 +17,7 @@
 package org.reveno.atp.core.engine;
 
 import org.reveno.atp.core.engine.processor.PipeProcessor;
+import org.reveno.atp.core.engine.processor.ProcessorContext;
 
 public class WorkflowEngine {
 	
@@ -26,14 +27,27 @@ public class WorkflowEngine {
 	}
 	
 	public void init() {
-		
+		inputProcessor.pipe(inputHandlers::serialization)
+					.then(inputHandlers::journaling, inputHandlers::replication)
+					.then(inputHandlers::transactionExecution)
+					.then(inputHandlers::viewsUpdate)
+					.then(this::outputTransmitter);
+		outputProcessor.pipe(outputHandlers::resultOutput, outputHandlers::publishEvents)
+					.then(outputHandlers::serilalization)
+					.then(outputHandlers::journaling);
 	}
 	
 	protected void transaction() {
 		
 	}
 	
+	protected void outputTransmitter(ProcessorContext context, boolean endOfBatch) {
+		
+	}
+	
 	protected PipeProcessor inputProcessor;
 	protected PipeProcessor outputProcessor;
+	protected InputHandlers inputHandlers;
+	protected OutputHandlers outputHandlers;
 	
 }

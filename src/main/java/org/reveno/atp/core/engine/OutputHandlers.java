@@ -18,25 +18,21 @@ package org.reveno.atp.core.engine;
 
 import org.reveno.atp.core.engine.processor.ProcessorContext;
 
-public class InputHandlers {
+public class OutputHandlers {
 
-	public void serialization(ProcessorContext context, boolean endOfBatch) {
+	public void resultOutput(ProcessorContext context, boolean endOfBatch) {
+		
+	}
+	
+	public void publishEvents(ProcessorContext context, boolean endOfBatch) {
+		
+	}
+	
+	public void serilalization(ProcessorContext context, boolean endOfBatch) {
 		
 	}
 	
 	public void journaling(ProcessorContext context, boolean endOfBatch) {
-		
-	}
-	
-	public void replication(ProcessorContext context, boolean endOfBatch) {
-		
-	}
-	
-	public void transactionExecution(ProcessorContext context, boolean endOfBatch) {
-		
-	}
-	
-	public void viewsUpdate(ProcessorContext context, boolean endOfBatch) {
 		
 	}
 	
