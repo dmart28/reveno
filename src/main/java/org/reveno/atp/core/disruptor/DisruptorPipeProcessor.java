@@ -101,7 +101,7 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 	}
 
 	@Override
-	public PipeProcessor pipe(ActivityHandler handler) {
+	public PipeProcessor pipe(ActivityHandler... handler) {
 		if (!isStarted)
 			handlers.add(handler);
 		return this;
@@ -121,17 +121,15 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 		}
 		return null;
 	}
-
-	@SuppressWarnings("unchecked")
+	
 	protected void attachHandlers(Disruptor<Activity> disruptor) {
-		List<EventHandler<Activity>> disruptorHandlers = handlers.stream()
-				.<EventHandler<Activity>> map(
-						(h) -> (e, c, eob) -> h.handle(e, eob))
+		List<EventHandler<Activity>[]> disruptorHandlers = handlers.stream()
+				.<EventHandler<Activity>[]> map(this::convert)
 				.collect(Collectors.toList());
 		
 		EventHandlerGroup<Activity> h = disruptor.handleEventsWith(disruptorHandlers.get(0));
-		for (EventHandler<Activity> dh : disruptorHandlers)
-			h = h.then(dh);
+		for (int i = 1; i < disruptorHandlers.size(); i++)
+			h = h.then(disruptorHandlers.get(i));
 	}
 
 	<T> T requireStarted(Supplier<T> body) {
@@ -141,10 +139,21 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 			throw new IllegalStateException(
 					"Pipe Processor must be started first.");
 	}
+	
+	@SuppressWarnings("unchecked")
+	protected EventHandler<Activity>[] convert(ActivityHandler[] h) {
+		EventHandler<Activity>[] acs = new EventHandler[h.length];
+		for (int i = 0; i < h.length; i++) {
+			final ActivityHandler hh = h[i];
+			acs[i] = (e, c, eob) -> hh.handle(e, eob);
+		}
+			
+		return acs;
+	}
 
 	protected volatile boolean isStarted = false;
 	protected Disruptor<Activity> disruptor;
-	protected List<ActivityHandler> handlers = new ArrayList<>();
+	protected List<ActivityHandler[]> handlers = new ArrayList<>();
 	protected final boolean singleProducer;
 	protected final CpuConsumption cpuConsumption;
 	protected final Executor executor = Executors.newCachedThreadPool();
