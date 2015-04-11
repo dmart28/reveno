@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
+import sun.misc.Contended;
+
 public class Activity {
 
 	private CompletableFuture<?> future;
@@ -29,6 +31,26 @@ public class Activity {
 	}
 	public Activity future(CompletableFuture<?> future) {
 		this.future = future;
+		return this;
+	}
+	
+	@Contended
+	private boolean journalingSuccess;
+	public boolean isJournalingSuccess() {
+		return journalingSuccess;
+	}
+	public Activity journalingSuccessful() {
+		this.journalingSuccess = true;
+		return this;
+	}
+	
+	@Contended
+	private boolean replicationSuccess;
+	public boolean isReplicationSuccess() {
+		return replicationSuccess;
+	}
+	public Activity replicationSuccessful() {
+		this.replicationSuccess = true;
 		return this;
 	}
 	

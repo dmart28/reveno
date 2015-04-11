@@ -20,8 +20,9 @@ import org.reveno.atp.core.engine.processor.PipeProcessor;
 
 public class WorkflowEngine {
 	
-	public WorkflowEngine(PipeProcessor processor) {
-		this.processor = processor;
+	public WorkflowEngine(PipeProcessor inputProcessor, PipeProcessor outputProcessor) {
+		this.inputProcessor = inputProcessor;
+		this.outputProcessor = outputProcessor;
 	}
 	
 	public void init() {
@@ -32,6 +33,7 @@ public class WorkflowEngine {
 		
 	}
 	
-	protected PipeProcessor processor;
+	protected PipeProcessor inputProcessor;
+	protected PipeProcessor outputProcessor;
 	
 }

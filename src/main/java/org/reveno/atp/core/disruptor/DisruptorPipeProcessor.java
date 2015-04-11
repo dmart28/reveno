@@ -146,8 +146,7 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 		for (int i = 0; i < h.length; i++) {
 			final ActivityHandler hh = h[i];
 			acs[i] = (e, c, eob) -> hh.handle(e, eob);
-		}
-			
+		}	
 		return acs;
 	}
 
