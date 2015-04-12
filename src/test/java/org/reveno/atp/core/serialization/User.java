@@ -14,18 +14,32 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.core.engine;
+package org.reveno.atp.core.serialization;
 
-import org.reveno.atp.core.api.EventsCommitInfo;
-import org.reveno.atp.core.api.TransactionCommitInfo;
-import org.reveno.atp.core.engine.components.SerializersChain;
+import java.io.Serializable;
 
-public interface WorkflowContext {
-
-	public SerializersChain serializer();
+public class User implements Serializable {
+	private static final long serialVersionUID = 1L;
 	
-	public TransactionCommitInfo.Builder transactionCommitBuilder();
+	private String name;
+	public String getName() {
+		return name;
+	}
 	
-	public EventsCommitInfo.Builder eventsCommitBuilder();
+	private int age;
+	public int getAge() {
+		return age;
+	}
 	
+	public User(String name, int age) {
+		this.name = name;
+		this.age = age;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof User))
+			return false;
+		return ((User)obj).name.equals(name) && ((User)obj).age == age;
+	}
 }

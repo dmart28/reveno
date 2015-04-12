@@ -29,4 +29,9 @@ public interface Buffer {
 	
 	int readInt();
 	
+	
+	void mark();
+	
+	void reset();
+	
 }

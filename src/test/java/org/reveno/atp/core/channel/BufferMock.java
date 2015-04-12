@@ -88,5 +88,12 @@ public class BufferMock implements Buffer {
 	public int readInt() {
 		return bytesToInt(readBytes(4));
 	}
+	
+	@Override
+	public void mark() {
+	}
 
+	@Override
+	public void reset() {
+	}
 }

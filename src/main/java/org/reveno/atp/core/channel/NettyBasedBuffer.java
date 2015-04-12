@@ -108,6 +108,18 @@ public class NettyBasedBuffer implements Buffer {
 		return buffer.hashCode();
 	}
 	
+	@Override
+	public void mark() {
+		buffer.markReaderIndex();
+		buffer.markWriterIndex();
+	}
+	
+	@Override
+	public void reset() {
+		buffer.resetReaderIndex();
+		buffer.resetWriterIndex();
+	}
+	
 	
 	private final ByteBuf buffer;
 	

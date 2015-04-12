@@ -16,32 +16,62 @@
 
 package org.reveno.atp.core.engine;
 
+import java.util.function.BiConsumer;
+
+import org.reveno.atp.core.api.channel.Buffer;
+import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.core.engine.processor.ProcessorContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class InputHandlers {
+	
+	protected WorkflowContext services;
 
-	public void marshalling(ProcessorContext context, boolean endOfBatch) {
+	public void ex(ProcessorContext c, boolean filter, boolean eob, BiConsumer<ProcessorContext, Boolean> body) {
+		if (!c.isAborted() && filter) {
+			try {
+				body.accept(c, eob);
+			} catch (Throwable t) {
+				log.error("inputHandlers", t);
+				c.abort();
+			}
+		}
+	}
+	
+	public void marshalling(ProcessorContext c, boolean endOfBatch) {
+		ex(c, !c.isReplicated(), endOfBatch, marshaller);
+	}
+	protected final BiConsumer<ProcessorContext, Boolean> marshaller = (c, eob) -> {
+		services.serializer().serializeCommands(c.getCommands(), c.marshallerBuffer());
+	};
+	
+	public void replication(ProcessorContext c, boolean endOfBatch) {
 		
 	}
 	
-	public void journaling(ProcessorContext context, boolean endOfBatch) {
+	public void transactionExecution(ProcessorContext c, boolean endOfBatch) {
 		
 	}
 	
-	public void serialization(ProcessorContext context, boolean endOfBatch) {
+	public void serialization(ProcessorContext c, boolean endOfBatch) {
 		
 	}
 	
-	public void replication(ProcessorContext context, boolean endOfBatch) {
+	public void journaling(ProcessorContext c, boolean endOfBatch) {
 		
 	}
 	
-	public void transactionExecution(ProcessorContext context, boolean endOfBatch) {
+	public void viewsUpdate(ProcessorContext c, boolean endOfBatch) {
 		
 	}
 	
-	public void viewsUpdate(ProcessorContext context, boolean endOfBatch) {
-		
+	
+	public InputHandlers(WorkflowContext context) {
+		this.services = context;
 	}
 	
+	
+	protected static final Buffer marshalled = new NettyBasedBuffer(true);
+	protected static final Logger log = LoggerFactory.getLogger(InputHandlers.class);
 }

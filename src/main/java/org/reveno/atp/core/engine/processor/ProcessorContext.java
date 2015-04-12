@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
+import org.reveno.atp.core.api.channel.Buffer;
+
 import sun.misc.Contended;
 
 public class ProcessorContext {
@@ -32,6 +34,11 @@ public class ProcessorContext {
 	public ProcessorContext future(CompletableFuture<?> future) {
 		this.future = future;
 		return this;
+	}
+	
+	private Buffer marshallerBuffer;
+	public Buffer marshallerBuffer() {
+		return marshallerBuffer;
 	}
 	
 	@Contended
@@ -96,8 +103,12 @@ public class ProcessorContext {
 	
 	public ProcessorContext reset() {
 		commands.clear();
+		marshallerBuffer.clear();
 		hasResult = false;
 		isAborted = false;
+		isReplicated = false;
+		journalingSuccess = false;
+		replicationSuccess = false;
 		future = null;
 		
 		return this;

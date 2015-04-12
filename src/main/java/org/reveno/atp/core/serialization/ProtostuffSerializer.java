@@ -2,7 +2,9 @@ package org.reveno.atp.core.serialization;
 
 import static org.reveno.atp.utils.MeasureUtils.mb;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.reveno.atp.api.domain.RepositoryData;
@@ -28,8 +30,7 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	public void registerTransactionType(Class<?> txDataType) {
 		registered.put(txDataType.hashCode(), new ProtoTransactionTypeHolder(txDataType, RuntimeSchema.getSchema(txDataType)));
 	}
-
-	@SuppressWarnings("unchecked")
+	
 	@Override
 	public void serialize(TransactionCommitInfo info, Buffer buffer) {
 		changeClassLoaderIfRequired();
@@ -39,18 +40,9 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 		buffer.writeInt(info.getVersion());
 		buffer.writeInt(info.getTransactionCommits().length);
 		
-		for (Object tc : info.getTransactionCommits()) {
-			int classHash = tc.getClass().hashCode();
-			byte[] data = ProtostuffIOUtil.toByteArray(tc, (Schema<Object>)registered.get(classHash).schema, linkedBuff.get());
-			
-			buffer.writeInt(classHash);
-			buffer.writeInt(data.length);
-			buffer.writeBytes(data);
-			linkedBuff.get().clear();
-		}
+		serializeObjects(buffer, info.getTransactionCommits());
 	}
-
-	@SuppressWarnings("unchecked")
+	
 	@Override
 	public TransactionCommitInfo deserialize(Builder builder, Buffer buffer) {
 		changeClassLoaderIfRequired();
@@ -58,17 +50,7 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 		long transactionId = buffer.readLong();
 		long time = buffer.readLong();
 		int version = buffer.readInt();
-		Object[] commits = new Object[buffer.readInt()];
-		
-		for (int i = 0; i < commits.length; i++) {
-			int classHash = buffer.readInt();
-			byte[] data = buffer.readBytes(buffer.readInt());
-			
-			Schema<Object> schema = (Schema<Object>)registered.get(classHash).schema;
-			Object message = schema.newMessage();
-			ProtostuffIOUtil.mergeFrom(data, message, schema);
-			commits[i] = message;
-		}
+		Object[] commits = deserializeObjects(buffer);
 		
 		return builder.create(transactionId, version, time, commits);
 	}
@@ -93,6 +75,21 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 		return repoData;
 	}
 	
+	@Override
+	public void serializeCommands(List<Object> commands, Buffer buffer) {
+		changeClassLoaderIfRequired();
+		
+		buffer.writeInt(commands.size());
+		serializeObjects(buffer, commands);
+	}
+	
+	@Override
+	public List<Object> deserializeCommands(Buffer buffer) {
+		changeClassLoaderIfRequired();
+		
+		return Arrays.asList(deserializeObjects(buffer));
+	}
+	
 	
 	public ProtostuffSerializer() {
 		this(Thread.currentThread().getContextClassLoader());
@@ -102,6 +99,44 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 		this.classLoader = classLoader;
 	}
 	
+	protected void serializeObjects(Buffer buffer, List<Object> objs) {
+		for (Object tc : objs) {
+			seriazeObject(buffer, tc);
+		}
+	}
+	
+	protected void serializeObjects(Buffer buffer, Object[] objs) {
+		for (Object tc : objs) {
+			seriazeObject(buffer, tc);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	protected void seriazeObject(Buffer buffer, Object tc) {
+		int classHash = tc.getClass().hashCode();
+		byte[] data = ProtostuffIOUtil.toByteArray(tc, (Schema<Object>)registered.get(classHash).schema, linkedBuff.get());
+		
+		buffer.writeInt(classHash);
+		buffer.writeInt(data.length);
+		buffer.writeBytes(data);
+		linkedBuff.get().clear();
+	}
+	
+	@SuppressWarnings("unchecked")
+	protected Object[] deserializeObjects(Buffer buffer) {
+		Object[] commits = new Object[buffer.readInt()];
+		
+		for (int i = 0; i < commits.length; i++) {
+			int classHash = buffer.readInt();
+			byte[] data = buffer.readBytes(buffer.readInt());
+			
+			Schema<Object> schema = (Schema<Object>)registered.get(classHash).schema;
+			Object message = schema.newMessage();
+			ProtostuffIOUtil.mergeFrom(data, message, schema);
+			commits[i] = message;
+		}
+		return commits;
+	}
 	
 	protected void changeClassLoaderIfRequired() {
 		if (Thread.currentThread().getContextClassLoader() != classLoader) {

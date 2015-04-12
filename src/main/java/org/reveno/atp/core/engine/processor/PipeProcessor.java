@@ -29,7 +29,7 @@ public interface PipeProcessor {
 	
 	boolean isStarted();
 	
-	PipeProcessor pipe(ActivityHandler... handler);
+	PipeProcessor pipe(ProcessorHandler... handler);
 	
 	
 	CompletableFuture<EmptyResult> process(Object[] commands);
@@ -37,7 +37,7 @@ public interface PipeProcessor {
 	<R> CompletableFuture<Result<R>> execute(Object command);
 	
 	
-	default PipeProcessor then(ActivityHandler... handler) {
+	default PipeProcessor then(ProcessorHandler... handler) {
 		return pipe(handler);
 	}
 	

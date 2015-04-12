@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
-import org.reveno.atp.core.engine.processor.ActivityHandler;
+import org.reveno.atp.core.engine.processor.ProcessorHandler;
 import org.reveno.atp.core.engine.processor.PipeProcessor;
 import org.reveno.atp.core.engine.processor.ProcessorContext;
 import org.slf4j.Logger;
@@ -101,7 +101,7 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 	}
 
 	@Override
-	public PipeProcessor pipe(ActivityHandler... handler) {
+	public PipeProcessor pipe(ProcessorHandler... handler) {
 		if (!isStarted)
 			handlers.add(handler);
 		return this;
@@ -141,10 +141,10 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected EventHandler<ProcessorContext>[] convert(ActivityHandler[] h) {
+	protected EventHandler<ProcessorContext>[] convert(ProcessorHandler[] h) {
 		EventHandler<ProcessorContext>[] acs = new EventHandler[h.length];
 		for (int i = 0; i < h.length; i++) {
-			final ActivityHandler hh = h[i];
+			final ProcessorHandler hh = h[i];
 			acs[i] = (e, c, eob) -> hh.handle(e, eob);
 		}	
 		return acs;
@@ -152,7 +152,7 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 
 	protected volatile boolean isStarted = false;
 	protected Disruptor<ProcessorContext> disruptor;
-	protected List<ActivityHandler[]> handlers = new ArrayList<>();
+	protected List<ProcessorHandler[]> handlers = new ArrayList<>();
 	protected final boolean singleProducer;
 	protected final CpuConsumption cpuConsumption;
 	protected final Executor executor;
