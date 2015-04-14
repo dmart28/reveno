@@ -43,6 +43,7 @@ public class TransactionExecutor {
 			c.abort();
 			log.error("executeCommands", t);
 			services.repository().rollback();
+			throw t;
 		}
 	}
 	

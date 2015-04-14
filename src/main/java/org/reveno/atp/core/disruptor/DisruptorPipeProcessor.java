@@ -62,6 +62,7 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 				createWaitStrategy());
 
 		attachHandlers(disruptor);
+		// TODO exception listener that will stop disruptor, mark node Slave, etc.
 		disruptor.start();
 
 		log.info("Started.");
