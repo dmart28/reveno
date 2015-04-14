@@ -96,4 +96,8 @@ public class BufferMock implements Buffer {
 	@Override
 	public void reset() {
 	}
+
+	@Override
+	public void writeFromBuffer(Buffer buffer) {
+	}
 }

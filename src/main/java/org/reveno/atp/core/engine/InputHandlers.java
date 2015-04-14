@@ -18,6 +18,7 @@ package org.reveno.atp.core.engine;
 
 import java.util.function.BiConsumer;
 
+import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.core.engine.processor.ProcessorContext;
@@ -28,6 +29,7 @@ public class InputHandlers {
 	
 	protected WorkflowContext services;
 
+	@SuppressWarnings("unchecked")
 	public void ex(ProcessorContext c, boolean filter, boolean eob, BiConsumer<ProcessorContext, Boolean> body) {
 		if (!c.isAborted() && filter) {
 			try {
@@ -35,9 +37,8 @@ public class InputHandlers {
 			} catch (Throwable t) {
 				log.error("inputHandlers", t);
 				c.abort();
+				c.future().complete(new EmptyResult(t));
 			}
-		} else {
-			c.getFuture().complete(null);
 		}
 	}
 	

@@ -25,6 +25,8 @@ public class WorkflowEngine {
 			WorkflowContext context) {
 		this.inputProcessor = inputProcessor;
 		this.outputProcessor = outputProcessor;
+		this.inputHandlers = new InputHandlers(null); // TODO change
+		this.outputHandlers = new OutputHandlers(); // TODO
 	}
 	
 	public void init() {

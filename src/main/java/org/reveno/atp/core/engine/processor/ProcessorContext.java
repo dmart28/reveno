@@ -22,13 +22,14 @@ import java.util.concurrent.CompletableFuture;
 
 import org.reveno.atp.core.api.channel.Buffer;
 
+@SuppressWarnings("rawtypes")
 public class ProcessorContext {
 
-	private CompletableFuture<?> future;
-	public CompletableFuture<?> getFuture() {
+	private CompletableFuture future;
+	public CompletableFuture future() {
 		return future;
 	}
-	public ProcessorContext future(CompletableFuture<?> future) {
+	public ProcessorContext future(CompletableFuture future) {
 		this.future = future;
 		return this;
 	}
