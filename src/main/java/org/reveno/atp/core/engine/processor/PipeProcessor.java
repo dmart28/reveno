@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core.engine.processor;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.reveno.atp.api.commands.EmptyResult;
@@ -32,7 +33,7 @@ public interface PipeProcessor {
 	PipeProcessor pipe(ProcessorHandler... handler);
 	
 	
-	CompletableFuture<EmptyResult> process(Object[] commands);
+	CompletableFuture<EmptyResult> process(List<Object> commands);
 	
 	<R> CompletableFuture<Result<R>> execute(Object command);
 	

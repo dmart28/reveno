@@ -1,0 +1,95 @@
+/** 
+ *  Copyright (c) 2015 The original author or authors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package org.reveno.atp.core.engine.components;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import org.reveno.atp.api.domain.WriteableRepository;
+import org.reveno.atp.utils.MapUtils;
+
+/*
+ * Used for recording which entities were modified on stage of Transaction execution, since
+ * we will want that info on next step where we updating Views mappings.
+ */
+public class RecordingRepository implements WriteableRepository {
+
+	private WriteableRepository underlyingRepo;
+	
+	public void underlyingRepository(WriteableRepository repository) {
+		this.underlyingRepo = repository;
+	}
+
+	@Override
+	public <T> T get(Class<T> entityType, long id) {
+		records.get(entityType).add(id);
+		return null;
+	}
+
+	@Override
+	public <T> Collection<T> getAll(Class<T> entityType) {
+		records.get(entityType).clear();
+		records.get(entityType).addAll(GET_ALL);
+		return underlyingRepo.getAll(entityType);
+	}
+
+	@Override
+	public Map<Class<?>, Map<Long, Object>> getAll() {
+		// TODO put a mark refresh all?
+		return underlyingRepo.getAll();
+	}
+
+	@Override
+	public Map<Long, Object> getEntities(Class<?> entityType) {
+		records.get(entityType).clear();
+		records.get(entityType).addAll(GET_ALL);
+		return underlyingRepo.getEntities(entityType);
+	}
+
+	@Override
+	public <T> T store(long entityId, T entity) {
+		records.get(entity.getClass()).add(entityId);
+		return underlyingRepo.store(entityId, entity);
+	}
+
+	@Override
+	public Object remove(Class<?> entityClass, long entityId) {
+		records.get(entityClass).add(entityId);
+		return underlyingRepo.remove(entityClass, entityId);
+	}
+
+	@Override
+	public void load(Map<Class<?>, Map<Long, Object>> map) {
+		underlyingRepo.load(map);
+	}
+	
+	public void clear() {
+		records.clear();
+	}
+	
+	public Map<Class<?>, Set<Long>> getMarkedRecords() {
+		return records;
+	}
+	
+	private Map<Class<?>, Set<Long>> records = MapUtils.repositorySet();
+	@SuppressWarnings("serial")
+	public static final Set<Long> GET_ALL = new HashSet<Long>() {{
+		add(-1L); add(-3L); add(-5L); add(-10L); add(-101L);
+	}};
+}

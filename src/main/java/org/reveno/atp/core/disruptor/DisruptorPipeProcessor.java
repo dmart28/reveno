@@ -83,7 +83,7 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 	}
 
 	@Override
-	public CompletableFuture<EmptyResult> process(Object[] commands) {
+	public CompletableFuture<EmptyResult> process(List<Object> commands) {
 		return requireStarted(() -> {
 			final CompletableFuture<EmptyResult> f = new CompletableFuture<EmptyResult>();
 			disruptor.publishEvent((e,s) -> e.reset().future(f).addCommands(commands));

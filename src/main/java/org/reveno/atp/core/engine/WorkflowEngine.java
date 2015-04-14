@@ -49,7 +49,7 @@ public class WorkflowEngine {
 	
 	protected PipeProcessor inputProcessor;
 	protected PipeProcessor outputProcessor;
-	protected InputHandlers inputHandlers;
-	protected OutputHandlers outputHandlers;
+	protected final InputHandlers inputHandlers;
+	protected final OutputHandlers outputHandlers;
 	
 }

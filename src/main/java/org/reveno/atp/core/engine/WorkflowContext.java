@@ -18,6 +18,8 @@ package org.reveno.atp.core.engine;
 
 import org.reveno.atp.core.api.EventsCommitInfo;
 import org.reveno.atp.core.api.TransactionCommitInfo;
+import org.reveno.atp.core.api.TxRepository;
+import org.reveno.atp.core.components.CommandsManager;
 import org.reveno.atp.core.engine.components.SerializersChain;
 
 public interface WorkflowContext {
@@ -27,5 +29,11 @@ public interface WorkflowContext {
 	public TransactionCommitInfo.Builder transactionCommitBuilder();
 	
 	public EventsCommitInfo.Builder eventsCommitBuilder();
+	
+	public long nextTransactionId();
+	
+	public CommandsManager commandsManager();
+	
+	public TxRepository repository();
 	
 }

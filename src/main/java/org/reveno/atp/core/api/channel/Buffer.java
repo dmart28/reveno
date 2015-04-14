@@ -21,6 +21,8 @@ public interface Buffer {
 	
 	void writeFromBuffer(ByteBuffer buffer);
 	
+	void writeFromBuffer(Buffer buffer);
+	
 	byte[] readBytes();
 	
 	byte[] readBytes(int length);

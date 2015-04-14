@@ -80,6 +80,15 @@ public class NettyBasedBuffer implements Buffer {
 	public void writeFromBuffer(ByteBuffer bb) {
 		buffer.writeBytes(bb);
 	}
+	
+	@Override
+	public void writeFromBuffer(Buffer b) {
+		if (b instanceof NettyBasedBuffer) {
+			buffer.writeBytes(((NettyBasedBuffer)b).buffer);
+		} else {
+			buffer.writeBytes(b.getBytes());
+		}
+	}
 
 	@Override
 	public byte[] readBytes() {

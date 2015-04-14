@@ -22,6 +22,6 @@ public interface CommandContext {
 
 	Repository repository();
 	
-	CommandContext asPartOfTransaction(Object transactionParam);
+	CommandContext executeTransaction(Object transactionParam);
 	
 }

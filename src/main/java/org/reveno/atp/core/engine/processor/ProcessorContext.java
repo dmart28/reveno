@@ -19,11 +19,8 @@ package org.reveno.atp.core.engine.processor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.IntStream;
 
 import org.reveno.atp.core.api.channel.Buffer;
-
-import sun.misc.Contended;
 
 public class ProcessorContext {
 
@@ -41,7 +38,6 @@ public class ProcessorContext {
 		return marshallerBuffer;
 	}
 	
-	@Contended
 	private boolean journalingSuccess;
 	public boolean isJournalingSuccess() {
 		return journalingSuccess;
@@ -51,7 +47,6 @@ public class ProcessorContext {
 		return this;
 	}
 	
-	@Contended
 	private boolean replicationSuccess;
 	public boolean isReplicationSuccess() {
 		return replicationSuccess;
@@ -68,6 +63,13 @@ public class ProcessorContext {
 	public ProcessorContext withResult() {
 		this.hasResult = true;
 		return this;
+	}
+	private Object commandResult;
+	public Object commandResult() {
+		return commandResult;
+	}
+	public void commandResult(Object commandResult) {
+		this.commandResult = commandResult;
 	}
 	
 	private boolean isAborted;
@@ -95,9 +97,14 @@ public class ProcessorContext {
 		commands.add(cmd);
 		return this;
 	}
-	public ProcessorContext addCommands(Object[] cmds) {
-		IntStream.range(0, cmds.length).forEach((i) -> commands.add(cmds[i]));
+	public ProcessorContext addCommands(List<Object> cmds) {
+		commands.addAll(cmds);
 		return this;
+	}
+	
+	private List<Object> transactions = new ArrayList<>();
+	public List<Object> getTransactions() {
+		return transactions;
 	}
 	
 	
@@ -110,6 +117,7 @@ public class ProcessorContext {
 		journalingSuccess = false;
 		replicationSuccess = false;
 		future = null;
+		commandResult = null;
 		
 		return this;
 	}

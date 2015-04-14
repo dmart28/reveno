@@ -36,6 +36,8 @@ public class InputHandlers {
 				log.error("inputHandlers", t);
 				c.abort();
 			}
+		} else {
+			c.getFuture().complete(null);
 		}
 	}
 	
@@ -47,8 +49,16 @@ public class InputHandlers {
 	};
 	
 	public void replication(ProcessorContext c, boolean endOfBatch) {
-		
+		ex(c, c.marshallerBuffer().length() > 0, endOfBatch, replicator);
 	}
+	protected final BiConsumer<ProcessorContext, Boolean> replicator = (c, eob) -> {
+		if (eob) {
+			// TODO some replication here
+		} else {
+			marshalled.writeInt(c.marshallerBuffer().length());
+			marshalled.writeFromBuffer(c.marshallerBuffer());
+		}
+	};
 	
 	public void transactionExecution(ProcessorContext c, boolean endOfBatch) {
 		

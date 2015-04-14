@@ -16,6 +16,7 @@
 
 package org.reveno.atp.api;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.reveno.atp.api.commands.EmptyResult;
@@ -48,6 +49,6 @@ public interface Reveno {
 	
 	<R> CompletableFuture<Result<R>> executeCommand(Object command);
 	
-	CompletableFuture<EmptyResult> performCommands(Object[] commands);
+	CompletableFuture<EmptyResult> performCommands(List<Object> commands);
 	
 }
