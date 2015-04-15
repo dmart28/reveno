@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.core.components;
+package org.reveno.atp.core.engine.components;
 
 import java.util.HashMap;
 import java.util.Map;

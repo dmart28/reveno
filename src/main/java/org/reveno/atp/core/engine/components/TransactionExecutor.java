@@ -21,6 +21,9 @@ import java.util.List;
 
 import org.reveno.atp.api.commands.CommandContext;
 import org.reveno.atp.api.domain.Repository;
+import org.reveno.atp.api.domain.WriteableRepository;
+import org.reveno.atp.api.events.EventBus;
+import org.reveno.atp.api.transaction.TransactionContext;
 import org.reveno.atp.core.engine.WorkflowContext;
 import org.reveno.atp.core.engine.processor.ProcessorContext;
 import org.slf4j.Logger;
@@ -30,50 +33,76 @@ public class TransactionExecutor {
 
 	public void executeCommands(ProcessorContext c, WorkflowContext services) {
 		try {
-			repository.underlyingRepository(services.repository());
-			services.repository().begin();
-			
+			repository.underlying(services.repository()).map(c.getMarkedRecords());
+			transactionContext.withEventBus(services.eventBus()).withRepository(services.repository());
 			commandContext.withRepository(repository);
 			
+			services.repository().begin();
 			
-			commandContext.reset();
+			c.getCommands().forEach(cmd -> {
+				services.commandsManager().execute(cmd, commandContext);
+				services.transactionsManager().execute(commandContext.transactions, transactionContext);
+				c.addTransactions(commandContext.transactions);
+			});
 			
 			services.repository().commit();
 		} catch (Throwable t) {
-			c.abort();
+			c.abort(t);
 			log.error("executeCommands", t);
 			services.repository().rollback();
-			throw t;
 		}
 	}
 	
 	protected RecordingRepository repository = new RecordingRepository();
 	protected InnerCommandContext commandContext = new InnerCommandContext();
+	protected InnerTransactionContext transactionContext = new InnerTransactionContext();
 	protected static final Logger log = LoggerFactory.getLogger(TransactionExecutor.class);
 		
 	protected static class InnerCommandContext implements CommandContext {
-		private Repository repository;
+		public Repository repository;
+		public List<Object> transactions = new ArrayList<>();
+		
+		@Override
 		public Repository repository() {
 			return repository;
 		}
 		
-		private List<Object> transactions = new ArrayList<>();
+		@Override
 		public CommandContext executeTransaction(Object transactionParam) {
 			transactions.add(transactionParam);
 			return this;
 		}
 		
-		public InnerCommandContext reset() {
-			repository = null;
+		public InnerCommandContext withRepository(Repository repository) {
+			this.repository = repository;
 			transactions.clear();
 			return this;
 		}
+	};
+	
+	protected static class InnerTransactionContext implements TransactionContext {
+		public EventBus eventBus;
+		public WriteableRepository repository;
+
+		@Override
+		public EventBus eventBus() {
+			return eventBus;
+		}
+
+		@Override
+		public WriteableRepository repository() {
+			return repository;
+		}
 		
-		public InnerCommandContext withRepository(Repository repository) {
-			this.repository = repository;
+		public InnerTransactionContext withEventBus(EventBus eventBus) {
+			this.eventBus = eventBus;
 			return this;
 		}
 		
-	};
+		public InnerTransactionContext withRepository(WriteableRepository repository) {
+			this.repository = repository;
+			return this;
+		}
+	}
 	
 }

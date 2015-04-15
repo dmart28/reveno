@@ -18,9 +18,12 @@ package org.reveno.atp.core.engine.processor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.reveno.atp.core.api.channel.Buffer;
+import org.reveno.atp.utils.MapUtils;
 
 @SuppressWarnings("rawtypes")
 public class ProcessorContext {
@@ -74,11 +77,16 @@ public class ProcessorContext {
 	}
 	
 	private boolean isAborted;
+	private Throwable abortIssue;
 	public boolean isAborted() {
 		return isAborted;
 	}
-	public void abort() {
+	public Throwable abortIssue() {
+		return abortIssue;
+	}
+	public void abort(Throwable abortIssue) {
 		this.isAborted = true;
+		this.abortIssue = abortIssue;
 	}
 	
 	private boolean isReplicated;
@@ -107,16 +115,28 @@ public class ProcessorContext {
 	public List<Object> getTransactions() {
 		return transactions;
 	}
+	public ProcessorContext addTransactions(List<Object> transactions) {
+		this.transactions = transactions;
+		return this;
+	}
+	
+	private Map<Class<?>, Set<Long>> markedRecords = MapUtils.repositorySet();
+	public Map<Class<?>, Set<Long>> getMarkedRecords() {
+		return markedRecords;
+	}
 	
 	
 	public ProcessorContext reset() {
 		commands.clear();
+		transactions.clear();
 		marshallerBuffer.clear();
+		markedRecords.clear();
 		hasResult = false;
 		isAborted = false;
 		isReplicated = false;
 		journalingSuccess = false;
 		replicationSuccess = false;
+		abortIssue = null;
 		future = null;
 		commandResult = null;
 		

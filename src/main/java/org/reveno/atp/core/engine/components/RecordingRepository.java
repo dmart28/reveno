@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.reveno.atp.api.domain.WriteableRepository;
-import org.reveno.atp.utils.MapUtils;
 
 /*
  * Used for recording which entities were modified on stage of Transaction execution, since
@@ -32,20 +31,26 @@ public class RecordingRepository implements WriteableRepository {
 
 	private WriteableRepository underlyingRepo;
 	
-	public void underlyingRepository(WriteableRepository repository) {
+	public RecordingRepository underlying(WriteableRepository repository) {
 		this.underlyingRepo = repository;
+		return this;
+	}
+	
+	public RecordingRepository map(Map<Class<?>, Set<Long>> markedRecords) {
+		this.markedRecords = markedRecords;
+		return this;
 	}
 
 	@Override
 	public <T> T get(Class<T> entityType, long id) {
-		records.get(entityType).add(id);
+		markedRecords.get(entityType).add(id);
 		return null;
 	}
 
 	@Override
 	public <T> Collection<T> getAll(Class<T> entityType) {
-		records.get(entityType).clear();
-		records.get(entityType).addAll(GET_ALL);
+		markedRecords.get(entityType).clear();
+		markedRecords.get(entityType).addAll(GET_ALL);
 		return underlyingRepo.getAll(entityType);
 	}
 
@@ -57,20 +62,20 @@ public class RecordingRepository implements WriteableRepository {
 
 	@Override
 	public Map<Long, Object> getEntities(Class<?> entityType) {
-		records.get(entityType).clear();
-		records.get(entityType).addAll(GET_ALL);
+		markedRecords.get(entityType).clear();
+		markedRecords.get(entityType).addAll(GET_ALL);
 		return underlyingRepo.getEntities(entityType);
 	}
 
 	@Override
 	public <T> T store(long entityId, T entity) {
-		records.get(entity.getClass()).add(entityId);
+		markedRecords.get(entity.getClass()).add(entityId);
 		return underlyingRepo.store(entityId, entity);
 	}
 
 	@Override
 	public Object remove(Class<?> entityClass, long entityId) {
-		records.get(entityClass).add(entityId);
+		markedRecords.get(entityClass).add(entityId);
 		return underlyingRepo.remove(entityClass, entityId);
 	}
 
@@ -79,15 +84,7 @@ public class RecordingRepository implements WriteableRepository {
 		underlyingRepo.load(map);
 	}
 	
-	public void clear() {
-		records.clear();
-	}
-	
-	public Map<Class<?>, Set<Long>> getMarkedRecords() {
-		return records;
-	}
-	
-	private Map<Class<?>, Set<Long>> records = MapUtils.repositorySet();
+	private Map<Class<?>, Set<Long>> markedRecords;
 	@SuppressWarnings("serial")
 	public static final Set<Long> GET_ALL = new HashSet<Long>() {{
 		add(-1L); add(-3L); add(-5L); add(-10L); add(-101L);

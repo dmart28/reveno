@@ -16,23 +16,31 @@
 
 package org.reveno.atp.core.engine;
 
+import java.util.List;
+
+import org.reveno.atp.api.events.EventBus;
 import org.reveno.atp.core.api.EventsCommitInfo;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.TxRepository;
-import org.reveno.atp.core.components.CommandsManager;
-import org.reveno.atp.core.engine.components.SerializersChain;
+import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
+import org.reveno.atp.core.engine.components.CommandsManager;
+import org.reveno.atp.core.engine.components.TransactionsManager;
 
 public interface WorkflowContext {
-
-	public SerializersChain serializer();
+	
+	public List<TransactionInfoSerializer> serializers();
+	
+	public TransactionsManager transactionsManager();
+	
+	public CommandsManager commandsManager();
+	
+	public EventBus eventBus();
 	
 	public TransactionCommitInfo.Builder transactionCommitBuilder();
 	
 	public EventsCommitInfo.Builder eventsCommitBuilder();
 	
 	public long nextTransactionId();
-	
-	public CommandsManager commandsManager();
 	
 	public TxRepository repository();
 	
