@@ -19,9 +19,11 @@ package org.reveno.atp.utils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public abstract class MapUtils {
 
@@ -35,6 +37,10 @@ public abstract class MapUtils {
 	
 	public static <T> MapOfSet<Class<?>, T> repositorySet() {
 		return new MapOfSet<Class<?>, T>();
+	}
+	
+	public static <T> MapOfSet<Class<?>, T> repositoryLinkedSet() {
+		return new MapOfSet<Class<?>, T>(() -> new LinkedHashSet<T>());
 	}
 	
 	public static class MapOfMap<T, U, M> extends HashMap<T, Map<U, M>> implements Map<T, Map<U, M>> {
@@ -71,6 +77,7 @@ public abstract class MapUtils {
 	
 	public static class MapOfSet<T, U> extends HashMap<T, Set<U>> implements Map<T, Set<U>> {
 		private static final long serialVersionUID = 1412151511553511511L;
+		private Supplier<Set<U>> setCreator;
 		
 		@SuppressWarnings("unchecked")
 		@Override
@@ -80,8 +87,16 @@ public abstract class MapUtils {
 		
 		public Set<U> safeGet(T key) {
 			if (!this.containsKey(key)) 
-				this.put(key, new HashSet<>());
+				this.put(key, setCreator.get());
 			return super.get(key);
+		}
+		
+		public MapOfSet() {
+			this.setCreator = () -> new HashSet<U>();
+		}
+		
+		public MapOfSet(Supplier<Set<U>> setCreator) {
+			this.setCreator = setCreator;
 		}
 	}
 	

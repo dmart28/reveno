@@ -126,7 +126,7 @@ public class ProcessorContext {
 		return this;
 	}
 	
-	private Map<Class<?>, Set<Long>> markedRecords = MapUtils.repositorySet();
+	private Map<Class<?>, Set<Long>> markedRecords = MapUtils.repositoryLinkedSet();
 	public Map<Class<?>, Set<Long>> getMarkedRecords() {
 		return markedRecords;
 	}
@@ -137,7 +137,7 @@ public class ProcessorContext {
 		transactions.clear();
 		marshallerBuffer.clear();
 		transactionsBuffer.clear();
-		markedRecords.clear();
+		markedRecords.values().forEach(Set::clear);
 		hasResult = false;
 		isAborted = false;
 		isReplicated = false;

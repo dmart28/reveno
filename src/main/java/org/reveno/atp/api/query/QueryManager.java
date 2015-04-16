@@ -22,7 +22,7 @@ import java.util.function.Predicate;
 
 public interface QueryManager {
 
-	<V> Optional<V> find(Class<V> viewType, Long id);
+	<V> Optional<V> find(Class<V> viewType, long id);
 	
 	<V> Collection<V> select(Class<V> viewType);
 	

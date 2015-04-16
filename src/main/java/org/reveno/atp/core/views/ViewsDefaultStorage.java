@@ -19,6 +19,7 @@ package org.reveno.atp.core.views;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.query.QueryManager;
@@ -27,46 +28,33 @@ import org.reveno.atp.core.api.ViewsStorage;
 public class ViewsDefaultStorage implements ViewsStorage, QueryManager  {
 
 	@Override
-	public <V> V find(Class<V> viewType, Long id) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public <V> Collection<V> select(Class<V> viewType) {
-		// TODO Auto-generated method stub
-		return null;
+		return repository.getAll(viewType);
 	}
 
 	@Override
 	public <V> Collection<V> select(Class<V> viewType, Predicate<V> filter) {
-		// TODO Auto-generated method stub
-		return null;
+		return repository.getAll(viewType).stream().filter(filter).collect(Collectors.toList());
 	}
 
 	@Override
-	public <V> Collection<V> parallelSelect(Class<V> viewType,
-			Predicate<V> filter) {
-		// TODO Auto-generated method stub
-		return null;
+	public <V> Collection<V> parallelSelect(Class<V> viewType, Predicate<V> filter) {
+		return repository.getAll(viewType).stream().parallel().filter(filter).collect(Collectors.toList());
 	}
 
 	@Override
 	public <View> Optional<View> find(Class<View> viewType, long id) {
-		// TODO Auto-generated method stub
-		return null;
+		return Optional.ofNullable(repository.get(viewType, id));
 	}
 
 	@Override
 	public <View> void insert(long id, View view) {
-		// TODO Auto-generated method stub
-		
+		repository.store(id, view);
 	}
 
 	@Override
 	public <View> void remove(Class<View> viewType, long id) {
-		// TODO Auto-generated method stub
-		
+		repository.remove(viewType, id);
 	}
 	
 	public ViewsDefaultStorage(WriteableRepository repository) {

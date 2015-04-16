@@ -16,6 +16,29 @@
 
 package org.reveno.atp.core.views;
 
+import java.util.Map;
+import java.util.Set;
+
+import org.reveno.atp.core.api.ViewsStorage;
+import org.reveno.atp.core.engine.components.RecordingRepository;
+
 public class ViewsProcessor {
 
+	public void process(Map<Class<?>, Set<Long>> marked) {
+		marked.forEach((k, v) -> {
+			if (v.containsAll(RecordingRepository.GET_ALL)) {
+				
+			} else {
+				
+			}
+		});
+	}
+	
+	public ViewsProcessor(ViewsManager manager, ViewsStorage storage) {
+		this.manager = manager;
+		this.storage = storage;
+	}
+	
+	protected ViewsManager manager;
+	protected ViewsStorage storage;
 }
