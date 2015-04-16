@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.reveno.atp.core.api.channel.Buffer;
+import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.utils.MapUtils;
 
 @SuppressWarnings("rawtypes")
@@ -37,9 +38,14 @@ public class ProcessorContext {
 		return this;
 	}
 	
-	private Buffer marshallerBuffer;
+	private Buffer marshallerBuffer = new NettyBasedBuffer(true);
 	public Buffer marshallerBuffer() {
 		return marshallerBuffer;
+	}
+	
+	private Buffer transactionsBuffer = new NettyBasedBuffer(true);
+	public Buffer transactionsBuffer() {
+		return transactionsBuffer;
 	}
 	
 	private boolean journalingSuccess;
@@ -130,6 +136,7 @@ public class ProcessorContext {
 		commands.clear();
 		transactions.clear();
 		marshallerBuffer.clear();
+		transactionsBuffer.clear();
 		markedRecords.clear();
 		hasResult = false;
 		isAborted = false;

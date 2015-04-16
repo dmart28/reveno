@@ -69,8 +69,7 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 
 	@Override
 	public void serialize(RepositoryData repository, Buffer buffer) {
-		try (ByteArrayOutputStream ba = new ByteArrayOutputStream(); // TODO
-																		// global
+		try (ByteArrayOutputStream ba = new ByteArrayOutputStream(); // TODO global
 				ObjectOutputStream os = new ObjectOutputStream(ba)) {
 			os.writeObject(repository);
 			buffer.writeInt(ba.size());

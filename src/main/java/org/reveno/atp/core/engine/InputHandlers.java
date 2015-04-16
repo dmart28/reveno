@@ -19,6 +19,7 @@ package org.reveno.atp.core.engine;
 import java.util.function.BiConsumer;
 
 import org.reveno.atp.api.commands.EmptyResult;
+import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.core.engine.components.SerializersChain;
@@ -55,11 +56,11 @@ public class InputHandlers {
 	}
 	
 	public void serialization(ProcessorContext c, boolean endOfBatch) {
-		
+		ex(c, c.getTransactions().size() > 0, endOfBatch, serializator);
 	}
 	
 	public void journaling(ProcessorContext c, boolean endOfBatch) {
-		
+		ex(c, true, endOfBatch, journaler);
 	}
 	
 	public void viewsUpdate(ProcessorContext c, boolean endOfBatch) {
@@ -83,6 +84,18 @@ public class InputHandlers {
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> transactionExecutor = (c, eob) -> {
 		txExecutor.executeCommands(c, services);
+	};
+	protected final BiConsumer<ProcessorContext, Boolean> serializator = (c, eob) -> {
+		// TODO what's with version?
+		TransactionCommitInfo tci = services.transactionCommitBuilder().create(services.nextTransactionId(), 1,
+				System.currentTimeMillis(), c.getTransactions().toArray());
+		serializer.serialize(tci, c.transactionsBuffer());
+	};
+	protected final BiConsumer<ProcessorContext, Boolean> journaler = (c, eob) -> {
+		services.transactionJournaler().writeData(c.transactionsBuffer(), eob);
+	};
+	protected final BiConsumer<ProcessorContext, Boolean> viewsUpdater = (c, eob) -> {
+		
 	};
 	
 	

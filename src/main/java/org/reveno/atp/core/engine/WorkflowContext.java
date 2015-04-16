@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.reveno.atp.api.events.EventBus;
 import org.reveno.atp.core.api.EventsCommitInfo;
+import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
@@ -37,6 +38,10 @@ public interface WorkflowContext {
 	public EventBus eventBus();
 	
 	public TransactionCommitInfo.Builder transactionCommitBuilder();
+	
+	public Journaler transactionJournaler();
+	
+	public Journaler eventsJournaler();
 	
 	public EventsCommitInfo.Builder eventsCommitBuilder();
 	

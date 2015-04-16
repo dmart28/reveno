@@ -40,9 +40,11 @@ public class TransactionExecutor {
 			services.repository().begin();
 			
 			c.getCommands().forEach(cmd -> {
-				services.commandsManager().execute(cmd, commandContext);
+				Object result = services.commandsManager().execute(cmd, commandContext);
 				services.transactionsManager().execute(commandContext.transactions, transactionContext);
 				c.addTransactions(commandContext.transactions);
+				if (c.hasResult())
+					c.commandResult(result);
 			});
 			
 			services.repository().commit();
