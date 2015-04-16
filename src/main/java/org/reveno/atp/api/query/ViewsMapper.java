@@ -16,11 +16,13 @@
 
 package org.reveno.atp.api.query;
 
+import java.util.Optional;
+
 import org.reveno.atp.api.domain.Repository;
 
 @FunctionalInterface
 public interface ViewsMapper<Entity, View> {
 
-	View map(Entity entity, Repository repository);
+	View map(Entity entity, Optional<View> oldView, Repository repository);
 	
 }
