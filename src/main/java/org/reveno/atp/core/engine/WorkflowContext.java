@@ -23,10 +23,10 @@ import org.reveno.atp.core.api.EventsCommitInfo;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.TxRepository;
-import org.reveno.atp.core.api.ViewsStorage;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.reveno.atp.core.engine.components.CommandsManager;
 import org.reveno.atp.core.engine.components.TransactionsManager;
+import org.reveno.atp.core.views.ViewsProcessor;
 
 public interface WorkflowContext {
 	
@@ -50,6 +50,6 @@ public interface WorkflowContext {
 	
 	public TxRepository repository();
 	
-	public ViewsStorage viewsStorage();
+	public ViewsProcessor viewsProcessor();
 	
 }

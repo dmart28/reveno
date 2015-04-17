@@ -64,7 +64,7 @@ public class InputHandlers {
 	}
 	
 	public void viewsUpdate(ProcessorContext c, boolean endOfBatch) {
-		
+		ex(c, true, endOfBatch, viewsUpdater);
 	}
 	
 	protected WorkflowContext services;
@@ -95,7 +95,7 @@ public class InputHandlers {
 		services.transactionJournaler().writeData(c.transactionsBuffer(), eob);
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> viewsUpdater = (c, eob) -> {
-		
+		services.viewsProcessor().process(c.getMarkedRecords());
 	};
 	
 	

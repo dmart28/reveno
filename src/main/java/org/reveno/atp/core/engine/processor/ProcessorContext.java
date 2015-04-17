@@ -48,24 +48,6 @@ public class ProcessorContext {
 		return transactionsBuffer;
 	}
 	
-	private boolean journalingSuccess;
-	public boolean isJournalingSuccess() {
-		return journalingSuccess;
-	}
-	public ProcessorContext journalingSuccessful() {
-		this.journalingSuccess = true;
-		return this;
-	}
-	
-	private boolean replicationSuccess;
-	public boolean isReplicationSuccess() {
-		return replicationSuccess;
-	}
-	public ProcessorContext replicationSuccessful() {
-		this.replicationSuccess = true;
-		return this;
-	}
-	
 	private boolean hasResult;
 	public boolean hasResult() {
 		return hasResult;
@@ -141,8 +123,6 @@ public class ProcessorContext {
 		hasResult = false;
 		isAborted = false;
 		isReplicated = false;
-		journalingSuccess = false;
-		replicationSuccess = false;
 		abortIssue = null;
 		future = null;
 		commandResult = null;
