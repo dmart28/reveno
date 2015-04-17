@@ -16,6 +16,40 @@
 
 package org.reveno.atp.core.views;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.reveno.atp.api.query.ViewsMapper;
+
 public class ViewsManager {
 
+	public <E, V> void register(Class<E> entityType, Class<V> viewType, ViewsMapper<E, V> mapper) {
+		viewsHandlers.put(entityType, new ViewHandlerHolder<E, V>(viewType, mapper));
+	}
+	
+	public boolean hasEntityMap(Class<?> entityType) {
+		return viewsHandlers.containsKey(entityType);
+	}
+	
+	public Class<?> resolveEntityViewType(Class<?> entityType) {
+		return viewsHandlers.get(entityType).viewType;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <E, V> ViewsMapper<E, V> getMapper(Class<?> entityType) {
+		return (ViewsMapper<E, V>) viewsHandlers.get(entityType).mapper;
+	}
+	
+	protected Map<Class<?>, ViewHandlerHolder<?, ?>> viewsHandlers = new HashMap<>();
+	
+	public static class ViewHandlerHolder<E, V> {
+		public Class<V> viewType;
+		public ViewsMapper<E, V> mapper;
+		
+		public ViewHandlerHolder(Class<V> viewType, ViewsMapper<E, V> mapper) {
+			this.viewType = viewType;
+			this.mapper = mapper;
+		}
+	}
+	
 }
