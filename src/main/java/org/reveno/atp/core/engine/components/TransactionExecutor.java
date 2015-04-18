@@ -22,7 +22,6 @@ import java.util.List;
 import org.reveno.atp.api.commands.CommandContext;
 import org.reveno.atp.api.domain.Repository;
 import org.reveno.atp.api.domain.WriteableRepository;
-import org.reveno.atp.api.events.EventBus;
 import org.reveno.atp.api.transaction.TransactionContext;
 import org.reveno.atp.core.engine.WorkflowContext;
 import org.reveno.atp.core.engine.processor.ProcessorContext;
@@ -32,9 +31,10 @@ import org.slf4j.LoggerFactory;
 public class TransactionExecutor {
 
 	public void executeCommands(ProcessorContext c, WorkflowContext services) {
+		c.transactionId(services.nextTransactionId());
 		try {
 			repository.underlying(services.repository()).map(c.getMarkedRecords());
-			transactionContext.withEventBus(services.eventBus()).withRepository(services.repository());
+			transactionContext.withContext(c).withRepository(services.repository());
 			commandContext.withRepository(repository);
 			
 			services.repository().begin();
@@ -83,12 +83,12 @@ public class TransactionExecutor {
 	};
 	
 	protected static class InnerTransactionContext implements TransactionContext {
-		public EventBus eventBus;
+		public ProcessorContext context;
 		public WriteableRepository repository;
 
 		@Override
-		public EventBus eventBus() {
-			return eventBus;
+		public void publishEvent(Object event) {
+			context.getEvents().add(event);
 		}
 
 		@Override
@@ -96,8 +96,8 @@ public class TransactionExecutor {
 			return repository;
 		}
 		
-		public InnerTransactionContext withEventBus(EventBus eventBus) {
-			this.eventBus = eventBus;
+		public InnerTransactionContext withContext(ProcessorContext context) {
+			this.context = context;
 			return this;
 		}
 		

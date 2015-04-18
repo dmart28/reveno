@@ -17,11 +17,10 @@
 package org.reveno.atp.api.transaction;
 
 import org.reveno.atp.api.domain.WriteableRepository;
-import org.reveno.atp.api.events.EventBus;
 
 public interface TransactionContext {
 	
-	EventBus eventBus();
+	void publishEvent(Object event);
 	
 	WriteableRepository repository();
 	

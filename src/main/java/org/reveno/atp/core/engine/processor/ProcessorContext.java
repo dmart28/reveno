@@ -28,6 +28,14 @@ import org.reveno.atp.utils.MapUtils;
 
 @SuppressWarnings("rawtypes")
 public class ProcessorContext {
+	
+	private long transactionId; 
+	public long transactionId() {
+		return transactionId;
+	}
+	public void transactionId(long transactionId) {
+		this.transactionId = transactionId;
+	}
 
 	private CompletableFuture future;
 	public CompletableFuture future() {
@@ -104,8 +112,12 @@ public class ProcessorContext {
 		return transactions;
 	}
 	public ProcessorContext addTransactions(List<Object> transactions) {
-		this.transactions = transactions;
+		this.transactions.addAll(transactions);
 		return this;
+	}
+	private List<Object> events = new ArrayList<>();
+	public List<Object> getEvents() {
+		return events;
 	}
 	
 	private Map<Class<?>, Set<Long>> markedRecords = MapUtils.repositoryLinkedSet();
@@ -115,8 +127,10 @@ public class ProcessorContext {
 	
 	
 	public ProcessorContext reset() {
+		transactionId = 0L;
 		commands.clear();
 		transactions.clear();
+		events.clear();
 		marshallerBuffer.clear();
 		transactionsBuffer.clear();
 		markedRecords.values().forEach(Set::clear);

@@ -14,8 +14,19 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.api.events;
+package org.reveno.atp.api;
 
-public interface EventBus {
+import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
 
+public interface EventsManager {
+	
+	void asyncEventExecutor(ExecutorService executor);
+	
+	<E> void asyncEventHandler(Class<E> eventType, Consumer<E> consumer);
+	
+	<E> void eventHandler(Class<E> eventType, Consumer<E> consumer);
+	
+	<E> void removeEventHandler(Class<E> eventType, Consumer<E> consumer);
+	
 }

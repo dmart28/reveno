@@ -33,7 +33,7 @@ public class WorkflowEngine {
 					.then(handlers::transactionExecution)
 					.then(handlers::serialization)
 					.then(handlers::journaling, handlers::viewsUpdate)
-					.then(handlers::result);
+					.then(handlers::result, handlers::eventsPublishing);
 	}
 	
 	protected void transaction() {

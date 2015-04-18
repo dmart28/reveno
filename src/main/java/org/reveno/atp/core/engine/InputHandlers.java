@@ -68,6 +68,10 @@ public class InputHandlers {
 		ex(c, true, endOfBatch, viewsUpdater);
 	}
 	
+	public void eventsPublishing(ProcessorContext c, boolean endOfBatch) {
+		ex(c, c.getEvents().size() > 0, endOfBatch, eventsPublisher);
+	}
+	
 	@SuppressWarnings("unchecked")
 	public void result(ProcessorContext c, boolean endOfBatch) {
 		if (c.isAborted())
@@ -109,6 +113,9 @@ public class InputHandlers {
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> viewsUpdater = (c, eob) -> {
 		services.viewsProcessor().process(c.getMarkedRecords());
+	};
+	protected final BiConsumer<ProcessorContext, Boolean> eventsPublisher = (c, eob) -> {
+		services.eventBus().publishEvents(c.transactionId(), c.getEvents().toArray());
 	};
 	
 	
