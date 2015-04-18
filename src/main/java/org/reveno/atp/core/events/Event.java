@@ -21,6 +21,14 @@ import org.reveno.atp.core.channel.NettyBasedBuffer;
 
 public class Event {
 	
+	private boolean isAborted;
+	public boolean isAborted() {
+		return isAborted;
+	}
+	public void abort() {
+		this.isAborted = true;
+	}
+	
 	private long transactionId;
 	public long transactionId() {
 		return transactionId;

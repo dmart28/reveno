@@ -16,14 +16,15 @@
 
 package org.reveno.atp.core.engine;
 
+import org.reveno.atp.core.api.EventBus;
 import org.reveno.atp.core.engine.processor.PipeProcessor;
 
 public class WorkflowEngine {
 	
-	public WorkflowEngine(PipeProcessor inputProcessor, PipeProcessor outputProcessor, 
+	public WorkflowEngine(PipeProcessor inputProcessor, EventBus eventBus, 
 			WorkflowContext context) {
 		this.inputProcessor = inputProcessor;
-		this.outputProcessor = outputProcessor;
+		this.eventBus = eventBus;
 		this.handlers = new InputHandlers(null); // TODO change
 	}
 	
@@ -42,7 +43,7 @@ public class WorkflowEngine {
 	
 	
 	protected PipeProcessor inputProcessor;
-	protected PipeProcessor outputProcessor;
+	protected EventBus eventBus;
 	protected final InputHandlers handlers;
 	
 }

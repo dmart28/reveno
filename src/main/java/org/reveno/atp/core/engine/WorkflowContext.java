@@ -19,7 +19,6 @@ package org.reveno.atp.core.engine;
 import java.util.List;
 
 import org.reveno.atp.core.api.EventBus;
-import org.reveno.atp.core.api.EventsCommitInfo;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.TxRepository;
@@ -46,12 +45,7 @@ public interface WorkflowContext {
 	
 	public TransactionCommitInfo.Builder transactionCommitBuilder();
 	
-	public EventsCommitInfo.Builder eventsCommitBuilder();
-	
-	
 	public Journaler transactionJournaler();
-	
-	public Journaler eventsJournaler();
 
 	
 	public long nextTransactionId();

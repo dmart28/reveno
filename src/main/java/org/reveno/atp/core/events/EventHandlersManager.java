@@ -16,33 +16,50 @@
 
 package org.reveno.atp.core.events;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 import org.reveno.atp.api.EventsManager;
+import org.reveno.atp.utils.MapUtils;
 
+@SuppressWarnings("unchecked")
 public class EventHandlersManager implements EventsManager {
 
 	@Override
 	public void asyncEventExecutor(ExecutorService executor) {
-		
+		if (this.asyncListenersExecutor != null)
+			this.asyncListenersExecutor.shutdown();
+		this.asyncListenersExecutor = executor;
 	}
-
+	
 	@Override
 	public <E> void asyncEventHandler(Class<E> eventType, Consumer<E> consumer) {
-		
+		asyncListeners.get(eventType).add((Consumer<Object>) consumer);
 	}
 
 	@Override
 	public <E> void eventHandler(Class<E> eventType, Consumer<E> consumer) {
-		
+		listeners.get(eventType).add((Consumer<Object>) consumer);
 	}
 
 	@Override
 	public <E> void removeEventHandler(Class<E> eventType, Consumer<E> consumer) {
-		
+		listeners.get(eventType).remove(consumer);
+	}
+	
+	public Set<Consumer<Object>> getEventHandlers(Class<?> eventType) {
+		return listeners.get(eventType);
+	}
+	
+	public Set<Consumer<Object>> getAsyncHandlers(Class<?> eventType) {
+		return asyncListeners.get(eventType);
 	}
 
 	
-	
+	protected Map<Class<?>, Set<Consumer<Object>>> listeners = MapUtils.repositorySet();
+	protected Map<Class<?>, Set<Consumer<Object>>> asyncListeners = MapUtils.repositorySet();
+	protected ExecutorService asyncListenersExecutor = Executors.newSingleThreadExecutor();
 }

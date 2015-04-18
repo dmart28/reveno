@@ -19,10 +19,12 @@ package org.reveno.atp.core.events;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.core.api.EventBus;
+import org.reveno.atp.core.api.EventsCommitInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,9 +38,12 @@ import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 
 public class DisruptorEventsBus implements EventBus {
+	
+	protected EventsContext context;
 
-	public DisruptorEventsBus(CpuConsumption cpuConsumption) {
+	public DisruptorEventsBus(CpuConsumption cpuConsumption, EventsContext context) {
 		this.cpuConsumption = cpuConsumption;
+		this.context = context;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -46,7 +51,7 @@ public class DisruptorEventsBus implements EventBus {
 		if (isStarted) throw new IllegalStateException("The Event Bus is alredy started.");
 		
 		disruptor = new Disruptor<Event>(eventFactory, 8 * 1024, executor, ProducerType.SINGLE, createWaitStrategy());
-		disruptor.handleEventsWith(this::publisher).then(this::serializer).then(this::journaler);
+		disruptor.handleEventsWith(this::publish).then(this::serialize).then(this::journal);
 		disruptor.start();
 		
 		log.info("Started.");
@@ -54,8 +59,22 @@ public class DisruptorEventsBus implements EventBus {
 	}
 	
 	public void stop() {
+		if (!isStarted) throw new IllegalStateException("The Events Bus is already stopped.");
 		
+		isStarted = false;
+		disruptor.shutdown();
 		log.info("Stopped.");
+	}
+	
+	protected void ex(Event c, boolean eob, BiConsumer<Event, Boolean> body) {
+		if (!c.isAborted()) {
+			try {
+				body.accept(c, eob);
+			} catch (Throwable t) {
+				log.error("eventsBus", t);
+				c.abort();
+			}
+		}
 	}
 	
 	@Override
@@ -66,17 +85,33 @@ public class DisruptorEventsBus implements EventBus {
 		});
 	}
 	
-	protected void publisher(Event event, long sequence, boolean endOfBatch) {
-		
+	protected void publish(Event event, long sequence, boolean endOfBatch) {
+		ex(event, endOfBatch, publisher);
 	}
 	
-	protected void serializer(Event event, long sequence, boolean endOfBatch) {
-		
+	protected void serialize(Event event, long sequence, boolean endOfBatch) {
+		ex(event, endOfBatch, serializer);
 	}
 	
-	protected void journaler(Event event, long sequence, boolean endOfBatch) {
-		
+	protected void journal(Event event, long sequence, boolean endOfBatch) {
+		ex(event, endOfBatch, journaler);
 	}
+	
+	protected final BiConsumer<Event, Boolean> publisher = (e, eof) -> {
+		for (Object event : e.events()) {
+			context.manager().getEventHandlers(event.getClass()).forEach(h -> h.accept(event));
+		}
+		// TODO async processing
+	};
+	
+	protected final BiConsumer<Event, Boolean> serializer = (e, eof) -> {
+		EventsCommitInfo info = context.eventsCommitBuilder().create(e.transactionId(), System.currentTimeMillis());
+		context.serializer().serialize(info, e.serialized());
+	};
+	
+	protected final BiConsumer<Event, Boolean> journaler = (e, eof) -> {
+		context.eventsJournaler().writeData(e.serialized(), eof);
+	};
 	
 	protected WaitStrategy createWaitStrategy() {
 		switch (cpuConsumption) {
