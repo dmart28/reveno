@@ -32,24 +32,28 @@ public interface WorkflowContext {
 	
 	public List<TransactionInfoSerializer> serializers();
 	
+	public TxRepository repository();
+	
+	public ViewsProcessor viewsProcessor();
+	
 	public TransactionsManager transactionsManager();
 	
 	public CommandsManager commandsManager();
 	
+	
 	public EventBus eventBus();
 	
+	
 	public TransactionCommitInfo.Builder transactionCommitBuilder();
+	
+	public EventsCommitInfo.Builder eventsCommitBuilder();
+	
 	
 	public Journaler transactionJournaler();
 	
 	public Journaler eventsJournaler();
-	
-	public EventsCommitInfo.Builder eventsCommitBuilder();
+
 	
 	public long nextTransactionId();
-	
-	public TxRepository repository();
-	
-	public ViewsProcessor viewsProcessor();
 	
 }

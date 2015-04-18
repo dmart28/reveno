@@ -19,6 +19,7 @@ package org.reveno.atp.core.engine;
 import java.util.function.BiConsumer;
 
 import org.reveno.atp.api.commands.EmptyResult;
+import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
@@ -65,6 +66,18 @@ public class InputHandlers {
 	
 	public void viewsUpdate(ProcessorContext c, boolean endOfBatch) {
 		ex(c, true, endOfBatch, viewsUpdater);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void result(ProcessorContext c, boolean endOfBatch) {
+		if (c.isAborted())
+			c.future().complete(new EmptyResult(c.abortIssue()));
+		else {
+			if (c.hasResult())
+				c.future().complete(new Result<Object>(c.commandResult()));
+			else
+				c.future().complete(new EmptyResult());
+		}
 	}
 	
 	protected WorkflowContext services;

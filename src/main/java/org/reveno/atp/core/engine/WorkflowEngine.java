@@ -17,7 +17,6 @@
 package org.reveno.atp.core.engine;
 
 import org.reveno.atp.core.engine.processor.PipeProcessor;
-import org.reveno.atp.core.engine.processor.ProcessorContext;
 
 public class WorkflowEngine {
 	
@@ -25,33 +24,25 @@ public class WorkflowEngine {
 			WorkflowContext context) {
 		this.inputProcessor = inputProcessor;
 		this.outputProcessor = outputProcessor;
-		this.inputHandlers = new InputHandlers(null); // TODO change
-		this.outputHandlers = new OutputHandlers(); // TODO
+		this.handlers = new InputHandlers(null); // TODO change
 	}
 	
 	public void init() {
-		inputProcessor.pipe(inputHandlers::marshalling)
-					.then(inputHandlers::replication)
-					.then(inputHandlers::transactionExecution)
-					.then(inputHandlers::serialization)
-					.then(inputHandlers::journaling, inputHandlers::viewsUpdate)
-					.then(this::outputTransmitter);
-		outputProcessor.pipe(outputHandlers::resultOutput, outputHandlers::publishEvents)
-					.then(outputHandlers::serilalization)
-					.then(outputHandlers::journaling);
+		inputProcessor.pipe(handlers::marshalling)
+					.then(handlers::replication)
+					.then(handlers::transactionExecution)
+					.then(handlers::serialization)
+					.then(handlers::journaling, handlers::viewsUpdate)
+					.then(handlers::result);
 	}
 	
 	protected void transaction() {
 		
 	}
 	
-	protected void outputTransmitter(ProcessorContext context, boolean endOfBatch) {
-		
-	}
 	
 	protected PipeProcessor inputProcessor;
 	protected PipeProcessor outputProcessor;
-	protected final InputHandlers inputHandlers;
-	protected final OutputHandlers outputHandlers;
+	protected final InputHandlers handlers;
 	
 }
