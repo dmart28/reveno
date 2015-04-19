@@ -32,7 +32,7 @@ import org.reveno.atp.core.api.EventsCommitInfo.Builder;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.serialization.EventsInfoSerializer;
 import org.reveno.atp.core.data.DefaultJournaler;
-import org.reveno.atp.core.events.DisruptorEventsBus;
+import org.reveno.atp.core.events.DisruptorEventPublisher;
 import org.reveno.atp.core.events.EventHandlersManager;
 import org.reveno.atp.core.events.EventsContext;
 import org.reveno.atp.core.impl.EventsCommitInfoImpl;
@@ -75,7 +75,7 @@ public class DisruptorEventsBusTest {
 		EventsCommitInfo.Builder builder = new EventsCommitInfoImpl.PojoBuilder();
 		EventsInfoSerializer serializer = new SimpleEventsSerializer();
 		
-		DisruptorEventsBus eventsBus = new DisruptorEventsBus(CpuConsumption.HIGH, new Context(journaler, builder, serializer, manager));
+		DisruptorEventPublisher eventsBus = new DisruptorEventPublisher(CpuConsumption.HIGH, new Context(journaler, builder, serializer, manager));
 		eventsBus.start();
 		
 		eventsBus.publishEvents(5L, new Object[] { new MyEvent("Hello!"), new MyNextEvent() });

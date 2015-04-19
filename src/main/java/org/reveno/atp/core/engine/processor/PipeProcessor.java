@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
+import org.reveno.atp.core.api.TransactionCommitInfo;
 
 public interface PipeProcessor {
 
@@ -36,6 +37,8 @@ public interface PipeProcessor {
 	CompletableFuture<EmptyResult> process(List<Object> commands);
 	
 	<R> CompletableFuture<Result<R>> execute(Object command);
+	
+	void executeReplay(TransactionCommitInfo transaction);
 	
 	
 	default PipeProcessor then(ProcessorHandler... handler) {

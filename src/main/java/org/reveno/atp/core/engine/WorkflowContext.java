@@ -40,7 +40,7 @@ public interface WorkflowContext {
 	public CommandsManager commandsManager();
 	
 	
-	public EventPublisher eventBus();
+	public EventPublisher eventPublisher();
 	
 	
 	public TransactionCommitInfo.Builder transactionCommitBuilder();

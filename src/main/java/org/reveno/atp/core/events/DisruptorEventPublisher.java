@@ -38,11 +38,11 @@ import com.lmax.disruptor.YieldingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 
-public class DisruptorEventsBus implements EventPublisher {
+public class DisruptorEventPublisher implements EventPublisher {
 	
 	protected EventsContext context;
 
-	public DisruptorEventsBus(CpuConsumption cpuConsumption, EventsContext context) {
+	public DisruptorEventPublisher(CpuConsumption cpuConsumption, EventsContext context) {
 		this.cpuConsumption = cpuConsumption;
 		this.context = context;
 	}
@@ -147,5 +147,5 @@ public class DisruptorEventsBus implements EventPublisher {
 	protected final Executor executor = Executors.newFixedThreadPool(3);
 	protected final CpuConsumption cpuConsumption;
 	protected static final EventFactory<Event> eventFactory = () -> new Event();
-	private static final Logger log = LoggerFactory.getLogger(DisruptorEventsBus.class);
+	private static final Logger log = LoggerFactory.getLogger(DisruptorEventPublisher.class);
 }

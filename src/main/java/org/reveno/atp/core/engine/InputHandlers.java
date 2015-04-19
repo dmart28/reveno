@@ -45,11 +45,11 @@ public class InputHandlers {
 	}
 	
 	public void marshalling(ProcessorContext c, boolean endOfBatch) {
-		ex(c, !c.isReplicated(), endOfBatch, marshaller);
+		ex(c, !c.isReplicated() && !c.isReplay(), endOfBatch, marshaller);
 	}
 	
 	public void replication(ProcessorContext c, boolean endOfBatch) {
-		ex(c, c.marshallerBuffer().length() > 0, endOfBatch, replicator);
+		ex(c, c.marshallerBuffer().length() > 0 && !c.isReplay(), endOfBatch, replicator);
 	}
 	
 	public void transactionExecution(ProcessorContext c, boolean endOfBatch) {
@@ -57,11 +57,11 @@ public class InputHandlers {
 	}
 	
 	public void serialization(ProcessorContext c, boolean endOfBatch) {
-		ex(c, c.getTransactions().size() > 0, endOfBatch, serializator);
+		ex(c, c.getTransactions().size() > 0 && !c.isReplay(), endOfBatch, serializator);
 	}
 	
 	public void journaling(ProcessorContext c, boolean endOfBatch) {
-		ex(c, true, endOfBatch, journaler);
+		ex(c, !c.isReplay(), endOfBatch, journaler);
 	}
 	
 	public void viewsUpdate(ProcessorContext c, boolean endOfBatch) {
@@ -74,13 +74,15 @@ public class InputHandlers {
 	
 	@SuppressWarnings("unchecked")
 	public void result(ProcessorContext c, boolean endOfBatch) {
-		if (c.isAborted())
-			c.future().complete(new EmptyResult(c.abortIssue()));
-		else {
-			if (c.hasResult())
-				c.future().complete(new Result<Object>(c.commandResult()));
-			else
-				c.future().complete(new EmptyResult());
+		if (!c.isReplay()) {
+			if (c.isAborted())
+				c.future().complete(new EmptyResult(c.abortIssue()));
+			else {
+				if (c.hasResult())
+					c.future().complete(new Result<Object>(c.commandResult()));
+				else
+					c.future().complete(new EmptyResult());
+			}
 		}
 	}
 	
@@ -115,7 +117,7 @@ public class InputHandlers {
 		services.viewsProcessor().process(c.getMarkedRecords());
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> eventsPublisher = (c, eob) -> {
-		services.eventBus().publishEvents(c.transactionId(), c.getEvents().toArray());
+		services.eventPublisher().publishEvents(c.transactionId(), c.getEvents().toArray());
 	};
 	
 	

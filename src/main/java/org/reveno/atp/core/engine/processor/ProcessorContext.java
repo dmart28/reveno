@@ -94,6 +94,15 @@ public class ProcessorContext {
 		return this;
 	}
 	
+	private boolean isReplay;
+	public boolean isReplay() {
+		return isReplay;
+	}
+	public ProcessorContext replay() {
+		isReplay = true;
+		return this;
+	}
+	
 	private List<Object> commands = new ArrayList<>();
 	public List<Object> getCommands() {
 		return commands;
