@@ -16,16 +16,6 @@
 
 package org.reveno.atp.core.restore;
 
-import org.reveno.atp.api.transaction.EventBus;
+public class TransactionsQueue {
 
-public class ReplayEventBus implements EventBus {
-
-	@Override
-	public void publishEvent(Object event) {
-		
-	}
-	
-	
-	
-	
 }

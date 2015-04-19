@@ -22,6 +22,7 @@ import java.util.List;
 import org.reveno.atp.api.commands.CommandContext;
 import org.reveno.atp.api.domain.Repository;
 import org.reveno.atp.api.domain.WriteableRepository;
+import org.reveno.atp.api.transaction.EventBus;
 import org.reveno.atp.api.transaction.TransactionContext;
 import org.reveno.atp.core.engine.WorkflowContext;
 import org.reveno.atp.core.engine.processor.ProcessorContext;
@@ -83,12 +84,12 @@ public class TransactionExecutor {
 	};
 	
 	protected static class InnerTransactionContext implements TransactionContext {
-		public ProcessorContext context;
+		public final ProcessContextEventBus eventBus = new ProcessContextEventBus();
 		public WriteableRepository repository;
 
 		@Override
-		public void publishEvent(Object event) {
-			context.getEvents().add(event);
+		public EventBus eventBus() {
+			return eventBus;
 		}
 
 		@Override
@@ -97,13 +98,26 @@ public class TransactionExecutor {
 		}
 		
 		public InnerTransactionContext withContext(ProcessorContext context) {
-			this.context = context;
+			eventBus.setContext(context);
 			return this;
 		}
 		
 		public InnerTransactionContext withRepository(WriteableRepository repository) {
 			this.repository = repository;
 			return this;
+		}
+	}
+	
+	protected static class ProcessContextEventBus implements EventBus {
+		private ProcessorContext context;
+
+		@Override
+		public void publishEvent(Object event) {
+			context.getEvents().add(event);
+		}
+		
+		public void setContext(ProcessorContext context) {
+			this.context = context;
 		}
 	}
 	

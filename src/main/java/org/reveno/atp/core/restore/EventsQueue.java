@@ -14,11 +14,8 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.core.api;
+package org.reveno.atp.core.restore;
 
+public class EventsQueue {
 
-public interface EventBus {
-
-	void publishEvents(long transactionId, Object[] events);
-	
 }

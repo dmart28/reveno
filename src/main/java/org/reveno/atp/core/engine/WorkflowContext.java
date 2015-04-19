@@ -18,7 +18,7 @@ package org.reveno.atp.core.engine;
 
 import java.util.List;
 
-import org.reveno.atp.core.api.EventBus;
+import org.reveno.atp.core.api.EventPublisher;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.TxRepository;
@@ -40,7 +40,7 @@ public interface WorkflowContext {
 	public CommandsManager commandsManager();
 	
 	
-	public EventBus eventBus();
+	public EventPublisher eventBus();
 	
 	
 	public TransactionCommitInfo.Builder transactionCommitBuilder();

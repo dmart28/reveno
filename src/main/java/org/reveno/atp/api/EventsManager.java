@@ -17,16 +17,34 @@
 package org.reveno.atp.api;
 
 import java.util.concurrent.ExecutorService;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public interface EventsManager {
 	
 	void asyncEventExecutor(ExecutorService executor);
 	
-	<E> void asyncEventHandler(Class<E> eventType, Consumer<E> consumer);
+	<E> void asyncEventHandler(Class<E> eventType, BiConsumer<E, EventMetadata> consumer);
 	
-	<E> void eventHandler(Class<E> eventType, Consumer<E> consumer);
+	<E> void eventHandler(Class<E> eventType, BiConsumer<E, EventMetadata> consumer);
 	
-	<E> void removeEventHandler(Class<E> eventType, Consumer<E> consumer);
+	<E> void removeEventHandler(Class<E> eventType, BiConsumer<E, EventMetadata> consumer);
+	
+	
+	public static class EventMetadata {
+		private boolean isReplay;
+		public boolean isReplay() {
+			return isReplay;
+		}
+		
+		private long transactionTime;
+		public long getTransactionTime() {
+			return transactionTime;
+		}
+		
+		public EventMetadata(boolean isReplay, long transactionTime) {
+			this.isReplay = isReplay;
+			this.transactionTime = transactionTime;
+		}
+	}
 	
 }

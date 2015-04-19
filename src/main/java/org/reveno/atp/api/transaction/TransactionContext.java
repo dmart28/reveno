@@ -20,7 +20,7 @@ import org.reveno.atp.api.domain.WriteableRepository;
 
 public interface TransactionContext {
 	
-	void publishEvent(Object event);
+	EventBus eventBus();
 	
 	WriteableRepository repository();
 	

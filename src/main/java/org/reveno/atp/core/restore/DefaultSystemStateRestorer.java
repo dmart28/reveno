@@ -19,6 +19,7 @@ package org.reveno.atp.core.restore;
 import java.util.function.Consumer;
 
 import org.reveno.atp.api.RepositorySnapshooter;
+import org.reveno.atp.core.RevenoConfiguration;
 import org.reveno.atp.core.api.SystemStateRestorer;
 import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.core.api.TxRepositoryFactory;
@@ -50,13 +51,16 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 	public DefaultSystemStateRestorer(JournalsStorage journalStorage,
 			TransactionInfoSerializer txSerializer,
 			TxRepositoryFactory repoFactory,
-			SnapshotsManager snapshotsManager) {
+			SnapshotsManager snapshotsManager, 
+			RevenoConfiguration configuration) {
 		this.journalStorage = journalStorage;
 		this.txSerializer = txSerializer;
 		this.repoFactory = repoFactory;
 		this.snapshotsManager = snapshotsManager;
+		this.configuration = configuration;
 	}
 
+	protected final RevenoConfiguration configuration;
 	protected final JournalsStorage journalStorage;
 	protected final TransactionInfoSerializer txSerializer;
 	protected final TxRepositoryFactory repoFactory;

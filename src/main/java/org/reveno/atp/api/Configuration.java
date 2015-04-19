@@ -24,6 +24,8 @@ public interface Configuration {
 	
 	void cpuConsumption(CpuConsumption cpuConsumption);
 	
+	void maxReplayQueueSize(long value);
+	
 	
 	public static interface SnapshotConfiguration {
 		void snapshootAtShutdown(boolean takeSnapshot);

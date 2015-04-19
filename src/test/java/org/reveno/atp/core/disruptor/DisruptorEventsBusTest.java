@@ -64,9 +64,9 @@ public class DisruptorEventsBusTest {
 		CountDownLatch latch = new CountDownLatch(3);
 		
 		EventHandlersManager manager = new EventHandlersManager();
-		manager.eventHandler(MyEvent.class, (e) -> { event[0] = e; latch.countDown(); });
+		manager.eventHandler(MyEvent.class, (e, md) -> { event[0] = e; latch.countDown(); });
 		
-		manager.eventHandler(MyNextEvent.class, (e) -> latch.countDown());
+		manager.eventHandler(MyNextEvent.class, (e, md) -> latch.countDown());
 		
 		String fileAddress = storage.nextStore().getEventsCommitsAddress();
 		Journaler journaler = new DefaultJournaler();

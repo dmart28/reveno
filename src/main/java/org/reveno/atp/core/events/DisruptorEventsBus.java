@@ -23,7 +23,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import org.reveno.atp.api.Configuration.CpuConsumption;
-import org.reveno.atp.core.api.EventBus;
+import org.reveno.atp.api.EventsManager.EventMetadata;
+import org.reveno.atp.core.api.EventPublisher;
 import org.reveno.atp.core.api.EventsCommitInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,7 @@ import com.lmax.disruptor.YieldingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 
-public class DisruptorEventsBus implements EventBus {
+public class DisruptorEventsBus implements EventPublisher {
 	
 	protected EventsContext context;
 
@@ -99,7 +100,7 @@ public class DisruptorEventsBus implements EventBus {
 	
 	protected final BiConsumer<Event, Boolean> publisher = (e, eof) -> {
 		for (Object event : e.events()) {
-			context.manager().getEventHandlers(event.getClass()).forEach(h -> h.accept(event));
+			context.manager().getEventHandlers(event.getClass()).forEach(h -> h.accept(event, metadata));
 		}
 		// TODO async processing
 	};
@@ -134,6 +135,12 @@ public class DisruptorEventsBus implements EventBus {
 			throw new IllegalStateException(
 					"Events Bus must be started first.");
 	}
+	
+	protected static final EventMetadata metadata = new EventMetadata(false, 0) {
+		public long getTransactionTime() {
+			return System.currentTimeMillis();
+		};
+	};
 	
 	protected volatile boolean isStarted = false;
 	protected Disruptor<Event> disruptor;
