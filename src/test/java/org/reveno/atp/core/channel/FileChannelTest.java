@@ -45,7 +45,7 @@ public class FileChannelTest {
 	@Test
 	public void testWrite() throws IOException {
 		final int chunks = 13;
-		List<byte[]> dataSets = IntStream.range(0, chunks).mapToObj((i) -> new byte[mb(1) + 1])
+		List<byte[]> dataSets = IntStream.range(0, chunks).mapToObj((i) -> new byte[mb(1)])
 			.peek((i) -> new Random().nextBytes(i)).collect(Collectors.toList());
 		
 		File testFile = new File(Files.createTempDir(), "fileChannelTest.dat");
@@ -54,7 +54,7 @@ public class FileChannelTest {
 			dataSets.forEach((ds) -> fc.write(new BufferMock(ds)));
 			fc.close();
 		
-			//Assert.assertEquals(testFile.length(), mb(chunks) + (chunks * 2 * 8));
+			Assert.assertEquals(testFile.length(), mb(chunks) + (chunks * 8));
 			Assert.assertFalse(fc.isOpen());
 		} finally {
 			testFile.delete();

@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core.api;
 
+import java.io.Closeable;
 import java.util.function.Consumer;
 
 import org.reveno.atp.core.api.channel.Buffer;
@@ -28,7 +29,7 @@ import org.reveno.atp.core.api.channel.Buffer;
  * We could simply put CQRS pattern here as well, segregating read and write parts.
  * InputProcessor will pay purpose of reading from stores.
  */
-public interface InputProcessor {
+public interface InputProcessor extends Closeable {
 
 	void process(Consumer<Buffer> consumer, JournalType type);
 

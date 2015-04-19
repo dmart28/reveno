@@ -50,7 +50,7 @@ public abstract class VersionedFileUtils {
 		Optional<String> lastFile = listFiles(baseDir, prefix, true).stream().reduce((a,b)->b);
 		
 		Function<Long, String> nextFile = (v) -> String.format("%s-%s-%s", prefix, FORMAT.format(new Date()),
-				version == null ? v + 1 : version);
+				version == null ? String.format("%010d", v + 1) : String.format("%010d", Long.parseLong(version)));
 		if (!lastFile.isPresent()) {
 			return nextFile.apply(0L);
 		} else {

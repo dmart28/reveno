@@ -19,8 +19,6 @@ package org.reveno.atp.core.data;
 import java.io.Closeable;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -38,13 +36,12 @@ public class DefaultInputProcessor implements InputProcessor, Closeable {
 				.map(f -> storage.channel(f)).collect(Collectors.toList());
 		ChannelReader<Buffer> bufferReader = new ChannelReader<>(new ChannelDecoder(), chs);
 		bufferReader.iterator().forEachRemaining((list) -> {
-			list.forEach((b) -> executor.execute(() -> consumer.accept(b)));
+			list.forEach((b) -> consumer.accept(b));
 		});
 	}
 	
 	@Override 
 	public void close() {
-		executor.shutdown();
 	}
 	
 	public DefaultInputProcessor(JournalsStorage storage) {
@@ -52,6 +49,5 @@ public class DefaultInputProcessor implements InputProcessor, Closeable {
 	}
 	
 	protected JournalsStorage storage;
-	private ExecutorService executor = Executors.newSingleThreadExecutor();
 
 }

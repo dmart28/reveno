@@ -72,7 +72,7 @@ public class FileSystemStorageTest {
 		
 		SnapshotStore ss = storage.nextSnapshotStore();
 		assertNotNull(ss);
-		assertTrue(ss.getSnapshotPath().endsWith("-2"));
+		assertTrue(ss.getSnapshotPath().endsWith("-0000000002"));
 		
 		assertEquals(0, storage.getLastStores().length);
 		

@@ -141,7 +141,8 @@ public class FileChannel implements Channel {
 	
 	public FileChannel(File file, String mode) {
 		try {
-			raf = new RandomAccessFile(file, mode);
+			this.file = file;
+			this.raf = new RandomAccessFile(file, mode);
 		} catch (FileNotFoundException e) {
 			throw new org.reveno.atp.api.exceptions.FileNotFoundException(file);
 		}
@@ -149,12 +150,19 @@ public class FileChannel implements Channel {
 	
 	public FileChannel(String filename, String mode) {
 		try {
-			raf = new RandomAccessFile(filename, mode);
+			this.file = new File(filename);
+			this.raf = new RandomAccessFile(filename, mode);
 		} catch (FileNotFoundException e) {
 			throw new org.reveno.atp.api.exceptions.FileNotFoundException(new File(filename));
 		}
 	}
 	
+	@Override
+	public String toString() {
+		return file.getName();
+	}
+	
+	private final File file;
 	private final RandomAccessFile raf;
 	private ByteBuffer buffer = ByteBuffer.allocateDirect(mb(1));
 	
