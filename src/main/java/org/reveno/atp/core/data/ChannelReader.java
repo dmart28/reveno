@@ -53,6 +53,8 @@ public class ChannelReader<T> implements Iterable<List<T>> {
 						return false;
 					}
 				}
+				// set next MappedByteBuffer chunk
+				chunkPos += buffer.length();
 				T result = null;
 				while ((result = decoder.decode(prevBuffer, buffer)) != null) {
 					if (entries == null) {
@@ -60,8 +62,6 @@ public class ChannelReader<T> implements Iterable<List<T>> {
 					}
 					entries.add(result);
 				}
-				// set next MappedByteBuffer chunk
-				chunkPos += buffer.capacity();
 				prevBuffer = buffer;
 				buffer = null;
 				if (entries != null) {

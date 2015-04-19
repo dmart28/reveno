@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -29,9 +28,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.reveno.atp.core.api.InputProcessor;
+import org.reveno.atp.core.api.InputProcessor.JournalType;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.TransactionCommitInfo;
-import org.reveno.atp.core.api.InputProcessor.JournalType;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
@@ -71,7 +70,7 @@ public class ReadWriteTest {
 		// there will be 10 journal stores
 		final int totalCount = 10 * 100_000;
 		int count = 0;
-		for (int i = 1; i <= totalCount / 100_000; i++) {
+		for (int i = 1; i <= 10; i++) {
 			JournalStore store = storage.nextStore();
 			Channel channel = storage.channel(store.getTransactionCommitsAddress());
 			Journaler journaler = new DefaultJournaler();
@@ -79,7 +78,7 @@ public class ReadWriteTest {
 			
 			Buffer buffer = new NettyBasedBuffer();
 			for (int j = 1; j <= totalCount / 10; j++) {
-				User user = new User(UUID.randomUUID().toString());
+				User user = new User(Double.toString(Math.random()));
 				TransactionCommitInfo d = builder.create(System.currentTimeMillis(), count++, 0, new Object[] { user });
 				serializer.serialize(d, buffer);
 				journaler.writeData(buffer, Math.random() < 0.1);

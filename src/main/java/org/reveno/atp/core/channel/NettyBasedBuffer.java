@@ -38,6 +38,10 @@ public class NettyBasedBuffer implements Buffer {
 		this.buffer = direct ? Unpooled.directBuffer(length) : Unpooled.buffer(length);
 	}
 	
+	public NettyBasedBuffer(int length, int maxLength, boolean direct) {
+		this.buffer = direct ? Unpooled.directBuffer(length, maxLength) : Unpooled.buffer(length, maxLength);
+	}
+	
 	@Override
 	public byte[] getBytes() {
 		byte[] bytes = new byte[buffer.writerIndex()];

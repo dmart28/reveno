@@ -102,7 +102,7 @@ public class FileChannel implements Channel {
 	protected void write(byte[] data) {
 		if (data.length > buffer.capacity()) {
 			destroyDirectBuffer(buffer);
-			buffer = ByteBuffer.allocateDirect(data.length * 2);
+			buffer = ByteBuffer.allocateDirect(data.length + 1);
 		}
 		buffer.put(data);
 		buffer.flip();
