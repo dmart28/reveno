@@ -7,7 +7,11 @@ public interface Buffer {
 	
 	byte[] getBytes();
 	
+	long capacity();
+	
 	int length();
+	
+	int remaining();
 	
 	void clear();
 	
@@ -26,6 +30,8 @@ public interface Buffer {
 	byte[] readBytes();
 	
 	byte[] readBytes(int length);
+	
+	void readBytes(byte[] data, int offset, int length);
 	
 	long readLong();
 	

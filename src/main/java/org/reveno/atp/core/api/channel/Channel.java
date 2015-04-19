@@ -20,12 +20,16 @@ import org.reveno.atp.core.api.AutoRecoverable;
 
 public interface Channel extends AutoCloseable, AutoRecoverable {
 	
+	long size();
+	
 	boolean isReadAvailable();
 	
-	public void read(Buffer buffer);
+	void read(Buffer buffer);
 	
-	public void write(Buffer buffer, boolean withIndex);
+	void write(Buffer buffer);
 	
-	public boolean isOpen();
+	boolean isOpen();
+	
+	void close();
 	
 }

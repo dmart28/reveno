@@ -45,6 +45,11 @@ public class NettyBasedBuffer implements Buffer {
 		
 		return bytes;
 	}
+	
+	@Override
+	public long capacity() {
+		return buffer.capacity();
+	}
 
 	@Override
 	public int length() {
@@ -54,6 +59,11 @@ public class NettyBasedBuffer implements Buffer {
 	@Override
 	public boolean isAvailable() {
 		return buffer.writerIndex() - buffer.readerIndex() > 0;
+	}
+	
+	@Override 
+	public int remaining() {
+		return buffer.readableBytes();
 	}
 
 	@Override
@@ -98,8 +108,13 @@ public class NettyBasedBuffer implements Buffer {
 	@Override
 	public byte[] readBytes(int length) {
 		byte[] data = new byte[length];
-		buffer.readBytes(data);
+		buffer.readBytes(data, 0, data.length > buffer.readableBytes() ? buffer.readableBytes() : data.length);
 		return data;
+	}
+	
+	@Override
+	public void readBytes(byte[] data, int offset, int length) {
+		buffer.readBytes(data, offset, length);
 	}
 
 	@Override

@@ -100,4 +100,19 @@ public class BufferMock implements Buffer {
 	@Override
 	public void writeFromBuffer(Buffer buffer) {
 	}
+
+	@Override
+	public long capacity() {
+		return length();
+	}
+
+	@Override
+	public int remaining() {
+		return bytes.length;
+	}
+
+	@Override
+	public void readBytes(byte[] data, int offset, int length) {
+		
+	}
 }

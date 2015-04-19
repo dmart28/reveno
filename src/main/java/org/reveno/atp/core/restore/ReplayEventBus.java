@@ -16,8 +16,8 @@
 
 package org.reveno.atp.core.restore;
 
-import org.reveno.atp.api.events.EventBus;
+//import org.reveno.atp.api.events.EventBus;
 
-public class ReplayEventBus implements EventBus {
+public class ReplayEventBus /*implements EventBus*/ {
 	
 }

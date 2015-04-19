@@ -17,27 +17,29 @@
 package org.reveno.atp.core.data;
 
 import java.io.Closeable;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.reveno.atp.core.api.InputProcessor;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
-import org.reveno.atp.core.channel.NettyBasedBuffer;
-import org.reveno.atp.utils.Preconditions;
+import org.reveno.atp.core.api.storage.JournalsStorage;
 
 public class DefaultInputProcessor implements InputProcessor, Closeable {
 	
 	@Override
-	public void process(Channel channel, final Consumer<Buffer> consumer) {
-		Preconditions.checkState(channel.isOpen(), "Channel should be open!");
-		
-		while (channel.isReadAvailable()) {
-			final Buffer buf = new NettyBasedBuffer(false);
-			channel.read(buf);
-			executor.submit(() -> consumer.accept(buf));
-		}
+	public void process(final Consumer<Buffer> consumer, JournalType type) {
+		List<Channel> chs = Arrays.asList(storage.getLastStores()).stream().map((js) -> type == JournalType.EVENTS ?
+				js.getEventsCommitsAddress() : js.getTransactionCommitsAddress())
+				.map(f -> storage.channel(f)).collect(Collectors.toList());
+		ChannelReader<Buffer> bufferReader = new ChannelReader<>(new ChannelDecoder(), chs);
+		bufferReader.iterator().forEachRemaining((list) -> {
+			list.forEach((b) -> executor.execute(() -> consumer.accept(b)));
+		});
 	}
 	
 	@Override 
@@ -45,7 +47,11 @@ public class DefaultInputProcessor implements InputProcessor, Closeable {
 		executor.shutdown();
 	}
 	
+	public DefaultInputProcessor(JournalsStorage storage) {
+		this.storage = storage;
+	}
 	
+	protected JournalsStorage storage;
 	private ExecutorService executor = Executors.newSingleThreadExecutor();
 
 }

@@ -50,7 +50,7 @@ public class DefaultSnapshooter implements RepositorySnapshooter {
 		try (Channel c = storage.channel(snap.getSnapshotPath())) {
 			log.info("Performing repository snapshot to " + snap);
 			
-			c.write(buffer, false);
+			c.write(buffer);
 		} catch (Throwable t) {
 			log.error("", t);
 			throw new RuntimeException(t);

@@ -16,10 +16,11 @@
 
 package org.reveno.atp.core.storage;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.junit.After;
@@ -27,6 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.reveno.atp.core.api.storage.JournalsStorage.JournalStore;
 import org.reveno.atp.core.api.storage.SnapshotStorage.SnapshotStore;
+import org.reveno.atp.test.utils.FileUtils;
 
 import com.google.common.io.Files;
 
@@ -43,7 +45,7 @@ public class FileSystemStorageTest {
 
 	@After
 	public void tearDown() throws IOException {
-		delete(tempDir);
+		FileUtils.delete(tempDir);
 	}
 
 	@Test
@@ -81,16 +83,6 @@ public class FileSystemStorageTest {
 	@Test
 	public void foldersTest() throws IOException {
 		
-	}
-
-	
-	protected void delete(File f) throws IOException {
-		if (f.isDirectory()) {
-			for (File c : f.listFiles())
-				delete(c);
-		}
-		if (!f.delete())
-			throw new FileNotFoundException("Failed to delete file: " + f);
 	}
 
 }

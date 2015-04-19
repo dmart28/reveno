@@ -14,27 +14,21 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.core.api;
+package org.reveno.atp.test.utils;
 
-import java.util.function.Consumer;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
-import org.reveno.atp.core.api.channel.Buffer;
+public abstract class FileUtils {
 
-/*
- * Previosly we used to use Journaler for both reading and writing.
- * Such logic breaks the idea of Journaler. Its single responsibility is to give 
- * comprehensive (or not) approach for writing.
- * 
- * We could simply put CQRS pattern here as well, segregating read and write parts.
- * InputProcessor will pay purpose of reading from stores.
- */
-public interface InputProcessor {
-
-	void process(Consumer<Buffer> consumer, JournalType type);
-
-	
-	public enum JournalType {
-		TRANSACTIONS, EVENTS
+	public static void delete(File f) throws IOException {
+		if (f.isDirectory()) {
+			for (File c : f.listFiles())
+				delete(c);
+		}
+		if (!f.delete())
+			throw new FileNotFoundException("Failed to delete file: " + f);
 	}
 	
 }

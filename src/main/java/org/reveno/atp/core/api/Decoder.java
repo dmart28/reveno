@@ -16,25 +16,8 @@
 
 package org.reveno.atp.core.api;
 
-import java.util.function.Consumer;
-
 import org.reveno.atp.core.api.channel.Buffer;
 
-/*
- * Previosly we used to use Journaler for both reading and writing.
- * Such logic breaks the idea of Journaler. Its single responsibility is to give 
- * comprehensive (or not) approach for writing.
- * 
- * We could simply put CQRS pattern here as well, segregating read and write parts.
- * InputProcessor will pay purpose of reading from stores.
- */
-public interface InputProcessor {
-
-	void process(Consumer<Buffer> consumer, JournalType type);
-
-	
-	public enum JournalType {
-		TRANSACTIONS, EVENTS
-	}
-	
+public interface Decoder<T> {
+    public T decode(Buffer prevBuffer, Buffer buffer);
 }

@@ -122,8 +122,7 @@ public class DisruptorEventsBus implements EventBus {
 		case HIGH:
 			return new YieldingWaitStrategy();
 		case PHASED:
-			return PhasedBackoffWaitStrategy.withLock((int) 2.5e5, (int) 8.5e5,
-					TimeUnit.NANOSECONDS);
+			return PhasedBackoffWaitStrategy.withLock((int) 2.5e5, (int) 8.5e5, TimeUnit.NANOSECONDS);
 		}
 		return null;
 	}

@@ -24,6 +24,8 @@ import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultJournaler implements Journaler {
 
@@ -31,14 +33,15 @@ public class DefaultJournaler implements Journaler {
 	public void writeData(Buffer entry, boolean endOfBatch) {
 		requireWriting();
 		
-		buffer.writeBytes(entry.getBytes());
+		buffer.writeFromBuffer(entry);
 		if (endOfBatch) {
 			Channel ch = channel.get();
-			ch.write(buffer, true);
+			ch.write(buffer);
 			buffer.clear();
 			
 			if (!channel.compareAndSet(ch, ch)) {
 				try {
+					log.info("Closing channel.");
 					ch.close();
 				} catch (Exception e) { }
 			}
@@ -47,12 +50,16 @@ public class DefaultJournaler implements Journaler {
 
 	@Override
 	public void startWriting(Channel ch) {
+		log.info("Started writing to " + ch);
+		
 		channel.set(ch);
 		isWriting = true;
 	}
 
 	@Override
 	public void stopWriting() {
+		log.info("Stopped writing.");
+		
 		isWriting = false;
 	}
 
@@ -74,5 +81,5 @@ public class DefaultJournaler implements Journaler {
 	private final Buffer buffer = new NettyBasedBuffer(mb(1), true);
 	private AtomicReference<Channel> channel = new AtomicReference<Channel>();
 	private volatile boolean isWriting = false;
-	
+	private static final Logger log = LoggerFactory.getLogger(DefaultJournaler.class);
 }

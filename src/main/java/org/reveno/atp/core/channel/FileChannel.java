@@ -34,8 +34,24 @@ import org.slf4j.LoggerFactory;
 public class FileChannel implements Channel {
 
 	@Override
-	public void close() throws IOException {
-		raf.close();
+	public long size() {
+		if (isOpen())
+			try {
+				return channel().size();
+			} catch (IOException e) {
+				return 0;
+			}
+		else
+			return 0;
+	}
+	
+	@Override
+	public void close() {
+		try {
+			raf.close();
+		} catch (Throwable t) {
+			log.error("channel close", t);
+		}
 		destroyDirectBuffer(buffer);
 	}
 
@@ -71,10 +87,9 @@ public class FileChannel implements Channel {
 	}
 
 	@Override
-	public void write(Buffer data, boolean withIndex) {
+	public void write(Buffer data) {
 		if (isOpen()) {
-			if (withIndex)
-				write(longToBytes(data.length()));
+			write(longToBytes(data.length()));
 			write(data.getBytes());
 		}
 	}
@@ -87,7 +102,7 @@ public class FileChannel implements Channel {
 	protected void write(byte[] data) {
 		if (data.length > buffer.capacity()) {
 			destroyDirectBuffer(buffer);
-			buffer = ByteBuffer.allocateDirect(data.length + 1);
+			buffer = ByteBuffer.allocateDirect(data.length * 2);
 		}
 		buffer.put(data);
 		buffer.flip();
@@ -95,7 +110,7 @@ public class FileChannel implements Channel {
 		buffer.clear();
 	}
 	
-	protected java.nio.channels.FileChannel channel() {
+	public java.nio.channels.FileChannel channel() {
 		return raf.getChannel();
 	}
 	
@@ -140,7 +155,7 @@ public class FileChannel implements Channel {
 		}
 	}
 	
-	private RandomAccessFile raf;
+	private final RandomAccessFile raf;
 	private ByteBuffer buffer = ByteBuffer.allocateDirect(mb(1));
 	
 	private static final Logger log = LoggerFactory.getLogger(FileChannel.class);

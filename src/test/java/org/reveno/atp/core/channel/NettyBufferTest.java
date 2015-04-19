@@ -43,4 +43,11 @@ public class NettyBufferTest {
 		Assert.assertEquals(len, buffer.getBytes().length);
 	}
 	
+	@Test
+	public void testCapacity() {
+		Buffer buffer = new NettyBasedBuffer(15, false);
+		Assert.assertEquals(15, buffer.capacity());
+		Assert.assertEquals(0, buffer.length());
+	}
+	
 }
