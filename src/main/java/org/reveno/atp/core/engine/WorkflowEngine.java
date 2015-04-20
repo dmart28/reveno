@@ -33,12 +33,18 @@ public class WorkflowEngine {
 					.then(handlers::serialization)
 					.then(handlers::journaling, handlers::viewsUpdate)
 					.then(handlers::result, handlers::eventsPublishing);
+		inputProcessor.start();
 	}
 	
-	protected void transaction() {
-		
+	public void shutdown() {
+		inputProcessor.stop();
 	}
 	
+	public PipeProcessor getPipe() {
+		return inputProcessor;
+	}
+	
+	// All failover stuff regulation goes here in future
 	
 	protected PipeProcessor inputProcessor;
 	protected EventPublisher eventBus;

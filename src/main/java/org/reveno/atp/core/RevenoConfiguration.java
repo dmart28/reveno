@@ -44,16 +44,7 @@ public class RevenoConfiguration implements Configuration {
 		return cpuConsumption;
 	}
 	
-	@Override
-	public void maxReplayQueueSize(long value) {
-		this.maxReplayQueueSize = value;
-	}
-	public long maxReplayQueueSize() {
-		return maxReplayQueueSize;
-	}
-	
 	private RevenoSnapshotConfiguration snapshooting = new RevenoSnapshotConfiguration();
-	private long maxReplayQueueSize = 100_000;
 	private CpuConsumption cpuConsumption = CpuConsumption.LOW;
 	private ModelType modelType = ModelType.IMMUTABLE;
 	

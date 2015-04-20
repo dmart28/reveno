@@ -19,12 +19,12 @@ package org.reveno.atp.core.restore;
 import java.util.function.Consumer;
 
 import org.reveno.atp.api.RepositorySnapshooter;
-import org.reveno.atp.core.RevenoConfiguration;
+import org.reveno.atp.core.EngineWorkflowContext;
 import org.reveno.atp.core.api.SystemStateRestorer;
 import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.core.api.TxRepositoryFactory;
-import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.reveno.atp.core.api.storage.JournalsStorage;
+import org.reveno.atp.core.engine.WorkflowEngine;
 import org.reveno.atp.core.snapshots.SnapshotsManager;
 
 public class DefaultSystemStateRestorer implements SystemStateRestorer {
@@ -49,21 +49,21 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 	
 	
 	public DefaultSystemStateRestorer(JournalsStorage journalStorage,
-			TransactionInfoSerializer txSerializer,
 			TxRepositoryFactory repoFactory,
-			SnapshotsManager snapshotsManager, 
-			RevenoConfiguration configuration) {
+			SnapshotsManager snapshotsManager,
+			EngineWorkflowContext workflowContext,
+			WorkflowEngine workflowEngine) {
 		this.journalStorage = journalStorage;
-		this.txSerializer = txSerializer;
 		this.repoFactory = repoFactory;
 		this.snapshotsManager = snapshotsManager;
-		this.configuration = configuration;
+		this.workflowContext = workflowContext;
+		this.workflowEngine = workflowEngine;
 	}
-
-	protected final RevenoConfiguration configuration;
+	
 	protected final JournalsStorage journalStorage;
-	protected final TransactionInfoSerializer txSerializer;
 	protected final TxRepositoryFactory repoFactory;
+	protected final EngineWorkflowContext workflowContext;
+	protected final WorkflowEngine workflowEngine;
 	protected final SnapshotsManager snapshotsManager;
 	
 }
