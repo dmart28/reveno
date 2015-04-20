@@ -67,8 +67,8 @@ public class DisruptorEventPublisher implements EventPublisher {
 		log.info("Stopped.");
 	}
 	
-	protected void ex(Event c, boolean eob, BiConsumer<Event, Boolean> body) {
-		if (!c.isAborted()) {
+	protected void ex(Event c, boolean filter, boolean eob, BiConsumer<Event, Boolean> body) {
+		if (!c.isAborted() && filter) {
 			try {
 				body.accept(c, eob);
 			} catch (Throwable t) {
@@ -79,23 +79,23 @@ public class DisruptorEventPublisher implements EventPublisher {
 	}
 	
 	@Override
-	public void publishEvents(long transactionId, Object[] events) {
+	public void publishEvents(boolean isReplay, long transactionId, Object[] events) {
 		requireStarted(() -> {
-			disruptor.publishEvent((e,s) -> e.reset().transactionId(transactionId).events(events));
+			disruptor.publishEvent((e,s) -> e.reset().replay(isReplay).transactionId(transactionId).events(events));
 			return null;
 		});
 	}
 	
 	protected void publish(Event event, long sequence, boolean endOfBatch) {
-		ex(event, endOfBatch, publisher);
+		ex(event, true, endOfBatch, publisher);
 	}
 	
 	protected void serialize(Event event, long sequence, boolean endOfBatch) {
-		ex(event, endOfBatch, serializer);
+		ex(event, !event.isReplay(), endOfBatch, serializer);
 	}
 	
 	protected void journal(Event event, long sequence, boolean endOfBatch) {
-		ex(event, endOfBatch, journaler);
+		ex(event, !event.isReplay(), endOfBatch, journaler);
 	}
 	
 	protected final BiConsumer<Event, Boolean> publisher = (e, eof) -> {

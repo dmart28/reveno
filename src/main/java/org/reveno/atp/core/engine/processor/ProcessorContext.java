@@ -153,6 +153,7 @@ public class ProcessorContext {
 		markedRecords.values().forEach(Set::clear);
 		hasResult = false;
 		isAborted = false;
+		isReplay = false;
 		isReplicated = false;
 		abortIssue = null;
 		future = null;

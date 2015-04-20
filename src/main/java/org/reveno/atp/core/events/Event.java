@@ -29,6 +29,15 @@ public class Event {
 		this.isAborted = true;
 	}
 	
+	private boolean isReplay;
+	public boolean isReplay() {
+		return isReplay;
+	}
+	public Event replay(boolean isReplay) {
+		this.isReplay = isReplay;
+		return this;
+	}
+	
 	private long transactionId;
 	public long transactionId() {
 		return transactionId;
@@ -53,6 +62,8 @@ public class Event {
 	}
 	
 	public Event reset() {
+		isAborted = false;
+		isReplay = false;
 		transactionId = 0L;
 		events = null;
 		serialized.clear();

@@ -117,7 +117,7 @@ public class InputHandlers {
 		services.viewsProcessor().process(c.getMarkedRecords());
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> eventsPublisher = (c, eob) -> {
-		services.eventPublisher().publishEvents(c.transactionId(), c.getEvents().toArray());
+		services.eventPublisher().publishEvents(c.isReplay(), c.transactionId(), c.getEvents().toArray());
 	};
 	
 	

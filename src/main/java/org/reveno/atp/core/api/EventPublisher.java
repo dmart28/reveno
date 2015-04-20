@@ -18,6 +18,6 @@ package org.reveno.atp.core.api;
 
 public interface EventPublisher {
 
-	void publishEvents(long transactionId, Object[] events);
+	void publishEvents(boolean isReplay, long transactionId, Object[] events);
 	
 }
