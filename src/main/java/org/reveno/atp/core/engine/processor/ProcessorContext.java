@@ -26,6 +26,8 @@ import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.utils.MapUtils;
 
+import sun.misc.Contended;
+
 @SuppressWarnings("rawtypes")
 public class ProcessorContext {
 	
@@ -51,6 +53,7 @@ public class ProcessorContext {
 		return marshallerBuffer;
 	}
 	
+	@Contended
 	private Buffer transactionsBuffer = new NettyBasedBuffer(true);
 	public Buffer transactionsBuffer() {
 		return transactionsBuffer;
@@ -64,6 +67,8 @@ public class ProcessorContext {
 		this.hasResult = true;
 		return this;
 	}
+	
+	@Contended
 	private Object commandResult;
 	public Object commandResult() {
 		return commandResult;
@@ -124,11 +129,14 @@ public class ProcessorContext {
 		this.transactions.addAll(transactions);
 		return this;
 	}
+	
+	@Contended
 	private List<Object> events = new ArrayList<>();
 	public List<Object> getEvents() {
 		return events;
 	}
 	
+	@Contended
 	private Map<Class<?>, Set<Long>> markedRecords = MapUtils.repositoryLinkedSet();
 	public Map<Class<?>, Set<Long>> getMarkedRecords() {
 		return markedRecords;

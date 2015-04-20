@@ -40,13 +40,17 @@ public class TransactionExecutor {
 			
 			services.repository().begin();
 			
-			c.getCommands().forEach(cmd -> {
-				Object result = services.commandsManager().execute(cmd, commandContext);
-				services.transactionsManager().execute(commandContext.transactions, transactionContext);
+			if (c.isReplay()) {
 				c.addTransactions(commandContext.transactions);
-				if (c.hasResult())
-					c.commandResult(result);
-			});
+			} else {
+				c.getCommands().forEach(cmd -> {
+					Object result = services.commandsManager().execute(cmd, commandContext);
+					executeTransactions(services);
+					c.addTransactions(commandContext.transactions);
+					if (c.hasResult())
+						c.commandResult(result);
+				});
+			}
 			
 			services.repository().commit();
 		} catch (Throwable t) {
@@ -54,6 +58,10 @@ public class TransactionExecutor {
 			log.error("executeCommands", t);
 			services.repository().rollback();
 		}
+	}
+
+	protected void executeTransactions(WorkflowContext services) {
+		services.transactionsManager().execute(commandContext.transactions, transactionContext);
 	}
 	
 	protected RecordingRepository repository = new RecordingRepository();

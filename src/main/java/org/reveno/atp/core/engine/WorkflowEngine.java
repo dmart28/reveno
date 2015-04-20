@@ -21,10 +21,8 @@ import org.reveno.atp.core.engine.processor.PipeProcessor;
 
 public class WorkflowEngine {
 	
-	public WorkflowEngine(PipeProcessor inputProcessor, EventPublisher eventBus, 
-			WorkflowContext context) {
+	public WorkflowEngine(PipeProcessor inputProcessor, WorkflowContext context) {
 		this.inputProcessor = inputProcessor;
-		this.eventBus = eventBus;
 		this.handlers = new InputHandlers(context);
 	}
 	

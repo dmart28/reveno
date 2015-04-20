@@ -53,7 +53,7 @@ public class InputHandlers {
 	}
 	
 	public void transactionExecution(ProcessorContext c, boolean endOfBatch) {
-		ex(c, c.getCommands().size() > 0, endOfBatch, transactionExecutor);
+		ex(c, true, endOfBatch, transactionExecutor);
 	}
 	
 	public void serialization(ProcessorContext c, boolean endOfBatch) {

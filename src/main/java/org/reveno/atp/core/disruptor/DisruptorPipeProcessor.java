@@ -17,6 +17,7 @@
 package org.reveno.atp.core.disruptor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
+import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.engine.processor.ProcessorHandler;
 import org.reveno.atp.core.engine.processor.PipeProcessor;
 import org.reveno.atp.core.engine.processor.ProcessorContext;
@@ -100,7 +102,16 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 			return f;
 		});
 	}
-
+	
+	@Override
+	public void executeReplay(TransactionCommitInfo transaction) {
+		requireStarted(() -> {
+			disruptor.publishEvent((e,s) -> e.reset().replay().getTransactions()
+					.addAll(Arrays.asList(transaction.getTransactionCommits())));
+			return null;
+		});
+	}
+	
 	@Override
 	public PipeProcessor pipe(ProcessorHandler... handler) {
 		if (!isStarted)
@@ -159,5 +170,5 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 	protected final Executor executor;
 	protected static final EventFactory<ProcessorContext> eventFactory = () -> new ProcessorContext();
 	private static final Logger log = LoggerFactory.getLogger(DisruptorPipeProcessor.class);
-
+	
 }
