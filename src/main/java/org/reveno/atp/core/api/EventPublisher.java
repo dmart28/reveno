@@ -16,8 +16,10 @@
 
 package org.reveno.atp.core.api;
 
+import org.reveno.atp.api.EventsManager.EventMetadata;
+
 public interface EventPublisher {
 
-	void publishEvents(boolean isReplay, long transactionId, Object[] events);
+	void publishEvents(boolean isReplay, long transactionId, EventMetadata eventMetadata, Object[] events);
 	
 }

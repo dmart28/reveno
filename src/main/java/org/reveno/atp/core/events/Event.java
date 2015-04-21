@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core.events;
 
+import org.reveno.atp.api.EventsManager.EventMetadata;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
 
@@ -53,6 +54,15 @@ public class Event {
 	}
 	public Event events(Object[] events) {
 		this.events = events;
+		return this;
+	}
+	
+	private EventMetadata eventMetadata;
+	public EventMetadata eventMetadata() {
+		return eventMetadata;
+	}
+	public Event eventMetadata(EventMetadata eventMetadata) {
+		this.eventMetadata = eventMetadata;
 		return this;
 	}
 	

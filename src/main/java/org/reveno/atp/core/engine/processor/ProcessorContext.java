@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import org.reveno.atp.api.EventsManager.EventMetadata;
 import org.reveno.atp.api.transaction.EventBus;
 import org.reveno.atp.core.api.RestoreableEventBus;
 import org.reveno.atp.core.api.channel.Buffer;
@@ -153,6 +154,15 @@ public class ProcessorContext {
 		return this;
 	}
 	
+	private EventMetadata eventMetadata;
+	public EventMetadata eventMetadata() {
+		return eventMetadata;
+	}
+	public ProcessorContext eventMetadata(EventMetadata eventMetadata) {
+		this.eventMetadata = eventMetadata;
+		return this;
+	}
+	
 	@Contended
 	private Map<Class<?>, Set<Long>> markedRecords = MapUtils.repositoryLinkedSet();
 	public Map<Class<?>, Set<Long>> getMarkedRecords() {
@@ -175,6 +185,7 @@ public class ProcessorContext {
 		abortIssue = null;
 		future = null;
 		commandResult = null;
+		eventMetadata = null;
 		eventBus = defaultEventBus;
 		
 		return this;

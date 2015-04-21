@@ -26,6 +26,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.reveno.atp.api.Configuration.CpuConsumption;
+import org.reveno.atp.api.EventsManager.EventMetadata;
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.core.api.TransactionCommitInfo;
@@ -119,10 +120,11 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 	}
 	
 	@Override
-	public void executeRestore(RestoreableEventBus eventBus, TransactionCommitInfo transaction) {
+	public void executeRestore(RestoreableEventBus eventBus, TransactionCommitInfo tx) {
 		requireStarted(() -> {
-			disruptor.publishEvent((e,s) -> e.reset().restore().transactionId(transaction.getTransactionId())
-					.eventBus(eventBus).getTransactions().addAll(Arrays.asList(transaction.getTransactionCommits())));
+			disruptor.publishEvent((e,s) -> e.reset().restore().transactionId(tx.getTransactionId())
+					.eventBus(eventBus).eventMetadata(metadata(tx)).getTransactions()
+					.addAll(Arrays.asList(tx.getTransactionCommits())));
 			return null;
 		});
 	}
@@ -147,6 +149,10 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 					TimeUnit.NANOSECONDS);
 		}
 		return null;
+	}
+	
+	protected EventMetadata metadata(TransactionCommitInfo tx) {
+		return new EventMetadata(true, tx.getTime());
 	}
 	
 	protected void attachHandlers(Disruptor<ProcessorContext> disruptor) {

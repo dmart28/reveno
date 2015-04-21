@@ -79,9 +79,10 @@ public class DisruptorEventPublisher implements EventPublisher {
 	}
 	
 	@Override
-	public void publishEvents(boolean isReplay, long transactionId, Object[] events) {
+	public void publishEvents(boolean isReplay, long transactionId, EventMetadata metadata, Object[] events) {
 		requireStarted(() -> {
-			disruptor.publishEvent((e,s) -> e.reset().replay(isReplay).transactionId(transactionId).events(events));
+			disruptor.publishEvent((e,s) -> e.reset().replay(isReplay).eventMetadata(metadata)
+					.transactionId(transactionId).events(events));
 			return null;
 		});
 	}
@@ -100,7 +101,8 @@ public class DisruptorEventPublisher implements EventPublisher {
 	
 	protected final BiConsumer<Event, Boolean> publisher = (e, eof) -> {
 		for (Object event : e.events()) {
-			context.manager().getEventHandlers(event.getClass()).forEach(h -> h.accept(event, metadata));
+			context.manager().getEventHandlers(event.getClass()).forEach(h -> h.accept(event,
+					e.eventMetadata() == null ? metadata : e.eventMetadata()));
 		}
 		// TODO async processing
 	};
