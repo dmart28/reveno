@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import org.reveno.atp.api.transaction.EventBus;
+import org.reveno.atp.core.api.RestoreableEventBus;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.utils.MapUtils;
@@ -31,12 +33,18 @@ import sun.misc.Contended;
 @SuppressWarnings("rawtypes")
 public class ProcessorContext {
 	
+	private final RestoreableEventBus defaultEventBus = new ProcessContextEventBus();
+	public EventBus defaultEventBus() {
+		return defaultEventBus;
+	}
+	
 	private long transactionId; 
 	public long transactionId() {
 		return transactionId;
 	}
-	public void transactionId(long transactionId) {
+	public ProcessorContext transactionId(long transactionId) {
 		this.transactionId = transactionId;
+		return this;
 	}
 
 	private CompletableFuture future;
@@ -99,12 +107,12 @@ public class ProcessorContext {
 		return this;
 	}
 	
-	private boolean isReplay;
-	public boolean isReplay() {
-		return isReplay;
+	private boolean isRestore;
+	public boolean isRestore() {
+		return isRestore;
 	}
-	public ProcessorContext replay() {
-		isReplay = true;
+	public ProcessorContext restore() {
+		isRestore = true;
 		return this;
 	}
 	
@@ -136,6 +144,15 @@ public class ProcessorContext {
 		return events;
 	}
 	
+	private RestoreableEventBus eventBus = defaultEventBus;
+	public RestoreableEventBus eventBus() {
+		return eventBus;
+	}
+	public ProcessorContext eventBus(RestoreableEventBus eventBus) {
+		this.eventBus = eventBus;
+		return this;
+	}
+	
 	@Contended
 	private Map<Class<?>, Set<Long>> markedRecords = MapUtils.repositoryLinkedSet();
 	public Map<Class<?>, Set<Long>> getMarkedRecords() {
@@ -153,13 +170,31 @@ public class ProcessorContext {
 		markedRecords.values().forEach(Set::clear);
 		hasResult = false;
 		isAborted = false;
-		isReplay = false;
+		isRestore = false;
 		isReplicated = false;
 		abortIssue = null;
 		future = null;
 		commandResult = null;
+		eventBus = defaultEventBus;
 		
 		return this;
+	}
+	
+	protected class ProcessContextEventBus implements RestoreableEventBus {
+		@Override
+		public void publishEvent(Object event) {
+			ProcessorContext.this.getEvents().add(event);
+		}
+
+		@Override
+		public RestoreableEventBus currentTransactionId(long transactionId) {
+			return this;
+		}
+
+		@Override
+		public RestoreableEventBus underlyingEventBus(EventBus eventBus) {
+			return this;
+		}
 	}
 	
 }

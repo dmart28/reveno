@@ -22,12 +22,15 @@ import java.util.concurrent.CompletableFuture;
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.core.api.TransactionCommitInfo;
+import org.reveno.atp.core.api.RestoreableEventBus;
 
 public interface PipeProcessor {
 
 	void start();
 	
 	void stop();
+	
+	void sync();
 	
 	boolean isStarted();
 	
@@ -38,7 +41,7 @@ public interface PipeProcessor {
 	
 	<R> CompletableFuture<Result<R>> execute(Object command);
 	
-	void executeReplay(TransactionCommitInfo transaction);
+	void executeRestore(RestoreableEventBus eventBus, TransactionCommitInfo transaction);
 	
 	
 	default PipeProcessor then(ProcessorHandler... handler) {

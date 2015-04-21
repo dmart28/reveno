@@ -61,7 +61,7 @@ public class ReadWriteTest {
 	}
 	
 	@Test
-	public void test() throws InterruptedException, IOException {
+	public void test() throws Exception {
 		List<TransactionInfoSerializer> serializers = new ArrayList<>();
 		serializers.add(new ProtostuffSerializer());
 		SerializersChain serializer = new SerializersChain(serializers);

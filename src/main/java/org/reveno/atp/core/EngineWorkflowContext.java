@@ -16,27 +16,27 @@
 
 package org.reveno.atp.core;
 
-import java.util.List;
+import java.util.function.Supplier;
 
 import org.reveno.atp.core.api.EventPublisher;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.TransactionCommitInfo.Builder;
 import org.reveno.atp.core.api.TxRepository;
-import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.reveno.atp.core.engine.WorkflowContext;
 import org.reveno.atp.core.engine.components.CommandsManager;
+import org.reveno.atp.core.engine.components.SerializersChain;
 import org.reveno.atp.core.engine.components.TransactionsManager;
 import org.reveno.atp.core.views.ViewsProcessor;
 
 public class EngineWorkflowContext implements WorkflowContext {
 
-	private List<TransactionInfoSerializer> serializers;
+	private SerializersChain serializer;
 	@Override
-	public List<TransactionInfoSerializer> serializers() {
-		return serializers;
+	public SerializersChain serializer() {
+		return serializer;
 	}
-	public EngineWorkflowContext serializers(List<TransactionInfoSerializer> serializers) {
-		this.serializers = serializers;
+	public EngineWorkflowContext serializers(SerializersChain serializer) {
+		this.serializer = serializer;
 		return this;
 	}
 
@@ -90,20 +90,34 @@ public class EngineWorkflowContext implements WorkflowContext {
 		return this;
 	}
 
-	private 
+	private Builder transactionCommitBuilder;
 	@Override
 	public Builder transactionCommitBuilder() {
-		return null;
+		return transactionCommitBuilder;
+	}
+	public EngineWorkflowContext transactionCommitBuilder(Builder transactionCommitBuilder) {
+		this.transactionCommitBuilder = transactionCommitBuilder;
+		return this;
 	}
 
+	private Journaler transactionJournaler;
 	@Override
 	public Journaler transactionJournaler() {
-		return null;
+		return transactionJournaler;
+	}
+	public EngineWorkflowContext transactionJournaler(Journaler transactionJournaler) {
+		this.transactionJournaler = transactionJournaler;
+		return this;
 	}
 
+	private Supplier<Long> nextTransactionId;
 	@Override
 	public long nextTransactionId() {
-		return 0;
+		return nextTransactionId.get();
+	}
+	public EngineWorkflowContext nextTransactionId(Supplier<Long> nextTransactionId) {
+		this.nextTransactionId = nextTransactionId;
+		return this;
 	}
 
 }

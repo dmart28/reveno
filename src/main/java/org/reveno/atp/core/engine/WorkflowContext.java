@@ -16,20 +16,18 @@
 
 package org.reveno.atp.core.engine;
 
-import java.util.List;
-
 import org.reveno.atp.core.api.EventPublisher;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.TxRepository;
-import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.reveno.atp.core.engine.components.CommandsManager;
+import org.reveno.atp.core.engine.components.SerializersChain;
 import org.reveno.atp.core.engine.components.TransactionsManager;
 import org.reveno.atp.core.views.ViewsProcessor;
 
 public interface WorkflowContext {
 	
-	public List<TransactionInfoSerializer> serializers();
+	public SerializersChain serializer();
 	
 	public TxRepository repository();
 	

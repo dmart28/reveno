@@ -31,9 +31,9 @@ public interface EventsManager {
 	
 	
 	public static class EventMetadata {
-		private boolean isReplay;
-		public boolean isReplay() {
-			return isReplay;
+		private boolean isRestore;
+		public boolean isRestore() {
+			return isRestore;
 		}
 		
 		private long transactionTime;
@@ -41,8 +41,8 @@ public interface EventsManager {
 			return transactionTime;
 		}
 		
-		public EventMetadata(boolean isReplay, long transactionTime) {
-			this.isReplay = isReplay;
+		public EventMetadata(boolean isRestore, long transactionTime) {
+			this.isRestore = isRestore;
 			this.transactionTime = transactionTime;
 		}
 	}

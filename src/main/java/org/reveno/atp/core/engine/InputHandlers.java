@@ -23,7 +23,6 @@ import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
-import org.reveno.atp.core.engine.components.SerializersChain;
 import org.reveno.atp.core.engine.components.TransactionExecutor;
 import org.reveno.atp.core.engine.processor.ProcessorContext;
 import org.slf4j.Logger;
@@ -45,11 +44,11 @@ public class InputHandlers {
 	}
 	
 	public void marshalling(ProcessorContext c, boolean endOfBatch) {
-		ex(c, !c.isReplicated() && !c.isReplay(), endOfBatch, marshaller);
+		ex(c, !c.isReplicated() && !c.isRestore(), endOfBatch, marshaller);
 	}
 	
 	public void replication(ProcessorContext c, boolean endOfBatch) {
-		ex(c, c.marshallerBuffer().length() > 0 && !c.isReplay(), endOfBatch, replicator);
+		ex(c, c.marshallerBuffer().length() > 0 && !c.isRestore(), endOfBatch, replicator);
 	}
 	
 	public void transactionExecution(ProcessorContext c, boolean endOfBatch) {
@@ -57,11 +56,11 @@ public class InputHandlers {
 	}
 	
 	public void serialization(ProcessorContext c, boolean endOfBatch) {
-		ex(c, c.getTransactions().size() > 0 && !c.isReplay(), endOfBatch, serializator);
+		ex(c, c.getTransactions().size() > 0 && !c.isRestore(), endOfBatch, serializator);
 	}
 	
 	public void journaling(ProcessorContext c, boolean endOfBatch) {
-		ex(c, !c.isReplay(), endOfBatch, journaler);
+		ex(c, !c.isRestore(), endOfBatch, journaler);
 	}
 	
 	public void viewsUpdate(ProcessorContext c, boolean endOfBatch) {
@@ -74,7 +73,7 @@ public class InputHandlers {
 	
 	@SuppressWarnings("unchecked")
 	public void result(ProcessorContext c, boolean endOfBatch) {
-		if (!c.isReplay()) {
+		if (!c.isRestore()) {
 			if (c.isAborted())
 				c.future().complete(new EmptyResult(c.abortIssue()));
 			else {
@@ -87,11 +86,10 @@ public class InputHandlers {
 	}
 	
 	protected WorkflowContext services;
-	protected SerializersChain serializer;
 	protected TransactionExecutor txExecutor;
 	
 	protected final BiConsumer<ProcessorContext, Boolean> marshaller = (c, eob) -> {
-		serializer.serializeCommands(c.getCommands(), c.marshallerBuffer());
+		services.serializer().serializeCommands(c.getCommands(), c.marshallerBuffer());
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> replicator = (c, eob) -> {
 		if (eob) {
@@ -108,7 +106,7 @@ public class InputHandlers {
 		// TODO what's with version?
 		TransactionCommitInfo tci = services.transactionCommitBuilder().create(services.nextTransactionId(), 1,
 				System.currentTimeMillis(), c.getTransactions().toArray());
-		serializer.serialize(tci, c.transactionsBuffer());
+		services.serializer().serialize(tci, c.transactionsBuffer());
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> journaler = (c, eob) -> {
 		services.transactionJournaler().writeData(c.transactionsBuffer(), eob);
@@ -117,13 +115,12 @@ public class InputHandlers {
 		services.viewsProcessor().process(c.getMarkedRecords());
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> eventsPublisher = (c, eob) -> {
-		services.eventPublisher().publishEvents(c.isReplay(), c.transactionId(), c.getEvents().toArray());
+		services.eventPublisher().publishEvents(c.isRestore(), c.transactionId(), c.getEvents().toArray());
 	};
 	
 	
 	public InputHandlers(WorkflowContext context) {
 		this.services = context;
-		this.serializer = new SerializersChain(context.serializers());
 		this.txExecutor = new TransactionExecutor();
 	}
 	

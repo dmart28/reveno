@@ -29,9 +29,10 @@ import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.core.api.TransactionCommitInfo;
-import org.reveno.atp.core.engine.processor.ProcessorHandler;
+import org.reveno.atp.core.api.RestoreableEventBus;
 import org.reveno.atp.core.engine.processor.PipeProcessor;
 import org.reveno.atp.core.engine.processor.ProcessorContext;
+import org.reveno.atp.core.engine.processor.ProcessorHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,6 +80,20 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 		disruptor.shutdown();
 		log.info("Stopped.");
 	}
+	
+	@Override
+	public void sync() {
+		requireStarted(()-> {
+			final CompletableFuture<EmptyResult> f = new CompletableFuture<EmptyResult>();
+			disruptor.publishEvent((e,s) -> e.reset().future(f).abort(null));
+			try {
+				f.get();
+			} catch (Throwable t) {
+				log.error("sync", t);
+			}
+			return null;
+		});
+	}
 
 	@Override
 	public boolean isStarted() {
@@ -104,10 +119,10 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 	}
 	
 	@Override
-	public void executeReplay(TransactionCommitInfo transaction) {
+	public void executeRestore(RestoreableEventBus eventBus, TransactionCommitInfo transaction) {
 		requireStarted(() -> {
-			disruptor.publishEvent((e,s) -> e.reset().replay().getTransactions()
-					.addAll(Arrays.asList(transaction.getTransactionCommits())));
+			disruptor.publishEvent((e,s) -> e.reset().restore().transactionId(transaction.getTransactionId())
+					.eventBus(eventBus).getTransactions().addAll(Arrays.asList(transaction.getTransactionCommits())));
 			return null;
 		});
 	}

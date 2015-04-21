@@ -32,16 +32,19 @@ import org.slf4j.LoggerFactory;
 public class TransactionExecutor {
 
 	public void executeCommands(ProcessorContext c, WorkflowContext services) {
-		c.transactionId(services.nextTransactionId());
+		if (!c.isRestore())
+			c.transactionId(services.nextTransactionId());
 		try {
+			c.eventBus().currentTransactionId(c.transactionId()).underlyingEventBus(c.defaultEventBus());
 			repository.underlying(services.repository()).map(c.getMarkedRecords());
 			transactionContext.withContext(c).withRepository(services.repository());
 			commandContext.withRepository(repository);
 			
 			services.repository().begin();
 			
-			if (c.isReplay()) {
-				c.addTransactions(commandContext.transactions);
+			if (c.isRestore()) {
+				commandContext.transactions.addAll(c.getTransactions());
+				executeTransactions(services);
 			} else {
 				c.getCommands().forEach(cmd -> {
 					Object result = services.commandsManager().execute(cmd, commandContext);
@@ -92,7 +95,7 @@ public class TransactionExecutor {
 	};
 	
 	protected static class InnerTransactionContext implements TransactionContext {
-		public final ProcessContextEventBus eventBus = new ProcessContextEventBus();
+		public EventBus eventBus;
 		public WriteableRepository repository;
 
 		@Override
@@ -106,26 +109,13 @@ public class TransactionExecutor {
 		}
 		
 		public InnerTransactionContext withContext(ProcessorContext context) {
-			eventBus.setContext(context);
+			this.eventBus = context.eventBus();
 			return this;
 		}
 		
 		public InnerTransactionContext withRepository(WriteableRepository repository) {
 			this.repository = repository;
 			return this;
-		}
-	}
-	
-	protected static class ProcessContextEventBus implements EventBus {
-		private ProcessorContext context;
-
-		@Override
-		public void publishEvent(Object event) {
-			context.getEvents().add(event);
-		}
-		
-		public void setContext(ProcessorContext context) {
-			this.context = context;
 		}
 	}
 	

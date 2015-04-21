@@ -14,18 +14,14 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.core.restore;
+package org.reveno.atp.core.api;
 
 import org.reveno.atp.api.transaction.EventBus;
 
-public class ReplayEventBus implements EventBus {
+public interface RestoreableEventBus extends EventBus {
 
-	@Override
-	public void publishEvent(Object event) {
-		
-	}
+	RestoreableEventBus currentTransactionId(long transactionId);
 	
-	
-	
+	RestoreableEventBus underlyingEventBus(EventBus eventBus);
 	
 }

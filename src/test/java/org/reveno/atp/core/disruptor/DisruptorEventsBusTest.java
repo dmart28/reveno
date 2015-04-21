@@ -78,8 +78,8 @@ public class DisruptorEventsBusTest {
 		DisruptorEventPublisher eventsBus = new DisruptorEventPublisher(CpuConsumption.HIGH, new Context(journaler, builder, serializer, manager));
 		eventsBus.start();
 		
-		eventsBus.publishEvents(5L, new Object[] { new MyEvent("Hello!"), new MyNextEvent() });
-		eventsBus.publishEvents(6L, new Object[] { new MyNextEvent() });
+		eventsBus.publishEvents(false, 5L, new Object[] { new MyEvent("Hello!"), new MyNextEvent() });
+		eventsBus.publishEvents(false, 6L, new Object[] { new MyNextEvent() });
 		
 		latch.await(1000, TimeUnit.MILLISECONDS);
 		Assert.assertNotNull(event[0]);
