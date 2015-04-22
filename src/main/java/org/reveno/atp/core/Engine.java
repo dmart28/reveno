@@ -270,16 +270,16 @@ public class Engine implements Reveno {
 	};
 
 	protected volatile boolean isStarted = false;
-	protected TxRepository repository; // set
-	protected SystemStateRestorer restorer; // set
-	protected SnapshotsManager snapshotsManager; // set
-	protected ViewsProcessor viewsProcessor; // set
-	protected WorkflowEngine workflowEngine; // set
-	protected EventPublisher eventPublisher; // set
-	protected PipeProcessor processor; // set
-	//--------------------
+	protected TxRepository repository;
+	protected SystemStateRestorer restorer;
+	protected SnapshotsManager snapshotsManager;
+	protected ViewsProcessor viewsProcessor;
+	protected WorkflowEngine workflowEngine;
+	protected EventPublisher eventPublisher;
+	protected PipeProcessor processor;
+	
 	protected RepositorySnapshooter restoreWith;
-	//--------------------
+	
 	protected RepositoryDataSerializer repositorySerializer = new DefaultJavaSerializer(getClass().getClassLoader());
 	protected SerializersChain serializer = new SerializersChain();
 	protected Journaler transactionsJournaler = new DefaultJournaler();
