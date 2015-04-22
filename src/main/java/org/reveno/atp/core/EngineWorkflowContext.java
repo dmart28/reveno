@@ -16,8 +16,6 @@
 
 package org.reveno.atp.core;
 
-import java.util.function.Supplier;
-
 import org.reveno.atp.core.api.EventPublisher;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.TransactionCommitInfo.Builder;
@@ -107,16 +105,6 @@ public class EngineWorkflowContext implements WorkflowContext {
 	}
 	public EngineWorkflowContext transactionJournaler(Journaler transactionJournaler) {
 		this.transactionJournaler = transactionJournaler;
-		return this;
-	}
-
-	private Supplier<Long> nextTransactionId;
-	@Override
-	public long nextTransactionId() {
-		return nextTransactionId.get();
-	}
-	public EngineWorkflowContext nextTransactionId(Supplier<Long> nextTransactionId) {
-		this.nextTransactionId = nextTransactionId;
 		return this;
 	}
 

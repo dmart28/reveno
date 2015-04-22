@@ -111,9 +111,9 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 	}
 
 	@Override
-	public <R> CompletableFuture<Result<R>> execute(Object command) {
+	public <R> CompletableFuture<Result<? extends R>> execute(Object command) {
 		return requireStarted(() -> {
-			final CompletableFuture<Result<R>> f = new CompletableFuture<Result<R>>();
+			final CompletableFuture<Result<? extends R>> f = new CompletableFuture<Result<? extends R>>();
 			disruptor.publishEvent((e,s) -> e.reset().future(f).addCommand(command).withResult());
 			return f;
 		});

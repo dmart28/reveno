@@ -47,7 +47,10 @@ public class ChannelDecoder implements Decoder<Buffer> {
 				lastSize = 0L;
 				return null;
 			}
-			lastSize = buffer.readLong();
+			if (!useLastSize)
+				lastSize = buffer.readLong();
+			else
+				useLastSize = false;
 			if (lastSize == 0) return null;
 			return readBuffer(buffer);
 		}
@@ -59,10 +62,14 @@ public class ChannelDecoder implements Decoder<Buffer> {
 			byte[] data = buffer.readBytes((int)lastSize);
 			b.writeBytes(data);
 			return b;
-		} else 
+		} else {
+			if (buffer.remaining() == 0)
+				useLastSize = true;
 			return null;
+		}
 	}
 	
+	private boolean useLastSize = false;
 	private long lastSize = 0L;
 
 }

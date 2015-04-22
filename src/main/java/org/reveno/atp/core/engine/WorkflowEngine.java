@@ -23,7 +23,7 @@ public class WorkflowEngine {
 	
 	public WorkflowEngine(PipeProcessor inputProcessor, WorkflowContext context) {
 		this.inputProcessor = inputProcessor;
-		this.handlers = new InputHandlers(context);
+		this.handlers = new InputHandlers(context, this::nextTransactionId);
 	}
 	
 	public void init() {
@@ -44,8 +44,17 @@ public class WorkflowEngine {
 		return inputProcessor;
 	}
 	
+	public void setLastTransactionId(long lastTransactionId) {
+		this.lastTransactionId = lastTransactionId;
+	}
+	
+	protected long nextTransactionId() {
+		return ++lastTransactionId;
+	}
+	
 	// All failover stuff regulation goes here in future
 	
+	protected volatile long lastTransactionId;
 	protected PipeProcessor inputProcessor;
 	protected EventPublisher eventBus;
 	protected final InputHandlers handlers;

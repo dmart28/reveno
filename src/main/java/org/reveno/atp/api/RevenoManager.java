@@ -16,6 +16,7 @@
 
 package org.reveno.atp.api;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -23,6 +24,7 @@ import java.util.function.BiFunction;
 import org.reveno.atp.api.commands.CommandContext;
 import org.reveno.atp.api.query.ViewsMapper;
 import org.reveno.atp.api.transaction.TransactionContext;
+import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 
 public interface RevenoManager {
 
@@ -36,7 +38,11 @@ public interface RevenoManager {
 	
 	RevenoManager snapshootWith(RepositorySnapshooter snapshooter);
 	
+	void restoreWith(RepositorySnapshooter snapshooter);
+	
 	void resetSnapshooters();
+	
+	void serializeWith(List<TransactionInfoSerializer> serializers);
 	
 	
 	default RevenoManager and(RepositorySnapshooter snapshooter) {

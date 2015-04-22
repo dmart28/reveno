@@ -17,7 +17,7 @@
 package org.reveno.atp.core.snapshots;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.reveno.atp.api.RepositorySnapshooter;
@@ -34,6 +34,13 @@ public class SnapshotsManager {
 		snapshooters.put(snapshooter.getType(), snapshooter);
 	}
 	
+	@SuppressWarnings("serial")
+	public void resetSnapshooters() {
+		snapshooters = new LinkedHashMap<Long, RepositorySnapshooter>() {{
+			put(DefaultSnapshooter.TYPE, defaultSnapshooter());
+		}};
+	}
+	
 	public void getSnapshooter(long type) {
 		snapshooters.get(type);
 	}
@@ -48,6 +55,6 @@ public class SnapshotsManager {
 	}
 	
 	
-	protected Map<Long, RepositorySnapshooter> snapshooters = new HashMap<>();
+	protected volatile Map<Long, RepositorySnapshooter> snapshooters = new LinkedHashMap<>();
 	
 }

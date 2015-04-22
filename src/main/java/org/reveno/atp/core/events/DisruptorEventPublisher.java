@@ -48,6 +48,7 @@ public class DisruptorEventPublisher implements EventPublisher {
 	}
 	
 	@SuppressWarnings("unchecked")
+	@Override
 	public void start() {
 		if (isStarted) throw new IllegalStateException("The Event Bus is alredy started.");
 		
@@ -59,6 +60,7 @@ public class DisruptorEventPublisher implements EventPublisher {
 		isStarted = true;
 	}
 	
+	@Override
 	public void stop() {
 		if (!isStarted) throw new IllegalStateException("The Events Bus is already stopped.");
 		

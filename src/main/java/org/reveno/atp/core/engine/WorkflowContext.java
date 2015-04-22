@@ -44,8 +44,5 @@ public interface WorkflowContext {
 	public TransactionCommitInfo.Builder transactionCommitBuilder();
 	
 	public Journaler transactionJournaler();
-
-	
-	public long nextTransactionId();
 	
 }

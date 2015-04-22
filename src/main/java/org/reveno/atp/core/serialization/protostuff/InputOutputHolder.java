@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.dyuproject.protostuff.ByteString;
 import com.dyuproject.protostuff.Input;
 import com.dyuproject.protostuff.Output;
@@ -159,7 +162,7 @@ public class InputOutputHolder implements Input, Output {
 	public void writeByteRange(boolean utf8String, int fieldNumber,
 			byte[] value, int offset, int length, boolean repeated)
 			throws IOException {
-		System.err.println("!");
+		log.info("writeByteRange");
 	}
 
 	@Override
@@ -169,7 +172,8 @@ public class InputOutputHolder implements Input, Output {
 		try {
 			schema.writeTo(cb, value);
 		} catch (Throwable t) {
-			t.printStackTrace();
+			log.error("", t);
+			throw new RuntimeException(t);
 		}
 		insert(fieldNumber, cb);
 	}
@@ -184,7 +188,7 @@ public class InputOutputHolder implements Input, Output {
 	@Override
 	public <T> void handleUnknownField(int fieldNumber, Schema<T> schema)
 			throws IOException {
-		System.err.println(fieldNumber + ": " + schema);
+		log.info(fieldNumber + ": " + schema);
 	}
 
 	@Override
@@ -288,7 +292,8 @@ public class InputOutputHolder implements Input, Output {
 		try {
 			schema.mergeFrom(cb, value);
 		} catch (Throwable t) {
-			t.printStackTrace();
+			log.error("", t);
+			throw new RuntimeException(t);
 		}
 		return value;
 	}
@@ -296,7 +301,7 @@ public class InputOutputHolder implements Input, Output {
 	@Override
 	public void transferByteRangeTo(Output output, boolean utf8String,
 			int fieldNumber, boolean repeated) throws IOException {
-		System.err.println("rd !");
+		log.info("rd !");
 	}
 
 	public void clear() {
@@ -317,5 +322,6 @@ public class InputOutputHolder implements Input, Output {
 	protected List<boolean[]> bools = new ArrayList<boolean[]>();
 	protected Queue<Object> data = new LinkedList<Object>();
 	protected Queue<Integer> fields = new LinkedList<Integer>();
+	protected Logger log = LoggerFactory.getLogger(InputOutputHolder.class);
 }
 

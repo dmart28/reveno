@@ -31,7 +31,7 @@ public class TransactionsManager {
 	}
 	
 	public void execute(List<Object> transactions, TransactionContext context) {
-		transactions.forEach(t -> txs.get(t).accept(t, context));
+		transactions.forEach(t -> txs.get(t.getClass()).accept(t, context));
 	}
 	
 	protected Map<Class<?>, BiConsumer<Object, TransactionContext>> txs = new HashMap<>();

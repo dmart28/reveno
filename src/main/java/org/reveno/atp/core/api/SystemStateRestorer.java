@@ -16,11 +16,10 @@
 
 package org.reveno.atp.core.api;
 
-import java.util.function.Consumer;
 
 public interface SystemStateRestorer {
 	
-	void restore(Consumer<SystemState> handler);
+	SystemState restore(TxRepository repository);
 	
 	
 	public static class SystemState {

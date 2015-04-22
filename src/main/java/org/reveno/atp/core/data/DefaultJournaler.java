@@ -61,6 +61,8 @@ public class DefaultJournaler implements Journaler {
 		log.info("Stopped writing.");
 		
 		isWriting = false;
+		if (buffer.isAvailable())
+			channel.get().write(buffer);
 	}
 
 	@Override

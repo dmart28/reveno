@@ -39,7 +39,7 @@ public interface PipeProcessor {
 	
 	CompletableFuture<EmptyResult> process(List<Object> commands);
 	
-	<R> CompletableFuture<Result<R>> execute(Object command);
+	<R> CompletableFuture<Result<? extends R>> execute(Object command);
 	
 	void executeRestore(RestoreableEventBus eventBus, TransactionCommitInfo transaction);
 	

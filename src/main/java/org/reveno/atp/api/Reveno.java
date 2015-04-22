@@ -46,7 +46,7 @@ public interface Reveno {
 	Configuration config();
 	
 	
-	<R> CompletableFuture<Result<R>> executeCommand(Object command);
+	<R> CompletableFuture<Result<? extends R>> executeCommand(Object command);
 	
 	CompletableFuture<EmptyResult> performCommands(List<Object> commands);
 	

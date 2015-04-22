@@ -39,6 +39,7 @@ public class FileChannel implements Channel {
 			try {
 				return channel().size();
 			} catch (IOException e) {
+				log.error("size", e);
 				return 0;
 			}
 		else

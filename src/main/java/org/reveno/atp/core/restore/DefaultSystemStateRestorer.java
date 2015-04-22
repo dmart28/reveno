@@ -16,9 +16,6 @@
 
 package org.reveno.atp.core.restore;
 
-import java.util.function.Consumer;
-
-import org.reveno.atp.api.RepositorySnapshooter;
 import org.reveno.atp.core.EngineEventsContext;
 import org.reveno.atp.core.EngineWorkflowContext;
 import org.reveno.atp.core.api.EventsCommitInfo;
@@ -27,21 +24,18 @@ import org.reveno.atp.core.api.InputProcessor.JournalType;
 import org.reveno.atp.core.api.SystemStateRestorer;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.TxRepository;
-import org.reveno.atp.core.api.TxRepositoryFactory;
 import org.reveno.atp.core.api.storage.JournalsStorage;
 import org.reveno.atp.core.data.DefaultInputProcessor;
 import org.reveno.atp.core.engine.WorkflowEngine;
-import org.reveno.atp.core.snapshots.SnapshotsManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DefaultSystemStateRestorer implements SystemStateRestorer {
 
 	@Override
-	public void restore(Consumer<SystemState> handler) {
-		TxRepository repository = combineRepository();
-		
+	public SystemState restore(TxRepository repository) {
 		workflowContext.repository(repository);
+		final long[] transactionId = { 0 };
 		try (InputProcessor processor = new DefaultInputProcessor(journalStorage)) {
 			processor.process((b) -> {
 				EventsCommitInfo e = eventsContext.serializer().deserialize(eventsContext.eventsCommitBuilder(), b);
@@ -49,6 +43,7 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 			}, JournalType.EVENTS);
 			processor.process((b) -> {
 				TransactionCommitInfo tx = workflowContext.serializer().deserialize(workflowContext.transactionCommitBuilder(), b);
+				transactionId[0] = tx.getTransactionId();
 				workflowEngine.getPipe().executeRestore(eventBus, tx);
 			}, JournalType.TRANSACTIONS);
 		} catch (Throwable t) {
@@ -56,29 +51,14 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 			throw new RuntimeException(t);
 		}
 		workflowEngine.getPipe().sync();
+		return new SystemState(transactionId[0]);
 	}
-
-	
-	protected TxRepository combineRepository() {
-		if (snapshooter().hasAny()) {
-			return repoFactory.create(snapshooter().load());
-		} else return repoFactory.create();
-	}
-	
-	protected RepositorySnapshooter snapshooter() {
-		return snapshotsManager.defaultSnapshooter();
-	}
-	
 	
 	public DefaultSystemStateRestorer(JournalsStorage journalStorage,
-			TxRepositoryFactory repoFactory,
-			SnapshotsManager snapshotsManager,
 			EngineWorkflowContext workflowContext,
 			EngineEventsContext eventsContext,
 			WorkflowEngine workflowEngine) {
 		this.journalStorage = journalStorage;
-		this.repoFactory = repoFactory;
-		this.snapshotsManager = snapshotsManager;
 		this.workflowContext = workflowContext;
 		this.eventsContext = eventsContext;
 		this.workflowEngine = workflowEngine;
@@ -86,11 +66,9 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 	
 	protected final RestorerEventBus eventBus = new RestorerEventBus();
 	protected final JournalsStorage journalStorage;
-	protected final TxRepositoryFactory repoFactory;
 	protected final EngineWorkflowContext workflowContext;
 	protected final EngineEventsContext eventsContext;
 	protected final WorkflowEngine workflowEngine;
-	protected final SnapshotsManager snapshotsManager;
 	
 	protected static final Logger log = LoggerFactory.getLogger(DefaultSystemStateRestorer.class);
 }

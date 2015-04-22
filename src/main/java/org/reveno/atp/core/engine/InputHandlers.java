@@ -17,6 +17,7 @@
 package org.reveno.atp.core.engine;
 
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
@@ -87,6 +88,7 @@ public class InputHandlers {
 	
 	protected WorkflowContext services;
 	protected TransactionExecutor txExecutor;
+	protected Supplier<Long> nextTransactionId;
 	
 	protected final BiConsumer<ProcessorContext, Boolean> marshaller = (c, eob) -> {
 		services.serializer().serializeCommands(c.getCommands(), c.marshallerBuffer());
@@ -100,11 +102,11 @@ public class InputHandlers {
 		}
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> transactionExecutor = (c, eob) -> {
-		txExecutor.executeCommands(c, services);
+		txExecutor.executeCommands(c, services, nextTransactionId);
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> serializator = (c, eob) -> {
 		// TODO what's with version?
-		TransactionCommitInfo tci = services.transactionCommitBuilder().create(services.nextTransactionId(), 1,
+		TransactionCommitInfo tci = services.transactionCommitBuilder().create(c.transactionId(), 1,
 				System.currentTimeMillis(), c.getTransactions().toArray());
 		services.serializer().serialize(tci, c.transactionsBuffer());
 	};
@@ -119,9 +121,10 @@ public class InputHandlers {
 	};
 	
 	
-	public InputHandlers(WorkflowContext context) {
+	public InputHandlers(WorkflowContext context, Supplier<Long> nextTransactionId) {
 		this.services = context;
 		this.txExecutor = new TransactionExecutor();
+		this.nextTransactionId = nextTransactionId;
 	}
 	
 	protected static final Buffer marshalled = new NettyBasedBuffer(true);

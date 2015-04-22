@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core.engine.components;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,8 @@ import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.TransactionCommitInfo.Builder;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
+import org.reveno.atp.core.serialization.DefaultJavaSerializer;
+import org.reveno.atp.core.serialization.ProtostuffSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +63,14 @@ public class SerializersChain implements TransactionInfoSerializer {
 	@Override
 	public List<Object> deserializeCommands(Buffer buffer) {
 		return tryToD(buffer, s -> s.deserializeCommands(buffer));
+	}
+	
+	@SuppressWarnings("serial")
+	public SerializersChain() {
+		this(new ArrayList<TransactionInfoSerializer>() {{
+			add(new ProtostuffSerializer());
+			add(new DefaultJavaSerializer());
+		}});
 	}
 	
 	public SerializersChain(List<TransactionInfoSerializer> transactionsSerializers) {
