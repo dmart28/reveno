@@ -9,7 +9,7 @@ repositories {
 	mavenLocal()
 	mavenCentral()
 }
-	
+
 dependencies {
 	//compile "org.scala-lang:scala-library:$scalaVersion"
 		
@@ -23,6 +23,25 @@ dependencies {
 	testCompile "com.google.guava:guava:$guavaVersion"
 	testCompile "junit:junit:$junitVersion"
 	testCompile "org.easymock:easymock:$easymockVersion"
+}
+
+sourceSets {
+	acceptanceTest {
+		java {
+            srcDir 'java'
+        }
+        resources {
+            srcDir 'resources'
+        }
+	} 
+}
+
+test {
+	minHeapSize = "256m"
+  	
+  	beforeTest { descriptor ->
+    	logger.lifecycle("Running test: " + descriptor)
+    }
 }
 
 defaultTasks 'clean', 'build'
