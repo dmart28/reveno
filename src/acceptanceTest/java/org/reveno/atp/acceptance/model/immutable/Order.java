@@ -16,6 +16,6 @@
 
 package org.reveno.atp.acceptance.model.immutable;
 
-public class User {
+public class Order {
 
 }
