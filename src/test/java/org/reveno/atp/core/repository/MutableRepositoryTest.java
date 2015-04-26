@@ -23,7 +23,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.reveno.atp.api.domain.WriteableRepository;
-import org.reveno.atp.api.exceptions.EntityNotFoundException;
 
 public class MutableRepositoryTest {
 
@@ -45,31 +44,19 @@ public class MutableRepositoryTest {
 		repository.store(1L, item1);
 		repository.store(2L, item2);
 		
-		Assert.assertNotNull(repository.get(Bin.class, 1L));
-		Assert.assertNotNull(repository.get(Bin.class, 2L));
-		try {
-			repository.get(Bin.class, 3L);
-			Assert.fail();
-		} catch (EntityNotFoundException e) {
-		}
+		Assert.assertTrue(repository.get(Bin.class, 1L).isPresent());
+		Assert.assertTrue(repository.get(Bin.class, 2L).isPresent());
+		Assert.assertFalse(repository.get(Bin.class, 3L).isPresent());
 		
-		Assert.assertNotNull(underlyingRepository.get(Bin.class, 1L));
-		Assert.assertNotNull(underlyingRepository.get(Bin.class, 2L));
+		Assert.assertTrue(underlyingRepository.get(Bin.class, 1L).isPresent());
+		Assert.assertTrue(underlyingRepository.get(Bin.class, 2L).isPresent());
 		
 		repository.rollback();
 		
-		Assert.assertNull(underlyingRepository.get(Bin.class, 1L));
-		Assert.assertNull(underlyingRepository.get(Bin.class, 2L));
-		try {
-			repository.get(Bin.class, 1L);
-			Assert.fail();
-		} catch (EntityNotFoundException e) {
-		}
-		try {
-			repository.get(Bin.class, 2L);
-			Assert.fail();
-		} catch (EntityNotFoundException e) {
-		}
+		Assert.assertFalse(underlyingRepository.get(Bin.class, 1L).isPresent());
+		Assert.assertFalse(underlyingRepository.get(Bin.class, 2L).isPresent());
+		Assert.assertFalse(repository.get(Bin.class, 1L).isPresent());
+		Assert.assertFalse(repository.get(Bin.class, 2L).isPresent());
 	}
 	
 	@Test
@@ -105,40 +92,40 @@ public class MutableRepositoryTest {
 		
 		Record rec = new Record();
 		repository.store(1L, rec);
-		Assert.assertNotNull(repository.get(Bin.class, 1L));
-		Assert.assertNotNull(repository.get(Bin.class, 2L));
-		Assert.assertNotNull(repository.get(Record.class, 1L));
+		Assert.assertTrue(repository.get(Bin.class, 1L).isPresent());
+		Assert.assertTrue(repository.get(Bin.class, 2L).isPresent());
+		Assert.assertTrue(repository.get(Record.class, 1L).isPresent());
 		repository.commit();
 		
-		Assert.assertNotNull(underlyingRepository.get(Bin.class, 1L));
-		Assert.assertNotNull(underlyingRepository.get(Bin.class, 2L));
-		Assert.assertNotNull(underlyingRepository.get(Record.class, 1L));
+		Assert.assertTrue(underlyingRepository.get(Bin.class, 1L).isPresent());
+		Assert.assertTrue(underlyingRepository.get(Bin.class, 2L).isPresent());
+		Assert.assertTrue(underlyingRepository.get(Record.class, 1L).isPresent());
 		
 		repository.begin();
-		rec = repository.get(Record.class, 1L);
+		rec = repository.get(Record.class, 1L).get();
 		rec.addBin(1L);
 		repository.rollback();
 		
-		Assert.assertEquals(0, repository.get(Record.class, 1L).bins.size());
+		Assert.assertEquals(0, repository.get(Record.class, 1L).get().bins.size());
 		
 		repository.begin();
-		rec = repository.get(Record.class, 1L);
+		rec = repository.get(Record.class, 1L).get();
 		rec.addBin(1L);
 		rec.addBin(2L);
 		repository.commit();
 		
-		Assert.assertEquals(2, repository.get(Record.class, 1L).bins.size());
-		Assert.assertArrayEquals(new Long[] {1L, 2L}, repository.get(Record.class, 1L).bins.toArray());
+		Assert.assertEquals(2, repository.get(Record.class, 1L).get().bins.size());
+		Assert.assertArrayEquals(new Long[] {1L, 2L}, repository.get(Record.class, 1L).get().bins.toArray());
 		
 		repository.begin();
-		rec = repository.get(Record.class, 1L);
+		rec = repository.get(Record.class, 1L).get();
 		rec.removeBin(1L);
 		repository.commit();
 		
-		Assert.assertEquals(1, repository.get(Record.class, 1L).bins.size());
-		Assert.assertArrayEquals(new Long[] {2L}, repository.get(Record.class, 1L).bins.toArray());
+		Assert.assertEquals(1, repository.get(Record.class, 1L).get().bins.size());
+		Assert.assertArrayEquals(new Long[] {2L}, repository.get(Record.class, 1L).get().bins.toArray());
 		
-		rec = repository.get(Record.class, 1L);
+		rec = repository.get(Record.class, 1L).get();
 		rec.addBin(1L);
 		
 		repository.begin();

@@ -21,10 +21,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.reveno.atp.api.domain.WriteableRepository;
-import org.reveno.atp.api.exceptions.EntityNotFoundException;
 import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.core.serialization.protostuff.InputOutputHolder;
 import org.reveno.atp.utils.MapUtils;
@@ -56,13 +56,13 @@ public class MutableModelRepository implements TxRepository {
 	}
 
 	@Override
-	public <T> T get(Class<T> entityType, long id) {
-		T entity = repository.get(entityType, id);
+	public <T> Optional<T> get(Class<T> entityType, long id) {
+		Optional<T> entity = repository.get(entityType, id);
 		if (entity == null)
-			throw new EntityNotFoundException(id, entityType);
+			return Optional.empty();
 		
-		if (isTransaction.get() && entity != null)
-			saveEntityState(id, entity, EntityRecoveryState.UPDATE);
+		if (isTransaction.get() && entity.isPresent())
+			saveEntityState(id, entity.get(), EntityRecoveryState.UPDATE);
 		return entity;
 	}
 

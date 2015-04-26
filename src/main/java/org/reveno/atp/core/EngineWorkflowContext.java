@@ -17,6 +17,7 @@
 package org.reveno.atp.core;
 
 import org.reveno.atp.core.api.EventPublisher;
+import org.reveno.atp.core.api.IdGenerator;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.TransactionCommitInfo.Builder;
 import org.reveno.atp.core.api.TxRepository;
@@ -28,6 +29,16 @@ import org.reveno.atp.core.views.ViewsProcessor;
 
 public class EngineWorkflowContext implements WorkflowContext {
 
+	private IdGenerator idGenerator;
+	@Override
+	public IdGenerator idGenerator() {
+		return idGenerator;
+	}
+	public EngineWorkflowContext idGenerator(IdGenerator idGenerator) {
+		this.idGenerator = idGenerator;
+		return this;
+	}
+	
 	private SerializersChain serializer;
 	@Override
 	public SerializersChain serializer() {

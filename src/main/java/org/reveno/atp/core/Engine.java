@@ -56,8 +56,10 @@ import org.reveno.atp.core.data.DefaultJournaler;
 import org.reveno.atp.core.disruptor.DisruptorPipeProcessor;
 import org.reveno.atp.core.engine.WorkflowEngine;
 import org.reveno.atp.core.engine.components.CommandsManager;
+import org.reveno.atp.core.engine.components.DefaultIdGenerator;
 import org.reveno.atp.core.engine.components.SerializersChain;
 import org.reveno.atp.core.engine.components.TransactionsManager;
+import org.reveno.atp.core.engine.components.DefaultIdGenerator.NextIdTransaction;
 import org.reveno.atp.core.engine.processor.PipeProcessor;
 import org.reveno.atp.core.events.DisruptorEventPublisher;
 import org.reveno.atp.core.events.EventHandlersManager;
@@ -109,6 +111,7 @@ public class Engine implements Reveno {
 			throw new IllegalStateException("Can't startup engine which is already started.");
 		
 		init();
+		connectSystemHandlers();
 		
 		eventPublisher.start();
 		workflowEngine.init();
@@ -238,9 +241,14 @@ public class Engine implements Reveno {
 		processor = new DisruptorPipeProcessor(configuration.cpuConsumption(), false, executor);
 		EngineWorkflowContext workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
 				.viewsProcessor(viewsProcessor).transactionsManager(transactionsManager).commandsManager(commandsManager)
-				.eventPublisher(eventPublisher).transactionCommitBuilder(txBuilder).transactionJournaler(transactionsJournaler);
+				.eventPublisher(eventPublisher).transactionCommitBuilder(txBuilder).transactionJournaler(transactionsJournaler)
+				.idGenerator(idGenerator);
 		workflowEngine = new WorkflowEngine(processor, workflowContext);
 		restorer = new DefaultSystemStateRestorer(journalsStorage, workflowContext, eventsContext, workflowEngine);
+	}
+	
+	protected void connectSystemHandlers() {
+		domain().transactionAction(NextIdTransaction.class, idGenerator);
 	}
 	
 	protected RepositorySnapshooter snapshooter() {
@@ -292,6 +300,8 @@ public class Engine implements Reveno {
 	protected ViewsManager viewsManager = new ViewsManager();
 	protected TransactionsManager transactionsManager = new TransactionsManager();
 	protected CommandsManager commandsManager = new CommandsManager();
+	
+	protected DefaultIdGenerator idGenerator = new DefaultIdGenerator();
 	
 	protected final RevenoConfiguration configuration = new RevenoConfiguration();
 	protected final JournalsStorage journalsStorage;

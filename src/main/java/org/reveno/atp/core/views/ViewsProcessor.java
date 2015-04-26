@@ -42,7 +42,7 @@ public class ViewsProcessor {
 		
 		Class<?> viewType = manager.resolveEntityViewType(entityType);
 		if (id >= 0) {
-			Object view = manager.getMapper(entityType).map(repository.get(entityType, id), 
+			Object view = manager.getMapper(entityType).map(repository.get(entityType, id).get(), 
 					(Optional<Object>) storage.find(viewType, id), repository);
 			storage.insert(id, view);
 		} else {

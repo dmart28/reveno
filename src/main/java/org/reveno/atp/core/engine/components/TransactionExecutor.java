@@ -25,6 +25,7 @@ import org.reveno.atp.api.domain.Repository;
 import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.transaction.EventBus;
 import org.reveno.atp.api.transaction.TransactionContext;
+import org.reveno.atp.core.api.IdGenerator;
 import org.reveno.atp.core.engine.WorkflowContext;
 import org.reveno.atp.core.engine.processor.ProcessorContext;
 import org.slf4j.Logger;
@@ -39,7 +40,7 @@ public class TransactionExecutor {
 			c.eventBus().currentTransactionId(c.transactionId()).underlyingEventBus(c.defaultEventBus());
 			repository.underlying(services.repository()).map(c.getMarkedRecords());
 			transactionContext.withContext(c).withRepository(repository);
-			commandContext.withRepository(repository);
+			commandContext.withRepository(repository).idGenerator(services.idGenerator());
 			
 			services.repository().begin();
 			
@@ -76,10 +77,16 @@ public class TransactionExecutor {
 	protected static class InnerCommandContext implements CommandContext {
 		public Repository repository;
 		public List<Object> transactions = new ArrayList<>();
+		public IdGenerator idGenerator;
 		
 		@Override
 		public Repository repository() {
 			return repository;
+		}
+		
+		@Override
+		public long id(Class<?> type) {
+			return idGenerator.next(type);
 		}
 		
 		@Override
@@ -91,6 +98,12 @@ public class TransactionExecutor {
 		public InnerCommandContext withRepository(Repository repository) {
 			this.repository = repository;
 			transactions.clear();
+			return this;
+		}
+		
+		public InnerCommandContext idGenerator(IdGenerator idGenerator) {
+			this.idGenerator = idGenerator;
+			this.idGenerator.context(this);
 			return this;
 		}
 	};

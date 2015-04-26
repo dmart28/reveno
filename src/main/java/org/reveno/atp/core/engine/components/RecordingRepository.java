@@ -19,6 +19,7 @@ package org.reveno.atp.core.engine.components;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.reveno.atp.api.domain.WriteableRepository;
@@ -42,9 +43,11 @@ public class RecordingRepository implements WriteableRepository {
 	}
 
 	@Override
-	public <T> T get(Class<T> entityType, long id) {
-		markedRecords.get(entityType).add(id);
-		return null;
+	public <T> Optional<T> get(Class<T> entityType, long id) {
+		Optional<T> result = underlyingRepo.get(entityType, id);
+		if (result.isPresent())
+			markedRecords.get(entityType).add(id);
+		return result;
 	}
 
 	@Override
@@ -75,6 +78,7 @@ public class RecordingRepository implements WriteableRepository {
 
 	@Override
 	public Object remove(Class<?> entityClass, long entityId) {
+		markedRecords.get(entityClass).remove(entityId);
 		markedRecords.get(entityClass).add(-entityId);
 		return underlyingRepo.remove(entityClass, entityId);
 	}

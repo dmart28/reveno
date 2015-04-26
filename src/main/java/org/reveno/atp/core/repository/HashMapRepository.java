@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.reveno.atp.api.domain.WriteableRepository;
 
@@ -27,10 +28,10 @@ public class HashMapRepository implements WriteableRepository {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T get(Class<T> entityType, long id) {
-		T entity =  (T) getEntities(entityType).get(id);
+	public <T> Optional<T> get(Class<T> entityType, long id) {
+		T entity = (T) getEntities(entityType).get(id);
 		
-		return entity;
+		return entity == null ? Optional.empty() : Optional.of(entity);
 	}
 	
 	@Override

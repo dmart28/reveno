@@ -44,7 +44,7 @@ public class ViewsDefaultStorage implements ViewsStorage, QueryManager  {
 
 	@Override
 	public <View> Optional<View> find(Class<View> viewType, long id) {
-		return Optional.ofNullable(repository.get(viewType, id));
+		return repository.get(viewType, id);
 	}
 
 	@Override

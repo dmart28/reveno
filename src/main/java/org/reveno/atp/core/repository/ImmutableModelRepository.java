@@ -19,11 +19,11 @@ package org.reveno.atp.core.repository;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.reveno.atp.api.domain.WriteableRepository;
-import org.reveno.atp.api.exceptions.EntityNotFoundException;
 import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.utils.MapUtils;
 
@@ -31,20 +31,18 @@ public class ImmutableModelRepository implements TxRepository {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T get(Class<T> entityType, long id) {
-		T entity = repository.get(entityType, id);
+	public <T> Optional<T> get(Class<T> entityType, long id) {
+		Optional<T> entity = repository.get(entityType, id);
 		if (isTransaction.get()) {
-			if (entity != null && isDeleted(entityType, id))
-				return null;
+			if (entity.isPresent() && isDeleted(entityType, id))
+				return Optional.empty();
 			else if (added.get(entityType).containsKey(id))
-				return (T) added.get(entityType).get(id);
+				return Optional.of((T) added.get(entityType).get(id));
 			else
-				throw new EntityNotFoundException(id, entityType);
-		} else if (entity != null) {
+				return entity;
+		} else {
 			return entity;
 		}
-		else 
-			throw new EntityNotFoundException(id, entityType);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -94,7 +92,7 @@ public class ImmutableModelRepository implements TxRepository {
 	public Object remove(Class<?> entityType, long entityId) {
 		if (isTransaction.get()) {
 			removed.get(entityType).add(entityId);
-			return repository.get(entityType, entityId);
+			return repository.get(entityType, entityId).get();
 		} else
 			return repository.remove(entityType, entityId);
 	}

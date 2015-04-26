@@ -22,6 +22,8 @@ public interface CommandContext {
 
 	Repository repository();
 	
+	long id(Class<?> entityType);
+	
 	CommandContext executeTransaction(Object transactionParam);
 	
 }

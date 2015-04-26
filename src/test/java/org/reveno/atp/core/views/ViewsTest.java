@@ -37,7 +37,7 @@ public class ViewsTest {
 	public void test() {
 		ViewsManager manager = new ViewsManager();
 		manager.register(User.class, UserView.class, (e, ov, r) -> new UserView(UUID.nameUUIDFromBytes(longToBytes(e.id)).toString(), 
-				r.get(UserInfo.class, e.id).name, r.get(UserInfo.class, e.id).age));
+				r.get(UserInfo.class, e.id).get().name, r.get(UserInfo.class, e.id).get().age));
 		ViewsDefaultStorage storage = new ViewsDefaultStorage(new HashMapRepository());
 		
 		WriteableRepository repository = new HashMapRepository();

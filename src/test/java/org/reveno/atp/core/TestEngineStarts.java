@@ -53,7 +53,8 @@ public class TestEngineStarts {
 		Assert.assertTrue(engine.query().find(LastCalculatedView.class, 1).isPresent());
 		Assert.assertEquals(4, engine.query().find(LastCalculatedView.class, 1).get().sqrt, 0.001);
 		engine.executeCommand(new SqrtCommand(64)).get();
-		Assert.assertEquals(8, engine.query().find(LastCalculatedView.class, 1).get().sqrt, 0.001);
+		// 3 because we call u.id(..) twice in command handler
+		Assert.assertEquals(8, engine.query().find(LastCalculatedView.class, 3).get().sqrt, 0.001);
 		
 		engine.shutdown();
 		
@@ -64,12 +65,15 @@ public class TestEngineStarts {
 		Reveno engine = new Engine(baseDir);
 		engine.domain().command(SqrtCommand.class, Double.class, (c, u) -> {
 			double result = Math.sqrt(c.number);
-			u.executeTransaction(new WriteLastCalculationTransaction(result));
+			u.executeTransaction(new WriteLastCalculationTransaction(u.id(SqrtCommand.class), result));
+			
+			// test next id generation as well
+			u.id(SqrtCommand.class);
 			
 			return result;
 		});
 		engine.domain().transactionAction(WriteLastCalculationTransaction.class, (t, u) -> {
-			u.repository().store(1, t.sqrt);
+			u.repository().store(t.id, t.sqrt);
 		});
 		engine.domain().viewMapper(Double.class, LastCalculatedView.class, (e, old, r) -> {
 			if (old.isPresent()) {
@@ -89,9 +93,11 @@ public class TestEngineStarts {
 	}
 	
 	public static class WriteLastCalculationTransaction {
+		public long id;
 		public double sqrt;
 		
-		public WriteLastCalculationTransaction(double sqrt) {
+		public WriteLastCalculationTransaction(long id, double sqrt) {
+			this.id = id;
 			this.sqrt = sqrt;
 		}
 	}

@@ -41,12 +41,12 @@ public class RepositoryTest {
 		repository.store(1L, item1);
 		repository.store(2L, item2);
 		
-		Assert.assertNotNull(repository.get(Bin.class, 1L));
-		Assert.assertNotNull(repository.get(Bin.class, 2L));
-		Assert.assertNull(repository.get(Bin.class, 3L));
+		Assert.assertTrue(repository.get(Bin.class, 1L).isPresent());
+		Assert.assertTrue(repository.get(Bin.class, 2L).isPresent());
+		Assert.assertFalse(repository.get(Bin.class, 3L).isPresent());
 		
-		Assert.assertNotNull(repository.get(Bin.class, 1L));
-		Assert.assertNotNull(repository.get(Bin.class, 2L));
+		Assert.assertTrue(repository.get(Bin.class, 1L).isPresent());
+		Assert.assertTrue(repository.get(Bin.class, 2L).isPresent());
 		
 		repository.remove(Bin.class, 2L);
 		Assert.assertEquals(1, repository.getAll(Bin.class).size());

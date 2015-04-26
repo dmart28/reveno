@@ -14,14 +14,14 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.api.exceptions;
+package org.reveno.atp.core.api;
 
-public class EntityNotFoundException extends RuntimeException {
+import org.reveno.atp.api.commands.CommandContext;
 
-	public EntityNotFoundException(long id, Class<?> entityType) {
-		super(String.format("Entity doesn't exist [id:%s; type:%s]", id, entityType));
-	}
+public interface IdGenerator {
+
+	void context(CommandContext context);
 	
-	private static final long serialVersionUID = 1L;
-
+	long next(Class<?> entityType);
+	
 }
