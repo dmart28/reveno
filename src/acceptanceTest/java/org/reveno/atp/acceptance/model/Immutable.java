@@ -22,6 +22,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -30,6 +31,20 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class Immutable {
+	
+	@SuppressWarnings("unchecked")
+	public static <T, U> HashMap<T, U> ma(HashMap<T, U> map, T key, U value) {
+		HashMap<T, U> c = (HashMap<T, U>)map.clone();
+		c.put(key, value);
+		return c;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T, U> HashMap<T, U> mr(HashMap<T, U> map, T key) {
+		HashMap<T, U> c = (HashMap<T, U>)map.clone();
+		c.remove(key);
+		return c;
+	}
 	
 	@SuppressWarnings("unchecked")
 	public static <T> HashSet<T> sa(HashSet<T> set, T value) {
@@ -53,6 +68,13 @@ public abstract class Immutable {
 	}
 	
 	@SuppressWarnings("unchecked")
+	public static <T> ArrayList<T> laa(ArrayList<T> set, Collection<T> value) {
+		ArrayList<T> c = (ArrayList<T>)set.clone();
+		c.addAll(value);
+		return c;
+	}
+	
+	@SuppressWarnings("unchecked")
 	public static <T> ArrayList<T> lr(ArrayList<T> set, T value) {
 		ArrayList<T> c = (ArrayList<T>)set.clone();
 		c.remove(value);
@@ -62,6 +84,13 @@ public abstract class Immutable {
 	public static Map<String, Object> pair(String str, Object o) {
 		Map<String, Object> m = new HashMap<>();
 		m.put(str, o);
+		return m;
+	}
+	
+	public static Map<String, Object> pair(String str, Object o, String str1, Object o1) {
+		Map<String, Object> m = new HashMap<>();
+		m.put(str, o);
+		m.put(str1, o1);
 		return m;
 	}
 
@@ -86,7 +115,7 @@ public abstract class Immutable {
 			return t.newInstance(args.toArray());
 		} catch (InstantiationException | IllegalAccessException
 				| IllegalArgumentException | InvocationTargetException e1) {
-			throw new RuntimeException(e1);
+			throw new RuntimeException("" + entity.getClass(), e1);
 		}
 	}
 	
@@ -94,10 +123,10 @@ public abstract class Immutable {
 	protected static void registerIfRequired(Class<?> type) {
 		if (!fields.containsKey(type)) {
 			fields.put(type, new LinkedHashMap<>());
-			for (Field f : type.getFields()) {
+			for (Field f : type.getDeclaredFields()) {
 				f.setAccessible(true);
 				
-				if (Modifier.isFinal(f.getModifiers()) && !Modifier.isPrivate(f.getModifiers())) {
+				if (Modifier.isFinal(f.getModifiers()) && (!Modifier.isPrivate(f.getModifiers()))) {
 					fields.get(type).put(f.getName(), f);
 				}
 			}

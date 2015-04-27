@@ -16,16 +16,22 @@
 
 package org.reveno.atp.acceptance.tests;
 
+import java.util.Optional;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.reveno.atp.acceptance.model.immutable.Account;
+import org.reveno.atp.acceptance.model.immutable.Fill;
+import org.reveno.atp.acceptance.model.immutable.Order;
+import org.reveno.atp.acceptance.model.immutable.Order.OrderStatus;
+import org.reveno.atp.acceptance.model.immutable.Order.OrderType;
 
 public class TestModel {
 
 	@Test
 	public void test() {
 		Account acc1 = new Account(1, "USD", 500);
-		Account acc2 = acc1.increaseBalance(500);
+		Account acc2 = acc1.addBalance(500);
 		
 		Assert.assertNotEquals(acc1, acc2);
 		Assert.assertEquals(500, acc1.balance);
@@ -46,6 +52,21 @@ public class TestModel {
 		Assert.assertEquals(1000, acc4.balance);
 		Assert.assertEquals(1, acc3.orders.size());
 		Assert.assertEquals(0, acc4.orders.size());
+		
+		Order order = new Order(1, 1, Optional.empty(), "EUR/USD", 134000, 700L, OrderStatus.FILLED, OrderType.MARKET);
+		Order order1 =  new Order(2, 1, Optional.empty(), "EUR/USD", 135000, 300L, OrderStatus.FILLED, OrderType.MARKET);
+		acc4 = acc4.addPosition(1L, "EUR/USD", new Fill(1L, acc4.id, 1, order.size, order.price, order));
+		
+		Assert.assertEquals(1, acc4.positions.positions.size());
+		Assert.assertEquals(700, acc4.positions.positions.get(1L).sum());
+		acc4 = acc4.applyFill(new Fill(2L,acc4.id, 1L, order1.size, order1.price, order1));
+		Assert.assertEquals(1000, acc4.positions.positions.get(1L).sum());
+		Assert.assertFalse(acc4.positions.positions.get(1L).isComplete());
+		
+		order = new Order(3, 1, Optional.of(1L), "EUR/USD", 128000, -1000, OrderStatus.FILLED, OrderType.MARKET);
+		acc4 = acc4.applyFill(new Fill(3L, acc4.id, 1L, order.size, order.price, order));
+		
+		Assert.assertTrue(acc4.positions.positions.get(1L).isComplete());
 	}
 	
 }

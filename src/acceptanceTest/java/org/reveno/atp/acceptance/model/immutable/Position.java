@@ -16,6 +16,52 @@
 
 package org.reveno.atp.acceptance.model.immutable;
 
+import static org.reveno.atp.acceptance.model.Immutable.copy;
+import static org.reveno.atp.acceptance.model.Immutable.la;
+import static org.reveno.atp.acceptance.model.Immutable.laa;
+import static org.reveno.atp.acceptance.model.Immutable.pair;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class Position {
 
+	public final long id;
+	public final String symbol;
+	public final long accountId;
+	public final ArrayList<Fill> fills;
+	
+	public Position addFill(Fill fill) {
+		return copy(this, pair("fills", la(fills, fill)));
+	}
+	
+	public Position addFills(List<Fill> fills) {
+		return copy(this, pair("fills", laa(this.fills, fills)));
+	}
+	
+	public boolean buy() {
+		return sum() > 0;
+	}
+	
+	public boolean isComplete() {
+		return sum() == 0L;
+	}
+
+	public long sum() {
+		return fills.stream().mapToLong(f -> f.size).sum();
+	}
+	
+	public Position(long id, String symbol, long accountId, ArrayList<Fill> fills) {
+		this.id = id;
+		this.symbol = symbol;
+		this.accountId = accountId;
+		this.fills = fills;
+	}
+	
+	public static Position create(long id, String symbol, long accountId, Fill fill) {
+		Position p = new Position(id, symbol, accountId, new ArrayList<>());
+		p.fills.add(fill);
+		return p;
+	}
+	
 }

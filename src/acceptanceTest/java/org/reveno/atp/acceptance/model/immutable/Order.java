@@ -16,6 +16,44 @@
 
 package org.reveno.atp.acceptance.model.immutable;
 
+import static org.reveno.atp.acceptance.model.Immutable.copy;
+import static org.reveno.atp.acceptance.model.Immutable.pair;
+
+import java.util.Optional;
+
 public class Order {
 
+	public final long id;
+	public final long accountId;
+	public final Optional<Long> positionId;
+	public final String symbol;
+	public final long price;
+	public final long size;
+	public final OrderStatus status;
+	public final OrderType type;
+	
+	public Order update(OrderStatus status) {
+		return copy(this, pair("status", status));
+	}
+	
+	public Order(long id, long accId, Optional<Long> positionId, String symbol,
+			long price, long size, OrderStatus status, OrderType type) {
+		this.id = id;
+		this.accountId = accId;
+		this.positionId = positionId;
+		this.symbol = symbol;
+		this.price = price;
+		this.size = size;
+		this.status = status;
+		this.type = type;
+	}
+	
+	public static enum OrderStatus {
+		PENDING, FILLED, CANCELLED
+	}
+	
+	public static enum OrderType {
+		MARKET, LIMIT, STOP
+	}
+	
 }

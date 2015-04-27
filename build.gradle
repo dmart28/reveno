@@ -10,6 +10,22 @@ repositories {
 	mavenCentral()
 }
 
+sourceSets {
+	acceptanceTest {
+		java {
+            srcDir 'java'
+        }
+        resources {
+            srcDir 'resources'
+        }
+	}
+	test {
+		java {
+			srcDirs = ['src/test/java', 'src/acceptanceTest/java']
+		}
+	}
+}
+
 dependencies {
 	//compile "org.scala-lang:scala-library:$scalaVersion"
 		
@@ -23,21 +39,17 @@ dependencies {
 	testCompile "com.google.guava:guava:$guavaVersion"
 	testCompile "junit:junit:$junitVersion"
 	testCompile "org.easymock:easymock:$easymockVersion"
+	
+	acceptanceTestCompile "com.google.guava:guava:$guavaVersion"
+	acceptanceTestCompile "junit:junit:$junitVersion"
+	acceptanceTestCompile "org.easymock:easymock:$easymockVersion"
 }
 
-sourceSets {
-	acceptanceTest {
-		java {
-            srcDir 'java'
-        }
-        resources {
-            srcDir 'resources'
-        }
-	} 
-}
+def forks = Math.max(4, (int) (Runtime.runtime.availableProcessors() / 2))
 
 test {
 	minHeapSize = "256m"
+	maxParallelForks = forks
   	
   	beforeTest { descriptor ->
     	logger.lifecycle("Running test: " + descriptor)

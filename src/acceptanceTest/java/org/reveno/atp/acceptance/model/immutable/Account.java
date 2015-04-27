@@ -22,6 +22,7 @@ import static org.reveno.atp.acceptance.model.Immutable.copy;
 import static org.reveno.atp.acceptance.model.Immutable.pair;
 
 import java.util.HashSet;
+import java.util.List;
 
 public class Account {
 
@@ -29,8 +30,9 @@ public class Account {
 	public final String currency;
 	public final long balance;
 	public final HashSet<Long> orders;
+	public final PositionBook positions;
 	
-	public Account increaseBalance(long add) {
+	public Account addBalance(long add) {
 		return copy(this, pair("balance", balance + add));
 	}
 	
@@ -38,19 +40,36 @@ public class Account {
 		return copy(this, pair("orders", sa(orders, orderId)));
 	}
 	
+	public Account addPosition(long id, String symbol, Fill fill) {
+		return copy(this, pair("positions", positions.addPosition(id, symbol, fill)));
+	}
+	
+	public Account applyFill(Fill fill) {
+		return copy(this, pair("positions", positions.applyFill(fill)));
+	}
+	
+	public Account mergePositions(long toPositionId, List<Long> mergedPositions) {
+		return copy(this, pair("positions", positions.merge(toPositionId, mergedPositions)));
+	}
+	
+	public Account exitPosition(long positionId, long pnl) {
+		return copy(this, pair("positions", positions.exit(positionId), "balance", balance + pnl));
+	}
+	
 	public Account removeOrder(long orderId) {
 		return copy(this, pair("orders", sr(orders, orderId)));
 	}
 	
 	public Account(long id, String currency, long balance) {
-		this(id, currency, balance, new HashSet<>());
+		this(id, currency, balance, new HashSet<>(), new PositionBook());
 	}
 	
-	public Account(long id, String currency, long balance, HashSet<Long> orders) {
+	public Account(long id, String currency, long balance, HashSet<Long> orders, PositionBook positions) {
 		this.id = id;
 		this.currency = currency;
 		this.balance = balance;
 		this.orders = orders;
+		this.positions = positions;
 	}
 	
 }
