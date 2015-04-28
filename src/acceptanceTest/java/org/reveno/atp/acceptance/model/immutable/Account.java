@@ -40,6 +40,10 @@ public class Account {
 		return copy(this, pair("orders", sa(orders, orderId)));
 	}
 	
+	public Account removeOrder(long orderId) {
+		return copy(this, pair("orders", sr(orders, orderId)));
+	}
+	
 	public Account addPosition(long id, String symbol, Fill fill) {
 		return copy(this, pair("positions", positions.addPosition(id, symbol, fill)));
 	}
@@ -54,10 +58,6 @@ public class Account {
 	
 	public Account exitPosition(long positionId, long pnl) {
 		return copy(this, pair("positions", positions.exit(positionId), "balance", balance + pnl));
-	}
-	
-	public Account removeOrder(long orderId) {
-		return copy(this, pair("orders", sr(orders, orderId)));
 	}
 	
 	public Account(long id, String currency, long balance) {
