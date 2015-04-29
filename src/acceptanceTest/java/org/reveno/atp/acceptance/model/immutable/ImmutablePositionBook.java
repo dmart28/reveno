@@ -16,39 +16,48 @@
 
 package org.reveno.atp.acceptance.model.immutable;
 
-import static org.reveno.atp.acceptance.model.Immutable.copy;
-import static org.reveno.atp.acceptance.model.Immutable.ma;
-import static org.reveno.atp.acceptance.model.Immutable.mr;
-import static org.reveno.atp.acceptance.model.Immutable.pair;
+import static org.reveno.atp.acceptance.utils.Immutable.copy;
+import static org.reveno.atp.acceptance.utils.Immutable.ma;
+import static org.reveno.atp.acceptance.utils.Immutable.mr;
+import static org.reveno.atp.acceptance.utils.Immutable.pair;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-public class PositionBook {
+import org.reveno.atp.acceptance.model.Fill;
+import org.reveno.atp.acceptance.model.Position;
+import org.reveno.atp.acceptance.model.PositionBook;
 
-	public final HashMap<Long, Position> positions;
+public class ImmutablePositionBook implements PositionBook {
+
+	private final HashMap<Long, Position> positions;
 	
-	public PositionBook addPosition(long id, String symbol, Fill fill) {
-		return copy(this, pair("positions", ma(positions, id, Position.create(id, symbol, fill.accountId, fill))));
+	public Map<Long, Position> positions() {
+		return positions;
 	}
 	
-	public PositionBook applyFill(Fill fill) {
-		long positionId = fill.positionId;
+	public ImmutablePositionBook addPosition(long id, String symbol, Fill fill) {
+		return copy(this, pair("positions", ma(positions, id, ImmutablePosition.FACTORY.create(id, symbol, fill.accountId(), fill))));
+	}
+	
+	public ImmutablePositionBook applyFill(Fill fill) {
+		long positionId = fill.positionId();
 		return copy(this, pair("positions", ma(positions, positionId, positions.get(positionId).addFill(fill))));
 	}
 	
-	public PositionBook merge(long toPositionId, List<Long> mergedPositions) {
+	public ImmutablePositionBook merge(long toPositionId, List<Long> mergedPositions) {
 		Position toPosition = positions.get(toPositionId);
 		List<Fill> newFills = mergedPositions.stream().map(pid -> positions.get(pid))
-				.flatMap(p -> p.fills.stream()).collect(Collectors.toList());
+				.flatMap(p -> p.fills().stream()).collect(Collectors.toList());
 		HashMap<Long, Position> newPos = ma(positions, toPositionId, toPosition.addFills(newFills));
 		mergedPositions.forEach(p -> newPos.remove(p));
 		
 		return copy(this, pair("positions", newPos));
 	}
 	
-	public PositionBook exit(long positionId) {
+	public ImmutablePositionBook exit(long positionId) {
 		Position position = positions.get(positionId);
 		if (!position.isComplete())
 			throw new RuntimeException("Can't exit not full filled position!");
@@ -56,12 +65,17 @@ public class PositionBook {
 		return copy(this, pair("positions", mr(positions, positionId)));
 	}
 	
-	public PositionBook() {
+	public ImmutablePositionBook() {
 		this(new HashMap<>());
 	}
 	
-	public PositionBook(HashMap<Long, Position> positions) {
+	public ImmutablePositionBook(HashMap<Long, Position> positions) {
 		this.positions = positions;
+	}
+
+	@Override
+	public boolean isImmutable() {
+		return true;
 	}
 	
 }

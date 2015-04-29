@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.acceptance.model;
+package org.reveno.atp.acceptance.utils;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -115,7 +115,7 @@ public abstract class Immutable {
 			return t.newInstance(args.toArray());
 		} catch (InstantiationException | IllegalAccessException
 				| IllegalArgumentException | InvocationTargetException e1) {
-			throw new RuntimeException("" + entity.getClass(), e1);
+			throw new RuntimeException("" + entity.getClass() + "\n" + t.getParameterCount(), e1);
 		}
 	}
 	
@@ -126,7 +126,7 @@ public abstract class Immutable {
 			for (Field f : type.getDeclaredFields()) {
 				f.setAccessible(true);
 				
-				if (Modifier.isFinal(f.getModifiers()) && (!Modifier.isPrivate(f.getModifiers()))) {
+				if (Modifier.isFinal(f.getModifiers()) && !Modifier.isStatic(f.getModifiers())) {
 					fields.get(type).put(f.getName(), f);
 				}
 			}

@@ -14,33 +14,34 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.acceptance.model.mutable;
+package org.reveno.atp.acceptance.model;
 
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.List;
 
-public class Account {
+public interface Position extends Changeable {
 
-	public final long id;
-	public final String currency;
-	public long balance;
-	public HashSet<Long> orders = new HashSet<>();
-	public PositionBook positions = new PositionBook();
+	long id();
 	
-	public void addBalance(long add) {
-		this.balance += add;
-	}
+	String symbol();
 	
-	public void addOrder(long orderId) {
-		orders.add(orderId);
-	}
+	long accountId();
 	
-	public void removeOrder(long orderId) {
-		orders.remove(orderId);
-	}
+	List<Fill> fills();
 	
-	public Account(long id, String currency) {
-		this.id = id;
-		this.currency = currency;
+	Position addFill(Fill fill);
+	
+	Position addFills(Collection<Fill> fills);
+	
+	boolean buy();
+	
+	boolean isComplete();
+	
+	long sum();
+	
+	
+	public interface PositionFactory {
+		Position create(long id, String symbol, long accountId, Fill fill);
 	}
 	
 }

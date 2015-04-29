@@ -14,24 +14,42 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.acceptance.model.immutable;
+package org.reveno.atp.acceptance.model;
 
-public class Fill {
+import java.util.Optional;
 
-	public final long id;
-	public final long accountId;
-	public final long positionId;
-	public final long size;
-	public final long price;
-	public final Order order;
+public interface Order extends Changeable {
+
+	long id();
 	
-	public Fill(long id, long accountId, long positionId, long size, long price, Order order) {
-		this.id = id;
-		this.accountId = accountId;
-		this.positionId = positionId;
-		this.size = size;
-		this.price = price;
-		this.order = order;
+	long accountId();
+	
+	Optional<Long> positionId();
+	
+	String symbol();
+	
+	long price();
+	
+	long size();
+	
+	OrderStatus orderStatus();
+	
+	OrderType orderType();
+	
+	Order update(OrderStatus orderStatus);
+	
+	public static enum OrderStatus {
+		PENDING, FILLED, CANCELLED
+	}
+	
+	public static enum OrderType {
+		MARKET, LIMIT, STOP
+	}
+	
+	
+	public interface OrderFactory {
+		Order create(long id, long accId, Optional<Long> positionId, String symbol,
+				long price, long size, OrderStatus status, OrderType type);
 	}
 	
 }

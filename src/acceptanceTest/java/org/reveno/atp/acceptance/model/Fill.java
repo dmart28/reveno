@@ -14,26 +14,25 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.acceptance.model.mutable;
+package org.reveno.atp.acceptance.model;
 
-import org.reveno.atp.acceptance.model.immutable.Order;
+public interface Fill extends Changeable {
 
-public class Fill {
-
-	public final long id;
-	public final long accountId;
-	public final long positionId;
-	public final long size;
-	public final long price;
-	public final Order order;
+	long id();
 	
-	public Fill(long id, long accountId, long positionId, long size, long price, Order order) {
-		this.id = id;
-		this.accountId = accountId;
-		this.positionId = positionId;
-		this.size = size;
-		this.price = price;
-		this.order = order;
+	long accountId();
+	
+	long positionId();
+	
+	long size();
+	
+	long price();
+	
+	Order order();
+	
+	
+	public interface FillFactory {
+		Fill create(long id, long accountId, long positionId, long size, long price, Order order);
 	}
 	
 }
