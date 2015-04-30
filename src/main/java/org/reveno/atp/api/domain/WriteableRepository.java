@@ -22,6 +22,8 @@ public interface WriteableRepository extends Repository {
 
 	<T> T store(long entityId, T entity);
 	
+	<T> T store(long entityId, Class<? super T> type, T entity);
+	
 	Object remove(Class<?> entityClass, long entityId);
 	
 	void load(Map<Class<?>, Map<Long, Object>> map);

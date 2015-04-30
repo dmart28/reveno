@@ -41,6 +41,14 @@ public class MutableModelRepository implements TxRepository {
 			saveEntityState(entityId, entity, EntityRecoveryState.REMOVE);
 		return entity;
 	}
+	
+	@Override
+	public <T> T store(long entityId, Class<? super T> type, T entity) {
+		repository.store(entityId, type, entity);
+		if (isTransaction.get() && entity != null)
+			saveEntityState(entityId, entity, EntityRecoveryState.REMOVE);
+		return entity;
+	}
 
 	@Override
 	public Object remove(Class<?> entityClass, long entityId) {

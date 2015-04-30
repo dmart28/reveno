@@ -50,6 +50,12 @@ public class HashMapRepository implements WriteableRepository {
 		getEntities(entity.getClass()).put(entityId, entity);
 		return entity;
 	}
+	
+	@Override
+	public <T> T store(long entityId, Class<? super T> type, T entity) {
+		getEntities(type).put(entityId, entity);
+		return entity;
+	}
 
 	@Override
 	public Object remove(Class<?> entityClass, long entityId) {

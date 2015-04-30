@@ -87,6 +87,15 @@ public class ImmutableModelRepository implements TxRepository {
 		} else
 			return repository.store(entityId, entity);
 	}
+	
+	@Override 
+	public <T> T store(long entityId, Class<? super T> type, T entity) {
+		if (isTransaction.get()) {
+			added.get(type).put(entityId, entity);
+			return entity;
+		} else
+			return repository.store(entityId, type, entity);
+	}
 
 	@Override
 	public Object remove(Class<?> entityType, long entityId) {

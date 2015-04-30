@@ -75,6 +75,12 @@ public class RecordingRepository implements WriteableRepository {
 		markedRecords.get(entity.getClass()).add(entityId);
 		return underlyingRepo.store(entityId, entity);
 	}
+	
+	@Override
+	public <T> T store(long entityId, Class<? super T> type, T entity) {
+		markedRecords.get(type).add(entityId);
+		return underlyingRepo.store(entityId, type, entity);
+	}
 
 	@Override
 	public Object remove(Class<?> entityClass, long entityId) {
