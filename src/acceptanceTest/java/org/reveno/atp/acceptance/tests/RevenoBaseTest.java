@@ -131,7 +131,7 @@ public class RevenoBaseTest {
 			super(count);
 		}
 		
-		public boolean waitFor() throws InterruptedException {
+		public boolean isArrived() throws InterruptedException {
 			return await(100, TimeUnit.MILLISECONDS);
 		}
 		

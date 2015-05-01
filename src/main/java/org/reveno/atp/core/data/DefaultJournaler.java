@@ -63,6 +63,7 @@ public class DefaultJournaler implements Journaler {
 		isWriting = false;
 		if (buffer.isAvailable())
 			channel.get().write(buffer);
+		channel.get().close();
 	}
 
 	@Override

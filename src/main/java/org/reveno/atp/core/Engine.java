@@ -136,6 +136,8 @@ public class Engine implements Reveno {
 		transactionsJournaler.destroy();
 		eventsJournaler.destroy();
 		
+		executor.shutdown();
+		
 		log.info("Engine was stopped.");
 	}
 
@@ -308,6 +310,6 @@ public class Engine implements Reveno {
 	protected final FoldersStorage foldersStorage;
 	protected final SnapshotStorage snapshotStorage;
 	
-	protected static final ExecutorService executor = Executors.newFixedThreadPool(8);
+	protected final ExecutorService executor = Executors.newFixedThreadPool(8);
 	protected static final Logger log = LoggerFactory.getLogger(Engine.class);
 }

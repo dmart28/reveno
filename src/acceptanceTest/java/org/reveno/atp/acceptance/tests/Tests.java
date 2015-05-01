@@ -32,11 +32,11 @@ public class Tests extends RevenoBaseTest {
 		Reveno reveno = createEngine();
 		reveno.startup();
 		
-		Waiter w = listenFor(reveno, AccountCreatedEvent.class);
+		Waiter accountCreatedEvent = listenFor(reveno, AccountCreatedEvent.class);
 		long accountId = sendCommandSync(reveno, new CreateNewAccountCommand("RUB", 1000L));
 		AccountView view = reveno.query().find(AccountView.class, accountId).get();
-		Assert.assertTrue(w.waitFor());
 		
+		Assert.assertTrue(accountCreatedEvent.isArrived());
 		Assert.assertEquals(accountId, view.accountId);
 		Assert.assertEquals("RUB", view.currency);
 		Assert.assertEquals(1000L, view.balance);
