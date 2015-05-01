@@ -76,9 +76,16 @@ public class Event {
 		isReplay = false;
 		transactionId = 0L;
 		events = null;
+		eventMetadata = null;
 		serialized.clear();
 		
 		return this;
+	}
+	
+	public void destroy() {
+		reset();
+		
+		serialized.release();
 	}
 	
 }

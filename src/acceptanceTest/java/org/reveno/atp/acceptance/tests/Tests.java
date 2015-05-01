@@ -65,6 +65,8 @@ public class Tests extends RevenoBaseTest {
 	@Test
 	public void testBatch() throws InterruptedException, ExecutionException {
 		Reveno reveno = createEngine();
+		Waiter accountsWaiter = listenFor(reveno, AccountCreatedEvent.class, 10_000);
+		Waiter ordersWaiter = listenFor(reveno, OrderCreatedEvent.class, 10_000);
 		reveno.startup();
 		
 		sendCommandsBatch(reveno, new CreateNewAccountCommand("USD", 1000_000L), 10_000);
@@ -78,6 +80,45 @@ public class Tests extends RevenoBaseTest {
 		
 		Assert.assertEquals(10_000, reveno.query().select(AccountView.class).size());
 		Assert.assertEquals(10_000, reveno.query().select(OrderView.class).size());
+		
+		Assert.assertTrue(accountsWaiter.isArrived());
+		Assert.assertTrue(ordersWaiter.isArrived());
+		
+		reveno.shutdown();
+	}
+	
+	@Test
+	public void testReplay() throws InterruptedException, ExecutionException {
+		testBasic();
+		
+		Reveno reveno = createEngine();
+		Waiter accountCreatedEvent = listenFor(reveno, AccountCreatedEvent.class);
+		Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class);
+		reveno.startup();
+		
+		Assert.assertFalse(accountCreatedEvent.isArrived());
+		Assert.assertFalse(orderCreatedEvent.isArrived());
+		
+		Assert.assertEquals(1, reveno.query().select(AccountView.class).size());
+		Assert.assertEquals(1, reveno.query().select(OrderView.class).size());
+		
+		reveno.shutdown();
+	}
+	
+	@Test
+	public void testBatchReplay() throws InterruptedException, ExecutionException {
+		testBatch();
+		
+		Reveno reveno = createEngine();
+		Waiter accountsWaiter = listenFor(reveno, AccountCreatedEvent.class, 1);
+		Waiter ordersWaiter = listenFor(reveno, OrderCreatedEvent.class, 1);
+		reveno.startup();
+		
+		Assert.assertEquals(10_000, reveno.query().select(AccountView.class).size());
+		Assert.assertEquals(10_000, reveno.query().select(OrderView.class).size());
+		
+		Assert.assertFalse(accountsWaiter.isArrived());
+		Assert.assertFalse(ordersWaiter.isArrived());
 		
 		reveno.shutdown();
 	}

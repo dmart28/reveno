@@ -69,6 +69,7 @@ public class RestorerEventBus implements RestoreableEventBus {
 			log.info("Missing transaction events from {} to {}", lastTransactionId + 1, event.getTransactionId() - 1);
 			unpublishedEvents.add(new LongRange(lastTransactionId + 1, event.getTransactionId() - 1));
 		}
+		lastTransactionId = event.getTransactionId();
 	}
 	
 	public Set<LongRange> getUnpublishedEvents() {

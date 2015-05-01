@@ -53,7 +53,7 @@ public class DisruptorEventPublisher implements EventPublisher {
 		if (isStarted) throw new IllegalStateException("The Event Bus is alredy started.");
 		
 		disruptor = new Disruptor<Event>(eventFactory, 8 * 1024, executor, ProducerType.SINGLE, createWaitStrategy());
-		disruptor.handleEventsWith(this::publish).then(this::serialize).then(this::journal);
+		disruptor.handleEventsWith(this::serialize).then(this::journal).then(this::publish);
 		disruptor.start();
 		
 		log.info("Started.");
@@ -67,6 +67,14 @@ public class DisruptorEventPublisher implements EventPublisher {
 		isStarted = false;
 		disruptor.shutdown();
 		log.info("Stopped.");
+	}
+	
+	@Override
+	public void shutdown() {
+		disruptor.shutdown();
+		
+		for (int i = 0; i < 8 * 1024; i++)
+			disruptor.getRingBuffer().get(i).destroy();
 	}
 	
 	protected void ex(Event c, boolean filter, boolean eob, BiConsumer<Event, Boolean> body) {

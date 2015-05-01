@@ -23,6 +23,8 @@ public interface EventPublisher {
 	void start();
 	
 	void stop();
+	
+	void shutdown();
 
 	void publishEvents(boolean isReplay, long transactionId, EventMetadata eventMetadata, Object[] events);
 	

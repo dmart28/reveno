@@ -19,7 +19,6 @@ package org.reveno.atp.core.channel;
 import static org.reveno.atp.utils.MeasureUtils.kb;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.buffer.Unpooled;
 
 import java.nio.ByteBuffer;
 

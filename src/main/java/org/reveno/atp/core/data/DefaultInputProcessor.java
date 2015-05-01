@@ -26,6 +26,8 @@ import org.reveno.atp.core.api.InputProcessor;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.api.storage.JournalsStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultInputProcessor implements InputProcessor, Closeable {
 	
@@ -35,12 +37,18 @@ public class DefaultInputProcessor implements InputProcessor, Closeable {
 				js.getEventsCommitsAddress() : js.getTransactionCommitsAddress())
 				.map(f -> storage.channel(f)).collect(Collectors.toList());
 		ChannelReader<Buffer> bufferReader = new ChannelReader<>(new ChannelDecoder(), chs);
-		bufferReader.iterator().forEachRemaining((list) -> {
-			list.forEach((b) -> {
-				consumer.accept(b);
-				b.release();
+		try {
+			bufferReader.iterator().forEachRemaining((list) -> {
+				list.forEach((b) -> {
+					while (b.isAvailable()) {
+						consumer.accept(b);
+					}
+					b.release();
+				});
 			});
-		});
+		} catch (Throwable t) {
+			log.error("process", t);
+		}
 	}
 	
 	@Override 
@@ -52,5 +60,6 @@ public class DefaultInputProcessor implements InputProcessor, Closeable {
 	}
 	
 	protected JournalsStorage storage;
+	protected static final Logger log = LoggerFactory.getLogger(DefaultInputProcessor.class);
 
 }

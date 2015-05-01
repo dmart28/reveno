@@ -71,7 +71,7 @@ public class RevenoBaseTest {
     @Parameter
     public ModelType modelType;
 	
-	private File tempDir;
+	protected File tempDir;
 	
 	@Before
 	public void setUp() {
@@ -150,6 +150,12 @@ public class RevenoBaseTest {
 	
 	protected <T> Waiter listenFor(Reveno reveno, Class<T> event) {
 		Waiter waiter = new Waiter(1);
+		reveno.events().eventHandler(event, (e,m) -> waiter.countDown());
+		return waiter;
+	}
+	
+	protected <T> Waiter listenFor(Reveno reveno, Class<T> event, int n) {
+		Waiter waiter = new Waiter(n);
 		reveno.events().eventHandler(event, (e,m) -> waiter.countDown());
 		return waiter;
 	}
