@@ -37,7 +37,8 @@ public class WorkflowEngine {
 	}
 	
 	public void shutdown() {
-		inputProcessor.stop();
+		inputProcessor.shutdown();
+		handlers.destroy();
 	}
 	
 	public PipeProcessor getPipe() {

@@ -38,6 +38,10 @@ public class BufferMock implements Buffer {
 		pos = 0;
 		bytes = new byte[0];
 	}
+	
+	@Override
+	public void release() {
+	}
 
 	@Override
 	public void writeBytes(byte[] b) {

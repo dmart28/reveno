@@ -133,8 +133,8 @@ public class Engine implements Reveno {
 		workflowEngine.shutdown();
 		eventPublisher.stop();
 		
-		transactionsJournaler.stopWriting();
-		eventsJournaler.stopWriting();
+		transactionsJournaler.destroy();
+		eventsJournaler.destroy();
 		
 		log.info("Engine was stopped.");
 	}

@@ -38,7 +38,7 @@ public class MutableModelRepository implements TxRepository {
 	public <T> T store(long entityId, T entity) {
 		repository.store(entityId, entity);
 		if (isTransaction.get() && entity != null)
-			saveEntityState(entityId, entity, EntityRecoveryState.REMOVE);
+			saveEntityState(entityId, entity.getClass(), entity, EntityRecoveryState.REMOVE);
 		return entity;
 	}
 	
@@ -46,7 +46,7 @@ public class MutableModelRepository implements TxRepository {
 	public <T> T store(long entityId, Class<? super T> type, T entity) {
 		repository.store(entityId, type, entity);
 		if (isTransaction.get() && entity != null)
-			saveEntityState(entityId, entity, EntityRecoveryState.REMOVE);
+			saveEntityState(entityId, type, entity, EntityRecoveryState.REMOVE);
 		return entity;
 	}
 
@@ -54,7 +54,7 @@ public class MutableModelRepository implements TxRepository {
 	public Object remove(Class<?> entityClass, long entityId) {
 		Object entity = repository.remove(entityClass, entityId);
 		if (isTransaction.get() && entity != null)
-			saveEntityState(entityId, entity, EntityRecoveryState.ADD);
+			saveEntityState(entityId, entityClass, entity, EntityRecoveryState.ADD);
 		return entity;
 	}
 
@@ -70,7 +70,7 @@ public class MutableModelRepository implements TxRepository {
 			return Optional.empty();
 		
 		if (isTransaction.get() && entity.isPresent())
-			saveEntityState(id, entity.get(), EntityRecoveryState.UPDATE);
+			saveEntityState(id, entityType, entity.get(), EntityRecoveryState.UPDATE);
 		return entity;
 	}
 
@@ -90,7 +90,7 @@ public class MutableModelRepository implements TxRepository {
 	public Map<Long, Object> getEntities(Class<?> entityType) {
 		Map<Long, Object> entities = repository.getEntities(entityType);
 		if (isTransaction.get()) 
-			entities.forEach((id, e) -> saveEntityState(id, e, EntityRecoveryState.UPDATE));
+			entities.forEach((id, e) -> saveEntityState(id, entityType, e, EntityRecoveryState.UPDATE));
 		return entities;
 	}
 
@@ -105,22 +105,23 @@ public class MutableModelRepository implements TxRepository {
 		clearResources();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void rollback() {
 		restoreEntities().forEach(se -> {
 			switch (states.get(se.getEntity().getClass()).get(se.getEntityId())) {
-			case ADD: case UPDATE: repository.store(se.getEntityId(), se.getEntity()); break;
+			case ADD: case UPDATE: repository.store(se.getEntityId(), (Class<Object>)se.getType(), se.getEntity()); break;
 			case REMOVE: repository.remove(se.getEntity().getClass(), se.getEntityId()); break;
 			}
 		});
 		clearResources();
 	}
 	
-	protected boolean saveEntityState(long entityId, Object entity, EntityRecoveryState state) {
-		if (!states.get(entity.getClass()).containsKey(entityId)) {
-			marshallEntity(new SavedEntity(entity, entityId));
-			fixedEntities.get(entity.getClass()).add(entityId);
-			states.get(entity.getClass()).put(entityId, state);
+	protected boolean saveEntityState(long entityId, Class<?> type, Object entity, EntityRecoveryState state) {
+		if (!states.get(type).containsKey(entityId)) {
+			marshallEntity(new SavedEntity(entity, type, entityId));
+			fixedEntities.get(type).add(entityId);
+			states.get(type).put(entityId, state);
 			return true;
 		} else
 			return false;
@@ -151,7 +152,7 @@ public class MutableModelRepository implements TxRepository {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		bufferMapping.get(entity.getClass()).add(holder);
+		bufferMapping.get(entity.getType()).add(holder);
 	}
 	
 	protected void clearResources() {
@@ -181,9 +182,10 @@ public class MutableModelRepository implements TxRepository {
 	}
 	
 	public static class SavedEntity {
-		public SavedEntity(Object entity, long entityId) {
+		public SavedEntity(Object entity, Class<?> type, long entityId) {
 			this.entity = entity;
 			this.entityId = entityId;
+			this.type = type;
 		}
 		
 		private Object entity;
@@ -196,11 +198,16 @@ public class MutableModelRepository implements TxRepository {
 			return entityId;
 		}
 		
+		private Class<?> type;
+		public Class<?> getType() {
+			return type;
+		}
+		
 		@Override
 		public int hashCode() {
 			int result = 1;
 			result = 31 * result + (int) (entityId ^ (entityId >>> 32));
-			result = 31 * result + entity.hashCode();
+			result = 31 * result + type.hashCode();
 			return result;
 		}
 		

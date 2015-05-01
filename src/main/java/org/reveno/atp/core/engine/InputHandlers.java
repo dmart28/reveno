@@ -86,6 +86,11 @@ public class InputHandlers {
 		}
 	}
 	
+	public void destroy() {
+		marshalled.release();
+	}
+	
+	protected final Buffer marshalled = new NettyBasedBuffer(true);
 	protected WorkflowContext services;
 	protected TransactionExecutor txExecutor;
 	protected Supplier<Long> nextTransactionId;
@@ -127,6 +132,5 @@ public class InputHandlers {
 		this.nextTransactionId = nextTransactionId;
 	}
 	
-	protected static final Buffer marshalled = new NettyBasedBuffer(true);
 	protected static final Logger log = LoggerFactory.getLogger(InputHandlers.class);
 }

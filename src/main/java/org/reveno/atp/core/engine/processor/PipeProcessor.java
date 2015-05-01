@@ -32,6 +32,8 @@ public interface PipeProcessor {
 	
 	void sync();
 	
+	void shutdown();
+	
 	boolean isStarted();
 	
 	PipeProcessor pipe(ProcessorHandler... handler);

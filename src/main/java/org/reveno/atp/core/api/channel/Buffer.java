@@ -15,6 +15,8 @@ public interface Buffer {
 	
 	void clear();
 	
+	void release();
+	
 	boolean isAvailable();
 	
 	void writeBytes(byte[] bytes);

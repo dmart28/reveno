@@ -62,6 +62,9 @@ public class ChannelReader<T> implements Iterable<List<T>> {
 					}
 					entries.add(result);
 				}
+				if (prevBuffer != null) {
+					prevBuffer.release();
+				}
 				prevBuffer = buffer;
 				buffer = null;
 				if (entries != null) {

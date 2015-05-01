@@ -18,6 +18,7 @@ package org.reveno.atp.core.channel;
 
 import static org.reveno.atp.utils.MeasureUtils.kb;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
 
 import java.nio.ByteBuffer;
@@ -35,11 +36,11 @@ public class NettyBasedBuffer implements Buffer {
 	}
 	
 	public NettyBasedBuffer(int length, boolean direct) {
-		this.buffer = direct ? Unpooled.directBuffer(length) : Unpooled.buffer(length);
+		this.buffer = direct ? PooledByteBufAllocator.DEFAULT.directBuffer(length) : PooledByteBufAllocator.DEFAULT.buffer(length);
 	}
 	
 	public NettyBasedBuffer(int length, int maxLength, boolean direct) {
-		this.buffer = direct ? Unpooled.directBuffer(length, maxLength) : Unpooled.buffer(length, maxLength);
+		this.buffer = direct ? PooledByteBufAllocator.DEFAULT.directBuffer(length, maxLength) : PooledByteBufAllocator.DEFAULT.buffer(length, maxLength);
 	}
 	
 	@Override
@@ -73,6 +74,11 @@ public class NettyBasedBuffer implements Buffer {
 	@Override
 	public void clear() {
 		buffer.clear();
+	}
+	
+	@Override
+	public void release() {
+		buffer.release();
 	}
 
 	@Override

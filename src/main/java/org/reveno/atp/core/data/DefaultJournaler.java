@@ -73,6 +73,13 @@ public class DefaultJournaler implements Journaler {
 		}
 	}
 	
+	@Override 
+	public void destroy() {
+		stopWriting();
+		
+		buffer.release();
+	}
+	
 	
 	protected void requireWriting() {
 		if (!isWriting)

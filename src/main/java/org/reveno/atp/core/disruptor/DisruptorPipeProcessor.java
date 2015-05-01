@@ -95,6 +95,14 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 			return null;
 		});
 	}
+	
+	@Override
+	public void shutdown() {
+		stop();
+		
+		for (int i = 0; i < 4 * 1024; i++)
+			disruptor.getRingBuffer().get(i).destroy();
+	}
 
 	@Override
 	public boolean isStarted() {

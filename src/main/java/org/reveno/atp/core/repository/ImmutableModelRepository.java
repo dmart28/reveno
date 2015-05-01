@@ -56,7 +56,7 @@ public class ImmutableModelRepository implements TxRepository {
 		if (isTransaction.get()) {
 			Map<Class<?>, Map<Long, Object>> map = repository.getAll();
 			map.forEach((k,v) -> v.forEach((k1, v1) -> {
-				if (!isDeleted(v1.getClass(), k1))
+				if (!isDeleted(k, k1))
 					v.remove(k1);
 				added.get(k).forEach((id, e) -> v.put(id, e));
 			}));
@@ -71,7 +71,7 @@ public class ImmutableModelRepository implements TxRepository {
 
 		if (isTransaction.get()) {
 			List<Map.Entry<Long, Object>> notRemoved = entities.entrySet()
-					.stream().filter(e -> !isDeleted(e.getValue().getClass(), e.getKey()))
+					.stream().filter(e -> !isDeleted(entityType, e.getKey()))
 					.collect(Collectors.toList());
 			notRemoved.addAll(added.get(entityType).entrySet());
 			return notRemoved.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -121,9 +121,10 @@ public class ImmutableModelRepository implements TxRepository {
 		removed.clear();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void commit() {
-		added.forEach((k,v) -> v.forEach((i,e) -> repository.store(i, e)));
+		added.forEach((k,v) -> v.forEach((i,e) -> repository.store(i, (Class<Object>)k, e)));
 		removed.forEach((k,v) -> v.forEach(id -> repository.remove(k, id)));
 		isTransaction.set(false);
 	}

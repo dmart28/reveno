@@ -36,7 +36,10 @@ public class DefaultInputProcessor implements InputProcessor, Closeable {
 				.map(f -> storage.channel(f)).collect(Collectors.toList());
 		ChannelReader<Buffer> bufferReader = new ChannelReader<>(new ChannelDecoder(), chs);
 		bufferReader.iterator().forEachRemaining((list) -> {
-			list.forEach((b) -> consumer.accept(b));
+			list.forEach((b) -> {
+				consumer.accept(b);
+				b.release();
+			});
 		});
 	}
 	

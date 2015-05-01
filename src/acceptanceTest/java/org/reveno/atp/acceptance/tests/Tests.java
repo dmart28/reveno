@@ -16,95 +16,32 @@
 
 package org.reveno.atp.acceptance.tests;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
 import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
-import org.reveno.atp.acceptance.api.transactions.CreateAccount;
-import org.reveno.atp.acceptance.api.transactions.Credit;
-import org.reveno.atp.acceptance.api.transactions.Debit;
-import org.reveno.atp.acceptance.handlers.Commands;
-import org.reveno.atp.acceptance.handlers.Transactions;
-import org.reveno.atp.acceptance.model.immutable.ImmutableAccount;
-import org.reveno.atp.acceptance.model.mutable.MutableAccount;
-import org.reveno.atp.api.Configuration.CpuConsumption;
-import org.reveno.atp.api.Configuration.ModelType;
+import org.reveno.atp.acceptance.api.events.AccountCreatedEvent;
+import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.api.Reveno;
-import org.reveno.atp.core.Engine;
-import org.reveno.atp.test.utils.FileUtils;
 
-import com.google.common.io.Files;
-
-@RunWith(Parameterized.class)
-public class Tests {
+public class Tests extends RevenoBaseTest {
 	
-	@Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][] {
-                 { ModelType.IMMUTABLE }, { ModelType.MUTABLE }  
-           });
-    }
-    
-    @Parameter
-    public ModelType modelType;
-	
-	private File tempDir;
-	
-	@Before
-	public void setUp() {
-		tempDir = Files.createTempDir();
-	}
-	
-	@After
-	public void tearDown() throws IOException {
-		FileUtils.delete(tempDir);
-	}
-
 	@Test 
 	public void testBasic() throws InterruptedException, ExecutionException {
 		Reveno reveno = createEngine();
 		reveno.startup();
 		
-		reveno.executeCommand(new CreateNewAccountCommand("RUB", 1000L)).get();
+		Waiter w = listenFor(reveno, AccountCreatedEvent.class);
+		long accountId = sendCommandSync(reveno, new CreateNewAccountCommand("RUB", 1000L));
+		AccountView view = reveno.query().find(AccountView.class, accountId).get();
+		Assert.assertTrue(w.waitFor());
+		
+		Assert.assertEquals(accountId, view.accountId);
+		Assert.assertEquals("RUB", view.currency);
+		Assert.assertEquals(1000L, view.balance);
 		
 		reveno.shutdown();
-	}
-	
-	protected Reveno createEngine() {
-		return createEngine((r) -> {});
-	}
-	
-	protected Reveno createEngine(Consumer<Reveno> interceptor) {
-		Reveno reveno = new Engine(tempDir);
-		
-		reveno.config().cpuConsumption(CpuConsumption.PHASED);
-		reveno.config().modelType(modelType);
-		
-		reveno.domain().command(CreateNewAccountCommand.class, Long.class, Commands::createAccount);
-		reveno.domain().transactionAction(CreateAccount.class, Transactions::createAccount);
-		reveno.domain().transactionAction(Credit.class, Transactions::credit);
-		reveno.domain().transactionAction(Debit.class, Transactions::debit);
-		
-		interceptor.accept(reveno);
-		
-		if (modelType == ModelType.IMMUTABLE) {
-			Transactions.accountFactory = ImmutableAccount.FACTORY;
-		} else {
-			Transactions.accountFactory = MutableAccount.FACTORY;
-		}
-		
-		return reveno;
 	}
 	
 }

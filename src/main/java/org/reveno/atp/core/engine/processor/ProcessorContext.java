@@ -191,6 +191,13 @@ public class ProcessorContext {
 		return this;
 	}
 	
+	public void destroy() {
+		reset();
+		
+		transactionsBuffer.release();
+		marshallerBuffer.release();
+	}
+	
 	protected class ProcessContextEventBus implements RestoreableEventBus {
 		@Override
 		public void publishEvent(Object event) {

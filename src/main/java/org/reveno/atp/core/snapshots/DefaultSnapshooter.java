@@ -54,6 +54,8 @@ public class DefaultSnapshooter implements RepositorySnapshooter {
 		} catch (Throwable t) {
 			log.error("", t);
 			throw new RuntimeException(t);
+		} finally {
+			buffer.release();
 		}
 	}
 
@@ -73,6 +75,8 @@ public class DefaultSnapshooter implements RepositorySnapshooter {
 		} catch (Throwable t) {
 			log.error("", t);
 			throw new RuntimeException(t);
+		} finally {
+			buffer.release();
 		}
 	}
 

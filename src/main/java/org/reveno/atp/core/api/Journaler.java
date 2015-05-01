@@ -28,4 +28,6 @@ public interface Journaler {
 	
 	void roll(Channel ch);
 	
+	void destroy();
+	
 }

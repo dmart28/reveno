@@ -66,7 +66,7 @@ public class Event {
 		return this;
 	}
 	
-	private Buffer serialized = new NettyBasedBuffer(32, true);
+	private Buffer serialized = new NettyBasedBuffer(32, false);
 	public Buffer serialized() {
 		return serialized;
 	}
