@@ -120,6 +120,11 @@ public class Tests extends RevenoBaseTest {
 		Assert.assertFalse(accountsWaiter.isArrived());
 		Assert.assertFalse(ordersWaiter.isArrived());
 		
+		long accountId = sendCommandSync(reveno, new CreateNewAccountCommand("USD", 1000_000L));
+		Assert.assertEquals(10_001, accountId);
+		long orderId = sendCommandSync(reveno, new NewOrderCommand(accountId, Optional.empty(), "EUR/USD", 134000, 1000, OrderType.MARKET));
+		Assert.assertEquals(10_001, orderId);
+		
 		reveno.shutdown();
 	}
 	

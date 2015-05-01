@@ -53,7 +53,7 @@ public class DisruptorEventPublisher implements EventPublisher {
 		if (isStarted) throw new IllegalStateException("The Event Bus is alredy started.");
 		
 		disruptor = new Disruptor<Event>(eventFactory, 8 * 1024, executor, ProducerType.SINGLE, createWaitStrategy());
-		disruptor.handleEventsWith(this::serialize).then(this::journal).then(this::publish);
+		disruptor.handleEventsWith(this::publish).then(this::serialize).then(this::journal);
 		disruptor.start();
 		
 		log.info("Started.");
