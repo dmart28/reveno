@@ -31,6 +31,7 @@ public class ImmutableOrder implements Order {
 	private final String symbol;
 	private final long price;
 	private final long size;
+	private final long time;
 	private final OrderStatus status;
 	private final OrderType type;
 	
@@ -58,6 +59,10 @@ public class ImmutableOrder implements Order {
 		return size;
 	}
 	
+	public long time() {
+		return time;
+	}
+	
 	public OrderStatus orderStatus() {
 		return status;
 	}
@@ -71,13 +76,14 @@ public class ImmutableOrder implements Order {
 	}
 	
 	public ImmutableOrder(long id, long accId, Optional<Long> positionId, String symbol,
-			long price, long size, OrderStatus status, OrderType type) {
+			long price, long size, long time, OrderStatus status, OrderType type) {
 		this.id = id;
 		this.accountId = accId;
 		this.positionId = positionId;
 		this.symbol = symbol;
 		this.price = price;
 		this.size = size;
+		this.time = time;
 		this.status = status;
 		this.type = type;
 	}
@@ -85,9 +91,9 @@ public class ImmutableOrder implements Order {
 	public static final OrderFactory FACTORY = new OrderFactory() {
 		@Override
 		public Order create(long id, long accId, Optional<Long> positionId,
-				String symbol, long price, long size, OrderStatus status,
+				String symbol, long price, long size, long time, OrderStatus status,
 				OrderType type) {
-			return new ImmutableOrder(id, accId, positionId, symbol, price, size, status, type);
+			return new ImmutableOrder(id, accId, positionId, symbol, price, size, time, status, type);
 		}
 	};
 

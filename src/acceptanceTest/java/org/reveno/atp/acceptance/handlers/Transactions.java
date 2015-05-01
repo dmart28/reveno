@@ -19,11 +19,16 @@ package org.reveno.atp.acceptance.handlers;
 import java.util.Optional;
 
 import org.reveno.atp.acceptance.api.events.AccountCreatedEvent;
+import org.reveno.atp.acceptance.api.events.OrderCreatedEvent;
+import org.reveno.atp.acceptance.api.transactions.AcceptOrder;
 import org.reveno.atp.acceptance.api.transactions.CreateAccount;
 import org.reveno.atp.acceptance.api.transactions.Credit;
 import org.reveno.atp.acceptance.api.transactions.Debit;
 import org.reveno.atp.acceptance.model.Account;
 import org.reveno.atp.acceptance.model.Account.AccountFactory;
+import org.reveno.atp.acceptance.model.Order;
+import org.reveno.atp.acceptance.model.Order.OrderFactory;
+import org.reveno.atp.acceptance.model.Order.OrderStatus;
 import org.reveno.atp.api.transaction.TransactionContext;
 
 public abstract class Transactions {
@@ -58,6 +63,19 @@ public abstract class Transactions {
 			acc.get().addBalance(-tx.amount);
 	}
 	
+	public static void acceptOrder(AcceptOrder tx, TransactionContext ctx) {
+		Account account = ctx.repository().get(Account.class, tx.accountId).get();
+		if (account.isImmutable())
+			ctx.repository().store(tx.accountId, Account.class, account.addOrder(tx.id));
+		else 
+			account.addOrder(tx.id);
+		
+		ctx.repository().store(tx.id, Order.class, orderFactory.create(tx.id, tx.accountId, tx.positionId, tx.symbol,
+				tx.price, tx.size, System.currentTimeMillis(), OrderStatus.PENDING, tx.orderType));
+		ctx.eventBus().publishEvent(new OrderCreatedEvent(tx.id, tx.accountId));
+	}
+	
 	public static AccountFactory accountFactory;
+	public static OrderFactory orderFactory;
 	
 }

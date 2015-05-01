@@ -54,7 +54,7 @@ public class DefaultIdGenerator implements IdGenerator, BiConsumer<DefaultIdGene
 	
 	public static class IdsBundle {
 		public long get(Class<?> type) {
-			return ids.getOrDefault(type, 1L);
+			return ids.getOrDefault(type, 0L);
 		}
 		
 		public IdsBundle store(Class<?> type, long id) {

@@ -16,10 +16,19 @@
 
 package org.reveno.atp.acceptance.handlers;
 
+import static java.lang.String.format;
+
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
+import org.reveno.atp.acceptance.api.commands.NewOrderCommand;
+import org.reveno.atp.acceptance.api.transactions.AcceptOrder;
 import org.reveno.atp.acceptance.api.transactions.CreateAccount;
 import org.reveno.atp.acceptance.api.transactions.Credit;
 import org.reveno.atp.acceptance.model.Account;
+import org.reveno.atp.acceptance.model.Order;
+import org.reveno.atp.acceptance.model.Position;
 import org.reveno.atp.api.commands.CommandContext;
 
 public abstract class Commands {
@@ -34,4 +43,32 @@ public abstract class Commands {
 		return accountId;
 	}
 	
+	public static Long newOrder(NewOrderCommand cmd, CommandContext ctx) { 
+		long orderId = ctx.id(Order.class);
+		Account account = ctx.repository().get(Account.class, cmd.accountId).get();
+		
+		if (cmd.positionId.isPresent()) {
+			long positionId = cmd.positionId.get();
+			require(account.positions().positions().containsKey(positionId), format("Can't find position %d in account %d", positionId, account.id()));
+			Position position = ctx.repository().get(Position.class, cmd.positionId.get()).get();
+			long sum = position.sum() + account.orders().stream().map(oid -> ctx.repository().get(Order.class, oid))
+					.flatMap(Commands::streamopt).filter(o -> o.positionId().isPresent() && o.positionId().get() == positionId)
+					.map(Order::size).reduce(0L, Long::sum);
+			require(sum != 0, format("The position %d is already filled.", positionId));
+		}
+		
+		ctx.executeTransaction(new AcceptOrder(orderId, cmd.accountId, cmd.positionId, cmd.symbol, cmd.price, cmd.size, cmd.orderType));
+		
+		return orderId;
+	}
+	
+	
+	static void require(boolean value, String message) {
+		if (!value)
+			throw new RuntimeException(message);
+	}
+	
+	static <T> Stream<T> streamopt(Optional<T> opt) {
+	    return opt.map(Stream::of).orElseGet(Stream::empty);
+	}
 }

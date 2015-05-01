@@ -53,8 +53,8 @@ public class TestModel {
 		Assert.assertEquals(1, acc3.orders().size());
 		Assert.assertEquals(0, acc4.orders().size());
 		
-		ImmutableOrder order = new ImmutableOrder(1, 1, Optional.empty(), "EUR/USD", 134000, 700L, OrderStatus.FILLED, OrderType.MARKET);
-		ImmutableOrder order1 =  new ImmutableOrder(2, 1, Optional.empty(), "EUR/USD", 135000, 300L, OrderStatus.FILLED, OrderType.MARKET);
+		ImmutableOrder order = new ImmutableOrder(1, 1, Optional.empty(), "EUR/USD", 134000, 700L, 0L, OrderStatus.FILLED, OrderType.MARKET);
+		ImmutableOrder order1 =  new ImmutableOrder(2, 1, Optional.empty(), "EUR/USD", 135000, 300L, 0L, OrderStatus.FILLED, OrderType.MARKET);
 		acc4 = acc4.addPosition(1L, "EUR/USD", new ImmutableFill(1L, acc4.id(), 1, order.size(), order.price(), order));
 		
 		Assert.assertEquals(1, acc4.positions().positions().size());
@@ -63,7 +63,7 @@ public class TestModel {
 		Assert.assertEquals(1000, acc4.positions().positions().get(1L).sum());
 		Assert.assertFalse(acc4.positions().positions().get(1L).isComplete());
 		
-		ImmutableOrder order2 = new ImmutableOrder(3, 1, Optional.of(1L), "EUR/USD", 128000, -1000, OrderStatus.FILLED, OrderType.MARKET);
+		ImmutableOrder order2 = new ImmutableOrder(3, 1, Optional.of(1L), "EUR/USD", 128000, -1000, 0L, OrderStatus.FILLED, OrderType.MARKET);
 		acc4 = acc4.applyFill(new ImmutableFill(3L, acc4.id(), 1L, order2.size(), order2.price(), order2));
 		
 		Assert.assertTrue(acc4.positions().positions().get(1L).isComplete());

@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -33,15 +34,21 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
+import org.reveno.atp.acceptance.api.commands.NewOrderCommand;
+import org.reveno.atp.acceptance.api.transactions.AcceptOrder;
 import org.reveno.atp.acceptance.api.transactions.CreateAccount;
 import org.reveno.atp.acceptance.api.transactions.Credit;
 import org.reveno.atp.acceptance.api.transactions.Debit;
 import org.reveno.atp.acceptance.handlers.Commands;
 import org.reveno.atp.acceptance.handlers.Transactions;
 import org.reveno.atp.acceptance.model.Account;
+import org.reveno.atp.acceptance.model.Order;
 import org.reveno.atp.acceptance.model.immutable.ImmutableAccount;
+import org.reveno.atp.acceptance.model.immutable.ImmutableOrder;
 import org.reveno.atp.acceptance.model.mutable.MutableAccount;
+import org.reveno.atp.acceptance.model.mutable.MutableOrder;
 import org.reveno.atp.acceptance.views.AccountView;
+import org.reveno.atp.acceptance.views.OrderView;
 import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.Reveno;
@@ -92,20 +99,28 @@ public class RevenoBaseTest {
 		reveno.config().modelType(modelType);
 		
 		reveno.domain().command(CreateNewAccountCommand.class, Long.class, Commands::createAccount);
+		reveno.domain().command(NewOrderCommand.class, Long.class, Commands::newOrder);
 		reveno.domain().transactionAction(CreateAccount.class, Transactions::createAccount);
+		reveno.domain().transactionAction(AcceptOrder.class, Transactions::acceptOrder);
 		reveno.domain().transactionAction(Credit.class, Transactions::credit);
 		reveno.domain().transactionAction(Debit.class, Transactions::debit);
 		
 		reveno.domain().viewMapper(Account.class, AccountView.class, (e, ov, r) -> {
-			return new AccountView(e.id(), e.currency(), e.balance());
+			return new AccountView(e.id(), e.currency(), e.balance(), e.orders(), reveno.query());
+		});
+		reveno.domain().viewMapper(Order.class, OrderView.class, (e, ov, r) -> {
+			return new OrderView(e.id(), e.accountId(), e.size(), e.price(), e.time(), e.positionId(),
+					e.symbol(), e.orderStatus(), e.orderType(), reveno.query());
 		});
 		
 		interceptor.accept(reveno);
 		
 		if (modelType == ModelType.IMMUTABLE) {
 			Transactions.accountFactory = ImmutableAccount.FACTORY;
+			Transactions.orderFactory = ImmutableOrder.FACTORY;
 		} else {
 			Transactions.accountFactory = MutableAccount.FACTORY;
+			Transactions.orderFactory = MutableOrder.FACTORY;
 		}
 		
 		return reveno;
@@ -117,6 +132,20 @@ public class RevenoBaseTest {
 		if (!result.isSuccess())
 			throw new RuntimeException(result.getException());
 		return result.getResult();
+	}
+	
+	protected void sendCommandsBatch(Reveno reveno, Object command, int n) throws InterruptedException, ExecutionException {
+		for (int i = 0; i < n - 1; i++) {
+			reveno.executeCommand(command);
+		}
+		sendCommandSync(reveno, command);
+	}
+	
+	protected void sendCommandsBatch(Reveno reveno, List<? extends Object> commands) throws InterruptedException, ExecutionException {
+		for (int i = 0; i < commands.size() - 1; i++) {
+			reveno.executeCommand(commands.get(i));
+		}
+		sendCommandSync(reveno, commands.get(commands.size() - 1));
 	}
 	
 	protected <T> Waiter listenFor(Reveno reveno, Class<T> event) {

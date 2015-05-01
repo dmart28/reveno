@@ -14,44 +14,19 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.acceptance.model;
+package org.reveno.atp.acceptance.views;
 
 import java.util.Optional;
+import java.util.stream.Stream;
 
-public interface Order extends Changeable {
+import org.reveno.atp.api.query.QueryManager;
 
-	long id();
+public class ViewBase {
+
+	protected QueryManager query;
 	
-	long accountId();
-	
-	Optional<Long> positionId();
-	
-	String symbol();
-	
-	long price();
-	
-	long size();
-	
-	long time();
-	
-	OrderStatus orderStatus();
-	
-	OrderType orderType();
-	
-	Order update(OrderStatus orderStatus);
-	
-	public static enum OrderStatus {
-		PENDING, FILLED, CANCELLED
-	}
-	
-	public static enum OrderType {
-		MARKET, LIMIT, STOP
-	}
-	
-	
-	public interface OrderFactory {
-		Order create(long id, long accId, Optional<Long> positionId, String symbol,
-				long price, long size, long time, OrderStatus status, OrderType type);
+	static <T> Stream<T> sops(Optional<T> opt) {
+	    return opt.map(Stream::of).orElseGet(Stream::empty);
 	}
 	
 }

@@ -18,9 +18,9 @@ package org.reveno.atp.core.repository;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.reveno.atp.api.domain.WriteableRepository;
 
@@ -72,17 +72,17 @@ public class HashMapRepository implements WriteableRepository {
 	@Override
 	public Map<Long, Object> getEntities(Class<?> entityType) {
 		if (!map.containsKey(entityType))
-			map.put(entityType, new HashMap<>(capacity, loadFactor));
+			map.put(entityType, new ConcurrentHashMap<>(capacity, loadFactor));
 		return map.get(entityType);
 	}
 	
 	
 	public HashMapRepository() {
-		this(1 << 6, 0.75f);
+		this(88 << 6, 0.75f);
 	}
 	
 	public HashMapRepository(int capacity, float loadFactor) {
-		this.map = new HashMap<>();
+		this.map = new ConcurrentHashMap<>();
 		this.capacity = capacity;
 		this.loadFactor = loadFactor;
 	}

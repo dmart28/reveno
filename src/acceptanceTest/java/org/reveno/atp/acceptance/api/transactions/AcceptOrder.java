@@ -14,44 +14,31 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.acceptance.model;
+package org.reveno.atp.acceptance.api.transactions;
 
 import java.util.Optional;
 
-public interface Order extends Changeable {
+import org.reveno.atp.acceptance.model.Order.OrderType;
 
-	long id();
+public class AcceptOrder {
+
+	public final long id;
+	public final long accountId;
+	public final Optional<Long> positionId;
+	public final String symbol;
+	public final long price;
+	public final long size;
+	public final OrderType orderType;
 	
-	long accountId();
-	
-	Optional<Long> positionId();
-	
-	String symbol();
-	
-	long price();
-	
-	long size();
-	
-	long time();
-	
-	OrderStatus orderStatus();
-	
-	OrderType orderType();
-	
-	Order update(OrderStatus orderStatus);
-	
-	public static enum OrderStatus {
-		PENDING, FILLED, CANCELLED
-	}
-	
-	public static enum OrderType {
-		MARKET, LIMIT, STOP
-	}
-	
-	
-	public interface OrderFactory {
-		Order create(long id, long accId, Optional<Long> positionId, String symbol,
-				long price, long size, long time, OrderStatus status, OrderType type);
+	public AcceptOrder(long id, long accountId, Optional<Long> positionId,
+			String symbol, long price, long size, OrderType orderType) {
+		this.id = id;
+		this.accountId = accountId;
+		this.positionId = positionId;
+		this.symbol = symbol;
+		this.price = price;
+		this.size = size;
+		this.orderType = orderType;
 	}
 	
 }
