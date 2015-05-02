@@ -11,11 +11,12 @@ public class SimpleEventsSerializer implements EventsInfoSerializer {
 	public void serialize(EventsCommitInfo info, Buffer buffer) {
 		buffer.writeLong(info.getTransactionId());
 		buffer.writeLong(info.getTime());
+		buffer.writeInt(info.getFlag());
 	}
 
 	@Override
 	public EventsCommitInfo deserialize(Builder builder, Buffer buffer) {
-		return builder.create(buffer.readLong(), buffer.readLong());
+		return builder.create(buffer.readLong(), buffer.readLong(), buffer.readInt());
 	}
 
 }

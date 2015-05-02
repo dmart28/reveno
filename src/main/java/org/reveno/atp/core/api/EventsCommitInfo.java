@@ -22,9 +22,11 @@ public interface EventsCommitInfo {
 	
 	long getTime();
 	
+	int getFlag();
+	
 	
 	public interface Builder {
-		EventsCommitInfo create(long txId, long time);
+		EventsCommitInfo create(long txId, long time, int flag);
 	}
 	
 }

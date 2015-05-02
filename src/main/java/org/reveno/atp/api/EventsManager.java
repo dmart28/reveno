@@ -16,12 +16,11 @@
 
 package org.reveno.atp.api;
 
-import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 
 public interface EventsManager {
 	
-	void asyncEventExecutor(ExecutorService executor);
+	void asyncEventExecutors(int count);
 	
 	<E> void asyncEventHandler(Class<E> eventType, BiConsumer<E, EventMetadata> consumer);
 	

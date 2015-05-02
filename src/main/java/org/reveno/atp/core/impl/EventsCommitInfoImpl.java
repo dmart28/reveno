@@ -36,13 +36,22 @@ public class EventsCommitInfoImpl implements EventsCommitInfo {
 		this.time = time;
 	}
 	
+	private int flag;
+	public int getFlag() {
+		return flag;
+	}
+	public void setFlag(final int flag) {
+		this.flag = flag;
+	}
+	
 	
 	public static class PojoBuilder implements EventsCommitInfo.Builder {
 		@Override
-		public EventsCommitInfo create(long txId, long time) {
+		public EventsCommitInfo create(long txId, long time, int flag) {
 			EventsCommitInfoImpl impl = new EventsCommitInfoImpl();
 			impl.setTransactionId(txId);
 			impl.setTime(time);
+			impl.setFlag(flag);
 			return impl;
 		}
 	}

@@ -39,6 +39,15 @@ public class Event {
 		return this;
 	}
 	
+	private int flag;
+	public int getFlag() {
+		return flag;
+	}
+	public Event flag(int flag) {
+		this.flag = flag;
+		return this;
+	}
+	
 	private long transactionId;
 	public long transactionId() {
 		return transactionId;
@@ -74,6 +83,7 @@ public class Event {
 	public Event reset() {
 		isAborted = false;
 		isReplay = false;
+		flag = 0;
 		transactionId = 0L;
 		events = null;
 		eventMetadata = null;

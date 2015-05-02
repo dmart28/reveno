@@ -23,15 +23,21 @@ public final class LongRange implements Iterable<Long>, Comparable<LongRange> {
 	public LongRange(long start, long end) {
 		this.start = start;
 		this.end = end;
-		size = end - start;
+	}
+	
+	public LongRange(long value) {
+		this.start = value;
+		this.end = value;
 	}
 	
 	public boolean higher(long value) {
-		return value >= end;
+		return value > end;
 	}
 
 	public boolean contains(long value) {
-		return value >= start && value < end;
+		if (start == end)
+			return value == start;
+		return value >= start && value <= end;
 	}
 
 	public Iterator<Long> iterator() {
@@ -70,7 +76,6 @@ public final class LongRange implements Iterable<Long>, Comparable<LongRange> {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + (int) (end ^ (end >>> 32));
-		result = prime * result + (int) (size ^ (size >>> 32));
 		result = prime * result + (int) (start ^ (start >>> 32));
 		return result;
 	}
@@ -86,8 +91,6 @@ public final class LongRange implements Iterable<Long>, Comparable<LongRange> {
 		LongRange other = (LongRange) obj;
 		if (end != other.end)
 			return false;
-		if (size != other.size)
-			return false;
 		if (start != other.start)
 			return false;
 		return true;
@@ -102,5 +105,4 @@ public final class LongRange implements Iterable<Long>, Comparable<LongRange> {
 	
 	public final long start;
 	public final long end;
-	public final long size;
 }

@@ -17,6 +17,7 @@
 package org.reveno.atp.core.events;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -52,7 +53,7 @@ public class DisruptorEventPublisher implements EventPublisher {
 	public void start() {
 		if (isStarted) throw new IllegalStateException("The Event Bus is alredy started.");
 		
-		disruptor = new Disruptor<Event>(eventFactory, 8 * 1024, executor, ProducerType.SINGLE, createWaitStrategy());
+		disruptor = new Disruptor<Event>(eventFactory, 8 * 1024, executor, ProducerType.MULTI, createWaitStrategy());
 		disruptor.handleEventsWith(this::publish).then(this::serialize).then(this::journal);
 		disruptor.start();
 		
@@ -97,8 +98,16 @@ public class DisruptorEventPublisher implements EventPublisher {
 		});
 	}
 	
+	@Override
+	public void commitAsyncError(boolean isReplay, long transactionId) {
+		requireStarted(() -> {
+			disruptor.publishEvent((e,s) -> e.reset().flag(ASYNC_ERROR_FLAG).replay(isReplay).transactionId(transactionId));
+			return null;
+		});
+	}
+	
 	protected void publish(Event event, long sequence, boolean endOfBatch) {
-		ex(event, true, endOfBatch, publisher);
+		ex(event, event.getFlag() == 0, endOfBatch, publisher);
 	}
 	
 	protected void serialize(Event event, long sequence, boolean endOfBatch) {
@@ -110,15 +119,39 @@ public class DisruptorEventPublisher implements EventPublisher {
 	}
 	
 	protected final BiConsumer<Event, Boolean> publisher = (e, eof) -> {
+		boolean needAsync = false;
 		for (Object event : e.events()) {
 			context.manager().getEventHandlers(event.getClass()).forEach(h -> h.accept(event,
 					e.eventMetadata() == null ? metadata : e.eventMetadata()));
+			needAsync = context.manager().getAsyncHandlers(event.getClass()).size() > 0;
 		}
-		// TODO async processing
+		if (needAsync) {
+			Barrier barrier = new Barrier(this, e.transactionId(), e.isReplay());
+			ExecutorService executor = context.manager().asyncEventExecutor();
+			for (Object event : e.events()) {
+				if (context.manager().getEventHandlers(event.getClass()).size() == 0) {
+					context.manager().getAsyncHandlers(event.getClass()).forEach(h -> {
+						barrier.open();
+						executor.execute(() -> {
+							try {
+								h.accept(event, e.eventMetadata() == null ? metadata : e.eventMetadata());
+							} catch (Throwable t) {
+								log.error("asyncEventExecutor", t);
+								barrier.fail();
+							}
+						});
+					});
+				}
+			}
+			if (barrier.isOpen()) {
+				executor.execute(barrier);
+			}
+		}
 	};
 	
 	protected final BiConsumer<Event, Boolean> serializer = (e, eof) -> {
-		EventsCommitInfo info = context.eventsCommitBuilder().create(e.transactionId(), System.currentTimeMillis());
+		EventsCommitInfo info = context.eventsCommitBuilder().create(e.transactionId(), System.currentTimeMillis(), 
+				e.getFlag());
 		context.serializer().serialize(info, e.serialized());
 	};
 	

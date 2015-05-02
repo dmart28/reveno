@@ -63,6 +63,69 @@ public class Tests extends RevenoBaseTest {
 	}
 	
 	@Test
+	public void testAsyncHandlers() throws InterruptedException, ExecutionException {
+		Reveno reveno = createEngine();
+		reveno.startup();
+		
+		Waiter accountCreatedEvent = listenAsyncFor(reveno, AccountCreatedEvent.class, 1_000);
+		sendCommandsBatch(reveno, new CreateNewAccountCommand("USD", 1000_000L), 1_000);
+		Assert.assertTrue(accountCreatedEvent.isArrived());
+		
+		reveno.shutdown();
+	}
+	
+	@Test
+	public void testExceptionalEventHandler() throws InterruptedException, ExecutionException {
+		Reveno reveno = createEngine();
+		reveno.startup();
+		
+		Waiter w = listenFor(reveno, AccountCreatedEvent.class, 1_000, (c) -> {
+			if (c == 500 || c == 600 || c == 601) {
+				throw new RuntimeException();
+			}
+		});
+		sendCommandsBatch(reveno, new CreateNewAccountCommand("USD", 1000_000L), 1_000);
+		Assert.assertTrue(w.isArrived());
+		
+		reveno.shutdown();
+		
+		reveno = createEngine();
+		w = listenFor(reveno, AccountCreatedEvent.class, 4);
+		reveno.startup();
+		
+		Assert.assertFalse(w.isArrived());
+		Assert.assertEquals(1, w.getCount());
+		
+		reveno.shutdown();
+	}
+	
+	@Test
+	public void testExceptionalAsyncEventHandler() throws InterruptedException, ExecutionException {
+		Reveno reveno = createEngine();
+		reveno.events().asyncEventExecutors(10);
+		reveno.startup();
+		
+		Waiter w = listenAsyncFor(reveno, AccountCreatedEvent.class, 1_000, (c) -> {
+			if (c == 500 || c == 600 || c == 601) {
+				throw new RuntimeException();
+			}
+		});
+		sendCommandsBatch(reveno, new CreateNewAccountCommand("USD", 1000_000L), 1_000);
+		Assert.assertTrue(w.isArrived());
+		
+		reveno.shutdown();
+		
+		reveno = createEngine();
+		w = listenFor(reveno, AccountCreatedEvent.class, 4);
+		reveno.startup();
+		
+		Assert.assertFalse(w.isArrived());
+		Assert.assertEquals(1, w.getCount());
+		
+		reveno.shutdown();
+	}
+	
+	@Test
 	public void testBatch() throws InterruptedException, ExecutionException {
 		Reveno reveno = createEngine();
 		Waiter accountsWaiter = listenFor(reveno, AccountCreatedEvent.class, 10_000);

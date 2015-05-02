@@ -16,11 +16,16 @@
 
 package org.reveno.atp.core.events;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.reveno.atp.api.EventsManager;
 import org.reveno.atp.utils.MapUtils;
@@ -29,10 +34,16 @@ import org.reveno.atp.utils.MapUtils;
 public class EventHandlersManager implements EventsManager {
 
 	@Override
-	public void asyncEventExecutor(ExecutorService executor) {
-		if (this.asyncListenersExecutor != null)
-			this.asyncListenersExecutor.shutdown();
-		this.asyncListenersExecutor = executor;
+	public void asyncEventExecutors(int count) {
+		close();
+		
+		asyncListenersExecutor = IntStream.range(0, count)
+				.mapToObj(i -> Executors.newSingleThreadExecutor())
+				.collect(Collectors.toList());
+	}
+	
+	public ExecutorService asyncEventExecutor() {
+		return asyncListenersExecutor.get(rand.nextInt(asyncListenersExecutor.size()));
 	}
 	
 	@Override
@@ -58,8 +69,12 @@ public class EventHandlersManager implements EventsManager {
 		return asyncListeners.get(eventType);
 	}
 
+	public void close() {
+		asyncListenersExecutor.forEach(ExecutorService::shutdown);
+	}
 	
+	protected Random rand = new Random();
 	protected Map<Class<?>, Set<BiConsumer<Object, EventMetadata>>> listeners = MapUtils.repositorySet();
 	protected Map<Class<?>, Set<BiConsumer<Object, EventMetadata>>> asyncListeners = MapUtils.repositorySet();
-	protected ExecutorService asyncListenersExecutor = Executors.newSingleThreadExecutor();
+	protected List<ExecutorService> asyncListenersExecutor = Arrays.asList(Executors.newSingleThreadExecutor());
 }

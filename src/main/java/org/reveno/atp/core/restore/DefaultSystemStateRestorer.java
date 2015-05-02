@@ -21,6 +21,7 @@ import org.reveno.atp.core.EngineWorkflowContext;
 import org.reveno.atp.core.api.EventsCommitInfo;
 import org.reveno.atp.core.api.InputProcessor;
 import org.reveno.atp.core.api.InputProcessor.JournalType;
+import org.reveno.atp.core.api.SystemInfo;
 import org.reveno.atp.core.api.SystemStateRestorer;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.TxRepository;
@@ -35,7 +36,7 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 	@Override
 	public SystemState restore(TxRepository repository) {
 		workflowContext.repository(repository);
-		final long[] transactionId = { 0 };
+		final long[] transactionId = { repository.get(SystemInfo.class, 0L).orElse(new SystemInfo(0L)).lastTransactionId };
 		try (InputProcessor processor = new DefaultInputProcessor(journalStorage)) {
 			processor.process((b) -> {
 				EventsCommitInfo e = eventsContext.serializer().deserialize(eventsContext.eventsCommitBuilder(), b);

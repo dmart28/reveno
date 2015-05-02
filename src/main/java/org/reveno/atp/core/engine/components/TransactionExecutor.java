@@ -18,6 +18,7 @@ package org.reveno.atp.core.engine.components;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.reveno.atp.api.commands.CommandContext;
@@ -26,6 +27,7 @@ import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.transaction.EventBus;
 import org.reveno.atp.api.transaction.TransactionContext;
 import org.reveno.atp.core.api.IdGenerator;
+import org.reveno.atp.core.api.SystemInfo;
 import org.reveno.atp.core.engine.WorkflowContext;
 import org.reveno.atp.core.engine.processor.ProcessorContext;
 import org.slf4j.Logger;
@@ -58,6 +60,7 @@ public class TransactionExecutor {
 			}
 			
 			services.repository().commit();
+			setSystemInfo(services, c.transactionId());
 		} catch (Throwable t) {
 			c.abort(t);
 			log.error("executeCommands", t);
@@ -67,6 +70,14 @@ public class TransactionExecutor {
 
 	protected void executeTransactions(WorkflowContext services) {
 		services.transactionsManager().execute(commandContext.transactions, transactionContext);
+	}
+	
+	protected void setSystemInfo(WorkflowContext services, long transactionId) {
+		Optional<SystemInfo> si = services.repository().get(SystemInfo.class, 0L);
+		if (si.isPresent())
+			si.get().lastTransactionId = transactionId;
+		else
+			services.repository().store(0L, SystemInfo.class, new SystemInfo(transactionId));
 	}
 	
 	protected RecordingRepository repository = new RecordingRepository();

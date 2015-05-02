@@ -22,6 +22,7 @@ import java.util.TreeSet;
 
 import org.reveno.atp.api.transaction.EventBus;
 import org.reveno.atp.commons.LongRange;
+import org.reveno.atp.core.api.EventPublisher;
 import org.reveno.atp.core.api.EventsCommitInfo;
 import org.reveno.atp.core.api.RestoreableEventBus;
 import org.slf4j.Logger;
@@ -35,7 +36,7 @@ public class RestorerEventBus implements RestoreableEventBus {
 		while (i.hasNext()) {
 			LongRange range = i.next();
 			if (!range.higher(currentTransactionId)) {
-				if (!range.contains(currentTransactionId)) {
+				if (range.contains(currentTransactionId)) {
 					underlyingEventBus.publishEvent(event);
 				}
 				break;
@@ -62,9 +63,14 @@ public class RestorerEventBus implements RestoreableEventBus {
 			return;
 		}
 		
-		if (event.getTransactionId() <= lastTransactionId) 
-			throw new RuntimeException("Next TxID can't be less or equal than last TxID!");
-		
+		if (event.getTransactionId() <= lastTransactionId && event.getFlag() == 0) {
+			log.warn("Transaction ID < Last Transaction ID - this is abnormal!");
+			return;
+		} else if (event.getFlag() == EventPublisher.ASYNC_ERROR_FLAG) {
+			log.info("Failed transaction event [{}]", event.getTransactionId());
+			unpublishedEvents.add(new LongRange(event.getTransactionId()));
+			return;
+		}
 		if (event.getTransactionId() - lastTransactionId > 1) {
 			log.info("Missing transaction events from {} to {}", lastTransactionId + 1, event.getTransactionId() - 1);
 			unpublishedEvents.add(new LongRange(lastTransactionId + 1, event.getTransactionId() - 1));

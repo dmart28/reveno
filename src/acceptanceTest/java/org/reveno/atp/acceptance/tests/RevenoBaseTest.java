@@ -154,9 +154,29 @@ public class RevenoBaseTest {
 		return waiter;
 	}
 	
-	protected <T> Waiter listenFor(Reveno reveno, Class<T> event, int n) {
+	protected <T> Waiter listenAsyncFor(Reveno reveno, Class<T> event, int n) {
+		return listenAsyncFor(reveno, event, n, (o) -> {});
+	}
+	
+	protected <T> Waiter listenAsyncFor(Reveno reveno, Class<T> event, int n, Consumer<Long> c) {
 		Waiter waiter = new Waiter(n);
-		reveno.events().eventHandler(event, (e,m) -> waiter.countDown());
+		reveno.events().asyncEventHandler(event, (e,m) -> {
+			waiter.countDown();
+			c.accept(waiter.getCount());
+		});
+		return waiter;
+	}
+	
+	protected <T> Waiter listenFor(Reveno reveno, Class<T> event, int n) {
+		return listenFor(reveno, event, n, (a) -> {});
+	}
+	
+	protected <T> Waiter listenFor(Reveno reveno, Class<T> event, int n, Consumer<Long> c) {
+		Waiter waiter = new Waiter(n);
+		reveno.events().eventHandler(event, (e,m) -> {
+			waiter.countDown();
+			c.accept(waiter.getCount());
+		});
 		return waiter;
 	}
 	
@@ -167,7 +187,7 @@ public class RevenoBaseTest {
 		}
 		
 		public boolean isArrived() throws InterruptedException {
-			return await(100, TimeUnit.MILLISECONDS);
+			return await(500, TimeUnit.MILLISECONDS);
 		}
 		
 	}

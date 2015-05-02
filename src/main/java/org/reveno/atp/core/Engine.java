@@ -136,6 +136,7 @@ public class Engine implements Reveno {
 		transactionsJournaler.destroy();
 		eventsJournaler.destroy();
 		
+		eventsManager.close();
 		executor.shutdown();
 		eventPublisher.shutdown();
 		

@@ -48,7 +48,7 @@ dependencies {
 def forks = Math.max(4, (int) (Runtime.runtime.availableProcessors() / 2))
 
 test {
-	minHeapSize = "256m"
+	minHeapSize = "1024m"
 	maxParallelForks = forks
   	
   	beforeTest { descriptor ->

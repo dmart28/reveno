@@ -16,21 +16,12 @@
 
 package org.reveno.atp.core.api;
 
-import org.reveno.atp.api.EventsManager.EventMetadata;
+public class SystemInfo {
 
-public interface EventPublisher {
+	public long lastTransactionId;
 	
-	void start();
-	
-	void stop();
-	
-	void shutdown();
-
-	void publishEvents(boolean isReplay, long transactionId, EventMetadata eventMetadata, Object[] events);
-
-	void commitAsyncError(boolean isReplay, long transactionId);
-	
-	
-	public static final int ASYNC_ERROR_FLAG = 0xFFFFFFFF;
+	public SystemInfo(long lastTransactionId) {
+		this.lastTransactionId = lastTransactionId;
+	}
 	
 }
