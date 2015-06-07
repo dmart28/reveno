@@ -85,6 +85,8 @@ public class Tests extends RevenoBaseTest {
 			}
 		});
 		sendCommandsBatch(reveno, new CreateNewAccountCommand("USD", 1000_000L), 1_000);
+		// it's just fine since on exception we still processing
+		// but such events won't be committed
 		Assert.assertTrue(w.isArrived());
 		
 		reveno.shutdown();
@@ -93,6 +95,8 @@ public class Tests extends RevenoBaseTest {
 		w = listenFor(reveno, AccountCreatedEvent.class, 4);
 		reveno.startup();
 		
+		// after restart we expect that there will be 3 replayed
+		// events - the count of exceptions
 		Assert.assertFalse(w.isArrived());
 		Assert.assertEquals(1, w.getCount());
 		

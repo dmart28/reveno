@@ -26,7 +26,7 @@ public interface Repository {
 	
 	<T> Collection<T> getAll(Class<T> entityType);
 	
-	Map<Class<?>, Map<Long, Object>> getAll();
+	RepositoryData getData();
 	
 	Map<Long, Object> getEntities(Class<?> entityType);
 	

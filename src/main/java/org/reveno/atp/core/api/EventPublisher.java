@@ -31,6 +31,6 @@ public interface EventPublisher {
 	void commitAsyncError(boolean isReplay, long transactionId);
 	
 	
-	public static final int ASYNC_ERROR_FLAG = 0xFFFFFFFF;
+	public static final int ASYNC_ERROR_FLAG = 0xBABECAFE;
 	
 }

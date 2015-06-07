@@ -29,7 +29,7 @@ import org.reveno.atp.acceptance.model.immutable.ImmutableOrder;
 public class TestModel {
 
 	@Test
-	public void test() {
+	public void testImmutableModel() {
 		ImmutableAccount acc1 = new ImmutableAccount(1, "USD", 500_000);
 		ImmutableAccount acc2 = acc1.addBalance(500_000);
 		

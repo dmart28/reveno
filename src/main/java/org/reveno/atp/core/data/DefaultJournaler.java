@@ -39,11 +39,15 @@ public class DefaultJournaler implements Journaler {
 			ch.write(buffer);
 			buffer.clear();
 			
-			if (!channel.compareAndSet(ch, ch)) {
-				try {
-					log.info("Closing channel.");
-					ch.close();
-				} catch (Exception e) { }
+			if (!oldChannel.compareAndSet(ch, ch)) {
+				if (oldChannel.get().isOpen())
+					closeSilently(oldChannel.get());
+				oldChannel.set(ch);
+				
+				if (rolledHandler != null) {
+					rolledHandler.run();
+					rolledHandler = null;
+				}
 			}
 		}
 	}
@@ -53,6 +57,7 @@ public class DefaultJournaler implements Journaler {
 		log.info("Started writing to " + ch);
 		
 		channel.set(ch);
+		oldChannel.set(ch);
 		isWriting = true;
 	}
 
@@ -63,15 +68,15 @@ public class DefaultJournaler implements Journaler {
 		isWriting = false;
 		if (buffer.isAvailable())
 			channel.get().write(buffer);
-		channel.get().close();
+		closeSilently(channel.get());
+		if (oldChannel.get().isOpen())
+			closeSilently(oldChannel.get());
 	}
 
 	@Override
-	public void roll(Channel ch) {
-		Channel curr = channel.get();
-		while (!channel.compareAndSet(curr, ch)) {
-			curr = channel.get();
-		}
+	public void roll(Channel ch, Runnable rolled) {
+		this.rolledHandler = rolled;
+		channel.set(ch);
 	}
 	
 	@Override 
@@ -82,14 +87,25 @@ public class DefaultJournaler implements Journaler {
 	}
 	
 	
+	protected void closeSilently(Channel ch) {
+		log.info("Closing channel.");
+		try {
+			ch.close();
+		} catch (Throwable t) {
+			log.error(t.getMessage(), t);
+		}
+	}
+	
 	protected void requireWriting() {
 		if (!isWriting)
 			throw new RuntimeException("Journaler must be in writing mode.");
 	}
 	
 	
-	private final Buffer buffer = new NettyBasedBuffer(mb(1), true);
-	private AtomicReference<Channel> channel = new AtomicReference<Channel>();
-	private volatile boolean isWriting = false;
-	private static final Logger log = LoggerFactory.getLogger(DefaultJournaler.class);
+	protected final Buffer buffer = new NettyBasedBuffer(mb(1), true);
+	protected AtomicReference<Channel> channel = new AtomicReference<Channel>();
+	protected AtomicReference<Channel> oldChannel = new AtomicReference<Channel>();
+	protected volatile Runnable rolledHandler;
+	protected volatile boolean isWriting = false;
+	protected static final Logger log = LoggerFactory.getLogger(DefaultJournaler.class);
 }

@@ -58,6 +58,14 @@ public class RevenoConfiguration implements Configuration {
 		public boolean snapshootAtShutdown() {
 			return snapshootAtShutdown;
 		}
+		
+		@Override
+		public void snapshootOnException(boolean snapshootOnException) {
+			this.snapshootOnException = snapshootOnException;
+		}
+		public boolean snapshootOnException() {
+			return snapshootOnException;
+		}
 
 		@Override
 		public void snapshootWithInterval(long interval) {
@@ -76,6 +84,7 @@ public class RevenoConfiguration implements Configuration {
 		}
 		
 		private volatile boolean snapshootAtShutdown = false;
+		private volatile boolean snapshootOnException = false;
 		private volatile long snapshootWithInterval = -1;
 		private volatile long snapshootEvery = -1;
 		

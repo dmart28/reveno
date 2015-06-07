@@ -25,6 +25,7 @@ import org.reveno.atp.core.engine.WorkflowContext;
 import org.reveno.atp.core.engine.components.CommandsManager;
 import org.reveno.atp.core.engine.components.SerializersChain;
 import org.reveno.atp.core.engine.components.TransactionsManager;
+import org.reveno.atp.core.snapshots.SnapshotsManager;
 import org.reveno.atp.core.views.ViewsProcessor;
 
 public class EngineWorkflowContext implements WorkflowContext {
@@ -116,6 +117,26 @@ public class EngineWorkflowContext implements WorkflowContext {
 	}
 	public EngineWorkflowContext transactionJournaler(Journaler transactionJournaler) {
 		this.transactionJournaler = transactionJournaler;
+		return this;
+	}
+	
+	private JournalsRoller roller;
+	@Override
+	public JournalsRoller roller() {
+		return roller;
+	}
+	public EngineWorkflowContext roller(JournalsRoller roller) {
+		this.roller = roller;
+		return this;
+	}
+	
+	private SnapshotsManager snapshotsManager;
+	@Override
+	public SnapshotsManager snapshotsManager() {
+		return snapshotsManager;
+	}
+	public EngineWorkflowContext snapshotsManager(SnapshotsManager snapshotsManager) {
+		this.snapshotsManager = snapshotsManager;
 		return this;
 	}
 

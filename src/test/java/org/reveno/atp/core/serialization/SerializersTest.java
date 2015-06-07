@@ -40,8 +40,7 @@ public class SerializersTest {
 		final User u1 = new User("Artem", 22);
 		final User u2 = new User("Maxim", 28);
 		
-		RepositoryData data = new RepositoryData();
-		data.data = new HashMap<>();
+		RepositoryData data = new RepositoryData(new HashMap<>());
 		data.data.put(User.class, new HashMap<>());
 		data.data.get(User.class).put(1L, u1);
 		data.data.get(User.class).put(2L, u2);

@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
 
 public class HashMapRepository implements WriteableRepository {
@@ -41,8 +42,8 @@ public class HashMapRepository implements WriteableRepository {
 	}
 
 	@Override
-	public Map<Class<?>, Map<Long, Object>> getAll() {
-		return Collections.unmodifiableMap(map);
+	public RepositoryData getData() {
+		return new RepositoryData(Collections.unmodifiableMap(map));
 	}
 
 	@Override

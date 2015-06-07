@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.core.serialization.protostuff.InputOutputHolder;
@@ -81,9 +82,9 @@ public class MutableModelRepository implements TxRepository {
 	}
 
 	@Override
-	public Map<Class<?>, Map<Long, Object>> getAll() {
+	public RepositoryData getData() {
 		// TODO ?
-		return repository.getAll();
+		return repository.getData();
 	}
 
 	@Override

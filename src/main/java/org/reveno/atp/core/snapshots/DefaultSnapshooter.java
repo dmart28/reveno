@@ -18,6 +18,9 @@ package org.reveno.atp.core.snapshots;
 
 import org.reveno.atp.api.RepositorySnapshooter;
 import org.reveno.atp.api.domain.RepositoryData;
+import org.reveno.atp.core.api.SystemStateRestorer;
+import org.reveno.atp.core.api.TxRepository;
+import org.reveno.atp.core.api.TxRepositoryFactory;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
@@ -42,13 +45,15 @@ public class DefaultSnapshooter implements RepositorySnapshooter {
 	}
 
 	@Override
-	public void snapshoot(RepositoryData repo) {
+	public void snapshoot(TxRepositoryFactory factory) {
 		SnapshotStore snap = storage.nextSnapshotStore();
+		TxRepository repo = factory.create();
+		restorer.restore(factory.create());
 		
 		Buffer buffer = new NettyBasedBuffer(false);
-		repoSerializer.serialize(repo, buffer);
+		repoSerializer.serialize(repo.getData(), buffer);
 		try (Channel c = storage.channel(snap.getSnapshotPath())) {
-			log.info("Performing repository snapshot to " + snap);
+			log.info("Performing default repository snapshot to " + snap);
 			
 			c.write(buffer);
 		} catch (Throwable t) {
@@ -81,13 +86,16 @@ public class DefaultSnapshooter implements RepositorySnapshooter {
 	}
 
 	public DefaultSnapshooter(
+			SystemStateRestorer restorer,
 			SnapshotStorage storage,
 			RepositoryDataSerializer repoSerializer) {
+		this.restorer = restorer;
 		this.storage = storage;
 		this.repoSerializer = repoSerializer;
 	}
 
 	
+	protected final SystemStateRestorer restorer;
 	protected final SnapshotStorage storage;
 	protected final RepositoryDataSerializer repoSerializer;
 	protected static final Logger log = LoggerFactory.getLogger(DefaultSnapshooter.class);

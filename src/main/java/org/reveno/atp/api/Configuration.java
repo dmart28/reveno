@@ -28,6 +28,8 @@ public interface Configuration {
 	public static interface SnapshotConfiguration {
 		void snapshootAtShutdown(boolean takeSnapshot);
 		
+		void snapshootOnException(boolean takeSnapshot);
+		
 		void snapshootWithInterval(long interval);
 		
 		void snapshootEvery(long transactionCount);

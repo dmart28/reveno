@@ -87,7 +87,8 @@ public class ReadWriteTest {
 			journaler.stopWriting();
 			channel.close();
 		}
-		
+
+		storage.nextStore();
 		CountDownLatch l = new CountDownLatch(totalCount);
 		InputProcessor processor = new DefaultInputProcessor(storage);
 		processor.process((b) -> {

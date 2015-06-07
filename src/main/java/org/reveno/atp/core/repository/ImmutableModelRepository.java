@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.utils.MapUtils;
@@ -52,17 +53,17 @@ public class ImmutableModelRepository implements TxRepository {
 	}
 
 	@Override
-	public Map<Class<?>, Map<Long, Object>> getAll() {
+	public RepositoryData getData() {
 		if (isTransaction.get()) {
-			Map<Class<?>, Map<Long, Object>> map = repository.getAll();
+			Map<Class<?>, Map<Long, Object>> map = repository.getData().data;
 			map.forEach((k,v) -> v.forEach((k1, v1) -> {
 				if (!isDeleted(k, k1))
 					v.remove(k1);
 				added.get(k).forEach((id, e) -> v.put(id, e));
 			}));
-			return map;
+			return new RepositoryData(map);
 		} else
-			return repository.getAll();
+			return repository.getData();
 	}
 	
 	@Override

@@ -55,7 +55,7 @@ public class RepositoryTest {
 		repository.store(1L, rec);
 		repository.store(2L, item2);
 		
-		Assert.assertEquals(2, repository.getAll().size());
+		Assert.assertEquals(2, repository.getData().data.size());
 		Assert.assertEquals(2, repository.getAll(Bin.class).size());
 		Assert.assertEquals(1, repository.getAll(Record.class).size());
 	}

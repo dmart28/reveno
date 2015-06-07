@@ -38,11 +38,11 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 		workflowContext.repository(repository);
 		final long[] transactionId = { repository.get(SystemInfo.class, 0L).orElse(new SystemInfo(0L)).lastTransactionId };
 		try (InputProcessor processor = new DefaultInputProcessor(journalStorage)) {
-			processor.process((b) -> {
+			processor.process(b -> {
 				EventsCommitInfo e = eventsContext.serializer().deserialize(eventsContext.eventsCommitBuilder(), b);
 				eventBus.processNextEvent(e);
 			}, JournalType.EVENTS);
-			processor.process((b) -> {
+			processor.process(b -> {
 				TransactionCommitInfo tx = workflowContext.serializer().deserialize(workflowContext.transactionCommitBuilder(), b);
 				transactionId[0] = tx.getTransactionId();
 				workflowEngine.getPipe().executeRestore(eventBus, tx);

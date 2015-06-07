@@ -22,7 +22,10 @@ import java.util.Map;
 public class RepositoryData implements Serializable {
 	
 	public Map<Class<?>, Map<Long, Object>> data;
-
+	
+	public RepositoryData(Map<Class<?>, Map<Long, Object>> data) {
+		this.data = data;
+	}
 	
 	private static final long serialVersionUID = 5311358734940295761L;
 }

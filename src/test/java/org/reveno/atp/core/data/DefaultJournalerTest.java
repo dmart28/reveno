@@ -60,7 +60,7 @@ public class DefaultJournalerTest {
 		testWithData(journaler, tempFile1);
 		
 		Channel fcRoll = new FileChannel(tempFile2, "rw");
-		journaler.roll(fcRoll);
+		journaler.roll(fcRoll, () -> {});
 		testWithData(journaler, tempFile2);
 		
 		fc.close();

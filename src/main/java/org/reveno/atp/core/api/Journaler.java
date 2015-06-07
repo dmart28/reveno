@@ -26,7 +26,7 @@ public interface Journaler {
 	void startWriting(Channel ch);
 	void stopWriting();
 	
-	void roll(Channel ch);
+	void roll(Channel ch, Runnable rolled);
 	
 	void destroy();
 	
