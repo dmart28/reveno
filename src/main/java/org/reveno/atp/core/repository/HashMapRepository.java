@@ -32,7 +32,7 @@ public class HashMapRepository implements WriteableRepository {
 	public <T> Optional<T> get(Class<T> entityType, long id) {
 		T entity = (T) getEntities(entityType).get(id);
 		
-		return entity == null ? Optional.empty() : Optional.of(entity);
+		return Optional.ofNullable(entity);
 	}
 	
 	@Override

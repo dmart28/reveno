@@ -16,7 +16,9 @@
 
 package org.reveno.atp.acceptance.model;
 
-public interface Changeable {
+import java.io.Serializable;
+
+public interface Changeable extends Serializable {
 
 	boolean isImmutable();
 	

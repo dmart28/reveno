@@ -24,7 +24,7 @@ public class MutableOrder implements Order {
 
 	private final long id;
 	private final long accountId;
-	private final Optional<Long> positionId;
+	private final Long positionId;
 	private final String symbol;
 	private final long price;
 	private final long size;
@@ -41,7 +41,7 @@ public class MutableOrder implements Order {
 	}
 	
 	public Optional<Long> positionId() {
-		return positionId;
+		return Optional.ofNullable(positionId);
 	}
 	
 	public String symbol() {
@@ -77,7 +77,7 @@ public class MutableOrder implements Order {
 			long price, long size, long time, OrderStatus status, OrderType type) {
 		this.id = id;
 		this.accountId = accId;
-		this.positionId = positionId;
+		this.positionId = positionId.orElse(null);
 		this.symbol = symbol;
 		this.price = price;
 		this.size = size;

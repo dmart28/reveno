@@ -68,14 +68,6 @@ public class RevenoConfiguration implements Configuration {
 		}
 
 		@Override
-		public void snapshootWithInterval(long interval) {
-			this.snapshootWithInterval = interval;
-		}
-		public long snapshootWithInterval() {
-			return snapshootWithInterval;
-		}
-
-		@Override
 		public void snapshootEvery(long transactionCount) {
 			this.snapshootEvery = transactionCount;
 		}
@@ -85,7 +77,6 @@ public class RevenoConfiguration implements Configuration {
 		
 		private volatile boolean snapshootAtShutdown = false;
 		private volatile boolean snapshootOnException = false;
-		private volatile long snapshootWithInterval = -1;
 		private volatile long snapshootEvery = -1;
 		
 	}

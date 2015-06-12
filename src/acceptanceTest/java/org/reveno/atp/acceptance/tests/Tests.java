@@ -16,7 +16,11 @@
 
 package org.reveno.atp.acceptance.tests;
 
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -33,6 +37,18 @@ import org.reveno.atp.acceptance.views.OrderView;
 import org.reveno.atp.api.Reveno;
 
 public class Tests extends RevenoBaseTest {
+	
+	protected void generateAndSendCommands(Reveno reveno, int count)
+			throws InterruptedException, ExecutionException {
+		sendCommandsBatch(reveno, new CreateNewAccountCommand("USD", 1000_000L), count);
+		
+		List<NewOrderCommand> commands = new ArrayList<>();
+		for (int i = 0; i < count; i++) {
+			commands.add(new NewOrderCommand((long)(count*Math.random()) + 1, Optional.empty(), "EUR/USD",
+					134000, (long)(1000*Math.random()), OrderType.MARKET));
+		}
+		sendCommandsBatch(reveno, commands);
+	}
 	
 	@Test 
 	public void testBasic() throws InterruptedException, ExecutionException {
@@ -136,14 +152,7 @@ public class Tests extends RevenoBaseTest {
 		Waiter ordersWaiter = listenFor(reveno, OrderCreatedEvent.class, 10_000);
 		reveno.startup();
 		
-		sendCommandsBatch(reveno, new CreateNewAccountCommand("USD", 1000_000L), 10_000);
-		
-		List<NewOrderCommand> commands = new ArrayList<>();
-		for (int i = 0; i < 10_000; i++) {
-			commands.add(new NewOrderCommand((long)(10_000*Math.random()) + 1, Optional.empty(), "EUR/USD",
-					134000, (long)(1000*Math.random()), OrderType.MARKET));
-		}
-		sendCommandsBatch(reveno, commands);
+		generateAndSendCommands(reveno, 10_000);
 		
 		Assert.assertEquals(10_000, reveno.query().select(AccountView.class).size());
 		Assert.assertEquals(10_000, reveno.query().select(OrderView.class).size());
@@ -191,6 +200,47 @@ public class Tests extends RevenoBaseTest {
 		Assert.assertEquals(10_001, accountId);
 		long orderId = sendCommandSync(reveno, new NewOrderCommand(accountId, Optional.empty(), "EUR/USD", 134000, 1000, OrderType.MARKET));
 		Assert.assertEquals(10_001, orderId);
+		
+		reveno.shutdown();
+	}
+	
+	@Test
+	public void testShutdownSnapshooting() throws Exception {
+		Reveno reveno = createEngine();
+		reveno.config().snapshooting().snapshootAtShutdown(true);
+		reveno.startup();
+		
+		generateAndSendCommands(reveno, 10_000);
+		
+		Assert.assertEquals(10_000, reveno.query().select(AccountView.class).size());
+		Assert.assertEquals(10_000, reveno.query().select(OrderView.class).size());
+		
+		reveno.shutdown();
+		
+		Arrays.asList(tempDir.listFiles(new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				return !(name.startsWith("snp"));
+			}
+		})).stream().map(f -> {
+			try {
+				return new RandomAccessFile(f, "rw");
+			} catch (Exception e) {
+				return null;
+			}
+		}).peek(rf -> {try {
+			rf.setLength(0);
+		} catch (Exception e) {
+		}}).peek(f -> {try {
+			f.close();
+		} catch (Exception e) {
+		}});
+		
+		reveno = createEngine();
+		reveno.startup();
+		
+		Assert.assertEquals(10_000, reveno.query().select(AccountView.class).size());
+		Assert.assertEquals(10_000, reveno.query().select(OrderView.class).size());
 		
 		reveno.shutdown();
 	}

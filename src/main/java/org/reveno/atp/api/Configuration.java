@@ -30,8 +30,6 @@ public interface Configuration {
 		
 		void snapshootOnException(boolean takeSnapshot);
 		
-		void snapshootWithInterval(long interval);
-		
 		void snapshootEvery(long transactionCount);
 	}
 	

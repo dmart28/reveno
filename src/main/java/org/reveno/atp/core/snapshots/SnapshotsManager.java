@@ -21,7 +21,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.reveno.atp.api.RepositorySnapshooter;
-import org.reveno.atp.core.api.SystemStateRestorer;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
 
@@ -51,8 +50,8 @@ public class SnapshotsManager {
 	}
 	
 	
-	public SnapshotsManager(SystemStateRestorer restorer, SnapshotStorage storage, RepositoryDataSerializer repoSerializer) {
-		snapshooters.put(DefaultSnapshooter.TYPE, new DefaultSnapshooter(restorer, storage, repoSerializer));
+	public SnapshotsManager(SnapshotStorage storage, RepositoryDataSerializer repoSerializer) {
+		snapshooters.put(DefaultSnapshooter.TYPE, new DefaultSnapshooter(storage, repoSerializer));
 	}
 	
 	

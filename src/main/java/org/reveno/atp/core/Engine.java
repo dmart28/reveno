@@ -18,11 +18,12 @@ package org.reveno.atp.core;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
@@ -78,6 +79,7 @@ import org.reveno.atp.core.storage.FileSystemStorage;
 import org.reveno.atp.core.views.ViewsDefaultStorage;
 import org.reveno.atp.core.views.ViewsManager;
 import org.reveno.atp.core.views.ViewsProcessor;
+import org.reveno.atp.utils.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,6 +123,7 @@ public class Engine implements Reveno {
 		
 		eventPublisher.start();
 		workflowEngine.init();
+		viewsProcessor.process(mapAsMarked(repository));
 		workflowEngine.setLastTransactionId(restorer.restore(repository).getLastTransactionId());
 		
 		log.info("Engine is started.");
@@ -248,6 +251,7 @@ public class Engine implements Reveno {
 		EngineEventsContext eventsContext = new EngineEventsContext().serializer(eventsSerializer)
 				.eventsCommitBuilder(eventBuilder).eventsJournaler(eventsJournaler).manager(eventsManager);
 		eventPublisher = new DisruptorEventPublisher(configuration.cpuConsumption(), eventsContext);
+		snapshotsManager = new SnapshotsManager(snapshotStorage, repositorySerializer);
 		repository = factory.create(snapshotStorage.getLastSnapshotStore() != null ? snapshooter().load() : null);
 		viewsProcessor = new ViewsProcessor(viewsManager, viewsStorage, repository);
 		processor = new DisruptorPipeProcessor(configuration.cpuConsumption(), false, executor);
@@ -255,17 +259,15 @@ public class Engine implements Reveno {
 		EngineWorkflowContext workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
 				.viewsProcessor(viewsProcessor).transactionsManager(transactionsManager).commandsManager(commandsManager)
 				.eventPublisher(eventPublisher).transactionCommitBuilder(txBuilder).transactionJournaler(transactionsJournaler)
-				.idGenerator(idGenerator).roller(roller);
+				.idGenerator(idGenerator).roller(roller).snapshotsManager(snapshotsManager);
 		workflowEngine = new WorkflowEngine(processor, workflowContext);
 		restorer = new DefaultSystemStateRestorer(journalsStorage, workflowContext, eventsContext, workflowEngine);
-		
-		snapshotsManager = new SnapshotsManager(restorer, snapshotStorage, repositorySerializer);
-		workflowContext.snapshotsManager(snapshotsManager);
-		
-		if (configuration.revenoSnapshooting().snapshootWithInterval() != -1) {
-			snapshooterIntervalExecutor.scheduleWithFixedDelay(() -> roller.roll(this::snapshootAll), configuration.revenoSnapshooting().snapshootWithInterval(),
-					configuration.revenoSnapshooting().snapshootWithInterval(), TimeUnit.MILLISECONDS);
-		}
+	}
+	
+	protected Map<Class<?>, Set<Long>> mapAsMarked(TxRepository repository) {
+		Map<Class<?>, Set<Long>> marked = MapUtils.repositorySet();
+		repository.getData().data.forEach((k, v) -> marked.put(k, v.keySet()));
+		return marked;
 	}
 	
 	protected void connectSystemHandlers() {
@@ -280,7 +282,7 @@ public class Engine implements Reveno {
 	}
 	
 	protected void snapshootAll() {
-		snapshotsManager.getAll().forEach(s -> s.snapshoot(factory));
+		snapshotsManager.getAll().forEach(s -> s.snapshoot(repository.getData()));
 	}
 	
 	protected final TxRepositoryFactory factory = new TxRepositoryFactory() {

@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core.engine.components;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -52,7 +53,9 @@ public class DefaultIdGenerator implements IdGenerator, BiConsumer<DefaultIdGene
 	protected CommandContext context;
 	
 	
-	public static class IdsBundle {
+	public static class IdsBundle implements Serializable {
+		private static final long serialVersionUID = 1L;
+
 		public long get(Class<?> type) {
 			return ids.getOrDefault(type, 0L);
 		}

@@ -17,7 +17,6 @@
 package org.reveno.atp.api;
 
 import org.reveno.atp.api.domain.RepositoryData;
-import org.reveno.atp.core.api.TxRepositoryFactory;
 
 public interface RepositorySnapshooter {
 
@@ -25,7 +24,7 @@ public interface RepositorySnapshooter {
 	
 	boolean hasAny();
 	
-	void snapshoot(TxRepositoryFactory factory);
+	void snapshoot(RepositoryData repo);
 	
 	RepositoryData load();
 }
