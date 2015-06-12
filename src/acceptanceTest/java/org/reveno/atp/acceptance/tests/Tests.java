@@ -216,12 +216,7 @@ public class Tests extends RevenoBaseTest {
 		
 		reveno.shutdown();
 		
-		Arrays.asList(tempDir.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				return !(name.startsWith("snp"));
-			}
-		})).forEach(f -> f.delete());
+		Arrays.asList(tempDir.listFiles((dir, name) -> !(name.startsWith("snp")))).forEach(File::delete);
 		
 		reveno = createEngine();
 		reveno.startup();
