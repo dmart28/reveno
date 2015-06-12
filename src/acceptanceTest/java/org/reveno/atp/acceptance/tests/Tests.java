@@ -18,7 +18,6 @@ package org.reveno.atp.acceptance.tests;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -222,19 +221,7 @@ public class Tests extends RevenoBaseTest {
 			public boolean accept(File dir, String name) {
 				return !(name.startsWith("snp"));
 			}
-		})).stream().map(f -> {
-			try {
-				return new RandomAccessFile(f, "rw");
-			} catch (Exception e) {
-				return null;
-			}
-		}).peek(rf -> {try {
-			rf.setLength(0);
-		} catch (Exception e) {
-		}}).peek(f -> {try {
-			f.close();
-		} catch (Exception e) {
-		}});
+		})).forEach(f -> f.delete());
 		
 		reveno = createEngine();
 		reveno.startup();
