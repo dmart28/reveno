@@ -41,8 +41,10 @@ import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.query.QueryManager;
 import org.reveno.atp.api.query.ViewsMapper;
 import org.reveno.atp.api.transaction.TransactionContext;
+import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.core.api.EventPublisher;
 import org.reveno.atp.core.api.EventsCommitInfo;
+import org.reveno.atp.core.api.InterceptorCollection;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.SystemStateRestorer;
 import org.reveno.atp.core.api.TransactionCommitInfo;
@@ -201,6 +203,16 @@ public class Engine implements Reveno {
 			public void serializeWith(List<TransactionInfoSerializer> serializers) {
 				serializer = new SerializersChain(serializers);
 			}
+			
+			@Override
+			public void interceptBefore(TransactionInterceptor interceptor) {
+				interceptors.getBeforeInterceptors().add(interceptor);
+			}
+			
+			@Override
+			public void interceptAfter(TransactionInterceptor interceptor) {
+				interceptors.getAfterInterceptors().add(interceptor);
+			}
 		};
 	}
 
@@ -259,7 +271,7 @@ public class Engine implements Reveno {
 		EngineWorkflowContext workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
 				.viewsProcessor(viewsProcessor).transactionsManager(transactionsManager).commandsManager(commandsManager)
 				.eventPublisher(eventPublisher).transactionCommitBuilder(txBuilder).transactionJournaler(transactionsJournaler)
-				.idGenerator(idGenerator).roller(roller).snapshotsManager(snapshotsManager);
+				.idGenerator(idGenerator).roller(roller).snapshotsManager(snapshotsManager).interceptorCollection(interceptors);
 		workflowEngine = new WorkflowEngine(processor, workflowContext);
 		restorer = new DefaultSystemStateRestorer(journalsStorage, workflowContext, eventsContext, workflowEngine);
 	}
@@ -328,6 +340,7 @@ public class Engine implements Reveno {
 	protected ViewsManager viewsManager = new ViewsManager();
 	protected TransactionsManager transactionsManager = new TransactionsManager();
 	protected CommandsManager commandsManager = new CommandsManager();
+	protected InterceptorCollection interceptors = new InterceptorCollection();
 	
 	protected DefaultIdGenerator idGenerator = new DefaultIdGenerator();
 	

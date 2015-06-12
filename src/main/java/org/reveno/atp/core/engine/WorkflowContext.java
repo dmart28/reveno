@@ -19,6 +19,7 @@ package org.reveno.atp.core.engine;
 import org.reveno.atp.core.JournalsRoller;
 import org.reveno.atp.core.api.EventPublisher;
 import org.reveno.atp.core.api.IdGenerator;
+import org.reveno.atp.core.api.InterceptorCollection;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.TxRepository;
@@ -41,6 +42,8 @@ public interface WorkflowContext {
 	public TransactionsManager transactionsManager();
 	
 	public CommandsManager commandsManager();
+	
+	public InterceptorCollection interceptorCollection();
 	
 	
 	public EventPublisher eventPublisher();

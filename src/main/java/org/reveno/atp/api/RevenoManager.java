@@ -24,6 +24,7 @@ import java.util.function.BiFunction;
 import org.reveno.atp.api.commands.CommandContext;
 import org.reveno.atp.api.query.ViewsMapper;
 import org.reveno.atp.api.transaction.TransactionContext;
+import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 
 public interface RevenoManager {
@@ -43,6 +44,10 @@ public interface RevenoManager {
 	void resetSnapshooters();
 	
 	void serializeWith(List<TransactionInfoSerializer> serializers);
+	
+	void interceptBefore(TransactionInterceptor interceptor);
+	
+	void interceptAfter(TransactionInterceptor interceptor);
 	
 	
 	default RevenoManager and(RepositorySnapshooter snapshooter) {

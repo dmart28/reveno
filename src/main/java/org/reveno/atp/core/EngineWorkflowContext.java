@@ -18,6 +18,7 @@ package org.reveno.atp.core;
 
 import org.reveno.atp.core.api.EventPublisher;
 import org.reveno.atp.core.api.IdGenerator;
+import org.reveno.atp.core.api.InterceptorCollection;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.TransactionCommitInfo.Builder;
 import org.reveno.atp.core.api.TxRepository;
@@ -137,6 +138,16 @@ public class EngineWorkflowContext implements WorkflowContext {
 	}
 	public EngineWorkflowContext snapshotsManager(SnapshotsManager snapshotsManager) {
 		this.snapshotsManager = snapshotsManager;
+		return this;
+	}
+	
+	private InterceptorCollection interceptorCollection;
+	@Override
+	public InterceptorCollection interceptorCollection() {
+		return interceptorCollection;
+	}
+	public EngineWorkflowContext interceptorCollection(InterceptorCollection interceptorCollection) {
+		this.interceptorCollection = interceptorCollection;
 		return this;
 	}
 

@@ -16,11 +16,14 @@
 
 package org.reveno.atp.core.engine;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
+import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
@@ -107,7 +110,9 @@ public class InputHandlers {
 		}
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> transactionExecutor = (c, eob) -> {
+		interceptors(services.interceptorCollection().getBeforeInterceptors(), c);
 		txExecutor.executeCommands(c, services, nextTransactionId);
+		interceptors(services.interceptorCollection().getAfterInterceptors(), c);
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> serializator = (c, eob) -> {
 		// TODO what's with version?
@@ -124,6 +129,12 @@ public class InputHandlers {
 	protected final BiConsumer<ProcessorContext, Boolean> eventsPublisher = (c, eob) -> {
 		services.eventPublisher().publishEvents(c.isRestore(), c.transactionId(), c.eventMetadata(), c.getEvents().toArray());
 	};
+	
+	
+	protected void interceptors(List<TransactionInterceptor> interceptors, ProcessorContext context) {
+		interceptors.forEach(i -> i.intercept(context.transactionId(), context.getCommands(), Optional.ofNullable(
+				context.getTransactions().size() == 0 ? null : context.getTransactions())));
+	}
 	
 	
 	public InputHandlers(WorkflowContext context, Supplier<Long> nextTransactionId) {
