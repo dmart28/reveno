@@ -51,8 +51,8 @@ test {
 	minHeapSize = "1024m"
 	maxParallelForks = forks
   	
-  	beforeTest { descriptor ->
-    	logger.lifecycle("Running " + descriptor)
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
     }
 }
 
