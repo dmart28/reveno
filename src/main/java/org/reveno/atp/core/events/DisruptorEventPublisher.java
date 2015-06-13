@@ -111,11 +111,11 @@ public class DisruptorEventPublisher implements EventPublisher {
 	}
 	
 	protected void serialize(Event event, long sequence, boolean endOfBatch) {
-		ex(event, !event.isReplay(), endOfBatch, serializer);
+		ex(event, /*!event.isReplay()*/ true, endOfBatch, serializer);
 	}
 	
 	protected void journal(Event event, long sequence, boolean endOfBatch) {
-		ex(event, !event.isReplay(), endOfBatch, journaler);
+		ex(event, /*!event.isReplay()*/ true, endOfBatch, journaler);
 	}
 	
 	protected final BiConsumer<Event, Boolean> publisher = (e, eof) -> {

@@ -246,6 +246,10 @@ public class Engine implements Reveno {
 		return interceptors;
 	}
 	
+	public synchronized void roll(Runnable r) {
+		roller.roll(r);
+	}
+	
 	protected void checkIsStarted() {
 		if (!isStarted)
 			throw new IllegalStateException("The Engine must be started first.");

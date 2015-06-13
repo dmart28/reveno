@@ -39,6 +39,19 @@ public final class LongRange implements Iterable<Long>, Comparable<LongRange> {
 			return value == start;
 		return value >= start && value <= end;
 	}
+	
+	public LongRange[] split(long value) {
+		if (start == end)
+			return new LongRange[0];
+		if (value > start && value < end)
+			return new LongRange[] { new LongRange(start, value - 1), new LongRange(value + 1, end) };
+		else if (value == start) 
+			return new LongRange[] { new LongRange(start + 1, end) };
+		else if (value == end)
+			return new LongRange[] { new LongRange(start, end - 1)};
+		
+		return null;
+	}
 
 	public Iterator<Long> iterator() {
 		return new RangeIterator();

@@ -17,11 +17,8 @@
 package org.reveno.atp.acceptance.tests;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -36,20 +33,8 @@ import org.reveno.atp.api.Reveno;
 
 public class Tests extends RevenoBaseTest {
 	
-	protected void generateAndSendCommands(Reveno reveno, int count)
-			throws InterruptedException, ExecutionException {
-		sendCommandsBatch(reveno, new CreateNewAccountCommand("USD", 1000_000L), count);
-		
-		List<NewOrderCommand> commands = new ArrayList<>();
-		for (int i = 0; i < count; i++) {
-			commands.add(new NewOrderCommand((long)(count*Math.random()) + 1, Optional.empty(), "EUR/USD",
-					134000, (long)(1000*Math.random()), OrderType.MARKET));
-		}
-		sendCommandsBatch(reveno, commands);
-	}
-	
 	@Test 
-	public void testBasic() throws InterruptedException, ExecutionException {
+	public void testBasic() throws Exception {
 		Reveno reveno = createEngine();
 		reveno.startup();
 		
@@ -77,7 +62,7 @@ public class Tests extends RevenoBaseTest {
 	}
 	
 	@Test
-	public void testAsyncHandlers() throws InterruptedException, ExecutionException {
+	public void testAsyncHandlers() throws Exception {
 		Reveno reveno = createEngine();
 		reveno.startup();
 		
@@ -89,7 +74,7 @@ public class Tests extends RevenoBaseTest {
 	}
 	
 	@Test
-	public void testExceptionalEventHandler() throws InterruptedException, ExecutionException {
+	public void testExceptionalEventHandler() throws Exception {
 		Reveno reveno = createEngine();
 		reveno.startup();
 		
@@ -118,7 +103,7 @@ public class Tests extends RevenoBaseTest {
 	}
 	
 	@Test
-	public void testExceptionalAsyncEventHandler() throws InterruptedException, ExecutionException {
+	public void testExceptionalAsyncEventHandler() throws Exception {
 		Reveno reveno = createEngine();
 		reveno.events().asyncEventExecutors(10);
 		reveno.startup();
@@ -144,7 +129,7 @@ public class Tests extends RevenoBaseTest {
 	}
 	
 	@Test
-	public void testBatch() throws InterruptedException, ExecutionException {
+	public void testBatch() throws Exception {
 		Reveno reveno = createEngine();
 		Waiter accountsWaiter = listenFor(reveno, AccountCreatedEvent.class, 10_000);
 		Waiter ordersWaiter = listenFor(reveno, OrderCreatedEvent.class, 10_000);
@@ -162,7 +147,7 @@ public class Tests extends RevenoBaseTest {
 	}
 	
 	@Test
-	public void testReplay() throws InterruptedException, ExecutionException {
+	public void testReplay() throws Exception {
 		testBasic();
 		
 		Reveno reveno = createEngine();
@@ -180,7 +165,7 @@ public class Tests extends RevenoBaseTest {
 	}
 	
 	@Test
-	public void testBatchReplay() throws InterruptedException, ExecutionException {
+	public void testBatchReplay() throws Exception {
 		testBatch();
 		
 		Reveno reveno = createEngine();
@@ -255,10 +240,14 @@ public class Tests extends RevenoBaseTest {
 		Arrays.asList(tempDir.listFiles((dir, name) -> name.startsWith("snp"))).forEach(File::delete);
 		
 		reveno = createEngine();
+		Waiter accountCreatedEvent = listenFor(reveno, AccountCreatedEvent.class);
+		Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class);
 		reveno.startup();
 		
 		Assert.assertEquals(10_008, reveno.query().select(AccountView.class).size());
 		Assert.assertEquals(10_008, reveno.query().select(OrderView.class).size());
+		Assert.assertFalse(accountCreatedEvent.isArrived());
+		Assert.assertFalse(orderCreatedEvent.isArrived());
 		
 		reveno.shutdown();
 	}

@@ -45,6 +45,30 @@ public class LongRangeTest {
 		ts.add(r1);
 		
 		Assert.assertEquals(r1, ts.iterator().next());
+		
+		LongRange[] splitted = r1.split(7);
+		
+		Assert.assertEquals(2, splitted.length);
+		Assert.assertEquals(new LongRange(5, 6), splitted[0]);
+		Assert.assertEquals(new LongRange(8), splitted[1]);
+		
+		splitted = r2.split(12);
+		Assert.assertEquals(new LongRange(11), splitted[0]);
+		Assert.assertEquals(new LongRange(13), splitted[1]);
+		
+		splitted = r2.split(13);
+		Assert.assertEquals(1, splitted.length);
+		Assert.assertEquals(new LongRange(11, 12), splitted[0]);
+		
+		splitted = r1.split(5);
+		Assert.assertEquals(1, splitted.length);
+		Assert.assertEquals(new LongRange(6, 8), splitted[0]);
+		
+		splitted = new LongRange(11, 12).split(11);
+		Assert.assertEquals(new LongRange(12), splitted[0]);
+		
+		splitted = new LongRange(15).split(15);
+		Assert.assertEquals(0, splitted.length);
 	}
 	
 }

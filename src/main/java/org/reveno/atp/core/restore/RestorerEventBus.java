@@ -32,6 +32,10 @@ public class RestorerEventBus implements RestoreableEventBus {
 
 	@Override
 	public void publishEvent(Object event) {
+		if (currentTransactionId > lastTransactionId) {
+			underlyingEventBus.publishEvent(event);
+			return;
+		}
 		Iterator<LongRange> i = unpublishedEvents.iterator();
 		while (i.hasNext()) {
 			LongRange range = i.next();
@@ -65,6 +69,7 @@ public class RestorerEventBus implements RestoreableEventBus {
 		
 		if (event.getTransactionId() <= lastTransactionId && event.getFlag() == 0) {
 			log.warn("Transaction ID < Last Transaction ID - this is abnormal!");
+			addMissedEvents(event);
 			return;
 		} else if (event.getFlag() == EventPublisher.ASYNC_ERROR_FLAG) {
 			log.info("Failed transaction event [{}]", event.getTransactionId());
@@ -76,6 +81,25 @@ public class RestorerEventBus implements RestoreableEventBus {
 			unpublishedEvents.add(new LongRange(lastTransactionId + 1, event.getTransactionId() - 1));
 		}
 		lastTransactionId = event.getTransactionId();
+	}
+
+	protected void addMissedEvents(EventsCommitInfo event) {
+		Set<LongRange> toAdd = new TreeSet<>();
+		Iterator<LongRange> i = unpublishedEvents.iterator();
+		while (i.hasNext()) {
+			LongRange range = i.next();
+			if (!range.higher(event.getTransactionId())) {
+				if (range.contains(event.getTransactionId())) {
+					i.remove();
+					for (LongRange subRange : range.split(event.getTransactionId())) {
+						toAdd.add(subRange);
+					}
+					break;
+				}
+			}
+			break;
+		}
+		unpublishedEvents.addAll(toAdd);
 	}
 	
 	public Set<LongRange> getUnpublishedEvents() {
