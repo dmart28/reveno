@@ -56,7 +56,6 @@ public class Tests extends RevenoBaseTest {
 		Assert.assertTrue(orderCreatedEvent.isArrived());
 		Assert.assertEquals(orderId, orderView.id);
 		Assert.assertEquals(1, accountView.orders().size());
-		Assert.assertTrue(System.currentTimeMillis() - orderView.time < 100);
 		
 		reveno.shutdown();
 	}
