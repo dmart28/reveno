@@ -16,20 +16,6 @@
 
 package org.reveno.atp.api.transaction;
 
-import org.reveno.atp.api.domain.WriteableRepository;
-
-/*
- * Allowes you to intercept into transaction processing.
- * 
- * WARNING: it's some kind of dangerous field, and it should be used with
- * super care, since inappropriate usage might be extremely harmful.
- * 
- * Good practice is to use it for some statistics gathering, snapshotting logic, etc.
- * 
- */
-@FunctionalInterface
-public interface TransactionInterceptor {
-
-	void intercept(long transactionId, WriteableRepository repository, TransactionStage stage);
-	
+public enum TransactionStage {
+	REPLICATION, TRANSACTION, JOURNALING
 }

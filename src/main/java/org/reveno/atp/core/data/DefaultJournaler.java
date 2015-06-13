@@ -34,7 +34,7 @@ public class DefaultJournaler implements Journaler {
 		requireWriting();
 		
 		buffer.writeFromBuffer(entry);
-		if (endOfBatch) {
+		if (endOfBatch || rolledHandler != null) {
 			Channel ch = channel.get();
 			ch.write(buffer);
 			buffer.clear();

@@ -16,14 +16,12 @@
 
 package org.reveno.atp.core.engine;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
-import org.reveno.atp.api.transaction.TransactionInterceptor;
+import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
@@ -102,6 +100,7 @@ public class InputHandlers {
 		services.serializer().serializeCommands(c.getCommands(), c.marshallerBuffer());
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> replicator = (c, eob) -> {
+		interceptors(TransactionStage.REPLICATION, c);
 		if (eob) {
 			// TODO some replication here
 		} else {
@@ -110,9 +109,11 @@ public class InputHandlers {
 		}
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> transactionExecutor = (c, eob) -> {
-		interceptors(services.interceptorCollection().getBeforeInterceptors(), c);
-		txExecutor.executeCommands(c, services, nextTransactionId);
-		interceptors(services.interceptorCollection().getAfterInterceptors(), c);
+		if (!c.isRestore())
+			c.transactionId(nextTransactionId.get());
+		
+		interceptors(TransactionStage.TRANSACTION, c);
+		txExecutor.executeCommands(c, services);
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> serializator = (c, eob) -> {
 		// TODO what's with version?
@@ -121,6 +122,7 @@ public class InputHandlers {
 		services.serializer().serialize(tci, c.transactionsBuffer());
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> journaler = (c, eob) -> {
+		interceptors(TransactionStage.JOURNALING, c);
 		services.transactionJournaler().writeData(c.transactionsBuffer(), eob);
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> viewsUpdater = (c, eob) -> {
@@ -131,9 +133,10 @@ public class InputHandlers {
 	};
 	
 	
-	protected void interceptors(List<TransactionInterceptor> interceptors, ProcessorContext context) {
-		interceptors.forEach(i -> i.intercept(context.transactionId(), context.getCommands(), Optional.ofNullable(
-				context.getTransactions().size() == 0 ? null : context.getTransactions())));
+	protected void interceptors(TransactionStage stage, ProcessorContext context) {
+		if (!context.isRestore() && services.interceptorCollection().getInterceptors(stage).size() > 0)
+			services.interceptorCollection().getInterceptors(stage).forEach(i -> i.intercept(context.transactionId(),
+					services.repository(), stage));
 	}
 	
 	

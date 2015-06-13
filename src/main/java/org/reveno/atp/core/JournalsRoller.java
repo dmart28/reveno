@@ -22,7 +22,7 @@ import org.reveno.atp.core.api.storage.JournalsStorage.JournalStore;
 
 public class JournalsRoller {
 
-	public synchronized void roll(Runnable completed) {
+	public void roll(Runnable completed) {
 		JournalStore store = storage.nextStore();
 		eventsJournaler.roll(storage.channel(store.getEventsCommitsAddress()), ()->{});
 		transactionsJournaler.roll(storage.channel(store.getTransactionCommitsAddress()), completed);

@@ -226,4 +226,41 @@ public class Tests extends RevenoBaseTest {
 		reveno.shutdown();
 	}
 	
+	@Test
+	public void testSnapshootingEvery() throws Exception {
+		Reveno reveno = createEngine();
+		reveno.config().snapshooting().snapshootAtShutdown(false);
+		reveno.config().snapshooting().snapshootEvery(1002);
+		reveno.startup();
+		
+		generateAndSendCommands(reveno, 10_005);
+		
+		Assert.assertEquals(10_005, reveno.query().select(AccountView.class).size());
+		Assert.assertEquals(10_005, reveno.query().select(OrderView.class).size());
+		
+		reveno.shutdown();
+		
+		Assert.assertEquals(19, tempDir.listFiles((dir, name) -> name.startsWith("snp")).length);
+		
+		reveno = createEngine();
+		reveno.startup();
+		
+		Assert.assertEquals(10_005, reveno.query().select(AccountView.class).size());
+		Assert.assertEquals(10_005, reveno.query().select(OrderView.class).size());
+		
+		generateAndSendCommands(reveno, 3);
+		
+		reveno.shutdown();
+		
+		Arrays.asList(tempDir.listFiles((dir, name) -> name.startsWith("snp"))).forEach(File::delete);
+		
+		reveno = createEngine();
+		reveno.startup();
+		
+		Assert.assertEquals(10_008, reveno.query().select(AccountView.class).size());
+		Assert.assertEquals(10_008, reveno.query().select(OrderView.class).size());
+		
+		reveno.shutdown();
+	}
+	
 }

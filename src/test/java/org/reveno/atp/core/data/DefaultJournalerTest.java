@@ -61,13 +61,17 @@ public class DefaultJournalerTest {
 		
 		Channel fcRoll = new FileChannel(tempFile2, "rw");
 		journaler.roll(fcRoll, () -> {});
-		testWithData(journaler, tempFile2);
+		testWithData(journaler, tempFile2, true);
 		
 		fc.close();
 		fcRoll.close();
 	}
-
+	
 	private void testWithData(Journaler journaler, File file) {
+		testWithData(journaler, file, false);
+	}
+
+	private void testWithData(Journaler journaler, File file, boolean rolled) {
 		for (int i = 0; i < 10; i++) {
 			byte[] data = new byte[mb(1)];
 			new Random().nextBytes(data);
@@ -75,11 +79,12 @@ public class DefaultJournalerTest {
 			
 			journaler.writeData(buffer, false);
 		}
-		Assert.assertEquals(file.length(), 0);
+		// when we call journaler.roll(..), we must to flush all previous data regardless 'endOfBatch' param
+		Assert.assertEquals(file.length(), rolled ? mb(1) + 8 : 0);
 		journaler.writeData(new BufferMock(new byte[0]), true);
-		Assert.assertEquals(file.length(), mb(10) + 8);
+		Assert.assertEquals(file.length(), mb(10) + 8 + (rolled ? 8 : 0));
 		journaler.writeData(new BufferMock(new byte[] { 1, 2, 3 }), true);
-		Assert.assertEquals(file.length(), (mb(10) + 8) + (8 + 3));
+		Assert.assertEquals(file.length(), (mb(10) + 8) + (8 + 3) + (rolled ? 8 : 0));
 	}
 	
 }

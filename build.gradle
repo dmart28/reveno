@@ -52,7 +52,7 @@ test {
 	maxParallelForks = forks
   	
   	beforeTest { descriptor ->
-    	logger.lifecycle("Running test: " + descriptor)
+    	logger.lifecycle("Running " + descriptor)
     }
 }
 

@@ -42,6 +42,7 @@ import org.reveno.atp.api.query.QueryManager;
 import org.reveno.atp.api.query.ViewsMapper;
 import org.reveno.atp.api.transaction.TransactionContext;
 import org.reveno.atp.api.transaction.TransactionInterceptor;
+import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.core.api.EventPublisher;
 import org.reveno.atp.core.api.EventsCommitInfo;
 import org.reveno.atp.core.api.InterceptorCollection;
@@ -62,6 +63,7 @@ import org.reveno.atp.core.disruptor.DisruptorPipeProcessor;
 import org.reveno.atp.core.engine.WorkflowEngine;
 import org.reveno.atp.core.engine.components.CommandsManager;
 import org.reveno.atp.core.engine.components.DefaultIdGenerator;
+import org.reveno.atp.core.engine.components.SnapshootingInterceptor;
 import org.reveno.atp.core.engine.components.DefaultIdGenerator.NextIdTransaction;
 import org.reveno.atp.core.engine.components.SerializersChain;
 import org.reveno.atp.core.engine.components.TransactionsManager;
@@ -203,16 +205,6 @@ public class Engine implements Reveno {
 			public void serializeWith(List<TransactionInfoSerializer> serializers) {
 				serializer = new SerializersChain(serializers);
 			}
-			
-			@Override
-			public void interceptBefore(TransactionInterceptor interceptor) {
-				interceptors.getBeforeInterceptors().add(interceptor);
-			}
-			
-			@Override
-			public void interceptAfter(TransactionInterceptor interceptor) {
-				interceptors.getAfterInterceptors().add(interceptor);
-			}
 		};
 	}
 
@@ -250,6 +242,10 @@ public class Engine implements Reveno {
 		return workflowEngine.getPipe().process(commands);
 	}
 	
+	public InterceptorCollection interceptors() {
+		return interceptors;
+	}
+	
 	protected void checkIsStarted() {
 		if (!isStarted)
 			throw new IllegalStateException("The Engine must be started first.");
@@ -284,6 +280,12 @@ public class Engine implements Reveno {
 	
 	protected void connectSystemHandlers() {
 		domain().transactionAction(NextIdTransaction.class, idGenerator);
+		if (configuration.revenoSnapshooting().snapshootEvery() != -1) {
+			TransactionInterceptor nTimeSnapshooter = new SnapshootingInterceptor(configuration, snapshotsManager,
+					roller, repositorySerializer);
+			interceptors.add(TransactionStage.TRANSACTION, nTimeSnapshooter);
+			interceptors.add(TransactionStage.JOURNALING, nTimeSnapshooter);
+		}
 	}
 	
 	protected RepositorySnapshooter snapshooter() {

@@ -49,7 +49,7 @@ public class RevenoConfiguration implements Configuration {
 	private ModelType modelType = ModelType.IMMUTABLE;
 	
 	
-	protected static class RevenoSnapshotConfiguration implements SnapshotConfiguration {
+	public static class RevenoSnapshotConfiguration implements SnapshotConfiguration {
 
 		@Override
 		public void snapshootAtShutdown(boolean takeSnapshot) {
@@ -57,14 +57,6 @@ public class RevenoConfiguration implements Configuration {
 		}
 		public boolean snapshootAtShutdown() {
 			return snapshootAtShutdown;
-		}
-		
-		@Override
-		public void snapshootOnException(boolean snapshootOnException) {
-			this.snapshootOnException = snapshootOnException;
-		}
-		public boolean snapshootOnException() {
-			return snapshootOnException;
 		}
 
 		@Override
@@ -76,7 +68,6 @@ public class RevenoConfiguration implements Configuration {
 		}
 		
 		private volatile boolean snapshootAtShutdown = false;
-		private volatile boolean snapshootOnException = false;
 		private volatile long snapshootEvery = -1;
 		
 	}

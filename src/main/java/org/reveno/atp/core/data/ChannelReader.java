@@ -95,6 +95,9 @@ public class ChannelReader<T> implements Iterable<List<T>> {
 					if (channel.size() - position < chunkSize) {
 						chunkSize = channel.size() - position;
 					}
+					if (chunkSize == 0) {
+						return nextBuffer(0);
+					}
 					Buffer buffer = new NettyBasedBuffer((int) chunkSize, false);
 					channel.read(buffer);
 					return buffer;

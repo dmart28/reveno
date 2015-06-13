@@ -19,7 +19,6 @@ package org.reveno.atp.core.engine.components;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import org.reveno.atp.api.commands.CommandContext;
 import org.reveno.atp.api.domain.Repository;
@@ -35,9 +34,7 @@ import org.slf4j.LoggerFactory;
 
 public class TransactionExecutor {
 
-	public void executeCommands(ProcessorContext c, WorkflowContext services, Supplier<Long> nextTransactionId) {
-		if (!c.isRestore())
-			c.transactionId(nextTransactionId.get());
+	public void executeCommands(ProcessorContext c, WorkflowContext services) {
 		try {
 			c.eventBus().currentTransactionId(c.transactionId()).underlyingEventBus(c.defaultEventBus());
 			repository.underlying(services.repository()).map(c.getMarkedRecords());

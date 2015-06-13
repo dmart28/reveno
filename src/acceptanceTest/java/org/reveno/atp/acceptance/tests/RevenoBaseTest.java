@@ -53,6 +53,9 @@ import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.Reveno;
 import org.reveno.atp.api.commands.Result;
+import org.reveno.atp.api.domain.WriteableRepository;
+import org.reveno.atp.api.transaction.TransactionInterceptor;
+import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.core.Engine;
 import org.reveno.atp.test.utils.FileUtils;
 
@@ -92,8 +95,8 @@ public class RevenoBaseTest {
 		return createEngine((r) -> {});
 	}
 
-	protected Reveno createEngine(Consumer<Reveno> interceptor) {
-		Reveno reveno = new Engine(tempDir);
+	protected Reveno createEngine(Consumer<Reveno> consumer) {
+		Engine reveno = new Engine(tempDir);
 		
 		reveno.config().cpuConsumption(CpuConsumption.PHASED);
 		reveno.config().modelType(modelType);
@@ -113,7 +116,9 @@ public class RevenoBaseTest {
 					e.symbol(), e.orderStatus(), e.orderType(), reveno.query());
 		});
 		
-		interceptor.accept(reveno);
+		txPerSecondMeter(reveno);
+		
+		consumer.accept(reveno);
 		
 		if (modelType == ModelType.IMMUTABLE) {
 			Transactions.accountFactory = ImmutableAccount.FACTORY;
@@ -124,6 +129,22 @@ public class RevenoBaseTest {
 		}
 		
 		return reveno;
+	}
+
+	protected void txPerSecondMeter(Engine reveno) {
+		reveno.interceptors().add(TransactionStage.TRANSACTION, new TransactionInterceptor() {
+			protected long start = -1L;
+			@Override
+			public void intercept(long transactionId, WriteableRepository repository,
+					TransactionStage stage) {
+				if (start == -1 || transactionId == 1) start = System.currentTimeMillis();
+				if (transactionId % 1000 == 0) {
+					System.err.println(String.format("%s tx per second!", (
+							Math.round((double)1000 * 60000) / (System.currentTimeMillis() - start))));
+					start = System.currentTimeMillis();
+				}
+			}
+		});
 	}
 	
 	@SuppressWarnings("unchecked")

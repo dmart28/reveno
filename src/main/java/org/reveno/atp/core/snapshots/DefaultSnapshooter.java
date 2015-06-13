@@ -67,7 +67,7 @@ public class DefaultSnapshooter implements RepositorySnapshooter {
 		SnapshotStore snap = storage.getLastSnapshotStore();
 		Buffer buffer = new NettyBasedBuffer(false);
 		try (Channel c = storage.channel(snap.getSnapshotPath())) {
-			log.info("Loading repository snapshot to " + snap);
+			log.info("Loading repository snapshot from " + snap);
 			while (c.isReadAvailable())
 				c.read(buffer);
 			

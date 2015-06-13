@@ -17,31 +17,25 @@
 package org.reveno.atp.core.api;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.reveno.atp.api.transaction.TransactionInterceptor;
+import org.reveno.atp.api.transaction.TransactionStage;
 
 public class InterceptorCollection {
 
-	protected List<TransactionInterceptor> beforeInterceptors;
-	public List<TransactionInterceptor> getBeforeInterceptors() {
-		return beforeInterceptors;
+	protected Map<TransactionStage, List<TransactionInterceptor>> interceptors = new HashMap<>();
+	
+	public List<TransactionInterceptor> getInterceptors(TransactionStage stage) {
+		if (!interceptors.containsKey(stage))
+			interceptors.put(stage, new ArrayList<>());
+		return interceptors.get(stage);
 	}
 	
-	protected List<TransactionInterceptor> afterInterceptors;
-	public List<TransactionInterceptor> getAfterInterceptors() {
-		return afterInterceptors;
-	}
-	
-	public InterceptorCollection() {
-		beforeInterceptors = new ArrayList<>();
-		afterInterceptors = new ArrayList<>();
-	}
-	
-	public InterceptorCollection(List<TransactionInterceptor> beforeInterceptors, 
-			List<TransactionInterceptor> afterInterceptors) {
-		this.beforeInterceptors = beforeInterceptors;
-		this.afterInterceptors = afterInterceptors;
+	public void add(TransactionStage stage, TransactionInterceptor interceptor) {
+		getInterceptors(stage).add(interceptor);
 	}
 	
 }
