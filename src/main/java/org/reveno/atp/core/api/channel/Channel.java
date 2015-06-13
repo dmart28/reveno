@@ -16,9 +16,7 @@
 
 package org.reveno.atp.core.api.channel;
 
-import org.reveno.atp.core.api.AutoRecoverable;
-
-public interface Channel extends AutoCloseable, AutoRecoverable {
+public interface Channel extends AutoCloseable {
 	
 	long size();
 	

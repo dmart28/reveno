@@ -57,16 +57,6 @@ public class FileChannel implements Channel {
 	}
 
 	@Override
-	public void recoverCorrupted(long position) {
-		try {
-			if (isOpen())
-				raf.setLength(position + 1);
-		} catch (IOException e) {
-			log.error("recoverCorrupted", e);
-		}
-	}
-
-	@Override
 	public boolean isReadAvailable() {
 		try {
 			return channel().position() < raf.length();
