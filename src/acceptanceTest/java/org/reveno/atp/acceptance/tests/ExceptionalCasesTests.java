@@ -23,6 +23,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.reveno.atp.acceptance.api.events.AccountCreatedEvent;
 import org.reveno.atp.acceptance.api.events.OrderCreatedEvent;
+import org.reveno.atp.acceptance.views.AccountView;
+import org.reveno.atp.acceptance.views.OrderView;
 import org.reveno.atp.api.Reveno;
 
 public class ExceptionalCasesTests extends RevenoBaseTest {
@@ -33,32 +35,58 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		reveno.startup();
 		
 		generateAndSendCommands(reveno, 5_000);
+		
+		Assert.assertEquals(5_000, reveno.query().select(AccountView.class).size());
+		Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
 	
 		reveno.shutdown();
 		
 		eraseRandomBuffer(findFirstFile("evn"));
 		
 		reveno = createEngine();
-		Waiter accountCreatedEvent = listenFor(reveno, AccountCreatedEvent.class, Integer.MAX_VALUE);
 		Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class, Integer.MAX_VALUE);
 		reveno.startup();
 		
-		Assert.assertFalse(accountCreatedEvent.isArrived());
+		Assert.assertEquals(5_000, reveno.query().select(AccountView.class).size());
+		Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
+		
 		Assert.assertFalse(orderCreatedEvent.isArrived());
-		Assert.assertTrue(accountCreatedEvent.getCount() < Integer.MAX_VALUE);
 		Assert.assertTrue(orderCreatedEvent.getCount() < Integer.MAX_VALUE);
 		
 		reveno.shutdown();
 		
 		reveno = createEngine();
-		accountCreatedEvent = listenFor(reveno, AccountCreatedEvent.class, 1);
+		Waiter accountCreatedEvent = listenFor(reveno, AccountCreatedEvent.class, 1);
 		orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class, 1);
 		reveno.startup();
+		
+		Assert.assertEquals(5_000, reveno.query().select(AccountView.class).size());
+		Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
 		
 		Assert.assertFalse(accountCreatedEvent.isArrived());
 		Assert.assertFalse(orderCreatedEvent.isArrived());
 		Assert.assertEquals(1, accountCreatedEvent.getCount());
 		Assert.assertEquals(1, orderCreatedEvent.getCount());
+		
+		reveno.shutdown();
+	}
+	
+	@Test
+	public void testTransactionCommitsFileCorrupted() throws Exception {
+		Reveno reveno = createEngine();
+		reveno.startup();
+		
+		generateAndSendCommands(reveno, 5_000);
+		
+		reveno.shutdown();
+		
+		eraseRandomBuffer(findFirstFile("tx"));
+		eraseRandomBuffer(findFirstFile("evn"));
+		
+		reveno = createEngine();
+		reveno.startup();
+		
+		Assert.assertTrue(5_000 > reveno.query().select(OrderView.class).size());
 		
 		reveno.shutdown();
 	}
