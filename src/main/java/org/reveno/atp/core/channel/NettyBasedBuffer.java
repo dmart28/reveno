@@ -27,11 +27,11 @@ import org.reveno.atp.core.api.channel.Buffer;
 public class NettyBasedBuffer implements Buffer {
 
 	public NettyBasedBuffer() {
-		this(kb(64), true);
+		this(kb(3), true);
 	}
 
 	public NettyBasedBuffer(boolean direct) {
-		this(kb(64), direct);
+		this(kb(3), direct);
 	}
 	
 	public NettyBasedBuffer(int length, boolean direct) {
