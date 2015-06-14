@@ -105,12 +105,15 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		reveno.shutdown();
 		
 		reveno = createEngine();
+		Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class, 1);
 		reveno.startup();
 		
 		if (accs.size() != 0) {
 			AccountView acc = reveno.query().find(AccountView.class, 1L).get();
 			Assert.assertTrue(acc.orders().stream().filter(o -> o.symbol.equals("TEST/TEST")).findFirst().isPresent());
 		}
+		
+		Assert.assertFalse(orderCreatedEvent.isArrived());
 		
 		reveno.shutdown();
 	}
