@@ -35,7 +35,6 @@ import org.reveno.atp.acceptance.model.Order.OrderType;
 import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
 import org.reveno.atp.api.Reveno;
-import org.reveno.atp.core.Engine;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.serialization.DefaultJavaSerializer;
 import org.reveno.atp.core.serialization.ProtostuffSerializer;
@@ -114,7 +113,7 @@ public class Tests extends RevenoBaseTest {
 	
 	@Test
 	public void testExceptionalAsyncEventHandler() throws Exception {
-		Reveno reveno = createEngine();
+		TestRevenoEngine reveno = createEngine();
 		reveno.events().asyncEventExecutors(10);
 		reveno.startup();
 		
@@ -125,7 +124,7 @@ public class Tests extends RevenoBaseTest {
 		});
 		sendCommandsBatch(reveno, new CreateNewAccountCommand("USD", 1000_000L), 1_000);
 		Assert.assertTrue(w.isArrived());
-		sleep(100);
+		reveno.syncAll();
 		
 		reveno.shutdown();
 		
@@ -282,7 +281,7 @@ public class Tests extends RevenoBaseTest {
 		final boolean[] stop =  { false };
 		AtomicLong counter = new AtomicLong(0);
 		ExecutorService transactionExecutor = Executors.newFixedThreadPool(10);
-		Engine reveno = createEngine();
+		TestRevenoEngine reveno = createEngine();
 		reveno.startup();
 		IntStream.range(0, 10).forEach(i -> transactionExecutor.submit(() -> {
 			while (!stop[0]) {

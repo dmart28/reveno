@@ -59,7 +59,6 @@ import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.api.transaction.TransactionStage;
-import org.reveno.atp.core.Engine;
 import org.reveno.atp.test.utils.FileUtils;
 
 import com.google.common.io.Files;
@@ -96,12 +95,12 @@ public class RevenoBaseTest {
 		// gradle requires such hack though
 	}
 	
-	protected Engine createEngine() {
+	protected TestRevenoEngine createEngine() {
 		return createEngine((r) -> {});
 	}
 
-	protected Engine createEngine(Consumer<Reveno> consumer) {
-		Engine reveno = new Engine(tempDir);
+	protected TestRevenoEngine createEngine(Consumer<Reveno> consumer) {
+		TestRevenoEngine reveno = new TestRevenoEngine(tempDir);
 		
 		reveno.config().cpuConsumption(CpuConsumption.PHASED);
 		reveno.config().modelType(modelType);
@@ -136,7 +135,7 @@ public class RevenoBaseTest {
 		return reveno;
 	}
 
-	protected void txPerSecondMeter(Engine reveno) {
+	protected void txPerSecondMeter(TestRevenoEngine reveno) {
 		reveno.interceptors().add(TransactionStage.TRANSACTION, new TransactionInterceptor() {
 			protected long start = -1L;
 			@Override
