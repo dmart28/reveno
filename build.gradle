@@ -27,8 +27,6 @@ sourceSets {
 }
 
 dependencies {
-	//compile "org.scala-lang:scala-library:$scalaVersion"
-		
 	compile "com.lmax:disruptor:$disruptorVersion"
 	compile "com.dyuproject.protostuff:protostuff-uberjar:$protostuffVersion"
 	compile "io.netty:netty-buffer:$nettyVersion"
