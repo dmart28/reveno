@@ -19,6 +19,10 @@ package org.reveno.atp.acceptance.tests;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.IntStream;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,6 +34,7 @@ import org.reveno.atp.acceptance.model.Order.OrderType;
 import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
 import org.reveno.atp.api.Reveno;
+import org.reveno.atp.core.Engine;
 
 public class Tests extends RevenoBaseTest {
 	
@@ -249,6 +254,47 @@ public class Tests extends RevenoBaseTest {
 		Assert.assertFalse(orderCreatedEvent.isArrived());
 		
 		reveno.shutdown();
+	}
+	
+	@Test
+	public void testParallelRolling() throws Exception {
+		final boolean[] stop =  { false };
+		AtomicLong counter = new AtomicLong(0);
+		ExecutorService transactionExecutor = Executors.newFixedThreadPool(10);
+		Engine reveno = createEngine();
+		reveno.startup();
+		IntStream.range(0, 10).forEach(i -> transactionExecutor.submit(() -> {
+			while (!stop[0]) {
+				counter.incrementAndGet();
+				try {
+					sendCommandSync(reveno, new CreateNewAccountCommand("USD", 1000_000L));
+				} catch (Exception e) {
+					e.printStackTrace();
+					throw new RuntimeException(e);
+				}
+			}
+		}));
+		
+		IntStream.range(0, 20).forEach(i -> {
+			Waiter w = new Waiter(1);
+			reveno.roll(() -> w.countDown());
+			w.awaitSilent();
+			sleep(200);
+		});
+		stop[0] = true;
+		sleep(10);
+		transactionExecutor.shutdown();
+		
+		reveno.shutdown();
+		
+		Reveno revenoRestarted = createEngine();
+		Waiter accountCreatedEvent = listenFor(reveno, AccountCreatedEvent.class);
+		revenoRestarted.startup();
+		
+		Assert.assertFalse(accountCreatedEvent.isArrived());
+		Assert.assertEquals(counter.get(), reveno.query().select(AccountView.class).size());
+		
+		revenoRestarted.shutdown();
 	}
 	
 }

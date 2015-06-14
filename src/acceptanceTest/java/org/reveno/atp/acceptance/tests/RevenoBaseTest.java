@@ -94,11 +94,11 @@ public class RevenoBaseTest {
 		// gradle requires such hack though
 	}
 	
-	protected Reveno createEngine() {
+	protected Engine createEngine() {
 		return createEngine((r) -> {});
 	}
 
-	protected Reveno createEngine(Consumer<Reveno> consumer) {
+	protected Engine createEngine(Consumer<Reveno> consumer) {
 		Engine reveno = new Engine(tempDir);
 		
 		reveno.config().cpuConsumption(CpuConsumption.PHASED);
@@ -220,6 +220,14 @@ public class RevenoBaseTest {
 		return waiter;
 	}
 	
+	protected void sleep(long time) {
+		try {
+			Thread.sleep(time);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
 	public static class Waiter extends CountDownLatch {
 
 		public Waiter(int count) {
@@ -228,6 +236,13 @@ public class RevenoBaseTest {
 		
 		public boolean isArrived() throws InterruptedException {
 			return await(500, TimeUnit.MILLISECONDS);
+		}
+		
+		public void awaitSilent() {
+			try {
+				await(500, TimeUnit.MILLISECONDS);
+			} catch (InterruptedException e) {
+			}
 		}
 		
 	}
