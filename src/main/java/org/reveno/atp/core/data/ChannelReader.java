@@ -79,6 +79,8 @@ public class ChannelReader<T> implements Iterable<List<T>> {
 						return false;
 					}
 				} else {
+					if (entries == null)
+						entries = new ArrayList<>();
 					return true;
 				}
 			}
