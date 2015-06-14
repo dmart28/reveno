@@ -200,11 +200,17 @@ public class RevenoBaseTest {
 		return listenAsyncFor(reveno, event, n, (o) -> {});
 	}
 	
-	protected <T> Waiter listenAsyncFor(Reveno reveno, Class<T> event, int n, Consumer<Long> c) {
+	protected <T> Waiter listenAsyncFor(Reveno reveno, Class<T> eventType, int n, Consumer<Long> c) {
 		Waiter waiter = new Waiter(n);
-		reveno.events().asyncEventHandler(event, (e,m) -> {
-			waiter.countDown();
-			c.accept(waiter.getCount());
+		reveno.events().asyncEventHandler(eventType, (e,m) -> {
+			long count = 0;
+			// since might be N threads executing this, count and countDown operations are not in sync,
+			// thus some numbers are skipped because of contention
+			synchronized (waiter) {
+				waiter.countDown();
+				count = waiter.getCount();
+			}
+			c.accept(count);
 		});
 		return waiter;
 	}
