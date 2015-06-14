@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core.events;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,6 +26,7 @@ import java.util.function.Supplier;
 
 import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.EventsManager.EventMetadata;
+import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.core.api.EventPublisher;
 import org.reveno.atp.core.api.EventsCommitInfo;
 import org.slf4j.Logger;
@@ -63,11 +65,24 @@ public class DisruptorEventPublisher implements EventPublisher {
 	
 	@Override
 	public void stop() {
-		if (!isStarted) throw new IllegalStateException("The Events Bus is already stopped.");
+		requireStarted();
 		
 		isStarted = false;
 		disruptor.shutdown();
 		log.info("Stopped.");
+	}
+	
+	@Override
+	public void sync() {
+		requireStarted();
+		
+		final CompletableFuture<EmptyResult> f = new CompletableFuture<EmptyResult>();
+		disruptor.publishEvent((e,s) -> e.reset().flag(SYNC_FLAG).syncFuture(f));
+		try {
+			f.get();
+		} catch (Throwable t) {
+			log.error("sync", t);
+		}
 	}
 	
 	@Override
@@ -111,11 +126,11 @@ public class DisruptorEventPublisher implements EventPublisher {
 	}
 	
 	protected void serialize(Event event, long sequence, boolean endOfBatch) {
-		ex(event, /*!event.isReplay()*/ true, endOfBatch, serializer);
+		ex(event, event.getFlag() != SYNC_FLAG, endOfBatch, serializer);
 	}
 	
 	protected void journal(Event event, long sequence, boolean endOfBatch) {
-		ex(event, /*!event.isReplay()*/ true, endOfBatch, journaler);
+		ex(event, true, endOfBatch, journaler);
 	}
 	
 	protected final BiConsumer<Event, Boolean> publisher = (e, eof) -> {
@@ -149,6 +164,10 @@ public class DisruptorEventPublisher implements EventPublisher {
 		}
 	};
 	
+	protected void requireStarted() {
+		if (!isStarted) throw new IllegalStateException("The Events Bus is already stopped.");
+	}
+	
 	protected final BiConsumer<Event, Boolean> serializer = (e, eof) -> {
 		EventsCommitInfo info = context.eventsCommitBuilder().create(e.transactionId(), System.currentTimeMillis(), 
 				e.getFlag());
@@ -156,7 +175,11 @@ public class DisruptorEventPublisher implements EventPublisher {
 	};
 	
 	protected final BiConsumer<Event, Boolean> journaler = (e, eof) -> {
-		context.eventsJournaler().writeData(e.serialized(), eof);
+		if (e.getFlag() == SYNC_FLAG) {
+			e.syncFuture().complete(null);
+		} else {
+			context.eventsJournaler().writeData(e.serialized(), eof);
+		}
 	};
 	
 	protected WaitStrategy createWaitStrategy() {

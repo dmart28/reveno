@@ -25,6 +25,8 @@ public interface EventPublisher {
 	void stop();
 	
 	void shutdown();
+	
+	void sync();
 
 	void publishEvents(boolean isReplay, long transactionId, EventMetadata eventMetadata, Object[] events);
 
@@ -32,5 +34,6 @@ public interface EventPublisher {
 	
 	
 	public static final int ASYNC_ERROR_FLAG = 0xBABECAFE;
+	public static final int SYNC_FLAG = 0xCAFEBABE;
 	
 }

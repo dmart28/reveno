@@ -16,6 +16,8 @@
 
 package org.reveno.atp.core.events;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.reveno.atp.api.EventsManager.EventMetadata;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
@@ -45,6 +47,15 @@ public class Event {
 	}
 	public Event flag(int flag) {
 		this.flag = flag;
+		return this;
+	}
+	
+	private CompletableFuture<?> syncFuture;
+	public CompletableFuture<?> syncFuture() {
+		return syncFuture;
+	}
+	public Event syncFuture(CompletableFuture<?> syncFuture) {
+		this.syncFuture = syncFuture;
 		return this;
 	}
 	
