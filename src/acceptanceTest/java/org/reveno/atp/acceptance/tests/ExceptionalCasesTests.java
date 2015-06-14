@@ -18,11 +18,15 @@ package org.reveno.atp.acceptance.tests;
 
 import java.io.File;
 import java.io.RandomAccessFile;
+import java.util.Collection;
+import java.util.Optional;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.reveno.atp.acceptance.api.commands.NewOrderCommand;
 import org.reveno.atp.acceptance.api.events.AccountCreatedEvent;
 import org.reveno.atp.acceptance.api.events.OrderCreatedEvent;
+import org.reveno.atp.acceptance.model.Order.OrderType;
 import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
 import org.reveno.atp.api.Reveno;
@@ -87,6 +91,26 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		reveno.startup();
 		
 		Assert.assertTrue(5_000 > reveno.query().select(OrderView.class).size());
+		
+		Collection<AccountView> accs = reveno.query().select(AccountView.class, a -> a.accountId == 1);
+		
+		if (accs.size() != 0) {
+			AccountView acc = accs.iterator().next();
+			long orderId = sendCommandSync(reveno, new NewOrderCommand(acc.accountId, Optional.empty(),
+					"TEST/TEST", 134000, 1000, OrderType.MARKET));
+			acc = reveno.query().find(AccountView.class, 1L).get();
+			Assert.assertTrue(acc.orders().stream().filter(o -> o.id == orderId).findFirst().isPresent());
+		}
+		
+		reveno.shutdown();
+		
+		reveno = createEngine();
+		reveno.startup();
+		
+		if (accs.size() != 0) {
+			AccountView acc = reveno.query().find(AccountView.class, 1L).get();
+			Assert.assertTrue(acc.orders().stream().filter(o -> o.symbol.equals("TEST/TEST")).findFirst().isPresent());
+		}
 		
 		reveno.shutdown();
 	}
