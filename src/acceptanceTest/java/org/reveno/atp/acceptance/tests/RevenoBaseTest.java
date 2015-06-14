@@ -120,7 +120,8 @@ public class RevenoBaseTest {
 					e.symbol(), e.orderStatus(), e.orderType(), reveno.query());
 		});
 		
-		txPerSecondMeter(reveno);
+		// disabled for now as more rubbish than worth
+		//txPerSecondMeter(reveno);
 		
 		consumer.accept(reveno);
 		
