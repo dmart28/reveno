@@ -63,7 +63,7 @@ public class DefaultJournaler implements Journaler {
 
 	@Override
 	public void stopWriting() {
-		log.info("Stopped writing.");
+		log.info("Stopped writing to " + channel.get());
 		
 		isWriting = false;
 		if (buffer.isAvailable())
