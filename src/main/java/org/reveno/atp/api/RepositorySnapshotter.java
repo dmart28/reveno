@@ -18,13 +18,13 @@ package org.reveno.atp.api;
 
 import org.reveno.atp.api.domain.RepositoryData;
 
-public interface RepositorySnapshooter {
+public interface RepositorySnapshotter {
 
 	long getType();
 	
 	boolean hasAny();
 	
-	void snapshoot(RepositoryData repo);
+	void snapshot(RepositoryData repo);
 	
 	RepositoryData load();
 }

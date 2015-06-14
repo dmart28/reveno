@@ -31,9 +31,9 @@ import org.reveno.atp.core.RevenoConfiguration;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
-import org.reveno.atp.core.snapshots.SnapshotsManager;
+import org.reveno.atp.core.snapshots.SnapshottersManager;
 
-public class SnapshootingInterceptor implements TransactionInterceptor {
+public class SnapshottingInterceptor implements TransactionInterceptor {
 	
 	protected long counter = 1L;
 	protected Map<Long, Buffer> snapshotsMutable = new ConcurrentHashMap<>();
@@ -42,7 +42,7 @@ public class SnapshootingInterceptor implements TransactionInterceptor {
 	@Override
 	public void intercept(long transactionId, WriteableRepository repository, TransactionStage stage) {
 			if (stage == TransactionStage.TRANSACTION) {
-				if (counter++ % configuration.revenoSnapshooting().snapshootEvery() == 0) {
+				if (counter++ % configuration.revenoSnapshotting().snapshotEvery() == 0) {
 					if (configuration.modelType() == ModelType.MUTABLE) {
 						NettyBasedBuffer buffer = new NettyBasedBuffer();
 						serializer.serialize(repository.getData(), buffer);
@@ -58,18 +58,18 @@ public class SnapshootingInterceptor implements TransactionInterceptor {
 					buffer.release();
 					snapshotsMutable.remove(transactionId);
 					
-					snapshotsManager.getAll().forEach(s -> s.snapshoot(data));
+					snapshotsManager.getAll().forEach(s -> s.snapshot(data));
 					roller.roll(() -> {});
 				} else if (snapshotsImmutable.containsKey(transactionId)) {
-					snapshotsManager.getAll().forEach(s -> s.snapshoot(snapshotsImmutable.get(transactionId)));
+					snapshotsManager.getAll().forEach(s -> s.snapshot(snapshotsImmutable.get(transactionId)));
 					snapshotsImmutable.remove(transactionId);
 					roller.roll(() -> {});
 				}
 			}
 	}
 	
-	public SnapshootingInterceptor(RevenoConfiguration configuration,
-			SnapshotsManager snapshotsManager, JournalsRoller roller,
+	public SnapshottingInterceptor(RevenoConfiguration configuration,
+			SnapshottersManager snapshotsManager, JournalsRoller roller,
 			RepositoryDataSerializer serializer) {
 		this.configuration = configuration;
 		this.snapshotsManager = snapshotsManager;
@@ -78,7 +78,7 @@ public class SnapshootingInterceptor implements TransactionInterceptor {
 	}
 	
 	protected RevenoConfiguration configuration;
-	protected SnapshotsManager snapshotsManager;
+	protected SnapshottersManager snapshotsManager;
 	protected JournalsRoller roller;
 	protected RepositoryDataSerializer serializer;
 	protected static final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());

@@ -30,7 +30,7 @@ import java.util.function.BiFunction;
 import org.reveno.atp.api.ClusterManager;
 import org.reveno.atp.api.Configuration;
 import org.reveno.atp.api.EventsManager;
-import org.reveno.atp.api.RepositorySnapshooter;
+import org.reveno.atp.api.RepositorySnapshotter;
 import org.reveno.atp.api.Reveno;
 import org.reveno.atp.api.RevenoManager;
 import org.reveno.atp.api.commands.CommandContext;
@@ -63,7 +63,7 @@ import org.reveno.atp.core.disruptor.DisruptorPipeProcessor;
 import org.reveno.atp.core.engine.WorkflowEngine;
 import org.reveno.atp.core.engine.components.CommandsManager;
 import org.reveno.atp.core.engine.components.DefaultIdGenerator;
-import org.reveno.atp.core.engine.components.SnapshootingInterceptor;
+import org.reveno.atp.core.engine.components.SnapshottingInterceptor;
 import org.reveno.atp.core.engine.components.DefaultIdGenerator.NextIdTransaction;
 import org.reveno.atp.core.engine.components.SerializersChain;
 import org.reveno.atp.core.engine.components.TransactionsManager;
@@ -78,7 +78,7 @@ import org.reveno.atp.core.repository.MutableModelRepository;
 import org.reveno.atp.core.restore.DefaultSystemStateRestorer;
 import org.reveno.atp.core.serialization.DefaultJavaSerializer;
 import org.reveno.atp.core.serialization.SimpleEventsSerializer;
-import org.reveno.atp.core.snapshots.SnapshotsManager;
+import org.reveno.atp.core.snapshots.SnapshottersManager;
 import org.reveno.atp.core.storage.FileSystemStorage;
 import org.reveno.atp.core.views.ViewsDefaultStorage;
 import org.reveno.atp.core.views.ViewsManager;
@@ -94,6 +94,7 @@ public class Engine implements Reveno {
 		this.foldersStorage = foldersStorage;
 		this.journalsStorage = journalsStorage;
 		this.snapshotStorage = snapshotStorage;
+		this.snapshotsManager = new SnapshottersManager(snapshotStorage, repositorySerializer);
 	}
 	
 	public Engine(File baseDir) {
@@ -101,6 +102,7 @@ public class Engine implements Reveno {
 		this.foldersStorage = storage;
 		this.journalsStorage = storage;
 		this.snapshotStorage = storage;
+		this.snapshotsManager = new SnapshottersManager(snapshotStorage, repositorySerializer);
 	}
 	
 	public Engine(String baseDir) {
@@ -149,11 +151,11 @@ public class Engine implements Reveno {
 		executor.shutdown();
 		eventPublisher.shutdown();
 		
-		snapshooterIntervalExecutor.shutdown();
+		snapshotterIntervalExecutor.shutdown();
 		
-		if (configuration.revenoSnapshooting().snapshootAtShutdown()) {
-			log.info("Preforming shutdown snapshooting...");
-			snapshootAll();
+		if (configuration.revenoSnapshotting().snapshotAtShutdown()) {
+			log.info("Preforming shutdown snapshotting...");
+			snapshotAll();
 		}
 		
 		log.info("Engine was stopped.");
@@ -162,6 +164,8 @@ public class Engine implements Reveno {
 	@Override
 	public RevenoManager domain() {
 		return new RevenoManager() {
+			protected RepositorySnapshotter lastSnapshotter;
+			
 			@Override
 			public <E, V> void viewMapper(Class<E> entityType, Class<V> viewType, ViewsMapper<E, V> mapper) {
 				viewsManager.register(entityType, viewType, mapper);
@@ -174,19 +178,25 @@ public class Engine implements Reveno {
 			}
 			
 			@Override
-			public RevenoManager snapshootWith(RepositorySnapshooter snapshooter) {
-				snapshotsManager.registerSnapshooter(snapshooter);
+			public RevenoManager snapshotWith(RepositorySnapshotter snapshotter) {
+				snapshotsManager.registerSnapshotter(snapshotter);
+				lastSnapshotter = snapshotter;
 				return this;
 			}
 			
 			@Override
-			public void restoreWith(RepositorySnapshooter snapshooter) {
-				restoreWith = snapshooter;
+			public void restoreWith(RepositorySnapshotter snapshotter) {
+				restoreWith = snapshotter;
 			}
 			
 			@Override
-			public void resetSnapshooters() {
-				snapshotsManager.resetSnapshooters();
+			public void andRestoreWithIt() {
+				restoreWith = lastSnapshotter;
+			}
+			
+			@Override
+			public void resetSnapshotters() {
+				snapshotsManager.resetSnapshotters();
 			}
 			
 			@Override
@@ -263,8 +273,7 @@ public class Engine implements Reveno {
 		EngineEventsContext eventsContext = new EngineEventsContext().serializer(eventsSerializer)
 				.eventsCommitBuilder(eventBuilder).eventsJournaler(eventsJournaler).manager(eventsManager);
 		eventPublisher = new DisruptorEventPublisher(configuration.cpuConsumption(), eventsContext);
-		snapshotsManager = new SnapshotsManager(snapshotStorage, repositorySerializer);
-		repository = factory.create(snapshotStorage.getLastSnapshotStore() != null ? snapshooter().load() : null);
+		repository = factory.create(snapshotStorage.getLastSnapshotStore() != null ? snapshotter().load() : null);
 		viewsProcessor = new ViewsProcessor(viewsManager, viewsStorage, repository);
 		processor = new DisruptorPipeProcessor(configuration.cpuConsumption(), false, executor);
 		roller = new JournalsRoller(transactionsJournaler, eventsJournaler, journalsStorage);
@@ -284,23 +293,23 @@ public class Engine implements Reveno {
 	
 	protected void connectSystemHandlers() {
 		domain().transactionAction(NextIdTransaction.class, idGenerator);
-		if (configuration.revenoSnapshooting().snapshootEvery() != -1) {
-			TransactionInterceptor nTimeSnapshooter = new SnapshootingInterceptor(configuration, snapshotsManager,
+		if (configuration.revenoSnapshotting().snapshotEvery() != -1) {
+			TransactionInterceptor nTimeSnapshotter = new SnapshottingInterceptor(configuration, snapshotsManager,
 					roller, repositorySerializer);
-			interceptors.add(TransactionStage.TRANSACTION, nTimeSnapshooter);
-			interceptors.add(TransactionStage.JOURNALING, nTimeSnapshooter);
+			interceptors.add(TransactionStage.TRANSACTION, nTimeSnapshotter);
+			interceptors.add(TransactionStage.JOURNALING, nTimeSnapshotter);
 		}
 	}
 	
-	protected RepositorySnapshooter snapshooter() {
+	protected RepositorySnapshotter snapshotter() {
 		if (restoreWith != null) 
 			return restoreWith;
 		else 
-			return snapshotsManager.defaultSnapshooter();
+			return snapshotsManager.defaultSnapshotter();
 	}
 	
-	protected void snapshootAll() {
-		snapshotsManager.getAll().forEach(s -> s.snapshoot(repository.getData()));
+	protected void snapshotAll() {
+		snapshotsManager.getAll().forEach(s -> s.snapshot(repository.getData()));
 	}
 	
 	protected final TxRepositoryFactory factory = new TxRepositoryFactory() {
@@ -325,14 +334,13 @@ public class Engine implements Reveno {
 	protected volatile boolean isStarted = false;
 	protected TxRepository repository;
 	protected SystemStateRestorer restorer;
-	protected SnapshotsManager snapshotsManager;
 	protected ViewsProcessor viewsProcessor;
 	protected WorkflowEngine workflowEngine;
 	protected EventPublisher eventPublisher;
 	protected PipeProcessor processor;
 	protected JournalsRoller roller;
 	
-	protected RepositorySnapshooter restoreWith;
+	protected RepositorySnapshotter restoreWith;
 	
 	protected RepositoryDataSerializer repositorySerializer = new DefaultJavaSerializer(getClass().getClassLoader());
 	protected SerializersChain serializer = new SerializersChain();
@@ -354,8 +362,9 @@ public class Engine implements Reveno {
 	protected final JournalsStorage journalsStorage;
 	protected final FoldersStorage foldersStorage;
 	protected final SnapshotStorage snapshotStorage;
+	protected final SnapshottersManager snapshotsManager;
 	
 	protected final ExecutorService executor = Executors.newFixedThreadPool(8);
-	protected final ScheduledExecutorService snapshooterIntervalExecutor = Executors.newSingleThreadScheduledExecutor();
+	protected final ScheduledExecutorService snapshotterIntervalExecutor = Executors.newSingleThreadScheduledExecutor();
 	protected static final Logger log = LoggerFactory.getLogger(Engine.class);
 }

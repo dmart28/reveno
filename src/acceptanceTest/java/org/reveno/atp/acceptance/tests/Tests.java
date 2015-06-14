@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import org.junit.Assert;
@@ -35,6 +36,11 @@ import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
 import org.reveno.atp.api.Reveno;
 import org.reveno.atp.core.Engine;
+import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
+import org.reveno.atp.core.serialization.DefaultJavaSerializer;
+import org.reveno.atp.core.serialization.ProtostuffSerializer;
+import org.reveno.atp.core.snapshots.DefaultSnapshotter;
+import org.reveno.atp.core.storage.FileSystemStorage;
 
 public class Tests extends RevenoBaseTest {
 	
@@ -119,6 +125,7 @@ public class Tests extends RevenoBaseTest {
 		});
 		sendCommandsBatch(reveno, new CreateNewAccountCommand("USD", 1000_000L), 1_000);
 		Assert.assertTrue(w.isArrived());
+		sleep(100);
 		
 		reveno.shutdown();
 		
@@ -192,9 +199,9 @@ public class Tests extends RevenoBaseTest {
 	}
 	
 	@Test
-	public void testShutdownSnapshooting() throws Exception {
+	public void testShutdownSnapshotting() throws Exception {
 		Reveno reveno = createEngine();
-		reveno.config().snapshooting().snapshootAtShutdown(true);
+		reveno.config().snapshotting().snapshotAtShutdown(true);
 		reveno.startup();
 		
 		generateAndSendCommands(reveno, 10_000);
@@ -216,10 +223,24 @@ public class Tests extends RevenoBaseTest {
 	}
 	
 	@Test
-	public void testSnapshootingEvery() throws Exception {
-		Reveno reveno = createEngine();
-		reveno.config().snapshooting().snapshootAtShutdown(false);
-		reveno.config().snapshooting().snapshootEvery(1002);
+	public void testSnapshottingEveryJavaSerializer() throws Exception {
+		testSnapshottingEvery(new DefaultJavaSerializer());
+	}
+	
+	@Test
+	public void testSnapshottingEveryProtostuffSerializer() throws Exception {
+		testSnapshottingEvery(new ProtostuffSerializer());
+	}
+	
+	public void testSnapshottingEvery(RepositoryDataSerializer repoSerializer) throws Exception {
+		Consumer<Reveno> consumer = r -> {
+			r.domain().resetSnapshotters();
+			r.domain().snapshotWith(new DefaultSnapshotter(new FileSystemStorage(tempDir), repoSerializer))
+				.andRestoreWithIt();
+		};
+		Reveno reveno = createEngine(consumer);
+		reveno.config().snapshotting().snapshotAtShutdown(false);
+		reveno.config().snapshotting().snapshotEvery(1002);
 		reveno.startup();
 		
 		generateAndSendCommands(reveno, 10_005);
@@ -231,7 +252,7 @@ public class Tests extends RevenoBaseTest {
 		
 		Assert.assertEquals(19, tempDir.listFiles((dir, name) -> name.startsWith("snp")).length);
 		
-		reveno = createEngine();
+		reveno = createEngine(consumer);
 		reveno.startup();
 		
 		Assert.assertEquals(10_005, reveno.query().select(AccountView.class).size());
@@ -241,9 +262,9 @@ public class Tests extends RevenoBaseTest {
 		
 		reveno.shutdown();
 		
-		Arrays.asList(tempDir.listFiles((dir, name) -> name.startsWith("snp"))).forEach(File::delete);
+		/*Arrays.asList(tempDir.listFiles((dir, name) -> name.startsWith("snp"))).forEach(File::delete);
 		
-		reveno = createEngine();
+		reveno = createEngine(consumer);
 		Waiter accountCreatedEvent = listenFor(reveno, AccountCreatedEvent.class);
 		Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class);
 		reveno.startup();
@@ -253,7 +274,7 @@ public class Tests extends RevenoBaseTest {
 		Assert.assertFalse(accountCreatedEvent.isArrived());
 		Assert.assertFalse(orderCreatedEvent.isArrived());
 		
-		reveno.shutdown();
+		reveno.shutdown();*/
 	}
 	
 	@Test

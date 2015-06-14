@@ -26,7 +26,7 @@ import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.core.engine.components.CommandsManager;
 import org.reveno.atp.core.engine.components.SerializersChain;
 import org.reveno.atp.core.engine.components.TransactionsManager;
-import org.reveno.atp.core.snapshots.SnapshotsManager;
+import org.reveno.atp.core.snapshots.SnapshottersManager;
 import org.reveno.atp.core.views.ViewsProcessor;
 
 public interface WorkflowContext {
@@ -56,6 +56,6 @@ public interface WorkflowContext {
 	public JournalsRoller roller();
 	
 	
-	public SnapshotsManager snapshotsManager();
+	public SnapshottersManager snapshotsManager();
 	
 }

@@ -16,7 +16,7 @@
 
 package org.reveno.atp.core.snapshots;
 
-import org.reveno.atp.api.RepositorySnapshooter;
+import org.reveno.atp.api.RepositorySnapshotter;
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
@@ -27,7 +27,7 @@ import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DefaultSnapshooter implements RepositorySnapshooter {
+public class DefaultSnapshotter implements RepositorySnapshotter {
 
 	public static final long TYPE = 0x12345;
 
@@ -42,7 +42,7 @@ public class DefaultSnapshooter implements RepositorySnapshooter {
 	}
 
 	@Override
-	public void snapshoot(RepositoryData repo) {
+	public void snapshot(RepositoryData repo) {
 		SnapshotStore snap = storage.nextSnapshotStore();
 		
 		Buffer buffer = new NettyBasedBuffer(false);
@@ -81,7 +81,7 @@ public class DefaultSnapshooter implements RepositorySnapshooter {
 		}
 	}
 
-	public DefaultSnapshooter(
+	public DefaultSnapshotter(
 			SnapshotStorage storage,
 			RepositoryDataSerializer repoSerializer) {
 		this.storage = storage;
@@ -91,6 +91,6 @@ public class DefaultSnapshooter implements RepositorySnapshooter {
 	
 	protected final SnapshotStorage storage;
 	protected final RepositoryDataSerializer repoSerializer;
-	protected static final Logger log = LoggerFactory.getLogger(DefaultSnapshooter.class);
+	protected static final Logger log = LoggerFactory.getLogger(DefaultSnapshotter.class);
 
 }

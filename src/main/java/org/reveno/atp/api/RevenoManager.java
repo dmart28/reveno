@@ -36,19 +36,21 @@ public interface RevenoManager {
 	
 	<E, V> void viewMapper(Class<E> entityType, Class<V> viewType, ViewsMapper<E, V> mapper);
 	
-	RevenoManager snapshootWith(RepositorySnapshooter snapshooter);
+	RevenoManager snapshotWith(RepositorySnapshotter snapshotter);
 	
-	void restoreWith(RepositorySnapshooter snapshooter);
+	void restoreWith(RepositorySnapshotter snapshotter);
 	
-	void resetSnapshooters();
+	void andRestoreWithIt();
+	
+	void resetSnapshotters();
 	
 	void serializeWith(List<TransactionInfoSerializer> serializers);
 		
 	
-	default RevenoManager and(RepositorySnapshooter snapshooter) {
-		Objects.requireNonNull(snapshooter);
+	default RevenoManager and(RepositorySnapshotter snapshotter) {
+		Objects.requireNonNull(snapshotter);
 		
-		snapshootWith(snapshooter);
+		snapshotWith(snapshotter);
 		return this;
 	}
 	

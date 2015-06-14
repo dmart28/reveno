@@ -18,7 +18,7 @@ package org.reveno.atp.api;
 
 public interface Configuration {
 	
-	SnapshotConfiguration snapshooting();
+	SnapshotConfiguration snapshotting();
 	
 	void modelType(ModelType modelType);
 	
@@ -26,9 +26,9 @@ public interface Configuration {
 	
 	
 	public static interface SnapshotConfiguration {
-		void snapshootAtShutdown(boolean takeSnapshot);
+		void snapshotAtShutdown(boolean takeSnapshot);
 		
-		void snapshootEvery(long transactionCount);
+		void snapshotEvery(long transactionCount);
 	}
 	
 	public static enum ModelType { MUTABLE, IMMUTABLE }

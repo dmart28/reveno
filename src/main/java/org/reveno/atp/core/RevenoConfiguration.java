@@ -21,11 +21,11 @@ import org.reveno.atp.api.Configuration;
 public class RevenoConfiguration implements Configuration {
 
 	@Override
-	public SnapshotConfiguration snapshooting() {
-		return revenoSnapshooting();
+	public SnapshotConfiguration snapshotting() {
+		return revenoSnapshotting();
 	}
-	public RevenoSnapshotConfiguration revenoSnapshooting() {
-		return snapshooting;
+	public RevenoSnapshotConfiguration revenoSnapshotting() {
+		return snapshotting;
 	}
 
 	@Override
@@ -44,7 +44,7 @@ public class RevenoConfiguration implements Configuration {
 		return cpuConsumption;
 	}
 	
-	private RevenoSnapshotConfiguration snapshooting = new RevenoSnapshotConfiguration();
+	private RevenoSnapshotConfiguration snapshotting = new RevenoSnapshotConfiguration();
 	private CpuConsumption cpuConsumption = CpuConsumption.LOW;
 	private ModelType modelType = ModelType.IMMUTABLE;
 	
@@ -52,23 +52,23 @@ public class RevenoConfiguration implements Configuration {
 	public static class RevenoSnapshotConfiguration implements SnapshotConfiguration {
 
 		@Override
-		public void snapshootAtShutdown(boolean takeSnapshot) {
-			this.snapshootAtShutdown = takeSnapshot;
+		public void snapshotAtShutdown(boolean takeSnapshot) {
+			this.snapshotAtShutdown = takeSnapshot;
 		}
-		public boolean snapshootAtShutdown() {
-			return snapshootAtShutdown;
+		public boolean snapshotAtShutdown() {
+			return snapshotAtShutdown;
 		}
 
 		@Override
-		public void snapshootEvery(long transactionCount) {
-			this.snapshootEvery = transactionCount;
+		public void snapshotEvery(long transactionCount) {
+			this.snapshotEvery = transactionCount;
 		}
-		public long snapshootEvery() {
-			return snapshootEvery;
+		public long snapshotEvery() {
+			return snapshotEvery;
 		}
 		
-		private volatile boolean snapshootAtShutdown = false;
-		private volatile long snapshootEvery = -1;
+		private volatile boolean snapshotAtShutdown = false;
+		private volatile long snapshotEvery = -1;
 		
 	}
 	

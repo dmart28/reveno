@@ -81,6 +81,8 @@ public class RevenoBaseTest {
 	
 	@Before
 	public void setUp() {
+		// need to tell protostuff to treat empty collections not as null
+		System.setProperty("protostuff.runtime.collection_schema_on_repeated_fields", "true");
 		tempDir = Files.createTempDir();
 	}
 	
