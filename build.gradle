@@ -56,4 +56,8 @@ test {
     }
 }
 
+task wrapper(type: Wrapper) {
+   gradleVersion = '2.4' //version required
+}
+
 defaultTasks 'clean', 'build'
