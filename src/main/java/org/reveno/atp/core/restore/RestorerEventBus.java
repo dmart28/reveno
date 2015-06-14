@@ -67,16 +67,15 @@ public class RestorerEventBus implements RestoreableEventBus {
 			return;
 		}
 		
-		if (event.getTransactionId() <= lastTransactionId && event.getFlag() == 0) {
-			log.warn("Transaction ID < Last Transaction ID - this is abnormal!");
-			addMissedEvents(event);
-			return;
-		} else if (event.getFlag() == EventPublisher.ASYNC_ERROR_FLAG) {
+		if (event.getFlag() == EventPublisher.ASYNC_ERROR_FLAG) {
 			log.info("Failed transaction event [{}]", event.getTransactionId());
 			unpublishedEvents.add(new LongRange(event.getTransactionId()));
 			return;
 		}
-		if (event.getTransactionId() - lastTransactionId > 1) {
+		if (event.getTransactionId() <= lastTransactionId && event.getFlag() == 0) {
+			log.warn("Transaction ID < Last Transaction ID - this is abnormal!");
+			addMissedEvents(event);
+		} else if (event.getTransactionId() - lastTransactionId > 1) {
 			log.info("Missing transaction events from {} to {}", lastTransactionId + 1, event.getTransactionId() - 1);
 			unpublishedEvents.add(new LongRange(lastTransactionId + 1, event.getTransactionId() - 1));
 		}

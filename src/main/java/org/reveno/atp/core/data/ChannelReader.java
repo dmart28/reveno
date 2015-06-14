@@ -71,11 +71,15 @@ public class ChannelReader<T> implements Iterable<List<T>> {
 				}
 				prevBuffer = buffer;
 				buffer = null;
-				if (entries != null) {
-					return true;
+				if (!channels.hasNext()) {
+					if (entries != null) {
+						return true;
+					} else {
+						channel.close();
+						return false;
+					}
 				} else {
-					channel.close();
-					return false;
+					return true;
 				}
 			}
 
