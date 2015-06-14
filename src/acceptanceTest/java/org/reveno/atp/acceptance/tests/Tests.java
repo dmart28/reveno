@@ -262,7 +262,7 @@ public class Tests extends RevenoBaseTest {
 		
 		reveno.shutdown();
 		
-		/*Arrays.asList(tempDir.listFiles((dir, name) -> name.startsWith("snp"))).forEach(File::delete);
+		Arrays.asList(tempDir.listFiles((dir, name) -> name.startsWith("snp"))).forEach(File::delete);
 		
 		reveno = createEngine(consumer);
 		Waiter accountCreatedEvent = listenFor(reveno, AccountCreatedEvent.class);
@@ -274,7 +274,7 @@ public class Tests extends RevenoBaseTest {
 		Assert.assertFalse(accountCreatedEvent.isArrived());
 		Assert.assertFalse(orderCreatedEvent.isArrived());
 		
-		reveno.shutdown();*/
+		reveno.shutdown();
 	}
 	
 	@Test
