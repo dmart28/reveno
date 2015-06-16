@@ -38,18 +38,14 @@ public class DefaultInputProcessor implements InputProcessor, Closeable {
 				js.getEventsCommitsAddress() : js.getTransactionCommitsAddress())
 				.map(f -> storage.channel(f)).limit(Math.abs(stores().length - 1)).collect(Collectors.toList());
 		ChannelReader<Buffer> bufferReader = new ChannelReader<>(new ChannelDecoder(), chs);
-		try {
-			bufferReader.iterator().forEachRemaining((list) -> {
-				list.forEach((b) -> {
-					while (b.isAvailable()) {
-						consumer.accept(b);
-					}
-					b.release();
-				});
+		bufferReader.iterator().forEachRemaining((list) -> {
+			list.forEach((b) -> {
+				while (b.isAvailable()) {
+					consumer.accept(b);
+				}
+				b.release();
 			});
-		} catch (Throwable t) {
-			log.error("process", t);
-		}
+		});
 	}
 	
 	@Override 
