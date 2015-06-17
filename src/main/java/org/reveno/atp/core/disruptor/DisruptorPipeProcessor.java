@@ -32,7 +32,6 @@ import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.RestoreableEventBus;
 import org.reveno.atp.core.engine.processor.PipeProcessor;
-import org.reveno.atp.core.engine.processor.ProcessorContext;
 import org.reveno.atp.core.engine.processor.ProcessorHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +47,8 @@ import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.EventHandlerGroup;
 import com.lmax.disruptor.dsl.ProducerType;
 
-public class DisruptorPipeProcessor implements PipeProcessor {
+@SuppressWarnings("unchecked")
+public class DisruptorPipeProcessor implements PipeProcessor<ProcessorContext> {
 
 	public DisruptorPipeProcessor(CpuConsumption cpuConsumption,
 			boolean singleProducer, Executor executor) {
@@ -139,7 +139,7 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 	}
 	
 	@Override
-	public PipeProcessor pipe(ProcessorHandler... handler) {
+	public PipeProcessor<ProcessorContext> pipe(ProcessorHandler<ProcessorContext>... handler) {
 		if (!isStarted)
 			handlers.add(handler);
 		return this;
@@ -182,11 +182,10 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 					"Pipe Processor must be started first.");
 	}
 	
-	@SuppressWarnings("unchecked")
-	protected EventHandler<ProcessorContext>[] convert(ProcessorHandler[] h) {
+	protected EventHandler<ProcessorContext>[] convert(ProcessorHandler<ProcessorContext>[] h) {
 		EventHandler<ProcessorContext>[] acs = new EventHandler[h.length];
 		for (int i = 0; i < h.length; i++) {
-			final ProcessorHandler hh = h[i];
+			final ProcessorHandler<ProcessorContext> hh = h[i];
 			acs[i] = (e, c, eob) -> hh.handle(e, eob);
 		}	
 		return acs;
@@ -194,7 +193,7 @@ public class DisruptorPipeProcessor implements PipeProcessor {
 
 	protected volatile boolean isStarted = false;
 	protected Disruptor<ProcessorContext> disruptor;
-	protected List<ProcessorHandler[]> handlers = new ArrayList<>();
+	protected List<ProcessorHandler<ProcessorContext>[]> handlers = new ArrayList<>();
 	protected final boolean singleProducer;
 	protected final CpuConsumption cpuConsumption;
 	protected final Executor executor;

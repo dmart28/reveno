@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.core.engine.processor;
+package org.reveno.atp.core.disruptor;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -18,6 +18,13 @@ package org.reveno.atp.core.api;
 
 import org.reveno.atp.api.EventsManager.EventMetadata;
 
+/**
+ * EventPublisher is main entry point in system, at which all events
+ * from transaction are being sent to execution.
+ * 
+ * @author Artem Dmitriev <art.dm.ser@gmail.com>
+ *
+ */
 public interface EventPublisher {
 	
 	void start();

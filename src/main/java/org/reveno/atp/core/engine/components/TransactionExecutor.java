@@ -27,8 +27,8 @@ import org.reveno.atp.api.transaction.EventBus;
 import org.reveno.atp.api.transaction.TransactionContext;
 import org.reveno.atp.core.api.IdGenerator;
 import org.reveno.atp.core.api.SystemInfo;
+import org.reveno.atp.core.disruptor.ProcessorContext;
 import org.reveno.atp.core.engine.WorkflowContext;
-import org.reveno.atp.core.engine.processor.ProcessorContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

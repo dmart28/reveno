@@ -24,7 +24,8 @@ import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.RestoreableEventBus;
 
-public interface PipeProcessor {
+@SuppressWarnings("unchecked")
+public interface PipeProcessor<T> {
 
 	void start();
 	
@@ -36,7 +37,7 @@ public interface PipeProcessor {
 	
 	boolean isStarted();
 	
-	PipeProcessor pipe(ProcessorHandler... handler);
+	PipeProcessor<T> pipe(ProcessorHandler<T>... handler);
 	
 	
 	CompletableFuture<EmptyResult> process(List<Object> commands);
@@ -46,7 +47,7 @@ public interface PipeProcessor {
 	void executeRestore(RestoreableEventBus eventBus, TransactionCommitInfo transaction);
 	
 	
-	default PipeProcessor then(ProcessorHandler... handler) {
+	default PipeProcessor<T> then(ProcessorHandler<T>... handler) {
 		return pipe(handler);
 	}
 	

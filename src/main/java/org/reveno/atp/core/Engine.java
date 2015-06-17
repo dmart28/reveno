@@ -61,6 +61,7 @@ import org.reveno.atp.core.api.storage.JournalsStorage.JournalStore;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
 import org.reveno.atp.core.data.DefaultJournaler;
 import org.reveno.atp.core.disruptor.DisruptorPipeProcessor;
+import org.reveno.atp.core.disruptor.ProcessorContext;
 import org.reveno.atp.core.engine.WorkflowEngine;
 import org.reveno.atp.core.engine.components.CommandsManager;
 import org.reveno.atp.core.engine.components.DefaultIdGenerator;
@@ -328,7 +329,7 @@ public class Engine implements Reveno {
 	protected ViewsProcessor viewsProcessor;
 	protected WorkflowEngine workflowEngine;
 	protected EventPublisher eventPublisher;
-	protected PipeProcessor processor;
+	protected PipeProcessor<ProcessorContext> processor;
 	protected JournalsRoller roller;
 	
 	protected RepositorySnapshotter restoreWith;

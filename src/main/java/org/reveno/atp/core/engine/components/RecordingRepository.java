@@ -96,8 +96,9 @@ public class RecordingRepository implements WriteableRepository {
 	}
 	
 	private Map<Class<?>, Set<Long>> markedRecords;
-	@SuppressWarnings("serial")
-	public static final Set<Long> GET_ALL = new HashSet<Long>() {{
+	public static final Set<Long> GET_ALL = new HashSet<Long>() {
+		private static final long serialVersionUID = 1L;
+	{
 		add(-1L); add(-3L); add(-5L); add(-10L); add(-101L);
 	}};
 }
