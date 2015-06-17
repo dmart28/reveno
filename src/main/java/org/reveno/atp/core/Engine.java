@@ -19,6 +19,7 @@ package org.reveno.atp.core;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -63,9 +64,9 @@ import org.reveno.atp.core.disruptor.DisruptorPipeProcessor;
 import org.reveno.atp.core.engine.WorkflowEngine;
 import org.reveno.atp.core.engine.components.CommandsManager;
 import org.reveno.atp.core.engine.components.DefaultIdGenerator;
-import org.reveno.atp.core.engine.components.SnapshottingInterceptor;
 import org.reveno.atp.core.engine.components.DefaultIdGenerator.NextIdTransaction;
 import org.reveno.atp.core.engine.components.SerializersChain;
+import org.reveno.atp.core.engine.components.SnapshottingInterceptor;
 import org.reveno.atp.core.engine.components.TransactionsManager;
 import org.reveno.atp.core.engine.processor.PipeProcessor;
 import org.reveno.atp.core.events.DisruptorEventPublisher;
@@ -265,7 +266,7 @@ public class Engine implements Reveno {
 		EngineEventsContext eventsContext = new EngineEventsContext().serializer(eventsSerializer)
 				.eventsCommitBuilder(eventBuilder).eventsJournaler(eventsJournaler).manager(eventsManager);
 		eventPublisher = new DisruptorEventPublisher(configuration.cpuConsumption(), eventsContext);
-		repository = factory.create(snapshotStorage.getLastSnapshotStore() != null ? snapshotter().load() : null);
+		repository = factory.create(loadLastSnapshot());
 		viewsProcessor = new ViewsProcessor(viewsManager, viewsStorage, repository);
 		processor = new DisruptorPipeProcessor(configuration.cpuConsumption(), false, executor);
 		roller = new JournalsRoller(transactionsJournaler, eventsJournaler, journalsStorage);
@@ -275,6 +276,15 @@ public class Engine implements Reveno {
 				.idGenerator(idGenerator).roller(roller).snapshotsManager(snapshotsManager).interceptorCollection(interceptors);
 		workflowEngine = new WorkflowEngine(processor, workflowContext);
 		restorer = new DefaultSystemStateRestorer(journalsStorage, workflowContext, eventsContext, workflowEngine);
+	}
+	
+	protected Optional<RepositoryData> loadLastSnapshot() {
+		if (restoreWith != null && restoreWith.hasAny()) {
+			return Optional.of(restoreWith.load());
+		}
+		return Optional.ofNullable(snapshotsManager.getAll().stream()
+						.filter(RepositorySnapshotter::hasAny).findFirst()
+						.map(RepositorySnapshotter::load).orElse(null));
 	}
 	
 	protected Map<Class<?>, Set<Long>> mapAsMarked(TxRepository repository) {
@@ -293,35 +303,24 @@ public class Engine implements Reveno {
 		}
 	}
 	
+	protected TxRepository createRepository() {
+		switch (configuration.modelType()) {
+		case IMMUTABLE : return new ImmutableModelRepository(repository());
+		case MUTABLE : return new MutableModelRepository(repository());
+		}
+		return null;
+	}
+	
 	protected RepositorySnapshotter snapshotter() {
 		if (restoreWith != null) 
 			return restoreWith;
 		else 
-			return snapshotsManager.defaultSnapshotter();
+			return snapshotsManager.getAll().stream().findFirst().get();
 	}
 	
 	protected void snapshotAll() {
 		snapshotsManager.getAll().forEach(s -> s.snapshot(repository.getData()));
 	}
-	
-	protected final TxRepositoryFactory factory = new TxRepositoryFactory() {
-		@Override
-		public TxRepository create(RepositoryData data) {
-			TxRepository repository = null;
-			switch (configuration.modelType()) {
-			case IMMUTABLE : repository = new ImmutableModelRepository(repository()); break;
-			case MUTABLE : repository = new MutableModelRepository(repository()); break;
-			}
-			if (data != null)
-				repository.load(data.data);
-			return repository;
-		}
-		
-		@Override
-		public TxRepository create() {
-			return create(null);
-		}
-	};
 
 	protected volatile boolean isStarted = false;
 	protected TxRepository repository;
@@ -359,4 +358,11 @@ public class Engine implements Reveno {
 	protected final ExecutorService executor = Executors.newFixedThreadPool(8);
 	protected final ScheduledExecutorService snapshotterIntervalExecutor = Executors.newSingleThreadScheduledExecutor();
 	protected static final Logger log = LoggerFactory.getLogger(Engine.class);
+	
+	protected final TxRepositoryFactory factory = (repositoryData) -> {
+		final TxRepository repository = createRepository();
+		repositoryData.ifPresent(d -> repository.load(d.data));
+		return repository;
+	};
+	
 }

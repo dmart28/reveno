@@ -17,41 +17,34 @@
 package org.reveno.atp.core.snapshots;
 
 import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import org.reveno.atp.api.RepositorySnapshotter;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
 
 public class SnapshottersManager {
-
-	public RepositorySnapshotter defaultSnapshotter() {
-		return snapshotters.get(DefaultSnapshotter.TYPE);
-	}
 	
 	public void registerSnapshotter(RepositorySnapshotter snapshotter) {
-		snapshotters.put(snapshotter.getType(), snapshotter);
+		snapshotters.add(snapshotter);
 	}
 	
 	public void resetSnapshotters() {
-		snapshotters = new LinkedHashMap<Long, RepositorySnapshotter>();
-	}
-	
-	public void getSnapshotter(long type) {
-		snapshotters.get(type);
+		snapshotters = new LinkedHashSet<>();
 	}
 	
 	public Collection<RepositorySnapshotter> getAll() {
-		return snapshotters.values();
+		return Collections.unmodifiableSet(snapshotters);
 	}
 	
 	
 	public SnapshottersManager(SnapshotStorage storage, RepositoryDataSerializer repoSerializer) {
-		snapshotters.put(DefaultSnapshotter.TYPE, new DefaultSnapshotter(storage, repoSerializer));
+		snapshotters.add(new DefaultSnapshotter(storage, repoSerializer));
 	}
 	
 	
-	protected volatile Map<Long, RepositorySnapshotter> snapshotters = new LinkedHashMap<>();
+	protected volatile Set<RepositorySnapshotter> snapshotters = new LinkedHashSet<>();
 	
 }

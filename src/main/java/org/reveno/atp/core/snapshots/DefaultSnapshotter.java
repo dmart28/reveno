@@ -28,13 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DefaultSnapshotter implements RepositorySnapshotter {
-
-	public static final long TYPE = 0x12345;
-
-	@Override
-	public long getType() {
-		return TYPE;
-	}
 	
 	@Override
 	public boolean hasAny() {

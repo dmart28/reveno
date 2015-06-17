@@ -17,20 +17,34 @@
 package org.reveno.atp.api;
 
 import org.reveno.atp.api.domain.RepositoryData;
+import org.reveno.atp.core.api.storage.SnapshotStorage;
 
 /**
- * 
+ * Snapshotter is the instrument 
  * 
  * @author Artem Dmitriev <art.dm.ser@gmail.com>
  *
  */
 public interface RepositorySnapshotter {
 
-	long getType();
-	
+	/**
+	 * Checks is there any available snapshot to be loaded.
+	 * 
+	 * @return if any snapshot available
+	 */
 	boolean hasAny();
 	
+	/**
+	 * Performs snapshotting of {@link RepositoryData} to some {@link SnapshotStorage}
+	 * 
+	 * @param repo latest state of domain model
+	 */
 	void snapshot(RepositoryData repo);
 	
+	/**
+	 * Loads last snapshot into {@link RepositoryData}
+	 * 
+	 * @return snapshotted state of domain model
+	 */
 	RepositoryData load();
 }
