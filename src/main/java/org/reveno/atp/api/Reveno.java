@@ -32,6 +32,9 @@ import org.reveno.atp.api.query.QueryManager;
  * You also have an ability to start Reveno as master-slave cluster, all the
  * required settings must be set in {@link org.reveno.atp.api.ClusterManager} 
  * class.
+ * 
+ * @author Artem Dmitriev <art.dm.ser@gmail.com>
+ *
  */
 public interface Reveno {
 	
@@ -60,14 +63,12 @@ public interface Reveno {
 	void shutdown();
 	
 	/**
-	 * Contains all required operations for the domain space of engine.
-	 * Basically it includes registration of commands and transactions along
-	 * with their handlers, also views mappers of domain model to view model.
-	 * 
-	 * Talking from CQRS point of view, this can be interpreted as Command
-	 * part management side.
-	 * 
-	 * Also you can provide your own serializers chain or domain snapshotters as well.
+     * Contains all required operations for managing of domain space of engine.
+     * Basically it includes registration of commands and transaction actions along
+     * with their handlers. You can put here your own View mappers as well, which
+ 	 * naturally are the bridge between Query side and your whole domain model.
+ 	 * 
+ 	 * Also you can provide your own serializers chain or domain snapshotters as well.
 	 * 
 	 * @return manager for working with domain space.
 	 */

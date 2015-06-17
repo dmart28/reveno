@@ -18,6 +18,12 @@ package org.reveno.atp.api;
 
 import org.reveno.atp.api.domain.RepositoryData;
 
+/**
+ * 
+ * 
+ * @author Artem Dmitriev <art.dm.ser@gmail.com>
+ *
+ */
 public interface RepositorySnapshotter {
 
 	long getType();

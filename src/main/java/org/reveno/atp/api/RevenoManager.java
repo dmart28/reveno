@@ -28,6 +28,17 @@ import org.reveno.atp.api.transaction.TransactionContext;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.reveno.atp.core.api.storage.FoldersStorage;
 
+/**
+ * Contains all required operations for managing of domain space of engine.
+ * Basically it includes registration of commands and transaction actions along
+ * with their handlers. You can put here your own View mappers as well, which
+ * naturally are the bridge between Query side and your whole domain model.
+ * 
+ * Also you can provide your own serializers chain or domain snapshotters as well.
+ * 
+ * @author Artem Dmitriev <art.dm.ser@gmail.com>
+ *
+ */
 public interface RevenoManager {
 
 	/**
