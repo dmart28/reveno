@@ -37,7 +37,7 @@ public class TestRevenoEngine extends Engine {
 	
 	public void syncAll() {
 		workflowEngine.getPipe().sync();
-		eventPublisher.sync();
+		eventPublisher.getPipe().sync();
 	}
 
 }

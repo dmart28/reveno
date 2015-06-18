@@ -22,9 +22,9 @@ import java.util.TreeSet;
 
 import org.reveno.atp.api.transaction.EventBus;
 import org.reveno.atp.commons.LongRange;
-import org.reveno.atp.core.api.EventPublisher;
 import org.reveno.atp.core.api.EventsCommitInfo;
 import org.reveno.atp.core.api.RestoreableEventBus;
+import org.reveno.atp.core.events.EventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

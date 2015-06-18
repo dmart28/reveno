@@ -16,9 +16,9 @@
 
 package org.reveno.atp.core.engine;
 
-import org.reveno.atp.core.api.EventPublisher;
 import org.reveno.atp.core.disruptor.ProcessorContext;
 import org.reveno.atp.core.engine.processor.TransactionPipeProcessor;
+import org.reveno.atp.core.events.EventPublisher;
 
 @SuppressWarnings("unchecked")
 public class WorkflowEngine {

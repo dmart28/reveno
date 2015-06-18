@@ -19,11 +19,11 @@ package org.reveno.atp.core.disruptor;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Assert;
-
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.reveno.atp.api.Configuration.CpuConsumption;
@@ -32,8 +32,10 @@ import org.reveno.atp.core.api.EventsCommitInfo.Builder;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.serialization.EventsInfoSerializer;
 import org.reveno.atp.core.data.DefaultJournaler;
-import org.reveno.atp.core.events.DisruptorEventPublisher;
+import org.reveno.atp.core.engine.processor.PipeProcessor;
+import org.reveno.atp.core.events.Event;
 import org.reveno.atp.core.events.EventHandlersManager;
+import org.reveno.atp.core.events.EventPublisher;
 import org.reveno.atp.core.events.EventsContext;
 import org.reveno.atp.core.impl.EventsCommitInfoImpl;
 import org.reveno.atp.core.serialization.SimpleEventsSerializer;
@@ -75,8 +77,9 @@ public class DisruptorEventsBusTest {
 		EventsCommitInfo.Builder builder = new EventsCommitInfoImpl.PojoBuilder();
 		EventsInfoSerializer serializer = new SimpleEventsSerializer();
 		
-		DisruptorEventPublisher eventsBus = new DisruptorEventPublisher(CpuConsumption.HIGH, new Context(journaler, builder, serializer, manager));
-		eventsBus.start();
+		PipeProcessor<Event> pipe = new DisruptorEventPipeProcessor(CpuConsumption.HIGH, Executors.newCachedThreadPool());
+		EventPublisher eventsBus = new EventPublisher(pipe, new Context(journaler, builder, serializer, manager));
+		eventsBus.getPipe().start();
 		
 		eventsBus.publishEvents(false, 5L, null, new Object[] { new MyEvent("Hello!"), new MyNextEvent() });
 		eventsBus.publishEvents(false, 6L, null, new Object[] { new MyNextEvent() });
@@ -85,7 +88,7 @@ public class DisruptorEventsBusTest {
 		Assert.assertNotNull(event[0]);
 		Assert.assertEquals(event[0].message, "Hello!");
 		
-		eventsBus.stop();
+		eventsBus.getPipe().stop();
 		journaler.stopWriting();
 		
 		System.out.println(new File(tempDir, fileAddress).length());

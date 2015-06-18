@@ -60,7 +60,7 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 	public void start() {
 		if (isStarted) throw new IllegalStateException("The Pipe Processor is alredy started.");
 		
-		disruptor = new Disruptor<T>(eventFactory(), 4 * 1024, executor(),
+		disruptor = new Disruptor<T>(eventFactory(), 6 * 1024, executor(),
 				singleProducer() ? ProducerType.SINGLE : ProducerType.MULTI,
 				createWaitStrategy());
 
@@ -86,7 +86,7 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 		stop();
 		disruptor.shutdown();
 		
-		for (int i = 0; i < 4 * 1024; i++)
+		for (int i = 0; i < 6 * 1024; i++)
 			disruptor.getRingBuffer().get(i).destroy();
 	}
 

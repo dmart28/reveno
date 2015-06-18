@@ -52,7 +52,7 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 			throw new RuntimeException(t);
 		}
 		workflowEngine.getPipe().sync();
-		workflowContext.eventPublisher().sync();
+		workflowContext.eventPublisher().getPipe().sync();
 		return new SystemState(transactionId[0]);
 	}
 	

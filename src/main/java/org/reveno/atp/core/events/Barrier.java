@@ -16,8 +16,6 @@
 
 package org.reveno.atp.core.events;
 
-import org.reveno.atp.core.api.EventPublisher;
-
 public class Barrier implements Runnable {
 
 	@Override

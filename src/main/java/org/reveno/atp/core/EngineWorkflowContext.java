@@ -16,7 +16,6 @@
 
 package org.reveno.atp.core;
 
-import org.reveno.atp.core.api.EventPublisher;
 import org.reveno.atp.core.api.IdGenerator;
 import org.reveno.atp.core.api.InterceptorCollection;
 import org.reveno.atp.core.api.Journaler;
@@ -26,6 +25,7 @@ import org.reveno.atp.core.engine.WorkflowContext;
 import org.reveno.atp.core.engine.components.CommandsManager;
 import org.reveno.atp.core.engine.components.SerializersChain;
 import org.reveno.atp.core.engine.components.TransactionsManager;
+import org.reveno.atp.core.events.EventPublisher;
 import org.reveno.atp.core.snapshots.SnapshottersManager;
 import org.reveno.atp.core.views.ViewsProcessor;
 
