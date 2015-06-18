@@ -32,7 +32,8 @@ public class RestorerEventBus implements RestoreableEventBus {
 
 	@Override
 	public void publishEvent(Object event) {
-		if (currentTransactionId > lastTransactionId) {
+		if (currentTransactionId > maxTransactionId) {
+			log.info("Current transaction id > max transaction id loaded from events. [%s,%s]");
 			underlyingEventBus.publishEvent(event);
 			return;
 		}
@@ -64,6 +65,7 @@ public class RestorerEventBus implements RestoreableEventBus {
 	public void processNextEvent(EventsCommitInfo event) {
 		if (lastTransactionId == -1L) {
 			lastTransactionId = event.getTransactionId();
+			maxTransactionId = lastTransactionId;
 			return;
 		}
 		
@@ -80,6 +82,8 @@ public class RestorerEventBus implements RestoreableEventBus {
 			unpublishedEvents.add(new LongRange(lastTransactionId + 1, event.getTransactionId() - 1));
 		}
 		lastTransactionId = event.getTransactionId();
+		if (lastTransactionId > maxTransactionId)
+			maxTransactionId = lastTransactionId;
 	}
 
 	protected void addMissedEvents(EventsCommitInfo event) {
@@ -112,7 +116,7 @@ public class RestorerEventBus implements RestoreableEventBus {
 	
 	protected EventBus underlyingEventBus;
 	protected long currentTransactionId = -1L;
-	protected long lastTransactionId = -1L;
+	protected long lastTransactionId = -1L, maxTransactionId = -1L;
 	protected TreeSet<LongRange> unpublishedEvents = new TreeSet<LongRange>();
 	protected static final Logger log = LoggerFactory.getLogger(RestorerEventBus.class);
 }
