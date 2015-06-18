@@ -33,7 +33,8 @@ public class RestorerEventBus implements RestoreableEventBus {
 	@Override
 	public void publishEvent(Object event) {
 		if (currentTransactionId > maxTransactionId) {
-			log.info("Current transaction id > max transaction id loaded from events. [%s,%s]");
+			log.info(String.format("Current transaction id > max transaction id loaded from events. [%s,%s]", 
+					currentTransactionId, maxTransactionId));
 			underlyingEventBus.publishEvent(event);
 			return;
 		}
