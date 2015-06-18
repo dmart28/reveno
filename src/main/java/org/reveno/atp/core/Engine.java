@@ -60,7 +60,7 @@ import org.reveno.atp.core.api.storage.JournalsStorage;
 import org.reveno.atp.core.api.storage.JournalsStorage.JournalStore;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
 import org.reveno.atp.core.data.DefaultJournaler;
-import org.reveno.atp.core.disruptor.DisruptorPipeProcessor;
+import org.reveno.atp.core.disruptor.DisruptorTransactionPipeProcessor;
 import org.reveno.atp.core.disruptor.ProcessorContext;
 import org.reveno.atp.core.engine.WorkflowEngine;
 import org.reveno.atp.core.engine.components.CommandsManager;
@@ -69,7 +69,7 @@ import org.reveno.atp.core.engine.components.DefaultIdGenerator.NextIdTransactio
 import org.reveno.atp.core.engine.components.SerializersChain;
 import org.reveno.atp.core.engine.components.SnapshottingInterceptor;
 import org.reveno.atp.core.engine.components.TransactionsManager;
-import org.reveno.atp.core.engine.processor.PipeProcessor;
+import org.reveno.atp.core.engine.processor.TransactionPipeProcessor;
 import org.reveno.atp.core.events.DisruptorEventPublisher;
 import org.reveno.atp.core.events.EventHandlersManager;
 import org.reveno.atp.core.impl.EventsCommitInfoImpl;
@@ -269,7 +269,7 @@ public class Engine implements Reveno {
 		eventPublisher = new DisruptorEventPublisher(configuration.cpuConsumption(), eventsContext);
 		repository = factory.create(loadLastSnapshot());
 		viewsProcessor = new ViewsProcessor(viewsManager, viewsStorage, repository);
-		processor = new DisruptorPipeProcessor(configuration.cpuConsumption(), false, executor);
+		processor = new DisruptorTransactionPipeProcessor(configuration.cpuConsumption(), false, executor);
 		roller = new JournalsRoller(transactionsJournaler, eventsJournaler, journalsStorage);
 		EngineWorkflowContext workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
 				.viewsProcessor(viewsProcessor).transactionsManager(transactionsManager).commandsManager(commandsManager)
@@ -329,7 +329,7 @@ public class Engine implements Reveno {
 	protected ViewsProcessor viewsProcessor;
 	protected WorkflowEngine workflowEngine;
 	protected EventPublisher eventPublisher;
-	protected PipeProcessor<ProcessorContext> processor;
+	protected TransactionPipeProcessor<ProcessorContext> processor;
 	protected JournalsRoller roller;
 	
 	protected RepositorySnapshotter restoreWith;

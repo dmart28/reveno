@@ -18,12 +18,12 @@ package org.reveno.atp.core.engine;
 
 import org.reveno.atp.core.api.EventPublisher;
 import org.reveno.atp.core.disruptor.ProcessorContext;
-import org.reveno.atp.core.engine.processor.PipeProcessor;
+import org.reveno.atp.core.engine.processor.TransactionPipeProcessor;
 
 @SuppressWarnings("unchecked")
 public class WorkflowEngine {
 	
-	public WorkflowEngine(PipeProcessor<ProcessorContext> inputProcessor, WorkflowContext context) {
+	public WorkflowEngine(TransactionPipeProcessor<ProcessorContext> inputProcessor, WorkflowContext context) {
 		this.inputProcessor = inputProcessor;
 		this.handlers = new InputHandlers(context, this::nextTransactionId);
 	}
@@ -43,7 +43,7 @@ public class WorkflowEngine {
 		handlers.destroy();
 	}
 	
-	public PipeProcessor<ProcessorContext> getPipe() {
+	public TransactionPipeProcessor<ProcessorContext> getPipe() {
 		return inputProcessor;
 	}
 	
@@ -58,7 +58,7 @@ public class WorkflowEngine {
 	// All failover stuff regulation goes here in future
 	
 	protected volatile long lastTransactionId;
-	protected PipeProcessor<ProcessorContext> inputProcessor;
+	protected TransactionPipeProcessor<ProcessorContext> inputProcessor;
 	protected EventPublisher eventBus;
 	protected final InputHandlers handlers;
 	

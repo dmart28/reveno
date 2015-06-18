@@ -17,20 +17,16 @@
 package org.reveno.atp.core.disruptor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.reveno.atp.api.Configuration.CpuConsumption;
-import org.reveno.atp.api.EventsManager.EventMetadata;
-import org.reveno.atp.api.commands.EmptyResult;
-import org.reveno.atp.api.commands.Result;
-import org.reveno.atp.core.api.TransactionCommitInfo;
-import org.reveno.atp.core.api.RestoreableEventBus;
+import org.reveno.atp.core.api.Destroyable;
 import org.reveno.atp.core.engine.processor.PipeProcessor;
 import org.reveno.atp.core.engine.processor.ProcessorHandler;
 import org.slf4j.Logger;
@@ -48,25 +44,28 @@ import com.lmax.disruptor.dsl.EventHandlerGroup;
 import com.lmax.disruptor.dsl.ProducerType;
 
 @SuppressWarnings("unchecked")
-public class DisruptorPipeProcessor implements PipeProcessor<ProcessorContext> {
-
-	public DisruptorPipeProcessor(CpuConsumption cpuConsumption,
-			boolean singleProducer, Executor executor) {
-		this.cpuConsumption = cpuConsumption;
-		this.singleProducer = singleProducer;
-		this.executor = executor;
-	}
+public abstract class DisruptorPipeProcessor<T extends Destroyable> implements PipeProcessor<T> {
+	
+	abstract CpuConsumption cpuConsumption();
+	
+	abstract boolean singleProducer();
+	
+	abstract EventFactory<T> eventFactory();
+	
+	abstract Executor executor();
+	
+	abstract void startInterceptor();
 
 	@Override
 	public void start() {
 		if (isStarted) throw new IllegalStateException("The Pipe Processor is alredy started.");
 		
-		disruptor = new Disruptor<ProcessorContext>(eventFactory, 4 * 1024, executor,
-				singleProducer ? ProducerType.SINGLE : ProducerType.MULTI,
+		disruptor = new Disruptor<T>(eventFactory(), 4 * 1024, executor(),
+				singleProducer() ? ProducerType.SINGLE : ProducerType.MULTI,
 				createWaitStrategy());
 
 		attachHandlers(disruptor);
-		// TODO exception listener that will stop disruptor, mark node Slave, etc.
+		startInterceptor();
 		disruptor.start();
 
 		log.info("Started.");
@@ -81,21 +80,7 @@ public class DisruptorPipeProcessor implements PipeProcessor<ProcessorContext> {
 		disruptor.shutdown();
 		log.info("Stopped.");
 	}
-	
-	@Override
-	public void sync() {
-		requireStarted(()-> {
-			final CompletableFuture<EmptyResult> f = new CompletableFuture<EmptyResult>();
-			disruptor.publishEvent((e,s) -> e.reset().future(f).abort(null));
-			try {
-				f.get();
-			} catch (Throwable t) {
-				log.error("sync", t);
-			}
-			return null;
-		});
-	}
-	
+
 	@Override
 	public void shutdown() {
 		stop();
@@ -109,44 +94,25 @@ public class DisruptorPipeProcessor implements PipeProcessor<ProcessorContext> {
 	public boolean isStarted() {
 		return isStarted;
 	}
-
-	@Override
-	public CompletableFuture<EmptyResult> process(List<Object> commands) {
-		return requireStarted(() -> {
-			final CompletableFuture<EmptyResult> f = new CompletableFuture<EmptyResult>();
-			disruptor.publishEvent((e,s) -> e.reset().future(f).addCommands(commands));
-			return f;
-		});
-	}
-
-	@Override
-	public <R> CompletableFuture<Result<? extends R>> execute(Object command) {
-		return requireStarted(() -> {
-			final CompletableFuture<Result<? extends R>> f = new CompletableFuture<Result<? extends R>>();
-			disruptor.publishEvent((e,s) -> e.reset().future(f).addCommand(command).withResult());
-			return f;
-		});
-	}
 	
 	@Override
-	public void executeRestore(RestoreableEventBus eventBus, TransactionCommitInfo tx) {
-		requireStarted(() -> {
-			disruptor.publishEvent((e,s) -> e.reset().restore().transactionId(tx.getTransactionId())
-					.eventBus(eventBus).eventMetadata(metadata(tx)).getTransactions()
-					.addAll(Arrays.asList(tx.getTransactionCommits())));
-			return null;
-		});
-	}
-	
-	@Override
-	public PipeProcessor<ProcessorContext> pipe(ProcessorHandler<ProcessorContext>... handler) {
+	public PipeProcessor<T> pipe(ProcessorHandler<T>... handler) {
 		if (!isStarted)
 			handlers.add(handler);
 		return this;
 	}
 
+	@Override
+	public <R> CompletableFuture<R> process(BiConsumer<T, CompletableFuture<R>> consumer) {
+		return requireStarted(() -> {
+			final CompletableFuture<R> f = new CompletableFuture<R>();
+			disruptor.publishEvent((e,s) -> consumer.accept(e, f));
+			return f;
+		});
+	}
+	
 	protected WaitStrategy createWaitStrategy() {
-		switch (cpuConsumption) {
+		switch (cpuConsumption()) {
 		case LOW:
 			return new BlockingWaitStrategy();
 		case NORMAL:
@@ -160,21 +126,17 @@ public class DisruptorPipeProcessor implements PipeProcessor<ProcessorContext> {
 		return null;
 	}
 	
-	protected EventMetadata metadata(TransactionCommitInfo tx) {
-		return new EventMetadata(true, tx.getTime());
-	}
-	
-	protected void attachHandlers(Disruptor<ProcessorContext> disruptor) {
-		List<EventHandler<ProcessorContext>[]> disruptorHandlers = handlers.stream()
-				.<EventHandler<ProcessorContext>[]> map(this::convert)
+	protected void attachHandlers(Disruptor<T> disruptor) {
+		List<EventHandler<T>[]> disruptorHandlers = handlers.stream()
+				.<EventHandler<T>[]> map(this::convert)
 				.collect(Collectors.toList());
 		
-		EventHandlerGroup<ProcessorContext> h = disruptor.handleEventsWith(disruptorHandlers.get(0));
+		EventHandlerGroup<T> h = disruptor.handleEventsWith(disruptorHandlers.get(0));
 		for (int i = 1; i < disruptorHandlers.size(); i++)
 			h = h.then(disruptorHandlers.get(i));
 	}
 
-	<T> T requireStarted(Supplier<T> body) {
+	<U> U requireStarted(Supplier<U> body) {
 		if (isStarted)
 			return body.get();
 		else
@@ -182,22 +144,18 @@ public class DisruptorPipeProcessor implements PipeProcessor<ProcessorContext> {
 					"Pipe Processor must be started first.");
 	}
 	
-	protected EventHandler<ProcessorContext>[] convert(ProcessorHandler<ProcessorContext>[] h) {
-		EventHandler<ProcessorContext>[] acs = new EventHandler[h.length];
+	protected EventHandler<T>[] convert(ProcessorHandler<T>[] h) {
+		EventHandler<T>[] acs = new EventHandler[h.length];
 		for (int i = 0; i < h.length; i++) {
-			final ProcessorHandler<ProcessorContext> hh = h[i];
+			final ProcessorHandler<T> hh = h[i];
 			acs[i] = (e, c, eob) -> hh.handle(e, eob);
 		}	
 		return acs;
 	}
-
-	protected volatile boolean isStarted = false;
-	protected Disruptor<ProcessorContext> disruptor;
-	protected List<ProcessorHandler<ProcessorContext>[]> handlers = new ArrayList<>();
-	protected final boolean singleProducer;
-	protected final CpuConsumption cpuConsumption;
-	protected final Executor executor;
-	protected static final EventFactory<ProcessorContext> eventFactory = () -> new ProcessorContext();
-	private static final Logger log = LoggerFactory.getLogger(DisruptorPipeProcessor.class);
 	
+	protected volatile boolean isStarted = false;
+	protected Disruptor<T> disruptor;
+	protected List<ProcessorHandler<T>[]> handlers = new ArrayList<>();
+	protected static final Logger log = LoggerFactory.getLogger(DisruptorPipeProcessor.class);
+
 }

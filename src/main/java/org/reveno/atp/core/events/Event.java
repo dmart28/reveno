@@ -19,10 +19,11 @@ package org.reveno.atp.core.events;
 import java.util.concurrent.CompletableFuture;
 
 import org.reveno.atp.api.EventsManager.EventMetadata;
+import org.reveno.atp.core.api.Destroyable;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
 
-public class Event {
+public class Event implements Destroyable {
 	
 	private boolean isAborted;
 	public boolean isAborted() {

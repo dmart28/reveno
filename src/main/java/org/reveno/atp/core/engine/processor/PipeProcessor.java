@@ -16,16 +16,13 @@
 
 package org.reveno.atp.core.engine.processor;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 
-import org.reveno.atp.api.commands.EmptyResult;
-import org.reveno.atp.api.commands.Result;
-import org.reveno.atp.core.api.TransactionCommitInfo;
-import org.reveno.atp.core.api.RestoreableEventBus;
+import org.reveno.atp.core.api.Destroyable;
 
 @SuppressWarnings("unchecked")
-public interface PipeProcessor<T> {
+public interface PipeProcessor<T extends Destroyable> {
 
 	void start();
 	
@@ -40,11 +37,7 @@ public interface PipeProcessor<T> {
 	PipeProcessor<T> pipe(ProcessorHandler<T>... handler);
 	
 	
-	CompletableFuture<EmptyResult> process(List<Object> commands);
-	
-	<R> CompletableFuture<Result<? extends R>> execute(Object command);
-	
-	void executeRestore(RestoreableEventBus eventBus, TransactionCommitInfo transaction);
+	<R> CompletableFuture<R> process(BiConsumer<T, CompletableFuture<R>> consumer);
 	
 	
 	default PipeProcessor<T> then(ProcessorHandler<T>... handler) {

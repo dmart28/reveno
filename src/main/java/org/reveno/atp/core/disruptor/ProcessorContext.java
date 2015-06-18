@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.reveno.atp.api.EventsManager.EventMetadata;
 import org.reveno.atp.api.transaction.EventBus;
+import org.reveno.atp.core.api.Destroyable;
 import org.reveno.atp.core.api.RestoreableEventBus;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
@@ -32,7 +33,7 @@ import org.reveno.atp.utils.MapUtils;
 import sun.misc.Contended;
 
 @SuppressWarnings("rawtypes")
-public class ProcessorContext {
+public class ProcessorContext implements Destroyable {
 	
 	private final RestoreableEventBus defaultEventBus = new ProcessContextEventBus();
 	public EventBus defaultEventBus() {
