@@ -243,12 +243,15 @@ public class RevenoBaseTest {
 		}
 		
 		public boolean isArrived() throws InterruptedException {
-			return await(5000, TimeUnit.MILLISECONDS);
+			boolean res = await(500, TimeUnit.MILLISECONDS);
+			if (!res)
+				res = await(100, TimeUnit.MILLISECONDS);
+			return res;
 		}
 		
 		public void awaitSilent() {
 			try {
-				await(5000, TimeUnit.MILLISECONDS);
+				isArrived();
 			} catch (InterruptedException e) {
 			}
 		}
