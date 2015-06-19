@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core.disruptor;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 import org.reveno.atp.api.Configuration.CpuConsumption;
@@ -33,7 +34,12 @@ public class DisruptorEventPipeProcessor extends DisruptorPipeProcessor<Event> {
 
 	@Override
 	public void sync() {
-		process((e,f) -> e.reset().flag(EventPublisher.SYNC_FLAG).syncFuture(f));
+		CompletableFuture<?> res = process((e,f) -> e.reset().flag(EventPublisher.SYNC_FLAG).syncFuture(f));
+		try {
+			res.get();
+		} catch (Throwable t) {
+			log.error("sync", t);
+		}
 	}
 
 	@Override
