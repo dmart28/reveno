@@ -96,11 +96,15 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		Collection<AccountView> accs = reveno.query().select(AccountView.class, a -> a.accountId == 1);
 		
 		if (accs.size() != 0) {
+			Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class, 1);
 			AccountView acc = accs.iterator().next();
 			long orderId = sendCommandSync(reveno, new NewOrderCommand(acc.accountId, Optional.empty(),
 					"TEST/TEST", 134000, 1000, OrderType.MARKET));
 			acc = reveno.query().find(AccountView.class, 1L).get();
 			Assert.assertTrue(acc.orders().stream().filter(o -> o.id == orderId).findFirst().isPresent());
+			// in very rare cases we might get result, but event didn't came to pipe, so 
+			// even though we syncAll(), the event might come to pipe after syncAll().
+			Assert.assertTrue(orderCreatedEvent.isArrived());
 		}
 		
 		reveno.syncAll();
