@@ -63,7 +63,7 @@ public class DisruptorEventPipeProcessor extends DisruptorPipeProcessor<Event> {
 	}
 
 	@Override
-	void startInterceptor() {
+	void startupInterceptor() {
 	}
 
 	protected final CpuConsumption cpuConsumption;

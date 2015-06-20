@@ -29,13 +29,12 @@ import org.reveno.atp.acceptance.api.events.OrderCreatedEvent;
 import org.reveno.atp.acceptance.model.Order.OrderType;
 import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
-import org.reveno.atp.api.Reveno;
 
 public class ExceptionalCasesTests extends RevenoBaseTest {
 
 	@Test
 	public void testEventsCommitsFileCorrupted() throws Exception {
-		Reveno reveno = createEngine();
+		TestRevenoEngine reveno = createEngine();
 		reveno.startup();
 		
 		generateAndSendCommands(reveno, 5_000);
@@ -57,6 +56,7 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		Assert.assertFalse(orderCreatedEvent.isArrived());
 		Assert.assertTrue(orderCreatedEvent.getCount() < Integer.MAX_VALUE);
 		
+		reveno.syncAll();
 		reveno.shutdown();
 		
 		reveno = createEngine();
@@ -77,11 +77,12 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 	
 	@Test
 	public void testTransactionCommitsFileCorrupted() throws Exception {
-		Reveno reveno = createEngine();
+		TestRevenoEngine reveno = createEngine();
 		reveno.startup();
 		
 		generateAndSendCommands(reveno, 5_000);
 		
+		reveno.syncAll();
 		reveno.shutdown();
 		
 		eraseRandomBuffer(findFirstFile("tx"));
@@ -102,6 +103,7 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 			Assert.assertTrue(acc.orders().stream().filter(o -> o.id == orderId).findFirst().isPresent());
 		}
 		
+		reveno.syncAll();
 		reveno.shutdown();
 		
 		reveno = createEngine();

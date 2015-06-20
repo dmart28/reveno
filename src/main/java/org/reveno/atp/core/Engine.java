@@ -136,6 +136,9 @@ public class Engine implements Reveno {
 		viewsProcessor.process(mapAsMarked(repository));
 		workflowEngine.setLastTransactionId(restorer.restore(repository).getLastTransactionId());
 		
+		workflowEngine.getPipe().sync();
+		eventPublisher.getPipe().sync();
+		
 		log.info("Engine is started.");
 		isStarted = true;
 	}

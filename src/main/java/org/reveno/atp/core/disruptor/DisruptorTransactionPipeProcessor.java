@@ -63,7 +63,7 @@ public class DisruptorTransactionPipeProcessor extends DisruptorPipeProcessor<Pr
 	}
 
 	@Override
-	public void startInterceptor() {
+	public void startupInterceptor() {
 		// TODO exception listener that will stop disruptor, mark node Slave, etc.
 	}
 	

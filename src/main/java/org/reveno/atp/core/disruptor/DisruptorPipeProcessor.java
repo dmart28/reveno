@@ -54,7 +54,7 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 	
 	abstract Executor executor();
 	
-	abstract void startInterceptor();
+	abstract void startupInterceptor();
 
 	@Override
 	public void start() {
@@ -65,7 +65,7 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 				createWaitStrategy());
 
 		attachHandlers(disruptor);
-		startInterceptor();
+		startupInterceptor();
 		disruptor.start();
 
 		log.info("Started.");
