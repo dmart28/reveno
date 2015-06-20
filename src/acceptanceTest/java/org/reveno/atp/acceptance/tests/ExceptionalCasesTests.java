@@ -54,7 +54,7 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
 		
 		Assert.assertFalse(orderCreatedEvent.isArrived());
-		Assert.assertTrue(orderCreatedEvent.getCount() < Integer.MAX_VALUE);
+		Assert.assertTrue(orderCreatedEvent.getCount() != Integer.MAX_VALUE);
 		
 		reveno.syncAll();
 		reveno.shutdown();
@@ -67,10 +67,16 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		Assert.assertEquals(5_000, reveno.query().select(AccountView.class).size());
 		Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
 		
+		// TODO until issue recovered
+		try {
 		Assert.assertFalse(accountCreatedEvent.isArrived());
 		Assert.assertFalse(orderCreatedEvent.isArrived());
 		Assert.assertEquals(1, accountCreatedEvent.getCount());
-		Assert.assertEquals(1, orderCreatedEvent.getCount());
+		Assert.assertEquals(1, orderCreatedEvent.getCount()); 
+		} catch (Throwable t) {
+			dontDelete = true;
+			throw new RuntimeException(t);
+		}
 		
 		reveno.shutdown();
 	}

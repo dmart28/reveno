@@ -97,6 +97,7 @@ public class Event implements Destroyable {
 		isReplay = false;
 		flag = 0;
 		transactionId = 0L;
+		syncFuture = null;
 		events = null;
 		eventMetadata = null;
 		serialized.clear();

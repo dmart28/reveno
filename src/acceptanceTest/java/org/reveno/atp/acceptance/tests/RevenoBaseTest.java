@@ -73,6 +73,8 @@ public class RevenoBaseTest {
            });
     }
     
+    protected boolean dontDelete = false;
+    
     @Parameter
     public ModelType modelType;
 	
@@ -87,7 +89,8 @@ public class RevenoBaseTest {
 	
 	@After
 	public void tearDown() throws IOException {
-		FileUtils.delete(tempDir);
+		if (!dontDelete)
+			FileUtils.delete(tempDir);
 	}
 	
 	@Test
