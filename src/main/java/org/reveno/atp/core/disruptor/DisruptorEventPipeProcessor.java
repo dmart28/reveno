@@ -49,7 +49,7 @@ public class DisruptorEventPipeProcessor extends DisruptorPipeProcessor<Event> {
 
 	@Override
 	boolean singleProducer() {
-		return true;
+		return false;
 	}
 
 	@Override
