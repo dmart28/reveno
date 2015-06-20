@@ -77,7 +77,8 @@ public class NettyBasedBuffer implements Buffer {
 	
 	@Override
 	public void release() {
-		buffer.release();
+		if (buffer.refCnt() != 0)
+			buffer.release();
 	}
 
 	@Override

@@ -81,6 +81,8 @@ public class ChannelReader<T> implements Iterable<List<T>> {
 						return true;
 					} else {
 						channel.close();
+						if (buffer != null && buffer.capacity() > 0)
+							buffer.release();
 						return false;
 					}
 				} else {
