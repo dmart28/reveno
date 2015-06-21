@@ -14,8 +14,23 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.api.cluster;
+package org.reveno.atp.clustering.api;
 
-public enum NodeAddressType {
-	SYNC, ASYNC
+public class NodeAddress {
+
+	private String connectionString;
+	public String getConnectionString() {
+		return connectionString;
+	}
+	
+	private NodeAddressType addressType;
+	public NodeAddressType getAddressType() {
+		return addressType;
+	}
+	
+	public NodeAddress(String connectionString, NodeAddressType addressType) {
+		this.connectionString = connectionString;
+		this.addressType = addressType;
+	}
+	
 }

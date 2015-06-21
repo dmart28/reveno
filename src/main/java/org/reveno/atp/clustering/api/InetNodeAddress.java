@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.api.cluster;
+package org.reveno.atp.clustering.api;
 
 public class InetNodeAddress extends NodeAddress {
 	
