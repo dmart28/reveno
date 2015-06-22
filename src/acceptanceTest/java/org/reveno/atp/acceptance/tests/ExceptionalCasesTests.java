@@ -21,6 +21,7 @@ import java.io.RandomAccessFile;
 import java.util.Collection;
 import java.util.Optional;
 
+import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 import org.reveno.atp.acceptance.api.commands.NewOrderCommand;
@@ -67,10 +68,16 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		Assert.assertEquals(5_000, reveno.query().select(AccountView.class).size());
 		Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
 		
+		try {
 		Assert.assertFalse(accountCreatedEvent.isArrived());
 		Assert.assertFalse(orderCreatedEvent.isArrived());
 		Assert.assertEquals(1, accountCreatedEvent.getCount());
 		Assert.assertEquals(1, orderCreatedEvent.getCount());
+		} catch (Throwable t) {
+			Logger.getLogger(ExceptionalCasesTests.class).info(tempDir.getAbsolutePath());
+			dontDelete = true;
+			throw new RuntimeException(t);
+		}
 		
 		reveno.shutdown();
 	}
