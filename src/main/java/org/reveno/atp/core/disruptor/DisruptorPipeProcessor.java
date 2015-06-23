@@ -19,7 +19,7 @@ package org.reveno.atp.core.disruptor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -52,7 +52,7 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 	
 	abstract EventFactory<T> eventFactory();
 	
-	abstract Executor executor();
+	abstract ExecutorService executor();
 	
 	abstract void startupInterceptor();
 
@@ -78,6 +78,7 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 		
 		isStarted = false;
 		disruptor.shutdown();
+		executor().shutdown();
 		log.info("Stopped.");
 	}
 

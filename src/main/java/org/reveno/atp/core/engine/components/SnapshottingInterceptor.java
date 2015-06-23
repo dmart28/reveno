@@ -18,8 +18,6 @@ package org.reveno.atp.core.engine.components;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.domain.RepositoryData;
@@ -81,6 +79,5 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 	protected SnapshottersManager snapshotsManager;
 	protected JournalsRoller roller;
 	protected RepositoryDataSerializer serializer;
-	protected static final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
 }

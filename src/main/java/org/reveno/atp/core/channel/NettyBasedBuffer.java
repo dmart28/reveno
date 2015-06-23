@@ -31,7 +31,7 @@ public class NettyBasedBuffer implements Buffer {
 	}
 
 	public NettyBasedBuffer(boolean direct) {
-		this(kb(3), direct);
+		this(kb(1), direct);
 	}
 	
 	public NettyBasedBuffer(int length, boolean direct) {

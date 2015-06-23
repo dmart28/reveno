@@ -19,7 +19,7 @@ package org.reveno.atp.core.disruptor;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.EventsManager.EventMetadata;
@@ -36,7 +36,7 @@ import com.lmax.disruptor.EventFactory;
 public class DisruptorTransactionPipeProcessor extends DisruptorPipeProcessor<ProcessorContext> implements TransactionPipeProcessor<ProcessorContext> {
 
 	public DisruptorTransactionPipeProcessor(CpuConsumption cpuConsumption,
-			boolean singleProducer, Executor executor) {
+			boolean singleProducer, ExecutorService executor) {
 		this.cpuConsumption = cpuConsumption;
 		this.singleProducer = singleProducer;
 		this.executor = executor;
@@ -53,12 +53,12 @@ public class DisruptorTransactionPipeProcessor extends DisruptorPipeProcessor<Pr
 	}
 
 	@Override
-	EventFactory<ProcessorContext> eventFactory() {
+	public EventFactory<ProcessorContext> eventFactory() {
 		return eventFactory;
 	}
 
 	@Override
-	Executor executor() {
+	public ExecutorService executor() {
 		return executor;
 	}
 
@@ -101,7 +101,7 @@ public class DisruptorTransactionPipeProcessor extends DisruptorPipeProcessor<Pr
 	
 	protected final boolean singleProducer;
 	protected final CpuConsumption cpuConsumption;
-	protected final Executor executor;
+	protected final ExecutorService executor;
 	protected static final EventFactory<ProcessorContext> eventFactory = () -> new ProcessorContext();
 	private static final Logger log = LoggerFactory.getLogger(DisruptorTransactionPipeProcessor.class);
 	

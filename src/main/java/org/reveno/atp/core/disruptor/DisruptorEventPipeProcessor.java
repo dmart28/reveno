@@ -17,7 +17,7 @@
 package org.reveno.atp.core.disruptor;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.core.events.Event;
@@ -27,7 +27,7 @@ import com.lmax.disruptor.EventFactory;
 
 public class DisruptorEventPipeProcessor extends DisruptorPipeProcessor<Event> {
 	
-	public DisruptorEventPipeProcessor(CpuConsumption cpuConsumption, Executor executor) {
+	public DisruptorEventPipeProcessor(CpuConsumption cpuConsumption, ExecutorService executor) {
 		this.cpuConsumption = cpuConsumption;
 		this.executor = executor;
 	}
@@ -58,7 +58,7 @@ public class DisruptorEventPipeProcessor extends DisruptorPipeProcessor<Event> {
 	}
 
 	@Override
-	public Executor executor() {
+	public ExecutorService executor() {
 		return executor;
 	}
 
@@ -67,7 +67,7 @@ public class DisruptorEventPipeProcessor extends DisruptorPipeProcessor<Event> {
 	}
 
 	protected final CpuConsumption cpuConsumption;
-	protected final Executor executor;
+	protected final ExecutorService executor;
 	protected static final EventFactory<Event> eventFactory = () -> new Event();
 	
 }
