@@ -126,7 +126,13 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 			Assert.assertTrue(acc.orders().stream().filter(o -> o.symbol.equals("TEST/TEST")).findFirst().isPresent());
 		}
 		
+		try {
 		Assert.assertFalse(orderCreatedEvent.isArrived());
+		} catch (Throwable t) {
+			Logger.getLogger(ExceptionalCasesTests.class).info(tempDir.getAbsolutePath());
+			dontDelete = true;
+			throw new RuntimeException(t);
+		}
 		
 		reveno.shutdown();
 	}
