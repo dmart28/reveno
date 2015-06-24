@@ -43,7 +43,7 @@ public class ChannelReader<T> implements Iterable<List<T>> {
 			private List<T> entries;
 			private long chunkPos = 0;
 			private Buffer prevBuffer, buffer;
-			private Channel prevChannel, channel;
+			private Channel channel;
 
 			@Override
 			public boolean hasNext() {
@@ -51,10 +51,6 @@ public class ChannelReader<T> implements Iterable<List<T>> {
 					buffer = nextBuffer(chunkPos);
 					if (buffer == null) {
 						return false;
-					}
-					if (prevChannel != channel) {
-						prevBuffer = null;
-						prevChannel = channel;
 					}
 				}
 				// set next MappedByteBuffer chunk
@@ -102,6 +98,7 @@ public class ChannelReader<T> implements Iterable<List<T>> {
 						if (channels.hasNext()) {
 							channel = channels.next();
 							log.info("Processing channel: " + channel);
+							prevBuffer = null;
 							chunkPos = 0;
 							position = 0;
 						} else {
