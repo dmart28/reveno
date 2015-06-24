@@ -110,6 +110,8 @@ public class ChannelReader<T> implements Iterable<List<T>> {
 						chunkSize = channel.size() - position;
 					}
 					if (chunkSize == 0) {
+						channel.close();
+						channel = null;
 						return nextBuffer(0);
 					}
 					Buffer buffer = new NettyBasedBuffer((int) chunkSize, false);
