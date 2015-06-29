@@ -3,7 +3,6 @@ package org.reveno.atp.core.serialization;
 import static org.reveno.atp.utils.MeasureUtils.mb;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
