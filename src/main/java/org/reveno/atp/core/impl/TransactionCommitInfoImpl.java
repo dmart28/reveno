@@ -23,48 +23,46 @@ import org.reveno.atp.core.api.TransactionCommitInfo;
 public class TransactionCommitInfoImpl implements TransactionCommitInfo {
 
 	private long transactionId;
-	public long getTransactionId() {
+	public long transactionId() {
 		return transactionId;
 	}
-	public void setTransactionId(final long transactionId) {
+	public TransactionCommitInfo transactionId(final long transactionId) {
 		this.transactionId = transactionId;
+		return this;
 	}
 
 	private int version;
-	public int getVersion() {
+	public int version() {
 		return version;
 	}
-	public void setVersion(final int version) {
+	public TransactionCommitInfo version(final int version) {
 		this.version = version;
+		return this;
 	}
 
 	private long time;
-	public long getTime() {
+	public long time() {
 		return time;
 	}
-	public void setTime(final long time) {
+	public TransactionCommitInfo time(final long time) {
 		this.time = time;
+		return this;
 	}
 	
 	private List<Object> transactionCommits;
-	public List<Object> getTransactionCommits() {
+	public List<Object> transactionCommits() {
 		return transactionCommits;
 	}
-	public void setStateChanges(List<Object> transactionCommits) {
+	public TransactionCommitInfo transactionCommits(List<Object> transactionCommits) {
 		this.transactionCommits = transactionCommits;
+		return this;
 	}
 	
 	
 	public static class PojoBuilder implements TransactionCommitInfo.Builder {
 		@Override
-		public TransactionCommitInfo create(long txId, int version, long time,
-				List<Object> state) {
-			TransactionCommitInfoImpl impl = new TransactionCommitInfoImpl();
-			impl.setTransactionId(txId);
-			impl.setStateChanges(state);
-			impl.setVersion(version);
-			impl.setTime(time);
-			return impl;
+		public TransactionCommitInfo create() {
+			return new TransactionCommitInfoImpl();
 		}
 	}
 	

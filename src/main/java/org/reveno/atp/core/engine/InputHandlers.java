@@ -22,7 +22,6 @@ import java.util.function.Supplier;
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.api.transaction.TransactionStage;
-import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.core.disruptor.ProcessorContext;
@@ -112,9 +111,8 @@ public class InputHandlers {
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> serializator = (c, eob) -> {
 		// TODO what's with version?
-		TransactionCommitInfo tci = services.transactionCommitBuilder().create(c.transactionId(), 1,
-				System.currentTimeMillis(), c.getTransactions());
-		services.serializer().serialize(tci, c.transactionsBuffer());
+		c.commitInfo().transactionId(c.transactionId()).version(1).time(c.time()).transactionCommits(c.getTransactions());
+		services.serializer().serialize(c.commitInfo(), c.transactionsBuffer());
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> journaler = (c, eob) -> {
 		interceptors(TransactionStage.JOURNALING, c);

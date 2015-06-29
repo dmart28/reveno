@@ -34,9 +34,11 @@ import com.lmax.disruptor.EventFactory;
 
 public class DisruptorTransactionPipeProcessor extends DisruptorPipeProcessor<ProcessorContext> implements TransactionPipeProcessor<ProcessorContext> {
 
-	public DisruptorTransactionPipeProcessor(CpuConsumption cpuConsumption, ExecutorService executor) {
+	public DisruptorTransactionPipeProcessor(TransactionCommitInfo.Builder builder, 
+			CpuConsumption cpuConsumption, ExecutorService executor) {
 		this.cpuConsumption = cpuConsumption;
 		this.executor = executor;
+		this.eventFactory = () -> new ProcessorContext(builder.create());
 	}
 	
 	@Override
@@ -86,19 +88,19 @@ public class DisruptorTransactionPipeProcessor extends DisruptorPipeProcessor<Pr
 	
 	@Override
 	public void executeRestore(RestoreableEventBus eventBus, TransactionCommitInfo tx) {
-		process((e,f) -> e.reset().restore().transactionId(tx.getTransactionId())
+		process((e,f) -> e.reset().restore().transactionId(tx.transactionId())
 					.eventBus(eventBus).eventMetadata(metadata(tx)).getTransactions()
-					.addAll(tx.getTransactionCommits()));
+					.addAll(tx.transactionCommits()));
 	}
 	
 	protected EventMetadata metadata(TransactionCommitInfo tx) {
-		return new EventMetadata(true, tx.getTime());
+		return new EventMetadata(true, tx.time());
 	}
 	
 	
 	protected final CpuConsumption cpuConsumption;
 	protected final ExecutorService executor;
-	protected static final EventFactory<ProcessorContext> eventFactory = () -> new ProcessorContext();
+	protected final EventFactory<ProcessorContext> eventFactory;
 	private static final Logger log = LoggerFactory.getLogger(DisruptorTransactionPipeProcessor.class);
 	
 }

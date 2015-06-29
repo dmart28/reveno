@@ -80,7 +80,9 @@ public class ReadWriteTest {
 			Buffer buffer = new NettyBasedBuffer();
 			for (int j = 1; j <= totalCount / 10; j++) {
 				User user = new User(Double.toString(Math.random()));
-				TransactionCommitInfo d = builder.create(System.currentTimeMillis(), count++, 0, Arrays.asList(new Object[] { user }));
+				TransactionCommitInfo d = builder.create()
+						.transactionId(System.currentTimeMillis()).version(count++).time(0).transactionCommits(
+								Arrays.asList(new Object[] { user }));
 				serializer.serialize(d, buffer);
 				journaler.writeData(buffer, Math.random() < 0.1);
 			}
@@ -95,7 +97,7 @@ public class ReadWriteTest {
 		processor.process((b) -> {
 			try {
 				while (b.isAvailable()) {
-					Assert.assertEquals(totalCount - l.getCount(), serializer.deserialize(builder, b).getVersion());
+					Assert.assertEquals(totalCount - l.getCount(), serializer.deserialize(builder, b).version());
 					l.countDown();
 				}
 			} catch (Throwable t) {

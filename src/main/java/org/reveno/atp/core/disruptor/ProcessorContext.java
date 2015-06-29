@@ -26,6 +26,7 @@ import org.reveno.atp.api.EventsManager.EventMetadata;
 import org.reveno.atp.api.transaction.EventBus;
 import org.reveno.atp.core.api.Destroyable;
 import org.reveno.atp.core.api.RestoreableEventBus;
+import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.utils.MapUtils;
@@ -70,13 +71,13 @@ public class ProcessorContext implements Destroyable {
 		return this;
 	}
 	
-	private Buffer marshallerBuffer = new NettyBasedBuffer(true);
+	private final Buffer marshallerBuffer = new NettyBasedBuffer(true);
 	public Buffer marshallerBuffer() {
 		return marshallerBuffer;
 	}
 	
 	@Contended
-	private Buffer transactionsBuffer = new NettyBasedBuffer(true);
+	private final Buffer transactionsBuffer = new NettyBasedBuffer(true);
 	public Buffer transactionsBuffer() {
 		return transactionsBuffer;
 	}
@@ -135,7 +136,7 @@ public class ProcessorContext implements Destroyable {
 	}
 	
 	@Contended
-	private List<Object> commands = new ArrayList<>();
+	private final List<Object> commands = new ArrayList<>();
 	public List<Object> getCommands() {
 		return commands;
 	}
@@ -149,7 +150,7 @@ public class ProcessorContext implements Destroyable {
 	}
 	
 	@Contended
-	private List<Object> transactions = new ArrayList<>();
+	private final List<Object> transactions = new ArrayList<>();
 	public List<Object> getTransactions() {
 		return transactions;
 	}
@@ -159,7 +160,7 @@ public class ProcessorContext implements Destroyable {
 	}
 	
 	@Contended
-	private List<Object> events = new ArrayList<>();
+	private final List<Object> events = new ArrayList<>();
 	public List<Object> getEvents() {
 		return events;
 	}
@@ -184,11 +185,16 @@ public class ProcessorContext implements Destroyable {
 	}
 	
 	@Contended
-	private Map<Class<?>, Set<Long>> markedRecords = MapUtils.repositoryLinkedSet();
+	private final Map<Class<?>, Set<Long>> markedRecords = MapUtils.repositoryLinkedSet();
 	public Map<Class<?>, Set<Long>> getMarkedRecords() {
 		return markedRecords;
 	}
 	
+	@Contended
+	private final TransactionCommitInfo commitInfo;
+	public TransactionCommitInfo commitInfo() {
+		return commitInfo;
+	}
 	
 	public ProcessorContext reset() {
 		transactionId = 0L;
@@ -216,6 +222,10 @@ public class ProcessorContext implements Destroyable {
 		
 		transactionsBuffer.release();
 		marshallerBuffer.release();
+	}
+	
+	public ProcessorContext(TransactionCommitInfo commitInfo) {
+		this.commitInfo = commitInfo;
 	}
 	
 	protected class ProcessContextEventBus implements RestoreableEventBus {

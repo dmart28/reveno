@@ -35,12 +35,12 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	public void serialize(TransactionCommitInfo info, Buffer buffer) {
 		changeClassLoaderIfRequired();
 		
-		buffer.writeLong(info.getTransactionId());
-		buffer.writeLong(info.getTime());
-		buffer.writeInt(info.getVersion());
-		buffer.writeInt(info.getTransactionCommits().size());
+		buffer.writeLong(info.transactionId());
+		buffer.writeLong(info.time());
+		buffer.writeInt(info.version());
+		buffer.writeInt(info.transactionCommits().size());
 		
-		serializeObjects(buffer, info.getTransactionCommits());
+		serializeObjects(buffer, info.transactionCommits());
 	}
 	
 	@Override
@@ -52,7 +52,7 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 		int version = buffer.readInt();
 		List<Object> commits = deserializeObjects(buffer);
 		
-		return builder.create(transactionId, version, time, commits);
+		return builder.create().transactionId(transactionId).time(time).version(version).transactionCommits(commits);
 	}
 
 	@Override

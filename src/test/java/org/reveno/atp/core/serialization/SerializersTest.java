@@ -55,16 +55,17 @@ public class SerializersTest {
 		
 		buffer.clear();
 		
-		TransactionCommitInfo ti = new TransactionCommitInfoImpl.PojoBuilder().create(2, 3, 4, Arrays.asList(new Object[] { u1, u2 }));
+		TransactionCommitInfo ti = new TransactionCommitInfoImpl.PojoBuilder().create()
+				.transactionId(2).version(3).time(4).transactionCommits(Arrays.asList(new Object[] { u1, u2 }));
 		tiSer.serialize(ti, buffer);
 		ti = tiSer.deserialize(new TransactionCommitInfoImpl.PojoBuilder(), buffer);
 		
-		Assert.assertEquals(ti.getTransactionId(), 2L);
-		Assert.assertEquals(ti.getVersion(), 3L);
-		Assert.assertEquals(ti.getTime(), 4);
-		Assert.assertSame(2, ti.getTransactionCommits().size());
-		Assert.assertEquals(u1, ti.getTransactionCommits().get(0));
-		Assert.assertEquals(u2, ti.getTransactionCommits().get(1));
+		Assert.assertEquals(ti.transactionId(), 2L);
+		Assert.assertEquals(ti.version(), 3L);
+		Assert.assertEquals(ti.time(), 4);
+		Assert.assertSame(2, ti.transactionCommits().size());
+		Assert.assertEquals(u1, ti.transactionCommits().get(0));
+		Assert.assertEquals(u2, ti.transactionCommits().get(1));
 	}
 	
 	public static class Empty {}

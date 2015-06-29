@@ -44,7 +44,7 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 			}, JournalType.EVENTS);
 			processor.process(b -> {
 				TransactionCommitInfo tx = workflowContext.serializer().deserialize(workflowContext.transactionCommitBuilder(), b);
-				transactionId[0] = tx.getTransactionId();
+				transactionId[0] = tx.transactionId();
 				workflowEngine.getPipe().executeRestore(eventBus, tx);
 			}, JournalType.TRANSACTIONS);
 		} catch (Throwable t) {

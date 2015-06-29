@@ -20,17 +20,25 @@ import java.util.List;
 
 public interface TransactionCommitInfo {
 	
-	long getTransactionId();
+	long transactionId();
 	
-	int getVersion();
+	TransactionCommitInfo transactionId(long transactionId);
 	
-	long getTime();
+	int version();
 	
-	List<Object> getTransactionCommits();
+	TransactionCommitInfo version(int version);
+	
+	long time();
+	
+	TransactionCommitInfo time(long time);
+	
+	List<Object> transactionCommits();
+	
+	TransactionCommitInfo transactionCommits(List<Object> commands);
 	
 	
 	public interface Builder {
-		TransactionCommitInfo create(long txId, int version, long time, List<Object> commits);
+		TransactionCommitInfo create();
 	}
 	
 }
