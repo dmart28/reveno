@@ -30,6 +30,7 @@ import java.util.function.BiFunction;
 
 import org.reveno.atp.api.ClusterManager;
 import org.reveno.atp.api.Configuration;
+import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.EventsManager;
 import org.reveno.atp.api.RepositorySnapshotter;
 import org.reveno.atp.api.Reveno;
@@ -263,7 +264,7 @@ public class Engine implements Reveno {
 	}
 	
 	protected WriteableRepository repository() {
-		return new HashMapRepository(1_000, 0.5f);
+		return new HashMapRepository(/*1_000, 0.5f*/);
 	}
 	
 	protected void init() {
@@ -271,8 +272,8 @@ public class Engine implements Reveno {
 				.eventsCommitBuilder(eventBuilder).eventsJournaler(eventsJournaler).manager(eventsManager);
 		repository = factory.create(loadLastSnapshot());
 		viewsProcessor = new ViewsProcessor(viewsManager, viewsStorage, repository);
-		processor = new DisruptorTransactionPipeProcessor(configuration.cpuConsumption(), false, executor);
-		eventProcessor = new DisruptorEventPipeProcessor(configuration.cpuConsumption(), eventExecutor);
+		processor = new DisruptorTransactionPipeProcessor(configuration.cpuConsumption(), executor);
+		eventProcessor = new DisruptorEventPipeProcessor(CpuConsumption.LOW, eventExecutor);
 		roller = new JournalsRoller(transactionsJournaler, eventsJournaler, journalsStorage);
 		eventPublisher = new EventPublisher(eventProcessor, eventsContext);
 		EngineWorkflowContext workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
@@ -361,7 +362,7 @@ public class Engine implements Reveno {
 	protected final SnapshotStorage snapshotStorage;
 	protected final SnapshottersManager snapshotsManager;
 	
-	protected final ExecutorService executor = Executors.newFixedThreadPool(8);
+	protected final ExecutorService executor = Executors.newFixedThreadPool(7);
 	protected final ExecutorService eventExecutor = Executors.newFixedThreadPool(3);
 	protected final ScheduledExecutorService snapshotterIntervalExecutor = Executors.newSingleThreadScheduledExecutor();
 	protected static final Logger log = LoggerFactory.getLogger(Engine.class);

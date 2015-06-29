@@ -18,19 +18,16 @@ package org.reveno.atp.clustering.api;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import org.reveno.atp.clustering.api.message.Message;
 
-public interface ClusterPipeline {
+public interface ClusterConnector {
 
-	boolean send(List<NodeAddress> dest, Message message);
+	CompletableFuture<Boolean> send(List<NodeAddress> dest, Message message);
 	
-	boolean send(List<NodeAddress> dest, Message message, Set<Flag> flags);
-	
-	void sendAsync(List<NodeAddress> dest, Message message);
-	
-	void sendAsync(List<NodeAddress> dest, Message message, Set<Flag> flags);
+	CompletableFuture<Boolean> send(List<NodeAddress> dest, Message message, Set<Flag> flags);
 	
 	
 	void receive(Consumer<Message> consumer);

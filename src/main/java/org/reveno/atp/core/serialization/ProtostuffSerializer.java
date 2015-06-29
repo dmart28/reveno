@@ -2,6 +2,7 @@ package org.reveno.atp.core.serialization;
 
 import static org.reveno.atp.utils.MeasureUtils.mb;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +39,7 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 		buffer.writeLong(info.getTransactionId());
 		buffer.writeLong(info.getTime());
 		buffer.writeInt(info.getVersion());
-		buffer.writeInt(info.getTransactionCommits().length);
+		buffer.writeInt(info.getTransactionCommits().size());
 		
 		serializeObjects(buffer, info.getTransactionCommits());
 	}
@@ -50,7 +51,7 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 		long transactionId = buffer.readLong();
 		long time = buffer.readLong();
 		int version = buffer.readInt();
-		Object[] commits = deserializeObjects(buffer);
+		List<Object> commits = deserializeObjects(buffer);
 		
 		return builder.create(transactionId, version, time, commits);
 	}
@@ -87,7 +88,7 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	public List<Object> deserializeCommands(Buffer buffer) {
 		changeClassLoaderIfRequired();
 		
-		return Arrays.asList(deserializeObjects(buffer));
+		return deserializeObjects(buffer);
 	}
 	
 	
@@ -100,12 +101,6 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	}
 	
 	protected void serializeObjects(Buffer buffer, List<Object> objs) {
-		for (Object tc : objs) {
-			seriazeObject(buffer, tc);
-		}
-	}
-	
-	protected void serializeObjects(Buffer buffer, Object[] objs) {
 		for (Object tc : objs) {
 			seriazeObject(buffer, tc);
 		}
@@ -123,17 +118,18 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected Object[] deserializeObjects(Buffer buffer) {
-		Object[] commits = new Object[buffer.readInt()];
+	protected List<Object> deserializeObjects(Buffer buffer) {
+		int len = buffer.readInt();
+		List<Object> commits =  new ArrayList<>(len);
 		
-		for (int i = 0; i < commits.length; i++) {
+		for (int i = 0; i < len; i++) {
 			int classHash = buffer.readInt();
 			byte[] data = buffer.readBytes(buffer.readInt());
 			
 			Schema<Object> schema = (Schema<Object>)registered.get(classHash).schema;
 			Object message = schema.newMessage();
 			ProtostuffIOUtil.mergeFrom(data, message, schema);
-			commits[i] = message;
+			commits.add(i, message);
 		}
 		return commits;
 	}

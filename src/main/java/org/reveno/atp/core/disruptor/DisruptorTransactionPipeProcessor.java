@@ -16,7 +16,6 @@
 
 package org.reveno.atp.core.disruptor;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -35,10 +34,8 @@ import com.lmax.disruptor.EventFactory;
 
 public class DisruptorTransactionPipeProcessor extends DisruptorPipeProcessor<ProcessorContext> implements TransactionPipeProcessor<ProcessorContext> {
 
-	public DisruptorTransactionPipeProcessor(CpuConsumption cpuConsumption,
-			boolean singleProducer, ExecutorService executor) {
+	public DisruptorTransactionPipeProcessor(CpuConsumption cpuConsumption, ExecutorService executor) {
 		this.cpuConsumption = cpuConsumption;
-		this.singleProducer = singleProducer;
 		this.executor = executor;
 	}
 	
@@ -49,7 +46,7 @@ public class DisruptorTransactionPipeProcessor extends DisruptorPipeProcessor<Pr
 
 	@Override
 	boolean singleProducer() {
-		return singleProducer;
+		return false;
 	}
 
 	@Override
@@ -79,19 +76,19 @@ public class DisruptorTransactionPipeProcessor extends DisruptorPipeProcessor<Pr
 
 	@Override
 	public CompletableFuture<EmptyResult> process(List<Object> commands) {
-		return process((e,f) -> e.reset().future(f).addCommands(commands));
+		return process((e,f) -> e.reset().future(f).addCommands(commands).time(System.nanoTime()));
 	}
 
 	@Override
 	public <R> CompletableFuture<Result<? extends R>> execute(Object command) {
-		return process((e,f) -> e.reset().future(f).addCommand(command).withResult());
+		return process((e,f) -> e.reset().future(f).addCommand(command).time(System.nanoTime()).withResult());
 	}
 	
 	@Override
 	public void executeRestore(RestoreableEventBus eventBus, TransactionCommitInfo tx) {
 		process((e,f) -> e.reset().restore().transactionId(tx.getTransactionId())
 					.eventBus(eventBus).eventMetadata(metadata(tx)).getTransactions()
-					.addAll(Arrays.asList(tx.getTransactionCommits())));
+					.addAll(tx.getTransactionCommits()));
 	}
 	
 	protected EventMetadata metadata(TransactionCommitInfo tx) {
@@ -99,7 +96,6 @@ public class DisruptorTransactionPipeProcessor extends DisruptorPipeProcessor<Pr
 	}
 	
 	
-	protected final boolean singleProducer;
 	protected final CpuConsumption cpuConsumption;
 	protected final ExecutorService executor;
 	protected static final EventFactory<ProcessorContext> eventFactory = () -> new ProcessorContext();

@@ -45,12 +45,8 @@ public class InputHandlers {
 		}
 	}
 	
-	public void marshalling(ProcessorContext c, boolean endOfBatch) {
-		ex(c, !c.isReplicated() && !c.isRestore(), endOfBatch, marshaller);
-	}
-	
 	public void replication(ProcessorContext c, boolean endOfBatch) {
-		ex(c, c.marshallerBuffer().length() > 0 && !c.isRestore(), endOfBatch, replicator);
+		ex(c, !c.isRestore(), endOfBatch, replicator);
 	}
 	
 	public void transactionExecution(ProcessorContext c, boolean endOfBatch) {
@@ -96,13 +92,12 @@ public class InputHandlers {
 	protected TransactionExecutor txExecutor;
 	protected Supplier<Long> nextTransactionId;
 	
-	protected final BiConsumer<ProcessorContext, Boolean> marshaller = (c, eob) -> {
-		services.serializer().serializeCommands(c.getCommands(), c.marshallerBuffer());
-	};
 	protected final BiConsumer<ProcessorContext, Boolean> replicator = (c, eob) -> {
 		interceptors(TransactionStage.REPLICATION, c);
+		
+		services.serializer().serializeCommands(c.getCommands(), c.marshallerBuffer());
 		if (eob) {
-			// TODO some replication here
+			marshalled.clear();
 		} else {
 			marshalled.writeInt(c.marshallerBuffer().length());
 			marshalled.writeFromBuffer(c.marshallerBuffer());
@@ -118,7 +113,7 @@ public class InputHandlers {
 	protected final BiConsumer<ProcessorContext, Boolean> serializator = (c, eob) -> {
 		// TODO what's with version?
 		TransactionCommitInfo tci = services.transactionCommitBuilder().create(c.transactionId(), 1,
-				System.currentTimeMillis(), c.getTransactions().toArray());
+				System.currentTimeMillis(), c.getTransactions());
 		services.serializer().serialize(tci, c.transactionsBuffer());
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> journaler = (c, eob) -> {
@@ -129,14 +124,15 @@ public class InputHandlers {
 		services.viewsProcessor().process(c.getMarkedRecords());
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> eventsPublisher = (c, eob) -> {
-		services.eventPublisher().publishEvents(c.isRestore(), c.transactionId(), c.eventMetadata(), c.getEvents().toArray());
+		if (c.getEvents().size() > 0) 
+			services.eventPublisher().publishEvents(c.isRestore(), c.transactionId(), c.eventMetadata(), c.getEvents().toArray());
 	};
 	
-	
+
 	protected void interceptors(TransactionStage stage, ProcessorContext context) {
 		if (!context.isRestore() && services.interceptorCollection().getInterceptors(stage).size() > 0)
 			services.interceptorCollection().getInterceptors(stage).forEach(i -> i.intercept(context.transactionId(),
-					services.repository(), stage));
+					context.time(), services.repository(), stage));
 	}
 	
 	

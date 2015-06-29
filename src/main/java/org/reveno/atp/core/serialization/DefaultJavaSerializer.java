@@ -49,6 +49,7 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public TransactionCommitInfo deserialize(Builder builder, Buffer buffer) {
 		long transactionId = buffer.readLong();
@@ -60,7 +61,7 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 				ObjectInputStreamEx os = new ObjectInputStreamEx(is,
 						classLoader)) {
 			return builder.create(transactionId, version, time,
-					(Object[]) os.readObject());
+					(List<Object>) os.readObject());
 		} catch (IOException | ClassNotFoundException e) {
 			log.error("", e);
 			throw new SerializerException(Action.DESERIALIZATION, getClass(), e);

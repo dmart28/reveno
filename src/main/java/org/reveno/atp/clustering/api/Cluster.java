@@ -30,7 +30,7 @@ public interface Cluster {
 	
 	boolean isConnected();
 	
-	ClusterPipeline pipeline();
+	ClusterConnector pipeline();
 	
 	void marshallWith(Class<? extends Message> msgType, Marshaller marshaller);
 	

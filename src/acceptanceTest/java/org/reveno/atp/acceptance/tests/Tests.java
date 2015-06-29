@@ -232,7 +232,7 @@ public class Tests extends RevenoBaseTest {
 	}
 	
 	public void testSnapshottingEvery(RepositoryDataSerializer repoSerializer) throws Exception {
-		Consumer<Reveno> consumer = r -> {
+		Consumer<TestRevenoEngine> consumer = r -> {
 			r.domain().resetSnapshotters();
 			r.domain().snapshotWith(new DefaultSnapshotter(new FileSystemStorage(tempDir), repoSerializer))
 				.andRestoreWithIt();

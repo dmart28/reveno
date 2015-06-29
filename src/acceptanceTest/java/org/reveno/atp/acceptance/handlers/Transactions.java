@@ -39,14 +39,11 @@ public abstract class Transactions {
 	}
 	
 	public static void credit(Credit tx, TransactionContext ctx) {
-		Optional<Account> acc = ctx.repository().get(Account.class, tx.accountId);
-		if (!acc.isPresent())
-			throw new RuntimeException("Can't find account with id=" + tx.accountId);
-		
-		if (acc.get().isImmutable()) 
-			ctx.repository().store(tx.accountId, Account.class, acc.get().addBalance(tx.amount));
+		Account acc = ctx.repository().get(Account.class, tx.accountId).get();
+		if (acc.isImmutable()) 
+			ctx.repository().store(tx.accountId, Account.class, acc.addBalance(tx.amount));
 		else
-			acc.get().addBalance(tx.amount);
+			acc.addBalance(tx.amount);
 	}
 	
 	public static void debit(Debit tx, TransactionContext ctx) {

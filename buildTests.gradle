@@ -1,0 +1,87 @@
+apply plugin: "java"
+apply plugin: "idea"
+apply plugin: "eclipse"
+apply plugin: "maven"
+
+buildscript {
+  repositories { jcenter() }
+  dependencies {
+    classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.1'
+  }
+}
+
+apply plugin: 'java' // or 'groovy'. Must be explicitly applied
+apply plugin: 'com.github.johnrengelman.shadow'
+
+group = 'org.reveno'
+version = '0.1.0'
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+}
+
+sourceSets {
+	acceptanceTest {
+		java {
+            srcDir 'java'
+        }
+        resources {
+            srcDir 'resources'
+        }
+	}
+	perfTest {
+		java {
+			srcDir 'java'
+		}
+		resources {
+			srcDir 'resources'
+		}
+	}
+	test {
+		java {
+			srcDirs = ['src/test/java', 'src/acceptanceTest/java']
+		}
+	}
+	main {
+		java {
+			srcDirs = ['src/main/java', 'src/test/java', 'src/acceptanceTest/java', 'src/perfTest/java']
+		}
+	}
+}
+
+dependencies {
+	compile "com.lmax:disruptor:$disruptorVersion"
+	compile "com.dyuproject.protostuff:protostuff-uberjar:$protostuffVersion"
+	compile "io.netty:netty-buffer:$nettyVersion"
+	
+	compile "org.jgroups:jgroups:$jgroupsVersion"
+	
+	compile "org.slf4j:slf4j-api:$slf4jVersion"
+	compile "org.slf4j:slf4j-log4j12:$log4jVersion"
+	
+	compile "com.google.guava:guava:$guavaVersion"
+	compile "junit:junit:$junitVersion"
+	compile "org.easymock:easymock:$easymockVersion"
+	
+	compile "com.google.guava:guava:$guavaVersion"
+	compile "junit:junit:$junitVersion"
+	compile "org.easymock:easymock:$easymockVersion"
+}
+
+def forks = Math.max(4, (int) (Runtime.runtime.availableProcessors() / 2))
+
+test {
+	minHeapSize = "512m"
+	maxParallelForks = forks
+  	
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+    }
+}
+
+task wrapper(type: Wrapper) {
+   gradleVersion = '2.4'
+}
+
+defaultTasks 'clean', 'build'

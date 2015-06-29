@@ -19,6 +19,7 @@ package org.reveno.atp.core.data;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -79,7 +80,7 @@ public class ReadWriteTest {
 			Buffer buffer = new NettyBasedBuffer();
 			for (int j = 1; j <= totalCount / 10; j++) {
 				User user = new User(Double.toString(Math.random()));
-				TransactionCommitInfo d = builder.create(System.currentTimeMillis(), count++, 0, new Object[] { user });
+				TransactionCommitInfo d = builder.create(System.currentTimeMillis(), count++, 0, Arrays.asList(new Object[] { user }));
 				serializer.serialize(d, buffer);
 				journaler.writeData(buffer, Math.random() < 0.1);
 			}

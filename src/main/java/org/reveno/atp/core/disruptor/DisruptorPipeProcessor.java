@@ -60,7 +60,7 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 	public void start() {
 		if (isStarted) throw new IllegalStateException("The Pipe Processor is alredy started.");
 		
-		disruptor = new Disruptor<T>(eventFactory(), 4 * 1024, executor(),
+		disruptor = new Disruptor<T>(eventFactory(), 1 * 1024, executor(),
 				singleProducer() ? ProducerType.SINGLE : ProducerType.MULTI,
 				createWaitStrategy());
 
@@ -105,11 +105,12 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 
 	@Override
 	public <R> CompletableFuture<R> process(BiConsumer<T, CompletableFuture<R>> consumer) {
-		return requireStarted(() -> {
-			final CompletableFuture<R> f = new CompletableFuture<R>();
-			disruptor.publishEvent((e,s) -> consumer.accept(e, f));
-			return f;
-		});
+		if (!isStarted)
+			throw new RuntimeException("Pipe Processor must be started!");
+		
+		final CompletableFuture<R> f = new CompletableFuture<R>();
+		disruptor.publishEvent((e,s) -> consumer.accept(e, f));
+		return f;
 	}
 	
 	protected WaitStrategy createWaitStrategy() {
@@ -121,7 +122,7 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 		case HIGH:
 			return new YieldingWaitStrategy();
 		case PHASED:
-			return PhasedBackoffWaitStrategy.withLock((int) 2.5e5, (int) 8.5e5,
+			return PhasedBackoffWaitStrategy.withLiteLock((int) 2.5e5, (int) 8.5e5,
 					TimeUnit.NANOSECONDS);
 		}
 		return null;

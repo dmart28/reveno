@@ -76,6 +76,7 @@ public class SerializersChain implements TransactionInfoSerializer {
 	public SerializersChain(List<TransactionInfoSerializer> transactionsSerializers) {
 		this.transactionSerializers = transactionsSerializers;
 		this.transactionSerializers.forEach(s -> transactionSerializersMap.put(s.getSerializerType(), s));
+		this.preferedSerializer = transactionsSerializers.get(0);
 	}
 	
 	
@@ -91,21 +92,31 @@ public class SerializersChain implements TransactionInfoSerializer {
 	}
 	
 	protected void tryTo(Buffer buffer, Consumer<TransactionInfoSerializer> c) {
-		for (TransactionInfoSerializer s : transactionSerializers) {
-			try {
-				buffer.mark();
-				buffer.writeInt(s.getSerializerType());
-				c.accept(s);
-				return;
-			} catch (Throwable tw) {
-				log.error("serialize", tw);
-				buffer.reset();
+		if (!accept(buffer, c, preferedSerializer)) {
+			for (int i = 1; i < transactionSerializers.size(); i++) {
+				if (accept(buffer, c, transactionSerializers.get(i)))
+					return;
 			}
+			throw new RuntimeException("All serializers failed to serialize.");
 		}
-		throw new RuntimeException("All serializers failed to serialize.");
+	}
+
+	protected boolean accept(Buffer buffer, Consumer<TransactionInfoSerializer> c,
+			TransactionInfoSerializer s) {
+		try {
+			buffer.mark();
+			buffer.writeInt(s.getSerializerType());
+			c.accept(s);
+			return true;
+		} catch (Throwable tw) {
+			log.error("serialize", tw);
+			buffer.reset();
+			return false;
+		}
 	}
 	
 	protected List<TransactionInfoSerializer> transactionSerializers;
+	protected TransactionInfoSerializer preferedSerializer;
 	protected Map<Integer, TransactionInfoSerializer> transactionSerializersMap = new HashMap<>();
 	protected static final Logger log = LoggerFactory.getLogger(SerializersChain.class);
 }

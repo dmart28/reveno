@@ -16,6 +16,8 @@
 
 package org.reveno.atp.core.impl;
 
+import java.util.List;
+
 import org.reveno.atp.core.api.TransactionCommitInfo;
 
 public class TransactionCommitInfoImpl implements TransactionCommitInfo {
@@ -44,11 +46,11 @@ public class TransactionCommitInfoImpl implements TransactionCommitInfo {
 		this.time = time;
 	}
 	
-	private Object[] transactionCommits;
-	public Object[] getTransactionCommits() {
+	private List<Object> transactionCommits;
+	public List<Object> getTransactionCommits() {
 		return transactionCommits;
 	}
-	public void setStateChanges(Object[] transactionCommits) {
+	public void setStateChanges(List<Object> transactionCommits) {
 		this.transactionCommits = transactionCommits;
 	}
 	
@@ -56,7 +58,7 @@ public class TransactionCommitInfoImpl implements TransactionCommitInfo {
 	public static class PojoBuilder implements TransactionCommitInfo.Builder {
 		@Override
 		public TransactionCommitInfo create(long txId, int version, long time,
-				Object[] state) {
+				List<Object> state) {
 			TransactionCommitInfoImpl impl = new TransactionCommitInfoImpl();
 			impl.setTransactionId(txId);
 			impl.setStateChanges(state);

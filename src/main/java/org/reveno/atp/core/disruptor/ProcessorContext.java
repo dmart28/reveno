@@ -35,11 +35,22 @@ import sun.misc.Contended;
 @SuppressWarnings("rawtypes")
 public class ProcessorContext implements Destroyable {
 	
+	@Contended
+	private long time = 0L;
+	public long time() {
+		return time;
+	}
+	public ProcessorContext time(long time) {
+		this.time = time;
+		return this;
+	}
+	
 	private final RestoreableEventBus defaultEventBus = new ProcessContextEventBus();
 	public EventBus defaultEventBus() {
 		return defaultEventBus;
 	}
 	
+	@Contended
 	private long transactionId; 
 	public long transactionId() {
 		return transactionId;
@@ -49,6 +60,7 @@ public class ProcessorContext implements Destroyable {
 		return this;
 	}
 
+	@Contended
 	private CompletableFuture future;
 	public CompletableFuture future() {
 		return future;
@@ -69,6 +81,7 @@ public class ProcessorContext implements Destroyable {
 		return transactionsBuffer;
 	}
 	
+	@Contended
 	private boolean hasResult;
 	public boolean hasResult() {
 		return hasResult;
@@ -87,6 +100,7 @@ public class ProcessorContext implements Destroyable {
 		this.commandResult = commandResult;
 	}
 	
+	@Contended
 	private boolean isAborted;
 	private Throwable abortIssue;
 	public boolean isAborted() {
@@ -100,6 +114,7 @@ public class ProcessorContext implements Destroyable {
 		this.abortIssue = abortIssue;
 	}
 	
+	@Contended
 	private boolean isReplicated;
 	public boolean isReplicated() {
 		return isReplicated;
@@ -109,6 +124,7 @@ public class ProcessorContext implements Destroyable {
 		return this;
 	}
 	
+	@Contended
 	private boolean isRestore;
 	public boolean isRestore() {
 		return isRestore;
@@ -118,6 +134,7 @@ public class ProcessorContext implements Destroyable {
 		return this;
 	}
 	
+	@Contended
 	private List<Object> commands = new ArrayList<>();
 	public List<Object> getCommands() {
 		return commands;
@@ -131,6 +148,7 @@ public class ProcessorContext implements Destroyable {
 		return this;
 	}
 	
+	@Contended
 	private List<Object> transactions = new ArrayList<>();
 	public List<Object> getTransactions() {
 		return transactions;
@@ -155,6 +173,7 @@ public class ProcessorContext implements Destroyable {
 		return this;
 	}
 	
+	@Contended
 	private EventMetadata eventMetadata;
 	public EventMetadata eventMetadata() {
 		return eventMetadata;

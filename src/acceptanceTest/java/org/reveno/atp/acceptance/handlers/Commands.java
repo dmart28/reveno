@@ -38,9 +38,15 @@ public abstract class Commands {
 		ctx.executeTransaction(new CreateAccount(accountId, cmd.currency));
 		
 		if (cmd.balance > 0)
-			ctx.executeTransaction(new Credit(accountId, cmd.balance));
+			ctx.executeTransaction(new Credit(accountId, cmd.balance, System.currentTimeMillis()));
 		
 		return accountId;
+	}
+	
+	public static void credit(Credit credit, CommandContext ctx) {
+		require(ctx.repository().get(Account.class, credit.accountId).isPresent(), format("Can't find account %d", credit.accountId));
+		
+		ctx.executeTransaction(credit);
 	}
 	
 	public static Long newOrder(NewOrderCommand cmd, CommandContext ctx) { 

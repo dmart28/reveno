@@ -16,6 +16,8 @@
 
 package org.reveno.atp.core.api;
 
+import java.util.List;
+
 public interface TransactionCommitInfo {
 	
 	long getTransactionId();
@@ -24,11 +26,11 @@ public interface TransactionCommitInfo {
 	
 	long getTime();
 	
-	Object[] getTransactionCommits();
+	List<Object> getTransactionCommits();
 	
 	
 	public interface Builder {
-		TransactionCommitInfo create(long txId, int version, long time, Object[] commits);
+		TransactionCommitInfo create(long txId, int version, long time, List<Object> commits);
 	}
 	
 }

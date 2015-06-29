@@ -38,7 +38,7 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 	protected Map<Long, RepositoryData> snapshotsImmutable = new ConcurrentHashMap<>();
 
 	@Override
-	public void intercept(long transactionId, WriteableRepository repository, TransactionStage stage) {
+	public void intercept(long transactionId, long time, WriteableRepository repository, TransactionStage stage) {
 			if (stage == TransactionStage.TRANSACTION) {
 				if (counter++ % configuration.revenoSnapshotting().snapshotEvery() == 0) {
 					if (configuration.modelType() == ModelType.MUTABLE) {

@@ -18,6 +18,6 @@ package org.reveno.atp.clustering.api;
 
 public enum Flag {
 
-	OUT_OF_BOUND
+	OUT_OF_BOUND, RSVP
 	
 }

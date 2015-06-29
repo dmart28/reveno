@@ -60,6 +60,8 @@ import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.test.utils.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.io.Files;
 
@@ -102,14 +104,15 @@ public class RevenoBaseTest {
 		return createEngine((r) -> {});
 	}
 
-	protected TestRevenoEngine createEngine(Consumer<Reveno> consumer) {
+	protected TestRevenoEngine createEngine(Consumer<TestRevenoEngine> consumer) {
 		TestRevenoEngine reveno = new TestRevenoEngine(tempDir);
 		
-		reveno.config().cpuConsumption(CpuConsumption.PHASED);
+		reveno.config().cpuConsumption(CpuConsumption.NORMAL);
 		reveno.config().modelType(modelType);
 		
 		reveno.domain().command(CreateNewAccountCommand.class, Long.class, Commands::createAccount);
 		reveno.domain().command(NewOrderCommand.class, Long.class, Commands::newOrder);
+		reveno.domain().command(Credit.class, Commands::credit);
 		reveno.domain().transactionAction(CreateAccount.class, Transactions::createAccount);
 		reveno.domain().transactionAction(AcceptOrder.class, Transactions::acceptOrder);
 		reveno.domain().transactionAction(Credit.class, Transactions::credit);
@@ -124,7 +127,7 @@ public class RevenoBaseTest {
 		});
 		
 		// disabled for now as more rubbish than worth
-		//txPerSecondMeter(reveno);
+		txPerSecondMeter(reveno);
 		
 		consumer.accept(reveno);
 		
@@ -143,12 +146,12 @@ public class RevenoBaseTest {
 		reveno.interceptors().add(TransactionStage.TRANSACTION, new TransactionInterceptor() {
 			protected long start = -1L;
 			@Override
-			public void intercept(long transactionId, WriteableRepository repository,
+			public void intercept(long transactionId, long time, WriteableRepository repository,
 					TransactionStage stage) {
 				if (start == -1 || transactionId == 1) start = System.currentTimeMillis();
-				if (transactionId % 1000 == 0) {
-					System.err.println(String.format("%s tx per second!", (
-							Math.round((double)1000 * 1000) / (System.currentTimeMillis() - start))));
+				if (transactionId % 1_000_000 == 0) {
+					log.info(String.format("%s tx per second!", (
+							Math.round((double)1_000_000 * 1000) / (System.currentTimeMillis() - start))));
 					start = System.currentTimeMillis();
 				}
 			}
@@ -257,5 +260,7 @@ public class RevenoBaseTest {
 		}
 		
 	}
+	
+	protected static final Logger log = LoggerFactory.getLogger(RevenoBaseTest.class);
 	
 }

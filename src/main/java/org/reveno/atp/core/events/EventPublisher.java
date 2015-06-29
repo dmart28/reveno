@@ -53,8 +53,10 @@ public class EventPublisher {
 	}
 	
 	public void publishEvents(boolean isReplay, long transactionId, EventMetadata metadata, Object[] events) {
-		this.pipeProcessor.process((e,f) -> e.reset().replay(isReplay).eventMetadata(metadata)
-				.transactionId(transactionId).events(events));
+		if (events.length > 0) {
+			this.pipeProcessor.process((e,f) -> e.reset().replay(isReplay).eventMetadata(metadata)
+					.transactionId(transactionId).events(events));
+		}
 	}
 	
 	public void commitAsyncError(boolean isReplay, long transactionId) {

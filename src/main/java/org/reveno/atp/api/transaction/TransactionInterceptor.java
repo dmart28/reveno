@@ -30,6 +30,6 @@ import org.reveno.atp.api.domain.WriteableRepository;
 @FunctionalInterface
 public interface TransactionInterceptor {
 
-	void intercept(long transactionId, WriteableRepository repository, TransactionStage stage);
+	void intercept(long transactionId, long time, WriteableRepository repository, TransactionStage stage);
 	
 }

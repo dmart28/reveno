@@ -45,7 +45,7 @@ public class RevenoConfiguration implements Configuration {
 	}
 	
 	private RevenoSnapshotConfiguration snapshotting = new RevenoSnapshotConfiguration();
-	private CpuConsumption cpuConsumption = CpuConsumption.LOW;
+	private CpuConsumption cpuConsumption = CpuConsumption.PHASED;
 	private ModelType modelType = ModelType.IMMUTABLE;
 	
 	
