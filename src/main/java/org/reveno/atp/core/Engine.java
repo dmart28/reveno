@@ -273,7 +273,7 @@ public class Engine implements Reveno {
 		repository = factory.create(loadLastSnapshot());
 		viewsProcessor = new ViewsProcessor(viewsManager, viewsStorage, repository);
 		processor = new DisruptorTransactionPipeProcessor(txBuilder, configuration.cpuConsumption(), executor);
-		eventProcessor = new DisruptorEventPipeProcessor(CpuConsumption.LOW, eventExecutor);
+		eventProcessor = new DisruptorEventPipeProcessor(CpuConsumption.PHASED, eventExecutor);
 		roller = new JournalsRoller(transactionsJournaler, eventsJournaler, journalsStorage);
 		eventPublisher = new EventPublisher(eventProcessor, eventsContext);
 		EngineWorkflowContext workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
