@@ -52,12 +52,8 @@ public class InputHandlers {
 		ex(c, true, endOfBatch, transactionExecutor);
 	}
 	
-	public void serialization(ProcessorContext c, boolean endOfBatch) {
-		ex(c, c.getTransactions().size() > 0 && !c.isRestore(), endOfBatch, serializator);
-	}
-	
 	public void journaling(ProcessorContext c, boolean endOfBatch) {
-		ex(c, !c.isRestore(), endOfBatch, journaler);
+		ex(c, c.getTransactions().size() > 0 && !c.isRestore(), endOfBatch, journaler);
 	}
 	
 	public void viewsUpdate(ProcessorContext c, boolean endOfBatch) {
@@ -109,14 +105,13 @@ public class InputHandlers {
 		interceptors(TransactionStage.TRANSACTION, c);
 		txExecutor.executeCommands(c, services);
 	};
-	protected final BiConsumer<ProcessorContext, Boolean> serializator = (c, eob) -> {
-		// TODO what's with version?
-		c.commitInfo().transactionId(c.transactionId()).version(1).time(c.time()).transactionCommits(c.getTransactions());
-		services.serializer().serialize(c.commitInfo(), c.transactionsBuffer());
-	};
 	protected final BiConsumer<ProcessorContext, Boolean> journaler = (c, eob) -> {
 		interceptors(TransactionStage.JOURNALING, c);
-		services.transactionJournaler().writeData(c.transactionsBuffer(), eob);
+		
+		services.transactionJournaler().writeData(b -> {
+			c.commitInfo().transactionId(c.transactionId()).version(1).time(c.time()).transactionCommits(c.getTransactions());
+			services.serializer().serialize(c.commitInfo(), b);
+		}, eob);
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> viewsUpdater = (c, eob) -> {
 		services.viewsProcessor().process(c.getMarkedRecords());

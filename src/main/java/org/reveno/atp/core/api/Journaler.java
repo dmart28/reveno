@@ -16,12 +16,14 @@
 
 package org.reveno.atp.core.api;
 
+import java.util.function.Consumer;
+
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
 
 public interface Journaler {
 	
-	void writeData(Buffer entry, boolean endOfBatch);
+	void writeData(Consumer<Buffer> journalerBuffer, boolean endOfBatch);
 	
 	void startWriting(Channel ch);
 	void stopWriting();

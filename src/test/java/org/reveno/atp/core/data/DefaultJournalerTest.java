@@ -22,14 +22,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Random;
 
-import org.junit.Assert;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.reveno.atp.core.api.Journaler;
-import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
-import org.reveno.atp.core.channel.BufferMock;
 import org.reveno.atp.core.channel.FileChannel;
 
 import com.google.common.io.Files;
@@ -75,16 +73,15 @@ public class DefaultJournalerTest {
 		for (int i = 0; i < 10; i++) {
 			byte[] data = new byte[mb(1)];
 			new Random().nextBytes(data);
-			Buffer buffer = new BufferMock(data);
 			
-			journaler.writeData(buffer, false);
+			journaler.writeData(b -> b.writeBytes(data), false);
 		}
 		// when we call journaler.roll(..), we must to flush all previous data regardless 'endOfBatch' param
-		Assert.assertEquals(file.length(), rolled ? mb(1) + 8 : 0);
-		journaler.writeData(new BufferMock(new byte[0]), true);
-		Assert.assertEquals(file.length(), mb(10) + 8 + (rolled ? 8 : 0));
-		journaler.writeData(new BufferMock(new byte[] { 1, 2, 3 }), true);
-		Assert.assertEquals(file.length(), (mb(10) + 8) + (8 + 3) + (rolled ? 8 : 0));
+		Assert.assertEquals(file.length(), 0);
+		journaler.writeData(b -> b.writeBytes(new byte[0]), true);
+		Assert.assertEquals(file.length(), mb(10) + 8);
+		journaler.writeData(b -> b.writeBytes(new byte[] { 1, 2, 3 }), true);
+		Assert.assertEquals(file.length(), (mb(10) + 8) + (8 + 3));
 	}
 	
 }

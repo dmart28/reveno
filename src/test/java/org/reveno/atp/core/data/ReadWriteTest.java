@@ -32,11 +32,9 @@ import org.reveno.atp.core.api.InputProcessor;
 import org.reveno.atp.core.api.InputProcessor.JournalType;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.TransactionCommitInfo;
-import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.reveno.atp.core.api.storage.JournalsStorage.JournalStore;
-import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.core.engine.components.SerializersChain;
 import org.reveno.atp.core.impl.TransactionCommitInfoImpl.PojoBuilder;
 import org.reveno.atp.core.serialization.ProtostuffSerializer;
@@ -77,16 +75,14 @@ public class ReadWriteTest {
 			Journaler journaler = new DefaultJournaler();
 			journaler.startWriting(channel);
 			
-			Buffer buffer = new NettyBasedBuffer();
 			for (int j = 1; j <= totalCount / 10; j++) {
 				User user = new User(Double.toString(Math.random()));
 				TransactionCommitInfo d = builder.create()
 						.transactionId(System.currentTimeMillis()).version(count++).time(0).transactionCommits(
 								Arrays.asList(new Object[] { user }));
-				serializer.serialize(d, buffer);
-				journaler.writeData(buffer, Math.random() < 0.1);
+				journaler.writeData(b -> serializer.serialize(d, b), Math.random() < 0.1);
 			}
-			journaler.writeData(new NettyBasedBuffer(), true);
+			journaler.writeData(b -> b.writeBytes(new byte[0]), true);
 			journaler.stopWriting();
 			channel.close();
 		}

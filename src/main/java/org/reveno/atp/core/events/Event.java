@@ -20,8 +20,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.reveno.atp.api.EventsManager.EventMetadata;
 import org.reveno.atp.core.api.Destroyable;
-import org.reveno.atp.core.api.channel.Buffer;
-import org.reveno.atp.core.channel.NettyBasedBuffer;
 
 public class Event implements Destroyable {
 	
@@ -87,11 +85,6 @@ public class Event implements Destroyable {
 		return this;
 	}
 	
-	private Buffer serialized = new NettyBasedBuffer(32, false);
-	public Buffer serialized() {
-		return serialized;
-	}
-	
 	public Event reset() {
 		isAborted = false;
 		isReplay = false;
@@ -100,15 +93,12 @@ public class Event implements Destroyable {
 		syncFuture = null;
 		events = null;
 		eventMetadata = null;
-		serialized.clear();
 		
 		return this;
 	}
 	
 	public void destroy() {
 		reset();
-		
-		serialized.release();
 	}
 	
 }

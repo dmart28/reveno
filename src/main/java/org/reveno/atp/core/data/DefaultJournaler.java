@@ -16,38 +16,32 @@
 
 package org.reveno.atp.core.data;
 
-import static org.reveno.atp.utils.MeasureUtils.mb;
-
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
-import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DefaultJournaler implements Journaler {
 
 	@Override
-	public void writeData(Buffer entry, boolean endOfBatch) {
+	public void writeData(Consumer<Buffer> writer, boolean endOfBatch) {
 		requireWriting();
-		
-		buffer.writeFromBuffer(entry);
-		if (endOfBatch || rolledHandler != null) {
-			Channel ch = channel.get();
-			ch.write(buffer);
-			buffer.clear();
-			
-			if (!oldChannel.compareAndSet(ch, ch)) {
-				if (oldChannel.get().isOpen())
-					closeSilently(oldChannel.get());
-				oldChannel.set(ch);
-				
-				if (rolledHandler != null) {
-					rolledHandler.run();
-					rolledHandler = null;
-				}
+
+		Channel ch = channel.get();
+		ch.write(writer::accept, endOfBatch);
+
+		if (!oldChannel.compareAndSet(ch, ch)) {
+			if (oldChannel.get().isOpen())
+				closeSilently(oldChannel.get());
+			oldChannel.set(ch);
+
+			if (rolledHandler != null) {
+				rolledHandler.run();
+				rolledHandler = null;
 			}
 		}
 	}
@@ -66,8 +60,6 @@ public class DefaultJournaler implements Journaler {
 		log.info("Stopped writing to " + channel.get());
 		
 		isWriting = false;
-		if (buffer.isAvailable())
-			channel.get().write(buffer);
 		closeSilently(channel.get());
 		if (oldChannel.get().isOpen())
 			closeSilently(oldChannel.get());
@@ -82,8 +74,6 @@ public class DefaultJournaler implements Journaler {
 	@Override 
 	public void destroy() {
 		stopWriting();
-		
-		buffer.release();
 	}
 	
 	
@@ -102,7 +92,6 @@ public class DefaultJournaler implements Journaler {
 	}
 	
 	
-	protected final Buffer buffer = new NettyBasedBuffer(mb(1), true);
 	protected AtomicReference<Channel> channel = new AtomicReference<Channel>();
 	protected AtomicReference<Channel> oldChannel = new AtomicReference<Channel>();
 	protected volatile Runnable rolledHandler;

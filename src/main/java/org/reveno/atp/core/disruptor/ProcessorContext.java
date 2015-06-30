@@ -77,12 +77,6 @@ public class ProcessorContext implements Destroyable {
 	}
 	
 	@Contended
-	private final Buffer transactionsBuffer = new NettyBasedBuffer(true);
-	public Buffer transactionsBuffer() {
-		return transactionsBuffer;
-	}
-	
-	@Contended
 	private boolean hasResult;
 	public boolean hasResult() {
 		return hasResult;
@@ -202,7 +196,6 @@ public class ProcessorContext implements Destroyable {
 		transactions.clear();
 		events.clear();
 		marshallerBuffer.clear();
-		transactionsBuffer.clear();
 		markedRecords.values().forEach(Set::clear);
 		hasResult = false;
 		isAborted = false;
@@ -220,7 +213,6 @@ public class ProcessorContext implements Destroyable {
 	public void destroy() {
 		reset();
 		
-		transactionsBuffer.release();
 		marshallerBuffer.release();
 	}
 	

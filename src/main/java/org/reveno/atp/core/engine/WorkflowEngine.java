@@ -31,7 +31,6 @@ public class WorkflowEngine {
 	public void init() {
 		inputProcessor.pipe(handlers::replication)
 					.then(handlers::transactionExecution)
-					.then(handlers::serialization)
 					.then(handlers::journaling, handlers::viewsUpdate)
 					.then(handlers::result, handlers::eventsPublishing);
 		inputProcessor.start();

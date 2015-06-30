@@ -39,11 +39,10 @@ public class DefaultSnapshotter implements RepositorySnapshotter {
 		SnapshotStore snap = storage.nextSnapshotStore();
 		
 		Buffer buffer = new NettyBasedBuffer(false);
-		repoSerializer.serialize(repo, buffer);
 		try (Channel c = storage.channel(snap.getSnapshotPath())) {
 			log.info("Performing default repository snapshot to " + snap);
 			
-			c.write(buffer);
+			c.write(b -> repoSerializer.serialize(repo, b), true);
 		} catch (Throwable t) {
 			log.error("", t);
 			throw new RuntimeException(t);

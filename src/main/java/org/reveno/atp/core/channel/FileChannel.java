@@ -25,6 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.util.function.Consumer;
 
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
@@ -49,7 +50,10 @@ public class FileChannel implements Channel {
 	@Override
 	public void close() {
 		try {
-			raf.close();
+			if (channel().isOpen()) {
+				write(b -> {}, true);
+				raf.close();
+			}
 		} catch (Throwable t) {
 			log.error("channel close", t);
 		}
@@ -74,31 +78,30 @@ public class FileChannel implements Channel {
 			buffer.flip();
 			
 			data.writeFromBuffer(buffer);
+			buffer.rewind();
 		}
 	}
-
+	
 	@Override
-	public void write(Buffer data) {
-		if (isOpen()) {
-			write(longToBytes(data.length()));
-			write(data.getBytes());
+	public void write(Consumer<Buffer> writer, boolean flush) {
+		writer.accept(revenoBuffer);
+		buffer = revenoBuffer.getBuffer();
+		if (flush && buffer.position() > 0) {
+			try {
+				raf.write(longToBytes(buffer.position()));
+			} catch (IOException e) {
+				log.error("write", e);
+				throw new RuntimeException(e);
+			}
+			buffer.flip();
+			write(buffer);
+			buffer.clear();
 		}
 	}
 
 	@Override
 	public boolean isOpen() {
 		return channel().isOpen();
-	}
-	
-	protected void write(byte[] data) {
-		if (data.length > buffer.capacity()) {
-			destroyDirectBuffer(buffer);
-			buffer = ByteBuffer.allocateDirect(data.length + 1);
-		}
-		buffer.put(data);
-		buffer.flip();
-		write(buffer);
-		buffer.clear();
 	}
 	
 	public java.nio.channels.FileChannel channel() {
@@ -156,6 +159,8 @@ public class FileChannel implements Channel {
 	private final File file;
 	private final RandomAccessFile raf;
 	private ByteBuffer buffer = ByteBuffer.allocateDirect(mb(1));
+	private ByteBufferWrapper revenoBuffer = new ByteBufferWrapper(buffer);
+	
 	
 	private static final Logger log = LoggerFactory.getLogger(FileChannel.class);
 }

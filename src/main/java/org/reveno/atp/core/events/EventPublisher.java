@@ -34,7 +34,7 @@ public class EventPublisher {
 		this.pipeProcessor = pipeProcessor;
 		this.context = context;
 		
-		this.pipeProcessor.pipe(this::publish).then(this::serialize).then(this::journal);
+		this.pipeProcessor.pipe(this::publish).then(this::journal);
 	}
 	
 	public PipeProcessor<Event> getPipe() {
@@ -65,10 +65,6 @@ public class EventPublisher {
 	
 	protected void publish(Event event, boolean endOfBatch) {
 		ex(event, event.getFlag() == 0, endOfBatch, publisher);
-	}
-	
-	protected void serialize(Event event, boolean endOfBatch) {
-		ex(event, event.getFlag() != SYNC_FLAG, endOfBatch, serializer);
 	}
 	
 	protected void journal(Event event, boolean endOfBatch) {
@@ -106,17 +102,15 @@ public class EventPublisher {
 		}
 	};
 	
-	protected final BiConsumer<Event, Boolean> serializer = (e, eof) -> {
-		EventsCommitInfo info = context.eventsCommitBuilder().create(e.transactionId(), System.currentTimeMillis(), 
-				e.getFlag());
-		context.serializer().serialize(info, e.serialized());
-	};
-	
 	protected final BiConsumer<Event, Boolean> journaler = (e, eof) -> {
 		if (e.getFlag() == SYNC_FLAG) {
 			e.syncFuture().complete(null);
 		} else {
-			context.eventsJournaler().writeData(e.serialized(), eof);
+			context.eventsJournaler().writeData(b -> {
+				EventsCommitInfo info = context.eventsCommitBuilder().create(e.transactionId(), System.currentTimeMillis(), 
+						e.getFlag());
+				context.serializer().serialize(info, b);
+			}, eof);
 		}
 	};
 	

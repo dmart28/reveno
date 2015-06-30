@@ -16,6 +16,8 @@
 
 package org.reveno.atp.core.api.channel;
 
+import java.util.function.Consumer;
+
 public interface Channel extends AutoCloseable {
 	
 	long size();
@@ -24,7 +26,7 @@ public interface Channel extends AutoCloseable {
 	
 	void read(Buffer buffer);
 	
-	void write(Buffer buffer);
+	void write(Consumer<Buffer> channelBuffer, boolean flush);
 	
 	boolean isOpen();
 	

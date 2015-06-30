@@ -51,10 +51,10 @@ public class FileChannelTest {
 		File testFile = new File(Files.createTempDir(), "fileChannelTest.dat");
 		try {
 			FileChannel fc = new FileChannel(testFile, "rw");
-			dataSets.forEach((ds) -> fc.write(new BufferMock(ds)));
+			dataSets.forEach((ds) -> fc.write(b -> b.writeBytes(ds), true));
 			fc.close();
 		
-			Assert.assertEquals(testFile.length(), mb(chunks) + (chunks * 8));
+			Assert.assertEquals(mb(chunks) + (chunks * 8), testFile.length());
 			Assert.assertFalse(fc.isOpen());
 		} finally {
 			testFile.delete();
