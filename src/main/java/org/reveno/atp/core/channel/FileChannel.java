@@ -69,7 +69,7 @@ public class FileChannel implements Channel {
 	@Override
 	public void read(Buffer data) {
 		if (isOpen()) {
-			buffer.rewind();
+			buffer.clear();
 			read(buffer);
 			buffer.flip();
 			
