@@ -20,6 +20,14 @@ sourceSets {
             srcDir 'resources'
         }
 	}
+    perfTest {
+        java {
+            srcDir 'java'
+        }
+        resources {
+            srcDir 'resources'
+        }
+    }
 	test {
 		java {
 			srcDirs = ['src/test/java', 'src/acceptanceTest/java']

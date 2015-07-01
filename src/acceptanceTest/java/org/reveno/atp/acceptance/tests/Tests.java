@@ -123,7 +123,7 @@ public class Tests extends RevenoBaseTest {
 			}
 		});
 		sendCommandsBatch(reveno, new CreateNewAccountCommand("USD", 1000_000L), 1_000);
-		Assert.assertTrue(w.isArrived());
+		Assert.assertTrue(w.isArrived(5));
 		
 		reveno.syncAll();
 		reveno.shutdown();
