@@ -297,7 +297,7 @@ public class Tests extends RevenoBaseTest {
 		
 		IntStream.range(0, 20).forEach(i -> {
 			Waiter w = new Waiter(1);
-			reveno.roll(() -> w.countDown());
+			reveno.roll(w::countDown);
 			w.awaitSilent();
 			sleep(200);
 		});

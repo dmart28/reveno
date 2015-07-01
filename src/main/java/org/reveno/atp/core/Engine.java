@@ -273,7 +273,7 @@ public class Engine implements Reveno {
 		repository = factory.create(loadLastSnapshot());
 		viewsProcessor = new ViewsProcessor(viewsManager, viewsStorage, repository);
 		processor = new DisruptorTransactionPipeProcessor(txBuilder, configuration.cpuConsumption(), executor);
-		eventProcessor = new DisruptorEventPipeProcessor(CpuConsumption.PHASED, eventExecutor);
+		eventProcessor = new DisruptorEventPipeProcessor(CpuConsumption.NORMAL, eventExecutor);
 		roller = new JournalsRoller(transactionsJournaler, eventsJournaler, journalsStorage);
 		eventPublisher = new EventPublisher(eventProcessor, eventsContext);
 		EngineWorkflowContext workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
@@ -315,13 +315,6 @@ public class Engine implements Reveno {
 		case MUTABLE : return new MutableModelRepository(repository());
 		}
 		return null;
-	}
-	
-	protected RepositorySnapshotter snapshotter() {
-		if (restoreWith != null) 
-			return restoreWith;
-		else 
-			return snapshotsManager.getAll().stream().findFirst().get();
 	}
 	
 	protected void snapshotAll() {
