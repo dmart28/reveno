@@ -27,8 +27,6 @@ import org.reveno.atp.api.transaction.EventBus;
 import org.reveno.atp.core.api.Destroyable;
 import org.reveno.atp.core.api.RestoreableEventBus;
 import org.reveno.atp.core.api.TransactionCommitInfo;
-import org.reveno.atp.core.api.channel.Buffer;
-import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.utils.MapUtils;
 
 import sun.misc.Contended;
@@ -69,11 +67,6 @@ public class ProcessorContext implements Destroyable {
 	public ProcessorContext future(CompletableFuture future) {
 		this.future = future;
 		return this;
-	}
-	
-	private final Buffer marshallerBuffer = new NettyBasedBuffer(true);
-	public Buffer marshallerBuffer() {
-		return marshallerBuffer;
 	}
 	
 	@Contended
@@ -195,7 +188,6 @@ public class ProcessorContext implements Destroyable {
 		commands.clear();
 		transactions.clear();
 		events.clear();
-		marshallerBuffer.clear();
 		markedRecords.values().forEach(Set::clear);
 		hasResult = false;
 		isAborted = false;
@@ -212,8 +204,6 @@ public class ProcessorContext implements Destroyable {
 	
 	public void destroy() {
 		reset();
-		
-		marshallerBuffer.release();
 	}
 	
 	public ProcessorContext(TransactionCommitInfo commitInfo) {

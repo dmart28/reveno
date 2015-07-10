@@ -87,7 +87,7 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 		stop();
 		disruptor.shutdown();
 		
-		for (int i = 0; i < 4 * 1024; i++)
+		for (int i = 0; i < 1 * 1024; i++)
 			disruptor.getRingBuffer().get(i).destroy();
 	}
 

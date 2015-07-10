@@ -16,6 +16,8 @@
 
 package org.reveno.atp.core.repository;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -72,18 +74,19 @@ public class HashMapRepository implements WriteableRepository {
 	
 	@Override
 	public Map<Long, Object> getEntities(Class<?> entityType) {
-		if (!map.containsKey(entityType))
-			map.put(entityType, new ConcurrentHashMap<>(capacity, loadFactor));
-		return map.get(entityType);
+		Map<Long, Object> result = map.get(entityType);
+		if (result == null)
+			map.put(entityType, (result = new Long2ObjectOpenHashMap<Object>(capacity)));
+		return result;
 	}
 	
 	
 	public HashMapRepository() {
-		this(88 << 6, 0.75f);
+		this(524288, 0.75f);
 	}
 	
 	public HashMapRepository(int capacity, float loadFactor) {
-		this.map = new ConcurrentHashMap<>();
+		this.map = new ConcurrentHashMap<>(capacity, loadFactor, 32);
 		this.capacity = capacity;
 		this.loadFactor = loadFactor;
 	}

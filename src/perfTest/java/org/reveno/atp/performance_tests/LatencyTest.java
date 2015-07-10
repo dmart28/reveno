@@ -29,7 +29,7 @@ import org.reveno.atp.core.Engine;
 public class LatencyTest extends RevenoBaseTest {
 
 	public static final long TOTAL_TRANSACTIONS = 103_000_000;
-	public static final long COLD_START_COUNT = 2_000_000;
+	public static final long COLD_START_COUNT = 10_000_000;
 	
 	public static void main(String[] args) throws Exception {
 		LatencyTest test = new LatencyTest();
@@ -45,6 +45,7 @@ public class LatencyTest extends RevenoBaseTest {
 		final long[] latency = { 0L };
 		final long[] worstLatency = { 0L };
 		final long[] worstCount = { 0L };
+		final long[] bestCount = { 0L };
 		Engine engine = createEngine((e) -> {
 			e.interceptors().add(TransactionStage.REPLICATION, (id, time, r, s) -> {
 				if (++counter[0] > COLD_START_COUNT) {
@@ -55,6 +56,9 @@ public class LatencyTest extends RevenoBaseTest {
 					}
 					if (lat > 3_000_000) {
 						worstCount[0]++;
+					}
+					if (lat <= 1000) {
+						bestCount[0]++;
 					}
 				}
 			});
@@ -70,10 +74,6 @@ public class LatencyTest extends RevenoBaseTest {
 				for (long j = 1; j < TOTAL_TRANSACTIONS / 100_000; j++) {
 					for (long i = 1; i <= 100_000; i++) {
 						engine.executeCommand(cmd);
-					}
-					try {
-						Thread.sleep(1);
-					} catch (Exception e1) {
 					}
 				}
 				});
@@ -91,6 +91,8 @@ public class LatencyTest extends RevenoBaseTest {
 		log.info("Worst latency: " + worstLatency[0]);
 		log.info("Worst precent: " + 
 				new DecimalFormat("##.########").format((((double)worstCount[0] / (TOTAL_TRANSACTIONS * (Runtime.getRuntime().availableProcessors()/2) - COLD_START_COUNT)) * 100)) + "%");
+		log.info("Best precent: " + 
+				new DecimalFormat("##.########").format((((double)bestCount[0] / (TOTAL_TRANSACTIONS * (Runtime.getRuntime().availableProcessors()/2) - COLD_START_COUNT)) * 100)) + "%");
 		sleep(2000);
 		
 		engine.shutdown();

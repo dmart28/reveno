@@ -23,12 +23,15 @@ import java.util.Set;
 import org.reveno.atp.api.domain.Repository;
 import org.reveno.atp.core.api.ViewsStorage;
 import org.reveno.atp.core.engine.components.RecordingRepository;
+import org.reveno.atp.core.views.ViewsManager.ViewHandlerHolder;
 
 public class ViewsProcessor {
+	
+	protected static final int GET_ALL_SIZE = RecordingRepository.GET_ALL.size();
 
 	public void process(Map<Class<?>, Set<Long>> marked) {
 		marked.forEach((k, v) -> {
-			if (v.containsAll(RecordingRepository.GET_ALL)) {
+			if (v.size() >= GET_ALL_SIZE && v.containsAll(RecordingRepository.GET_ALL)) {
 				repository.getEntities(k).forEach((id,e) -> map(k, id));
 			} else {
 				v.forEach(id -> map(k, id));
@@ -38,15 +41,16 @@ public class ViewsProcessor {
 	
 	@SuppressWarnings("unchecked")
 	protected void map(Class<?> entityType, long id) {
-		if (!manager.hasEntityMap(entityType)) return;
+		ViewHandlerHolder<Object, Object> holder = (ViewHandlerHolder<Object, Object>) manager.resolveEntity(entityType);
+		if (holder == null) 
+			return;
 		
-		Class<?> viewType = manager.resolveEntityViewType(entityType);
 		if (id >= 0) {
-			Object view = manager.getMapper(entityType).map(repository.get(entityType, id).get(), 
-					(Optional<Object>) storage.find(viewType, id), repository);
+			Object view = holder.mapper.map((Object) repository.get(entityType, id).get(), 
+					(Optional<Object>) storage.find(holder.viewType, id), repository);
 			storage.insert(id, view);
 		} else {
-			storage.remove(viewType, Math.abs(id));
+			storage.remove(holder.viewType, Math.abs(id));
 		}
 	}
 	

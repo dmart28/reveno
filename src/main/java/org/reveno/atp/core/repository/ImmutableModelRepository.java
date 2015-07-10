@@ -17,7 +17,6 @@
 package org.reveno.atp.core.repository;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -29,6 +28,8 @@ import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.utils.MapUtils;
 
 public class ImmutableModelRepository implements TxRepository {
+	
+	// TODO rewrite class to use collections only on rollback();
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -37,7 +38,7 @@ public class ImmutableModelRepository implements TxRepository {
 		if (isTransaction.get()) {
 			if (entity.isPresent() && isDeleted(entityType, id))
 				return Optional.empty();
-			else if (added.get(entityType).containsKey(id))
+			else if (added.containsKey(entityType) && added.get(entityType).containsKey(id))
 				return Optional.of((T) added.get(entityType).get(id));
 			else
 				return entity;
@@ -71,10 +72,16 @@ public class ImmutableModelRepository implements TxRepository {
 		Map<Long, Object> entities = repository.getEntities(entityType);
 
 		if (isTransaction.get()) {
-			List<Map.Entry<Long, Object>> notRemoved = entities.entrySet()
-					.stream().filter(e -> !isDeleted(entityType, e.getKey()))
-					.collect(Collectors.toList());
-			notRemoved.addAll(added.get(entityType).entrySet());
+			Set<Map.Entry<Long, Object>> notRemoved;
+			if (removed.size() > 0 && removed.get(entityType).size() > 0) {
+				notRemoved = entities.entrySet()
+						.stream().filter(e -> !isDeleted(entityType, e.getKey()))
+						.collect(Collectors.toSet());
+			} else {
+				notRemoved = entities.entrySet();
+			}
+			if (added.size() > 0 && added.get(entityType).size() > 0)
+				notRemoved.addAll(added.get(entityType).entrySet());
 			return notRemoved.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 		} else
 			return entities;
@@ -125,8 +132,10 @@ public class ImmutableModelRepository implements TxRepository {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void commit() {
-		added.forEach((k,v) -> v.forEach((i,e) -> repository.store(i, (Class<Object>)k, e)));
-		removed.forEach((k,v) -> v.forEach(id -> repository.remove(k, id)));
+		if (added.size() > 0)
+			added.forEach((k,v) -> v.forEach((i,e) -> repository.store(i, (Class<Object>)k, e)));
+		if (removed.size() > 0)
+			removed.forEach((k,v) -> v.forEach(id -> repository.remove(k, id)));
 		isTransaction.set(false);
 	}
 
@@ -135,8 +144,11 @@ public class ImmutableModelRepository implements TxRepository {
 		isTransaction.set(false);
 	}
 
+	/*
+	 * size checking mainly for performance issues on cases where there is no need to check map
+	 */
 	protected boolean isDeleted(Class<?> type, long key) {
-		return removed.containsKey(type) && removed.get(type).contains(key);
+		return removed.size() > 0 && removed.containsKey(type) && removed.get(type).size() > 0 && removed.get(type).contains(key);
 	}
 
 	public ImmutableModelRepository(WriteableRepository underlyingRepository) {

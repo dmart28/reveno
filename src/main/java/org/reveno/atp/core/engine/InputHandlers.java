@@ -26,6 +26,7 @@ import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.core.disruptor.ProcessorContext;
 import org.reveno.atp.core.engine.components.TransactionExecutor;
+import org.reveno.atp.utils.MeasureUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +83,7 @@ public class InputHandlers {
 		marshalled.release();
 	}
 	
-	protected final Buffer marshalled = new NettyBasedBuffer(true);
+	protected final Buffer marshalled = new NettyBasedBuffer(MeasureUtils.mb(1), true);
 	protected WorkflowContext services;
 	protected TransactionExecutor txExecutor;
 	protected Supplier<Long> nextTransactionId;
@@ -90,12 +91,10 @@ public class InputHandlers {
 	protected final BiConsumer<ProcessorContext, Boolean> replicator = (c, eob) -> {
 		interceptors(TransactionStage.REPLICATION, c);
 		
-		services.serializer().serializeCommands(c.getCommands(), c.marshallerBuffer());
 		if (eob) {
 			marshalled.clear();
 		} else {
-			marshalled.writeInt(c.marshallerBuffer().length());
-			marshalled.writeFromBuffer(c.marshallerBuffer());
+			services.serializer().serializeCommands(c.getCommands(), marshalled);
 		}
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> transactionExecutor = (c, eob) -> {

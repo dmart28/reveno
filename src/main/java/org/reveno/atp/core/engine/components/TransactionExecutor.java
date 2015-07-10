@@ -16,7 +16,6 @@
 
 package org.reveno.atp.core.engine.components;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,18 +38,16 @@ public class TransactionExecutor {
 			c.eventBus().currentTransactionId(c.transactionId()).underlyingEventBus(c.defaultEventBus());
 			repository.underlying(services.repository()).map(c.getMarkedRecords());
 			transactionContext.withContext(c).withRepository(repository);
-			commandContext.withRepository(repository).idGenerator(services.idGenerator());
+			commandContext.withRepository(repository).withTransactionsHolder(c.getTransactions()).idGenerator(services.idGenerator());
 			
 			services.repository().begin();
 			
-			if (c.isRestore()) {
-				commandContext.transactions.addAll(c.getTransactions());
-				executeTransactions(services);
+			 if (c.isRestore()) {
+				executeTransactions(services, c);
 			} else {
 				c.getCommands().forEach(cmd -> {
 					Object result = services.commandsManager().execute(cmd, commandContext);
-					executeTransactions(services);
-					c.addTransactions(commandContext.transactions);
+					executeTransactions(services, c);
 					if (c.hasResult())
 						c.commandResult(result);
 				});
@@ -65,8 +62,8 @@ public class TransactionExecutor {
 		}
 	}
 
-	protected void executeTransactions(WorkflowContext services) {
-		services.transactionsManager().execute(commandContext.transactions, transactionContext);
+	protected void executeTransactions(WorkflowContext services, ProcessorContext c) {
+		services.transactionsManager().execute(c.getTransactions(), transactionContext);
 	}
 	
 	protected void setSystemInfo(WorkflowContext services, long transactionId) {
@@ -84,7 +81,7 @@ public class TransactionExecutor {
 		
 	protected static class InnerCommandContext implements CommandContext {
 		public Repository repository;
-		public List<Object> transactions = new ArrayList<>();
+		protected List<Object> transactions;
 		public IdGenerator idGenerator;
 		
 		@Override
@@ -105,7 +102,11 @@ public class TransactionExecutor {
 		
 		public InnerCommandContext withRepository(Repository repository) {
 			this.repository = repository;
-			transactions.clear();
+			return this;
+		}
+		
+		public InnerCommandContext withTransactionsHolder(List<Object> transactions) {
+			this.transactions = transactions;
 			return this;
 		}
 		

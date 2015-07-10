@@ -51,4 +51,35 @@ public abstract class BinaryUtils {
 		    };
 	}
 	
+	public static final int intlongToBytes(int value, long lval, byte[] data) {
+		int result = 1;
+		
+		data[0] = (byte)(value >>> 24);
+		result = 31 * result + data[0];
+		data[1] = (byte)(value >>> 16);
+		result = 31 * result + data[1];
+		data[2] = (byte)(value >>> 8);
+		result = 31 * result + data[2];
+		data[3] = (byte)value;
+		result = 31 * result + data[3];
+		data[4] = (byte)(lval >>> 56);
+		result = 31 * result + data[4];
+		data[5] = (byte)(lval >>> 48);
+		result = 31 * result + data[5];
+		data[6] = (byte)(lval >>> 40);
+		result = 31 * result + data[6];
+		data[7] = (byte)(lval >>> 32);
+		result = 31 * result + data[7];
+		data[8] = (byte)(lval >>> 24);
+		result = 31 * result + data[8];
+		data[9] = (byte)(lval >>> 16);
+		result = 31 * result + data[9];
+		data[10] = (byte)(lval >>> 8);
+		result = 31 * result + data[10];
+		data[11] = (byte)(lval);
+		result = 31 * result + data[11];
+		
+		return result;
+	}
+	
 }

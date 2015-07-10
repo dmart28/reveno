@@ -31,13 +31,8 @@ public class ViewsManager {
 		return viewsHandlers.containsKey(entityType);
 	}
 	
-	public Class<?> resolveEntityViewType(Class<?> entityType) {
-		return viewsHandlers.get(entityType).viewType;
-	}
-	
-	@SuppressWarnings("unchecked")
-	public <E, V> ViewsMapper<E, V> getMapper(Class<?> entityType) {
-		return (ViewsMapper<E, V>) viewsHandlers.get(entityType).mapper;
+	public ViewHandlerHolder<?, ?> resolveEntity(Class<?> entityType) {
+		return viewsHandlers.get(entityType);
 	}
 	
 	protected Map<Class<?>, ViewHandlerHolder<?, ?>> viewsHandlers = new HashMap<>();

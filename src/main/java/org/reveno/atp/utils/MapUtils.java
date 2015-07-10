@@ -16,10 +16,11 @@
 
 package org.reveno.atp.utils;
 
+import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,8 +40,8 @@ public abstract class MapUtils {
 		return new MapOfSet<Class<?>, T>();
 	}
 	
-	public static <T> MapOfSet<Class<?>, T> repositoryLinkedSet() {
-		return new MapOfSet<Class<?>, T>(() -> new LinkedHashSet<T>());
+	public static <T> MapOfSet<Class<?>, Long> repositoryLinkedSet() {
+		return new MapOfSet<Class<?>, Long>(() -> new LongLinkedOpenHashSet());
 	}
 	
 	public static class MapOfMap<T, U, M> extends HashMap<T, Map<U, M>> implements Map<T, Map<U, M>> {
@@ -53,9 +54,10 @@ public abstract class MapUtils {
 		}
 		
 		public Map<U, M> safeGet(T key) {
-			if (!this.containsKey(key))
-				this.put(key, new HashMap<>());
-			return super.get(key);
+			Map<U, M> result = super.get(key);
+			if (result == null)
+				this.put(key, (result = new HashMap<>()));
+			return result;
 		}
 	}
 	
@@ -69,9 +71,10 @@ public abstract class MapUtils {
 		}
 		
 		public List<U> safeGet(T key) {
-			if (!this.containsKey(key))
-				this.put(key, new ArrayList<>());
-			return super.get(key);
+			List<U> result = super.get(key);
+			if (result == null)
+				this.put(key, (result = new ArrayList<>()));
+			return result;
 		}
 	}
 	
@@ -86,9 +89,10 @@ public abstract class MapUtils {
 		}
 		
 		public Set<U> safeGet(T key) {
-			if (!this.containsKey(key)) 
-				this.put(key, setCreator.get());
-			return super.get(key);
+			Set<U> result = super.get(key);
+			if (result == null) 
+				this.put(key, (result = setCreator.get()));
+			return result;
 		}
 		
 		public MapOfSet() {
