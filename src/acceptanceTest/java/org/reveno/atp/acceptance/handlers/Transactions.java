@@ -40,7 +40,7 @@ public abstract class Transactions {
 	
 	public static void credit(Credit tx, TransactionContext ctx) {
 		Account acc = ctx.repository().get(Account.class, tx.accountId).get();
-		if (acc.isImmutable()) 
+		if (acc.isImmutable())
 			ctx.repository().store(tx.accountId, Account.class, acc.addBalance(tx.amount));
 		else
 			acc.addBalance(tx.amount);

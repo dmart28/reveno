@@ -2,6 +2,8 @@ package org.reveno.atp.core.serialization;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -12,6 +14,8 @@ import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.reveno.atp.core.channel.BufferMock;
 import org.reveno.atp.core.impl.TransactionCommitInfoImpl;
+import org.reveno.atp.core.repository.HashMapRepository;
+import org.reveno.atp.utils.MapUtils;
 
 public class SerializersTest {
 
@@ -19,6 +23,38 @@ public class SerializersTest {
 	public void defaultJavaTest() {
 		DefaultJavaSerializer ser = new DefaultJavaSerializer();	
 		test(ser, ser);
+	}
+	
+	public static void main(String[] args) {
+		final Map<Class<?>, Map<Long, Object>> added = MapUtils.repositoryMap();
+		final Map<Class<?>, Set<Long>> removed = MapUtils.repositorySet();
+		HashMapRepository repository = new HashMapRepository();
+		
+		for (int ii = 0; ii < 10; ii++) {
+			for (int j = 0; j < 1_000_000; j++) {
+				added.get(SerializersTest.class).put(1L, new Object());
+				removed.get(SerializersTest.class).add(2L);
+				
+				if (added.size() > 0)
+					added.forEach((k,v) -> v.forEach((i,e) -> repository.store(i, (Class<Object>)k, e)));
+				if (removed.size() > 0)
+					removed.forEach((k,v) -> v.forEach(id -> repository.remove(k, id)));
+			}
+		}
+		
+		for (int o = 0; o < 10; o++) {
+		long t1 = System.currentTimeMillis();
+		for (int ii = 0; ii < 10; ii++) {
+			for (int j = 0; j < 1_000_000; j++) {
+				added.get(SerializersTest.class).put(1L, new Object());
+				removed.get(SerializersTest.class).add(2L);
+				
+				added.forEach((k,v) -> v.clear());
+				removed.forEach((k,v) -> v.clear());
+			}
+		}
+		System.out.println(System.currentTimeMillis() - t1);
+		}
 	}
 	
 	@Test

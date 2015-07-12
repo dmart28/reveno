@@ -44,7 +44,7 @@ public abstract class Commands {
 	}
 	
 	public static void credit(Credit credit, CommandContext ctx) {
-		require(ctx.repository().get(Account.class, credit.accountId).isPresent(), format("Can't find account %d", credit.accountId));
+		ctx.repository().get(Account.class, credit.accountId).isPresent();
 		
 		ctx.executeTransaction(credit);
 	}

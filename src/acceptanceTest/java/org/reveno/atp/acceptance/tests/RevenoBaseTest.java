@@ -149,9 +149,9 @@ public class RevenoBaseTest {
 			public void intercept(long transactionId, long time, WriteableRepository repository,
 					TransactionStage stage) {
 				if (start == -1 || transactionId == 1) start = System.currentTimeMillis();
-				if (transactionId % 1_000_000 == 0) {
+				if (transactionId % 10_000_000 == 0) {
 					log.info(String.format("%s tx per second!", (
-							Math.round((double)1_000_000 * 1000) / (System.currentTimeMillis() - start))));
+							Math.round((double)10_000_000 * 1000) / (System.currentTimeMillis() - start))));
 					start = System.currentTimeMillis();
 				}
 			}

@@ -58,7 +58,7 @@ public class ImmutableAccount implements Account {
 	}
 	
 	public ImmutableAccount addBalance(long add) {
-		return copy(this, pair("balance", balance + add));
+		return new ImmutableAccount(this.id, this.currency, this.balance + add, this.orders, this.positions);
 	}
 	
 	public ImmutableAccount addOrder(long orderId) {
