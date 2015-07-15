@@ -16,15 +16,12 @@
 
 package org.reveno.atp.api.domain;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
 public interface Repository {
 	
 	<T> Optional<T> get(Class<T> entityType, long id);
-	
-	<T> Collection<T> getAll(Class<T> entityType);
 	
 	RepositoryData getData();
 	

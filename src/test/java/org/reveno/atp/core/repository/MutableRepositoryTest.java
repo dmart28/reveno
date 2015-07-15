@@ -129,11 +129,11 @@ public class MutableRepositoryTest {
 		rec.addBin(1L);
 		
 		repository.begin();
-		Assert.assertEquals(2, repository.getAll(Bin.class).size());
+		Assert.assertEquals(2, repository.getEntities(Bin.class).size());
 		repository.store(3L, new Bin("artem", "test"));
-		Assert.assertEquals(3, repository.getAll(Bin.class).size());
+		Assert.assertEquals(3, repository.getEntities(Bin.class).size());
 		repository.rollback();
-		Assert.assertEquals(2, repository.getAll(Bin.class).size());
+		Assert.assertEquals(2, repository.getEntities(Bin.class).size());
 		
 		repository.begin();
 		Assert.assertEquals(2, repository.getEntities(Bin.class).size());

@@ -107,7 +107,7 @@ public class RevenoBaseTest {
 	protected TestRevenoEngine createEngine(Consumer<TestRevenoEngine> consumer) {
 		TestRevenoEngine reveno = new TestRevenoEngine(tempDir);
 		
-		reveno.config().cpuConsumption(CpuConsumption.NORMAL);
+		reveno.config().cpuConsumption(CpuConsumption.HIGH);
 		reveno.config().modelType(modelType);
 		
 		reveno.domain().command(CreateNewAccountCommand.class, Long.class, Commands::createAccount);

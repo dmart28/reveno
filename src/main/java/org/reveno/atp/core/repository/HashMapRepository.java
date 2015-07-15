@@ -16,31 +16,24 @@
 
 package org.reveno.atp.core.repository;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
+import org.reveno.atp.utils.MapUtils;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
+@SuppressWarnings("unchecked")
 public class HashMapRepository implements WriteableRepository {
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T> Optional<T> get(Class<T> entityType, long id) {
-		T entity = (T) getEntities(entityType).get(id);
-		
-		return Optional.ofNullable(entity);
-	}
 	
 	@Override
-	@SuppressWarnings("unchecked")
-	public <T> Collection<T> getAll(Class<T> entityType) {
-		return (Collection<T>) Collections.unmodifiableCollection(getEntities(entityType).values());
+	public <T> Optional<T> get(Class<T> entityType, long id) {
+		T entity = (T) map.get(entityType).get(id);
+		
+		return Optional.ofNullable(entity);
 	}
 
 	@Override
@@ -50,34 +43,32 @@ public class HashMapRepository implements WriteableRepository {
 
 	@Override
 	public <T> T store(long entityId, T entity) {
-		getEntities(entity.getClass()).put(entityId, entity);
+		map.get(entity.getClass()).put(entityId, entity);
 		return entity;
 	}
 	
 	@Override
 	public <T> T store(long entityId, Class<? super T> type, T entity) {
-		getEntities(type).put(entityId, entity);
+		map.get(type).put(entityId, entity);
 		return entity;
 	}
 
 	@Override
 	public Object remove(Class<?> entityClass, long entityId) {
-		if (map.containsKey(entityClass))
-			return map.get(entityClass).remove(entityId);
+		Long2ObjectOpenHashMap<Object> data = map.get(entityClass);
+		if (data != null)
+			return data.remove(entityId);
 		return null;
 	}
 
 	@Override
-	public void load(Map<Class<?>, Map<Long, Object>> map) {
-		this.map.putAll(map);
+	public void load(Map<Class<?>, Map<Long, Object>> data) {
+		data.forEach((k,v) -> map.put(k, new Long2ObjectOpenHashMap<>(v)));
 	}
 	
 	@Override
 	public Map<Long, Object> getEntities(Class<?> entityType) {
-		Map<Long, Object> result = map.get(entityType);
-		if (result == null)
-			map.put(entityType, (result = new Long2ObjectOpenHashMap<Object>(capacity)));
-		return result;
+		return map.get(entityType);
 	}
 	
 	
@@ -86,12 +77,12 @@ public class HashMapRepository implements WriteableRepository {
 	}
 	
 	public HashMapRepository(int capacity, float loadFactor) {
-		this.map = new ConcurrentHashMap<>(capacity, loadFactor, 32);
+		map = MapUtils.fastRepo(capacity, loadFactor);
 		this.capacity = capacity;
 		this.loadFactor = loadFactor;
 	}
 	
-	protected Map<Class<?>, Map<Long, Object>> map;
+	protected Map<Class<?>, Long2ObjectOpenHashMap<Object>> map;
 	protected int capacity;
 	protected float loadFactor;
 	

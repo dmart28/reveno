@@ -19,7 +19,6 @@ package org.reveno.atp.core.disruptor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.reveno.atp.api.EventsManager.EventMetadata;
@@ -29,6 +28,7 @@ import org.reveno.atp.core.api.RestoreableEventBus;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.utils.MapUtils;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import sun.misc.Contended;
 
 @SuppressWarnings("rawtypes")
@@ -172,8 +172,8 @@ public class ProcessorContext implements Destroyable {
 	}
 	
 	@Contended
-	private final Map<Class<?>, Set<Long>> markedRecords = MapUtils.repositoryLinkedSet();
-	public Map<Class<?>, Set<Long>> getMarkedRecords() {
+	private final Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> markedRecords = MapUtils.linkedFastRepo();
+	public Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> getMarkedRecords() {
 		return markedRecords;
 	}
 	
@@ -188,7 +188,7 @@ public class ProcessorContext implements Destroyable {
 		commands.clear();
 		transactions.clear();
 		events.clear();
-		markedRecords.values().forEach(Set::clear);
+		markedRecords.values().forEach(Long2ObjectLinkedOpenHashMap::clear);
 		hasResult = false;
 		isAborted = false;
 		isRestore = false;

@@ -92,6 +92,8 @@ import org.reveno.atp.utils.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
 public class Engine implements Reveno {
 	
 	public Engine(FoldersStorage foldersStorage, JournalsStorage journalsStorage,
@@ -271,7 +273,7 @@ public class Engine implements Reveno {
 		EngineEventsContext eventsContext = new EngineEventsContext().serializer(eventsSerializer)
 				.eventsCommitBuilder(eventBuilder).eventsJournaler(eventsJournaler).manager(eventsManager);
 		repository = factory.create(loadLastSnapshot());
-		viewsProcessor = new ViewsProcessor(viewsManager, viewsStorage, repository);
+		viewsProcessor = new ViewsProcessor(viewsManager, viewsStorage, viewsStorage);
 		processor = new DisruptorTransactionPipeProcessor(txBuilder, configuration.cpuConsumption(), executor);
 		eventProcessor = new DisruptorEventPipeProcessor(CpuConsumption.NORMAL, eventExecutor);
 		roller = new JournalsRoller(transactionsJournaler, eventsJournaler, journalsStorage);
@@ -294,7 +296,7 @@ public class Engine implements Reveno {
 	}
 	
 	protected Map<Class<?>, Set<Long>> mapAsMarked(TxRepository repository) {
-		Map<Class<?>, Set<Long>> marked = MapUtils.repositorySet();
+		Map<Class<?>, Long2ObjectOpenHashMap<Object>> marked = MapUtils.fastRepo();
 		repository.getData().data.forEach((k, v) -> marked.put(k, v.keySet()));
 		return marked;
 	}
@@ -341,7 +343,7 @@ public class Engine implements Reveno {
 	protected TransactionCommitInfo.Builder txBuilder = new TransactionCommitInfoImpl.PojoBuilder();
 	protected EventsCommitInfo.Builder eventBuilder = new EventsCommitInfoImpl.PojoBuilder();
 	protected EventHandlersManager eventsManager = new EventHandlersManager();
-	protected ViewsDefaultStorage viewsStorage = new ViewsDefaultStorage(repository());
+	protected ViewsDefaultStorage viewsStorage = new ViewsDefaultStorage();
 	protected ViewsManager viewsManager = new ViewsManager();
 	protected TransactionsManager transactionsManager = new TransactionsManager();
 	protected CommandsManager commandsManager = new CommandsManager();

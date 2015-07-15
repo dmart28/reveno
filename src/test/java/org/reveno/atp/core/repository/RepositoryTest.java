@@ -49,15 +49,15 @@ public class RepositoryTest {
 		Assert.assertTrue(repository.get(Bin.class, 2L).isPresent());
 		
 		repository.remove(Bin.class, 2L);
-		Assert.assertEquals(1, repository.getAll(Bin.class).size());
+		Assert.assertEquals(1, repository.getEntities(Bin.class).size());
 		
 		Record rec = new Record();
 		repository.store(1L, rec);
 		repository.store(2L, item2);
 		
 		Assert.assertEquals(2, repository.getData().data.size());
-		Assert.assertEquals(2, repository.getAll(Bin.class).size());
-		Assert.assertEquals(1, repository.getAll(Record.class).size());
+		Assert.assertEquals(2, repository.getEntities(Bin.class).size());
+		Assert.assertEquals(1, repository.getEntities(Record.class).size());
 	}
 	
 	public static class Record {

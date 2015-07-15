@@ -16,8 +16,8 @@
 
 package org.reveno.atp.core.views;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.reveno.atp.api.query.ViewsMapper;
 
@@ -25,6 +25,7 @@ public class ViewsManager {
 
 	public <E, V> void register(Class<E> entityType, Class<V> viewType, ViewsMapper<E, V> mapper) {
 		viewsHandlers.put(entityType, new ViewHandlerHolder<E, V>(viewType, mapper));
+		viewsToEntities.put(viewType, entityType);
 	}
 	
 	public boolean hasEntityMap(Class<?> entityType) {
@@ -35,7 +36,12 @@ public class ViewsManager {
 		return viewsHandlers.get(entityType);
 	}
 	
-	protected Map<Class<?>, ViewHandlerHolder<?, ?>> viewsHandlers = new HashMap<>();
+	public Class<?> resolveEntityType(Class<?> viewType) {
+		return viewsToEntities.get(viewType);
+	}
+	
+	protected Map<Class<?>, ViewHandlerHolder<?, ?>> viewsHandlers = new ConcurrentHashMap<>();
+	protected Map<Class<?>, Class<?>> viewsToEntities = new ConcurrentHashMap<>();
 	
 	public static class ViewHandlerHolder<E, V> {
 		public Class<V> viewType;

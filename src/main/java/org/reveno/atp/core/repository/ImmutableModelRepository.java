@@ -16,7 +16,6 @@
 
 package org.reveno.atp.core.repository;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -45,12 +44,6 @@ public class ImmutableModelRepository implements TxRepository {
 		} else {
 			return entity;
 		}
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T> Collection<T> getAll(Class<T> entityType) {
-		return (Collection<T>) getEntities(entityType).values();
 	}
 
 	@Override
@@ -125,8 +118,8 @@ public class ImmutableModelRepository implements TxRepository {
 	@Override
 	public void begin() {
 		isTransaction.set(true);
-		added.clear();
-		removed.clear();
+		added.forEach((k,v) -> v.clear());
+		removed.forEach((k,v) -> v.clear());
 	}
 
 	@SuppressWarnings("unchecked")

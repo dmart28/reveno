@@ -16,14 +16,13 @@
 
 package org.reveno.atp.core.engine.components;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
+
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 
 /*
  * Used for recording which entities were modified on stage of Transaction execution, since
@@ -38,7 +37,7 @@ public class RecordingRepository implements WriteableRepository {
 		return this;
 	}
 	
-	public RecordingRepository map(Map<Class<?>, Set<Long>> markedRecords) {
+	public RecordingRepository map(Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> markedRecords) {
 		this.markedRecords = markedRecords;
 		return this;
 	}
@@ -47,46 +46,40 @@ public class RecordingRepository implements WriteableRepository {
 	public <T> Optional<T> get(Class<T> entityType, long id) {
 		Optional<T> result = underlyingRepo.get(entityType, id);
 		if (result.isPresent())
-			markedRecords.get(entityType).add(id);
+			markedRecords.get(entityType).put(id, result.get());
 		return result;
 	}
 
 	@Override
-	public <T> Collection<T> getAll(Class<T> entityType) {
-		markedRecords.get(entityType).clear();
-		markedRecords.get(entityType).addAll(GET_ALL);
-		return underlyingRepo.getAll(entityType);
-	}
-
-	@Override
 	public RepositoryData getData() {
-		// TODO put a mark refresh all?
-		return underlyingRepo.getData();
+		RepositoryData data = underlyingRepo.getData();
+		data.data.forEach((k,v) -> markedRecords.get(k).putAll(v));
+		return data;
 	}
 
 	@Override
 	public Map<Long, Object> getEntities(Class<?> entityType) {
-		markedRecords.get(entityType).clear();
-		markedRecords.get(entityType).addAll(GET_ALL);
-		return underlyingRepo.getEntities(entityType);
+		Map<Long, Object> result = underlyingRepo.getEntities(entityType);
+		markedRecords.get(entityType).putAll(result);
+		return result;
 	}
 
 	@Override
 	public <T> T store(long entityId, T entity) {
-		markedRecords.get(entity.getClass()).add(entityId);
+		markedRecords.get(entity.getClass()).put(entityId, entity);
 		return underlyingRepo.store(entityId, entity);
 	}
 	
 	@Override
 	public <T> T store(long entityId, Class<? super T> type, T entity) {
-		markedRecords.get(type).add(entityId);
+		markedRecords.get(type).put(entityId, entity);
 		return underlyingRepo.store(entityId, type, entity);
 	}
 
 	@Override
 	public Object remove(Class<?> entityClass, long entityId) {
 		markedRecords.get(entityClass).remove(entityId);
-		markedRecords.get(entityClass).add(-entityId);
+		markedRecords.get(entityClass).put(-entityId, EMPTY);
 		return underlyingRepo.remove(entityClass, entityId);
 	}
 
@@ -95,10 +88,6 @@ public class RecordingRepository implements WriteableRepository {
 		underlyingRepo.load(map);
 	}
 	
-	private Map<Class<?>, Set<Long>> markedRecords;
-	public static final Set<Long> GET_ALL = new HashSet<Long>() {
-		private static final long serialVersionUID = 1L;
-	{
-		add(-1L); add(-3L); add(-5L); add(-10L); add(-101L);
-	}};
+	protected Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> markedRecords;
+	protected static final Object EMPTY = new Object();
 }

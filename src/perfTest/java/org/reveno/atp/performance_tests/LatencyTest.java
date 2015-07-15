@@ -85,7 +85,7 @@ public class LatencyTest extends RevenoBaseTest {
 			ths[a].join();
 		}
 		
-		//sendCommandSync(engine, new Credit(accountId, 2, System.currentTimeMillis()));
+		sendCommandSync(engine, new Credit(accountId, 2, System.currentTimeMillis()));
 		
 		log.info("Avg latency: " + ((double)latency[0] / ((TOTAL_TRANSACTIONS) * (Runtime.getRuntime().availableProcessors()/2) - COLD_START_COUNT)));
 		log.info("Worst latency: " + worstLatency[0]);

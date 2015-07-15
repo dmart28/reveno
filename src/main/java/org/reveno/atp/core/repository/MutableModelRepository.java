@@ -18,7 +18,6 @@ package org.reveno.atp.core.repository;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -67,18 +66,10 @@ public class MutableModelRepository implements TxRepository {
 	@Override
 	public <T> Optional<T> get(Class<T> entityType, long id) {
 		Optional<T> entity = repository.get(entityType, id);
-		if (entity == null)
-			return Optional.empty();
 		
 		if (isTransaction.get() && entity.isPresent())
 			saveEntityState(id, entityType, entity.get(), EntityRecoveryState.UPDATE);
 		return entity;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T> Collection<T> getAll(Class<T> entityType) {
-		return (Collection<T>) getEntities(entityType).values();
 	}
 
 	@Override

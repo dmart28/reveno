@@ -17,50 +17,64 @@
 package org.reveno.atp.core.views;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.query.QueryManager;
 import org.reveno.atp.core.api.ViewsStorage;
+import org.reveno.atp.utils.MapUtils;
 
+/**
+ * Not efficient version, consider for changing it.
+ * 
+ * @author Artem Dmitriev <art.dm.ser@gmail.com>
+ *
+ */
 public class ViewsDefaultStorage implements ViewsStorage, QueryManager  {
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <V> Collection<V> select(Class<V> viewType) {
-		return repository.getAll(viewType);
+		return views.get(viewType).values().stream().map(i -> (V)i).collect(Collectors.toList());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <V> Collection<V> select(Class<V> viewType, Predicate<V> filter) {
-		return repository.getAll(viewType).stream().filter(filter).collect(Collectors.toList());
+		return views.get(viewType).values().stream().map(i -> (V)i).filter(filter).collect(Collectors.toList());
 	}
 
 	@Override
 	public <V> Collection<V> parallelSelect(Class<V> viewType, Predicate<V> filter) {
-		return repository.getAll(viewType).stream().parallel().filter(filter).collect(Collectors.toList());
+		return select(viewType).stream().parallel().filter(filter).collect(Collectors.toList());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <View> Optional<View> find(Class<View> viewType, long id) {
-		return repository.get(viewType, id);
+		return Optional.ofNullable((View)views.get(viewType).get(id));
 	}
 
 	@Override
 	public <View> void insert(long id, View view) {
-		repository.store(id, view);
+		views.get(view.getClass()).put(id, view);
 	}
 
 	@Override
 	public <View> void remove(Class<View> viewType, long id) {
-		repository.remove(viewType, id);
+		views.get(viewType).remove(id);
 	}
 	
-	public ViewsDefaultStorage(WriteableRepository repository) {
-		this.repository = repository;
+	public ViewsDefaultStorage() {
+		views = MapUtils.concurrentRepositoryMap(524288, 0.75f);
 	}
 	
-	private WriteableRepository repository;
+	public ViewsDefaultStorage(int capacity, float loadFactor) {
+		views = MapUtils.concurrentRepositoryMap(capacity, loadFactor);
+	}
+	
+	private final Map<Class<?>, Map<Long, Object>> views;
 	
 }

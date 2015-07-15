@@ -16,51 +16,69 @@
 
 package org.reveno.atp.core.views;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+import java.util.function.Predicate;
 
-import org.reveno.atp.api.domain.Repository;
+import org.reveno.atp.api.query.QueryManager;
+import org.reveno.atp.api.query.ViewsRepository;
 import org.reveno.atp.core.api.ViewsStorage;
-import org.reveno.atp.core.engine.components.RecordingRepository;
 import org.reveno.atp.core.views.ViewsManager.ViewHandlerHolder;
 
-public class ViewsProcessor {
-	
-	protected static final int GET_ALL_SIZE = RecordingRepository.GET_ALL.size();
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 
-	public void process(Map<Class<?>, Set<Long>> marked) {
+public class ViewsProcessor {
+
+	public void process(Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> marked) {
 		marked.forEach((k, v) -> {
-			if (v.size() >= GET_ALL_SIZE && v.containsAll(RecordingRepository.GET_ALL)) {
-				repository.getEntities(k).forEach((id,e) -> map(k, id));
-			} else {
-				v.forEach(id -> map(k, id));
-			}
+			v.long2ObjectEntrySet().forEach(e -> {
+				map(k, e.getLongKey(), e.getValue());
+			});
 		});
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected void map(Class<?> entityType, long id) {
+	protected void map(Class<?> entityType, long id, Object entity) {
 		ViewHandlerHolder<Object, Object> holder = (ViewHandlerHolder<Object, Object>) manager.resolveEntity(entityType);
 		if (holder == null) 
 			return;
 		
 		if (id >= 0) {
-			Object view = holder.mapper.map((Object) repository.get(entityType, id).get(), 
-					(Optional<Object>) storage.find(holder.viewType, id), repository);
+			Object view = holder.mapper.map(entity, (Optional<Object>) storage.find(holder.viewType, id), queryManager);
 			storage.insert(id, view);
 		} else {
 			storage.remove(holder.viewType, Math.abs(id));
 		}
 	}
 	
-	public ViewsProcessor(ViewsManager manager, ViewsStorage storage, Repository repository) {
+	public ViewsProcessor(ViewsManager manager, ViewsStorage storage) {
 		this.manager = manager;
 		this.storage = storage;
-		this.repository = repository;
 	}
 	
 	protected ViewsManager manager;
 	protected ViewsStorage storage;
-	protected Repository repository;
+	
+	
+	protected class OnDemandViewsRepository implements ViewsRepository {
+
+		@Override
+		public <V> Optional<V> get(Class<V> viewType, long id) {
+			Class<?> entityType = manager.resolveEntityType(viewType);
+			Object entity = marked.get(entityType).get(id);
+			if (entity != null) {
+				
+			}
+			return null;
+		}
+		
+		protected Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> marked;
+		
+		public void marked(Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> marked) {
+			this.marked = marked;
+		}
+		
+	}
+	
 }
