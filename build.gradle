@@ -61,6 +61,7 @@ def forks = Math.max(4, (int) (Runtime.runtime.availableProcessors() / 2))
 test {
 	minHeapSize = "512m"
 	maxParallelForks = forks
+	showStackTraces = true
   	
     testLogging {
         events "passed", "skipped", "failed", "standardOut", "standardError"
