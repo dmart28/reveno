@@ -16,9 +16,9 @@
 
 package org.reveno.atp.core.repository;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
@@ -38,7 +38,9 @@ public class HashMapRepository implements WriteableRepository {
 
 	@Override
 	public RepositoryData getData() {
-		return new RepositoryData(Collections.unmodifiableMap(map));
+		Map<Class<?>, Map<Long, Object>> data = MapUtils.repositoryMap();
+		map.forEach((k,v) -> data.get(k).putAll(v));
+		return new RepositoryData(data);
 	}
 
 	@Override
@@ -69,6 +71,11 @@ public class HashMapRepository implements WriteableRepository {
 	@Override
 	public Map<Long, Object> getEntities(Class<?> entityType) {
 		return map.get(entityType);
+	}
+	
+	@Override
+	public Set<Class<?>> getEntityTypes() {
+		return map.keySet();
 	}
 	
 	

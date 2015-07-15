@@ -59,10 +59,13 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	public void serialize(RepositoryData repository, Buffer buffer) {
 		changeClassLoaderIfRequired();
 		
-		byte[] data = ProtostuffIOUtil.toByteArray(repository, repoSchema, linkedBuff.get());
-		buffer.writeInt(data.length);
-		buffer.writeBytes(data);
-		linkedBuff.get().clear();
+		try {
+			byte[] data = ProtostuffIOUtil.toByteArray(repository, repoSchema, linkedBuff.get());
+			buffer.writeInt(data.length);
+			buffer.writeBytes(data);
+		} finally {
+			linkedBuff.get().clear();
+		}
 	}
 
 	@Override
@@ -108,12 +111,15 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	@SuppressWarnings("unchecked")
 	protected void seriazeObject(Buffer buffer, Object tc) {
 		int classHash = tc.getClass().hashCode();
-		byte[] data = ProtostuffIOUtil.toByteArray(tc, (Schema<Object>)registered.get(classHash).schema, linkedBuff.get());
+		try {
+			byte[] data = ProtostuffIOUtil.toByteArray(tc, (Schema<Object>)registered.get(classHash).schema, linkedBuff.get());
 		
-		buffer.writeInt(classHash);
-		buffer.writeInt(data.length);
-		buffer.writeBytes(data);
-		linkedBuff.get().clear();
+			buffer.writeInt(classHash);
+			buffer.writeInt(data.length);
+			buffer.writeBytes(data);
+		} finally {
+			linkedBuff.get().clear();
+		}
 	}
 	
 	@SuppressWarnings("unchecked")

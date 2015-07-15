@@ -26,6 +26,7 @@ import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.utils.MapUtils;
 
+@Deprecated
 public class ImmutableModelRepository implements TxRepository {
 	
 	// TODO rewrite class to use collections only on rollback();
@@ -71,7 +72,7 @@ public class ImmutableModelRepository implements TxRepository {
 						.stream().filter(e -> !isDeleted(entityType, e.getKey()))
 						.collect(Collectors.toSet());
 			} else {
-				notRemoved = entities.entrySet();
+				notRemoved = entities.entrySet().stream().collect(Collectors.toSet());
 			}
 			if (added.size() > 0 && added.get(entityType).size() > 0)
 				notRemoved.addAll(added.get(entityType).entrySet());
@@ -135,6 +136,11 @@ public class ImmutableModelRepository implements TxRepository {
 	@Override
 	public void rollback() {
 		isTransaction.set(false);
+	}
+	
+	@Override
+	public Set<Class<?>> getEntityTypes() {
+		return repository.getEntityTypes();
 	}
 
 	/*

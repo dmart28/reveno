@@ -18,6 +18,7 @@ package org.reveno.atp.api.domain;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public interface Repository {
 	
@@ -26,5 +27,7 @@ public interface Repository {
 	RepositoryData getData();
 	
 	Map<Long, Object> getEntities(Class<?> entityType);
+	
+	Set<Class<?>> getEntityTypes();
 	
 }

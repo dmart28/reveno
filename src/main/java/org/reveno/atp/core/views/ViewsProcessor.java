@@ -16,12 +16,10 @@
 
 package org.reveno.atp.core.views;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
 
-import org.reveno.atp.api.query.QueryManager;
+import org.reveno.atp.api.domain.Repository;
 import org.reveno.atp.api.query.ViewsRepository;
 import org.reveno.atp.core.api.ViewsStorage;
 import org.reveno.atp.core.views.ViewsManager.ViewHandlerHolder;
@@ -30,7 +28,14 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 
 public class ViewsProcessor {
 
+	public void process(Repository repo) {
+		repository.repositorySource(repo);
+		repo.getEntityTypes().forEach(c -> repo.getEntities(c).forEach((k,v) -> map(c, k, v)));
+		repository.repositorySource(null);
+	}
+	
 	public void process(Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> marked) {
+		repository.marked(marked);
 		marked.forEach((k, v) -> {
 			v.long2ObjectEntrySet().forEach(e -> {
 				map(k, e.getLongKey(), e.getValue());
@@ -45,7 +50,7 @@ public class ViewsProcessor {
 			return;
 		
 		if (id >= 0) {
-			Object view = holder.mapper.map(entity, (Optional<Object>) storage.find(holder.viewType, id), queryManager);
+			Object view = holder.mapper.map(entity, (Optional<Object>) storage.find(holder.viewType, id), repository);
 			storage.insert(id, view);
 		} else {
 			storage.remove(holder.viewType, Math.abs(id));
@@ -55,28 +60,38 @@ public class ViewsProcessor {
 	public ViewsProcessor(ViewsManager manager, ViewsStorage storage) {
 		this.manager = manager;
 		this.storage = storage;
+		this.repository = new OnDemandViewsRepository();
 	}
 	
 	protected ViewsManager manager;
 	protected ViewsStorage storage;
-	
+	protected OnDemandViewsRepository repository;
 	
 	protected class OnDemandViewsRepository implements ViewsRepository {
 
 		@Override
 		public <V> Optional<V> get(Class<V> viewType, long id) {
 			Class<?> entityType = manager.resolveEntityType(viewType);
-			Object entity = marked.get(entityType).get(id);
-			if (entity != null) {
-				
+			Object entity;
+			if (repository == null) {
+				entity = marked.get(entityType).get(id);
+			} else {
+				entity = repository.get(entityType, id);
 			}
-			return null;
+			if (entity != null) {
+				map(entityType, id, entity);
+			}
+			return storage.find(viewType, id);
 		}
 		
 		protected Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> marked;
-		
 		public void marked(Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> marked) {
 			this.marked = marked;
+		}
+		
+		protected Repository repository;
+		public void repositorySource(Repository repository) {
+			this.repository = repository;
 		}
 		
 	}

@@ -18,9 +18,7 @@ package org.reveno.atp.core;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -78,8 +76,8 @@ import org.reveno.atp.core.events.EventPublisher;
 import org.reveno.atp.core.impl.EventsCommitInfoImpl;
 import org.reveno.atp.core.impl.TransactionCommitInfoImpl;
 import org.reveno.atp.core.repository.HashMapRepository;
-import org.reveno.atp.core.repository.ImmutableModelRepository;
 import org.reveno.atp.core.repository.MutableModelRepository;
+import org.reveno.atp.core.repository.SnapshotBasedModelRepository;
 import org.reveno.atp.core.restore.DefaultSystemStateRestorer;
 import org.reveno.atp.core.serialization.DefaultJavaSerializer;
 import org.reveno.atp.core.serialization.SimpleEventsSerializer;
@@ -88,11 +86,8 @@ import org.reveno.atp.core.storage.FileSystemStorage;
 import org.reveno.atp.core.views.ViewsDefaultStorage;
 import org.reveno.atp.core.views.ViewsManager;
 import org.reveno.atp.core.views.ViewsProcessor;
-import org.reveno.atp.utils.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 public class Engine implements Reveno {
 	
@@ -136,7 +131,7 @@ public class Engine implements Reveno {
 		
 		eventPublisher.getPipe().start();
 		workflowEngine.init();
-		viewsProcessor.process(mapAsMarked(repository));
+		viewsProcessor.process(repository);
 		workflowEngine.setLastTransactionId(restorer.restore(repository).getLastTransactionId());
 		
 		workflowEngine.getPipe().sync();
@@ -273,7 +268,7 @@ public class Engine implements Reveno {
 		EngineEventsContext eventsContext = new EngineEventsContext().serializer(eventsSerializer)
 				.eventsCommitBuilder(eventBuilder).eventsJournaler(eventsJournaler).manager(eventsManager);
 		repository = factory.create(loadLastSnapshot());
-		viewsProcessor = new ViewsProcessor(viewsManager, viewsStorage, viewsStorage);
+		viewsProcessor = new ViewsProcessor(viewsManager, viewsStorage);
 		processor = new DisruptorTransactionPipeProcessor(txBuilder, configuration.cpuConsumption(), executor);
 		eventProcessor = new DisruptorEventPipeProcessor(CpuConsumption.NORMAL, eventExecutor);
 		roller = new JournalsRoller(transactionsJournaler, eventsJournaler, journalsStorage);
@@ -295,12 +290,6 @@ public class Engine implements Reveno {
 						.map(RepositorySnapshotter::load).orElse(null));
 	}
 	
-	protected Map<Class<?>, Set<Long>> mapAsMarked(TxRepository repository) {
-		Map<Class<?>, Long2ObjectOpenHashMap<Object>> marked = MapUtils.fastRepo();
-		repository.getData().data.forEach((k, v) -> marked.put(k, v.keySet()));
-		return marked;
-	}
-	
 	protected void connectSystemHandlers() {
 		domain().transactionAction(NextIdTransaction.class, idGenerator);
 		if (configuration.revenoSnapshotting().snapshotEvery() != -1) {
@@ -313,7 +302,7 @@ public class Engine implements Reveno {
 	
 	protected TxRepository createRepository() {
 		switch (configuration.modelType()) {
-		case IMMUTABLE : return new ImmutableModelRepository(repository());
+		case IMMUTABLE : return new SnapshotBasedModelRepository(repository());
 		case MUTABLE : return new MutableModelRepository(repository());
 		}
 		return null;

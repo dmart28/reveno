@@ -16,6 +16,7 @@
 
 package org.reveno.atp.utils;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -32,18 +33,19 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 
+@SuppressWarnings({ "unchecked", "rawtypes" })
 public abstract class MapUtils {
 	
 	public static SimpleMap<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> linkedFastRepo() {
-		return new SimpleMap<>(() -> new Long2ObjectLinkedOpenHashMap<>());
+		return new SimpleMap<>((Supplier & Serializable)Long2ObjectLinkedOpenHashMap::new);
 	}
 	
 	public static SimpleMap<Class<?>, Long2ObjectOpenHashMap<Object>> fastRepo() {
-		return new SimpleMap<>(() -> new Long2ObjectOpenHashMap<>());
+		return new SimpleMap<>((Supplier & Serializable)Long2ObjectOpenHashMap::new);
 	}
 	
 	public static SimpleMap<Class<?>, Long2ObjectOpenHashMap<Object>> fastRepo(int capacity, float loadFactor) {
-		return new SimpleMap<>(capacity, loadFactor, () -> new Long2ObjectOpenHashMap<>(capacity, loadFactor));
+		return new SimpleMap<>(capacity, loadFactor, (Supplier & Serializable)() -> new Long2ObjectOpenHashMap<>(capacity, loadFactor));
 	}
 
 	public static <T> ConcurrentMapOfMap<Class<?>, Long, T> concurrentRepositoryMap() {
@@ -87,7 +89,6 @@ public abstract class MapUtils {
 			this.supplier = supplier;
 		}
 		
-		@SuppressWarnings("unchecked")
 		@Override
 		public V get(Object key) {
 			return safeGet((K) key);
@@ -104,7 +105,6 @@ public abstract class MapUtils {
 	public static class MapOfMap<T, U, M> extends HashMap<T, Map<U, M>> implements Map<T, Map<U, M>> {
 		private static final long serialVersionUID = 8689714774124849342L;
 		
-		@SuppressWarnings("unchecked")
 		@Override
 		public Map<U, M> get(Object key) {
 			return safeGet((T) key);
@@ -128,7 +128,6 @@ public abstract class MapUtils {
 			super(capacity, loadFactor);
 		}
 		
-		@SuppressWarnings("unchecked")
 		@Override
 		public Map<U, M> get(Object key) {
 			return safeGet((T) key);
@@ -145,7 +144,6 @@ public abstract class MapUtils {
 	public static class MapOfList<T, U> extends HashMap<T, List<U>> implements Map<T, List<U>> {
 		private static final long serialVersionUID = -5096309465438907445L;
 
-		@SuppressWarnings("unchecked")
 		@Override
 		public List<U> get(Object key) {
 			return safeGet((T) key);
@@ -163,7 +161,6 @@ public abstract class MapUtils {
 		protected final Supplier<Set<U>> setCreator;
 		protected final Map<T, Set<U>> underlying;
 		
-		@SuppressWarnings("unchecked")
 		@Override
 		public Set<U> get(Object key) {
 			return safeGet((T) key);

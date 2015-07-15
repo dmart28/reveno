@@ -109,6 +109,11 @@ public class MutableModelRepository implements TxRepository {
 		clearResources();
 	}
 	
+	@Override
+	public Set<Class<?>> getEntityTypes() {
+		return repository.getEntityTypes();
+	}
+	
 	protected boolean saveEntityState(long entityId, Class<?> type, Object entity, EntityRecoveryState state) {
 		if (!states.get(type).containsKey(entityId)) {
 			marshallEntity(new SavedEntity(entity, type, entityId));

@@ -2,6 +2,7 @@ package org.reveno.atp.core.repository;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
@@ -12,7 +13,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 
 @SuppressWarnings("unchecked")
-public class ImmutableModelRepository2 implements TxRepository {
+public class SnapshotBasedModelRepository implements TxRepository {
 
 	@Override
 	public <T> T store(long entityId, T entity) {
@@ -22,7 +23,7 @@ public class ImmutableModelRepository2 implements TxRepository {
 	@Override
 	public <T> T store(long entityId, Class<? super T> type, T entity) {
 		checkAndStore(entityId, type);
-		return repository.store(entityId, entity);
+		return repository.store(entityId, type, entity);
 	}
 
 	@Override
@@ -53,18 +54,26 @@ public class ImmutableModelRepository2 implements TxRepository {
 
 	@Override
 	public void begin() {
+		isTransaction = true;
 		snapshotted.forEach((k,v) -> v.clear());
 		added.forEach((k,v) -> v.clear());
 	}
 
 	@Override
 	public void commit() {
+		isTransaction = false;
 	}
 
 	@Override
 	public void rollback() {
 		added.forEach((k, v) -> v.forEach(id -> repository.remove(k, id)));
 		snapshotted.forEach((k,v) -> v.forEach((id, e) -> repository.store(id, (Class<Object>)k, e)));
+		isTransaction = false;
+	}
+	
+	@Override
+	public Set<Class<?>> getEntityTypes() {
+		return repository.getEntityTypes();
 	}
 	
 	protected <T> void checkAndStore(long entityId, Class<? super T> type) {
@@ -84,7 +93,7 @@ public class ImmutableModelRepository2 implements TxRepository {
 		}
 	}
 
-	public ImmutableModelRepository2(WriteableRepository repository) {
+	public SnapshotBasedModelRepository(WriteableRepository repository) {
 		this.repository = repository;
 	}
 	

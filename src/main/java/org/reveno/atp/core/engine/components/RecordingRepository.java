@@ -18,6 +18,7 @@ package org.reveno.atp.core.engine.components;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
@@ -86,6 +87,11 @@ public class RecordingRepository implements WriteableRepository {
 	@Override
 	public void load(Map<Class<?>, Map<Long, Object>> map) {
 		underlyingRepo.load(map);
+	}
+	
+	@Override
+	public Set<Class<?>> getEntityTypes() {
+		return underlyingRepo.getEntityTypes();
 	}
 	
 	protected Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> markedRecords;
