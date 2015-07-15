@@ -252,7 +252,12 @@ public class Tests extends RevenoBaseTest {
 		Assert.assertEquals(19, tempDir.listFiles((dir, name) -> name.startsWith("snp")).length);
 		
 		reveno = createEngine(consumer);
+		try {
 		reveno.startup();
+		} catch (Throwable t) {
+			log.error("", t);
+			throw new RuntimeException(t);
+		}
 		
 		Assert.assertEquals(10_005, reveno.query().select(AccountView.class).size());
 		Assert.assertEquals(10_005, reveno.query().select(OrderView.class).size());
