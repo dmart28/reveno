@@ -63,6 +63,8 @@ test {
 	maxParallelForks = forks
   	
     testLogging {
+    	showExceptions = true
+    	showCauses = true
     	showStackTraces = true
         events "passed", "skipped", "failed", "standardOut", "standardError"
     }
