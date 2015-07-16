@@ -56,10 +56,10 @@ dependencies {
 	acceptanceTestCompile "org.easymock:easymock:$easymockVersion"
 }
 
-def forks = Math.max(4, (int) (Runtime.runtime.availableProcessors() / 2))
+def forks = Math.max(2, (int) (Runtime.runtime.availableProcessors() / 2))
 
 test {
-	minHeapSize = "512m"
+	minHeapSize = "1024m"
 	maxParallelForks = forks
 	systemProperty 'protostuff.runtime.collection_schema_on_repeated_fields', 'true'
   	
