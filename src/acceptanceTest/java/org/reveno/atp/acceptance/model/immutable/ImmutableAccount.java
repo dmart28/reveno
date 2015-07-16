@@ -16,11 +16,6 @@
 
 package org.reveno.atp.acceptance.model.immutable;
 
-import static org.reveno.atp.acceptance.utils.Immutable.copy;
-import static org.reveno.atp.acceptance.utils.Immutable.pair;
-import static org.reveno.atp.acceptance.utils.Immutable.sa;
-import static org.reveno.atp.acceptance.utils.Immutable.sr;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -62,27 +57,31 @@ public class ImmutableAccount implements Account {
 	}
 	
 	public ImmutableAccount addOrder(long orderId) {
-		return copy(this, pair("orders", sa(orders, orderId)));
+		HashSet<Long> newOrders = new HashSet<>(orders);
+		newOrders.add(orderId);
+		return new ImmutableAccount(this.id, this.currency, this.balance, newOrders, this.positions); 
 	}
 	
 	public ImmutableAccount removeOrder(long orderId) {
-		return copy(this, pair("orders", sr(orders, orderId)));
+		HashSet<Long> newOrders = new HashSet<>(orders);
+		newOrders.remove(orderId);
+		return new ImmutableAccount(this.id, this.currency, this.balance, newOrders, this.positions); 
 	}
 	
 	public ImmutableAccount addPosition(long id, String symbol, Fill fill) {
-		return copy(this, pair("positions", positions.addPosition(id, symbol, fill)));
+		return new ImmutableAccount(this.id, this.currency, this.balance, this.orders, positions.addPosition(id, symbol, fill));
 	}
 	
 	public ImmutableAccount applyFill(Fill fill) {
-		return copy(this, pair("positions", positions.applyFill(fill)));
+		return new ImmutableAccount(this.id, this.currency, this.balance, this.orders, positions.applyFill(fill));
 	}
 	
 	public ImmutableAccount mergePositions(long toPositionId, List<Long> mergedPositions) {
-		return copy(this, pair("positions", positions.merge(toPositionId, mergedPositions)));
+		return new ImmutableAccount(this.id, this.currency, this.balance, this.orders, positions.merge(toPositionId, mergedPositions));
 	}
 	
 	public ImmutableAccount exitPosition(long positionId, long pnl) {
-		return copy(this, pair("positions", positions.exit(positionId), "balance", balance + pnl));
+		return new ImmutableAccount(this.id, this.currency, this.balance + pnl, this.orders, positions.exit(positionId));
 	}
 	
 	public ImmutableAccount(long id, String currency, long balance) {

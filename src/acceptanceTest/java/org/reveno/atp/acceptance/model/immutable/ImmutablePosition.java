@@ -16,11 +16,6 @@
 
 package org.reveno.atp.acceptance.model.immutable;
 
-import static org.reveno.atp.acceptance.utils.Immutable.copy;
-import static org.reveno.atp.acceptance.utils.Immutable.la;
-import static org.reveno.atp.acceptance.utils.Immutable.laa;
-import static org.reveno.atp.acceptance.utils.Immutable.pair;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,11 +48,15 @@ public class ImmutablePosition implements Position {
 	}
 	
 	public ImmutablePosition addFill(Fill fill) {
-		return copy(this, pair("fills", la(fills, fill)));
+		ArrayList<Fill> newFills = new ArrayList<>(fills);
+		newFills.add(fill);
+		return new ImmutablePosition(id, symbol, accountId, newFills);
 	}
 	
 	public ImmutablePosition addFills(Collection<Fill> fills) {
-		return copy(this, pair("fills", laa(this.fills, fills)));
+		ArrayList<Fill> newFills = new ArrayList<>(fills);
+		newFills.addAll(fills);
+		return new ImmutablePosition(id, symbol, accountId, newFills);
 	}
 	
 	public boolean buy() {

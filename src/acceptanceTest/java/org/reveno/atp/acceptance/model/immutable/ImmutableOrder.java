@@ -16,9 +16,6 @@
 
 package org.reveno.atp.acceptance.model.immutable;
 
-import static org.reveno.atp.acceptance.utils.Immutable.copy;
-import static org.reveno.atp.acceptance.utils.Immutable.pair;
-
 import java.util.Optional;
 
 import org.reveno.atp.acceptance.model.Order;
@@ -72,7 +69,7 @@ public class ImmutableOrder implements Order {
 	}
 	
 	public ImmutableOrder update(OrderStatus status) {
-		return copy(this, pair("status", status));
+		return new ImmutableOrder(this.id, this.accountId, this.positionId(), this.symbol, this.price, this.size, this.time, status, this.type);
 	}
 	
 	public ImmutableOrder(long id, long accId, Optional<Long> positionId, String symbol,
