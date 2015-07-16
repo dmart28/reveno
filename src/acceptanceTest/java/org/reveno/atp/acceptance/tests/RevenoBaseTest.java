@@ -30,6 +30,7 @@ import java.util.function.Consumer;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -82,10 +83,13 @@ public class RevenoBaseTest {
 	
 	protected File tempDir;
 	
+	@BeforeClass
+	public static void beforeClass() {
+		System.setProperty("protostuff.runtime.collection_schema_on_repeated_fields", "true");
+	}
+	
 	@Before
 	public void setUp() {
-		// need to tell protostuff to treat empty collections not as null
-		System.setProperty("protostuff.runtime.collection_schema_on_repeated_fields", "true");
 		tempDir = Files.createTempDir();
 	}
 	
