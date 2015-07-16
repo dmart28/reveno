@@ -59,8 +59,8 @@ dependencies {
 def forks = Math.max(2, (int) (Runtime.runtime.availableProcessors() / 2))
 
 test {
-	minHeapSize = "1024m"
-	maxParallelForks = forks
+	minHeapSize = "512m"
+	maxParallelForks = 1
 	systemProperty 'protostuff.runtime.collection_schema_on_repeated_fields', 'true'
   	
     testLogging {
