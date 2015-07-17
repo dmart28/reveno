@@ -68,13 +68,18 @@ public class LatencyTest extends RevenoBaseTest {
 		final long accountId = sendCommandSync(engine, new CreateNewAccountCommand("USD", 1000_000L));
 		
 		Credit cmd = new Credit(accountId, 2, 0L);
-		Thread[] ths = new Thread[Runtime.getRuntime().availableProcessors() / 2];
+		Thread[] ths = new Thread[Runtime.getRuntime().availableProcessors() / 4];
 		for (int a = 0; a < ths.length; a++) {
 			Thread t1 = new Thread(() -> {
+				try {
 				for (long j = 1; j < TOTAL_TRANSACTIONS / 100_000; j++) {
 					for (long i = 1; i <= 100_000; i++) {
 						engine.executeCommand(cmd);
 					}
+					Thread.yield();
+				}
+				} catch (Throwable t) {
+					t.printStackTrace();
 				}
 				});
 				t1.start();

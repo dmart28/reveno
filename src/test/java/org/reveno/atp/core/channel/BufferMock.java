@@ -53,7 +53,9 @@ public class BufferMock implements Buffer {
 
 	@Override
 	public void writeLong(long value) {
-		writeBytes(longToBytes(value));
+		byte[] sizeBuffer = new byte[8];
+		longToBytes(value, sizeBuffer);
+		writeBytes(sizeBuffer);
 	}
 
 	@Override

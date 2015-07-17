@@ -21,7 +21,6 @@ import static org.reveno.atp.utils.MeasureUtils.mb;
 import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -33,6 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FileChannel implements Channel {
+	
+	public static final int PAGE_SIZE = 1024 * 4;
+	public static final long FILE_SIZE = PAGE_SIZE * 2000L * 1000L;
+	public static final byte[] BLANK_PAGE = new byte[PAGE_SIZE];
 
 	@Override
 	public long size() {
@@ -87,14 +90,17 @@ public class FileChannel implements Channel {
 		writer.accept(revenoBuffer);
 		buffer = revenoBuffer.getBuffer();
 		if (flush && buffer.position() > 0) {
+			// TODO intToBytes ...
+			long size = buffer.position();
 			try {
-				raf.write(longToBytes(buffer.position()));
+				longToBytes(size, sizeBuffer);
+				raf.write(sizeBuffer);
 			} catch (IOException e) {
 				log.error("write", e);
 				throw new RuntimeException(e);
 			}
 			buffer.flip();
-			write(buffer);
+			write(buffer, size);
 			buffer.clear();
 		}
 	}
@@ -108,18 +114,9 @@ public class FileChannel implements Channel {
 		return raf.getChannel();
 	}
 	
-	protected long currentPosition() {
+	protected void write(ByteBuffer buf, long size) {
 		try {
-			return channel().position();
-		} catch (Throwable t) {
-			log.error("", t);
-			return 0;
-		}
-	}
-	
-	protected void write(ByteBuffer buf) {
-		try {
-			channel().write(buf);
+			channel().write(buf, 0);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -137,7 +134,18 @@ public class FileChannel implements Channel {
 		try {
 			this.file = file;
 			this.raf = new RandomAccessFile(file, mode);
-		} catch (FileNotFoundException e) {
+			
+			log.info("Preallocating started.");
+			for (long i = 0; i < FILE_SIZE; i += PAGE_SIZE) {
+				raf.write(BLANK_PAGE, 0, PAGE_SIZE);
+			}
+			log.info("Preallocating finished.");
+			raf.close();
+			
+			this.raf = new RandomAccessFile(file, mode);
+			this.raf.seek(0);
+			channel().position(0);
+		} catch (Throwable e) {
 			throw new org.reveno.atp.api.exceptions.FileNotFoundException(file);
 		}
 	}
@@ -146,7 +154,7 @@ public class FileChannel implements Channel {
 		try {
 			this.file = new File(filename);
 			this.raf = new RandomAccessFile(filename, mode);
-		} catch (FileNotFoundException e) {
+		} catch (Throwable e) {
 			throw new org.reveno.atp.api.exceptions.FileNotFoundException(new File(filename));
 		}
 	}
@@ -157,9 +165,11 @@ public class FileChannel implements Channel {
 	}
 	
 	private final File file;
-	private final RandomAccessFile raf;
+	private RandomAccessFile raf;
+	private final byte[] sizeBuffer = new byte[8];
+	private long position = 0L;
 	private ByteBuffer buffer = ByteBuffer.allocateDirect(mb(1));
-	private ByteBufferWrapper revenoBuffer = new ByteBufferWrapper(buffer);
+	private final ByteBufferWrapper revenoBuffer = new ByteBufferWrapper(buffer);
 	
 	
 	private static final Logger log = LoggerFactory.getLogger(FileChannel.class);

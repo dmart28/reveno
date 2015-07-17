@@ -24,17 +24,15 @@ public abstract class BinaryUtils {
 	            | (((long) b[6] & 0xff) << 8) | (((long) b[7] & 0xff)));
 	}
 	
-	public static byte[] longToBytes(long l) {
-		return new byte[] {
-		        (byte) (l >> 56),
-		        (byte) (l >> 48),
-		        (byte) (l >> 40),
-		        (byte) (l >> 32),
-		        (byte) (l >> 24),
-		        (byte) (l >> 16),
-		        (byte) (l >> 8),
-		        (byte) l
-		    };
+	public static void longToBytes(long l, byte[] b) {
+		b[0] = (byte) (l >> 56);
+		b[1] = (byte) (l >> 48);
+		b[2] = (byte) (l >> 40);
+		b[3] = (byte) (l >> 32);
+		b[4] = (byte) (l >> 24);
+		b[5] = (byte) (l >> 16);
+		b[6] = (byte) (l >> 8);
+		b[7] = (byte) l;
 	}
 	
 	public static int bytesToInt(byte[] b) {
