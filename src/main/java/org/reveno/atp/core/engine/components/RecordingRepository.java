@@ -24,9 +24,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/*
+/**
  * Used for recording which entities were modified on stage of Transaction execution, since
  * we will want that info on next step where we updating Views mappings.
+ * 
+ * @author Artem Dmitriev <art.dm.ser@gmail.com>
+ * 
  */
 public class RecordingRepository implements WriteableRepository {
 
