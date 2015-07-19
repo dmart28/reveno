@@ -111,8 +111,8 @@ public class Engine implements Reveno {
 		connectSystemHandlers();
 		
 		JournalStore store = journalsStorage.nextStore();
-		transactionsJournaler.startWriting(journalsStorage.channel(store.getTransactionCommitsAddress()));
-		eventsJournaler.startWriting(journalsStorage.channel(store.getEventsCommitsAddress()));
+		transactionsJournaler.startWriting(journalsStorage.channel(store.getTransactionCommitsAddress(), config.preallocationSize()));
+		eventsJournaler.startWriting(journalsStorage.channel(store.getEventsCommitsAddress(), config.preallocationSize()));
 		
 		eventPublisher.getPipe().start();
 		workflowEngine.init();
@@ -141,7 +141,7 @@ public class Engine implements Reveno {
 		
 		snapshotterIntervalExecutor.shutdown();
 		
-		if (configuration.revenoSnapshotting().snapshotAtShutdown()) {
+		if (config.revenoSnapshotting().snapshotAtShutdown()) {
 			log.info("Preforming shutdown snapshotting...");
 			snapshotAll();
 		}
@@ -223,7 +223,7 @@ public class Engine implements Reveno {
 
 	@Override
 	public Configuration config() {
-		return configuration;
+		return config;
 	}
 
 	@Override
@@ -254,7 +254,7 @@ public class Engine implements Reveno {
 				.eventsCommitBuilder(eventBuilder).eventsJournaler(eventsJournaler).manager(eventsManager);
 		repository = factory.create(loadLastSnapshot());
 		viewsProcessor = new ViewsProcessor(viewsManager, viewsStorage);
-		processor = new DisruptorTransactionPipeProcessor(txBuilder, configuration.cpuConsumption(), executor);
+		processor = new DisruptorTransactionPipeProcessor(txBuilder, config.cpuConsumption(), executor);
 		eventProcessor = new DisruptorEventPipeProcessor(CpuConsumption.NORMAL, eventExecutor);
 		roller = new JournalsRoller(transactionsJournaler, eventsJournaler, journalsStorage);
 		eventPublisher = new EventPublisher(eventProcessor, eventsContext);
@@ -277,8 +277,8 @@ public class Engine implements Reveno {
 	
 	protected void connectSystemHandlers() {
 		domain().transactionAction(NextIdTransaction.class, idGenerator);
-		if (configuration.revenoSnapshotting().snapshotEvery() != -1) {
-			TransactionInterceptor nTimeSnapshotter = new SnapshottingInterceptor(configuration, snapshotsManager,
+		if (config.revenoSnapshotting().snapshotEvery() != -1) {
+			TransactionInterceptor nTimeSnapshotter = new SnapshottingInterceptor(config, snapshotsManager,
 					roller, repositorySerializer);
 			interceptors.add(TransactionStage.TRANSACTION, nTimeSnapshotter);
 			interceptors.add(TransactionStage.JOURNALING, nTimeSnapshotter);
@@ -286,7 +286,7 @@ public class Engine implements Reveno {
 	}
 	
 	protected TxRepository createRepository() {
-		switch (configuration.modelType()) {
+		switch (config.modelType()) {
 		case IMMUTABLE : return new SnapshotBasedModelRepository(repository());
 		case MUTABLE : return new MutableModelRepository(repository());
 		}
@@ -325,7 +325,7 @@ public class Engine implements Reveno {
 	
 	protected DefaultIdGenerator idGenerator = new DefaultIdGenerator();
 	
-	protected final RevenoConfiguration configuration = new RevenoConfiguration();
+	protected final RevenoConfiguration config = new RevenoConfiguration();
 	protected final JournalsStorage journalsStorage;
 	protected final FoldersStorage foldersStorage;
 	protected final SnapshotStorage snapshotStorage;

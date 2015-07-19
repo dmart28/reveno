@@ -40,14 +40,26 @@ public class RevenoConfiguration implements Configuration {
 	public void cpuConsumption(CpuConsumption cpuConsumption) {
 		this.cpuConsumption = cpuConsumption;
 	}
-	public CpuConsumption cpuConsumption() {
+
+    @Override
+    public void preallocationSize(long size) {
+        if (Long.bitCount(size) != 1) {
+            throw new IllegalArgumentException("Files must have size of power of 2!");
+        }
+        this.preallocationSize = size;
+    }
+    public long preallocationSize() {
+        return this.preallocationSize;
+    }
+
+    public CpuConsumption cpuConsumption() {
 		return cpuConsumption;
 	}
 	
-	private RevenoSnapshotConfiguration snapshotting = new RevenoSnapshotConfiguration();
-	private CpuConsumption cpuConsumption = CpuConsumption.PHASED;
-	private ModelType modelType = ModelType.IMMUTABLE;
-	
+	protected RevenoSnapshotConfiguration snapshotting = new RevenoSnapshotConfiguration();
+	protected CpuConsumption cpuConsumption = CpuConsumption.PHASED;
+	protected ModelType modelType = ModelType.IMMUTABLE;
+    protected long preallocationSize = 0L;
 	
 	public static class RevenoSnapshotConfiguration implements SnapshotConfiguration {
 
@@ -67,8 +79,8 @@ public class RevenoConfiguration implements Configuration {
 			return snapshotEvery;
 		}
 		
-		private volatile boolean snapshotAtShutdown = false;
-		private volatile long snapshotEvery = -1;
+		private boolean snapshotAtShutdown = false;
+		private long snapshotEvery = -1;
 		
 	}
 	

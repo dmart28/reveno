@@ -44,7 +44,12 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 		return new FileChannel(new File(baseDir, address), "rw");
 	}
 
-	@Override
+    @Override
+    public Channel channel(String address, long size) {
+        return new FileChannel(new File(baseDir, address), "rw", size);
+    }
+
+    @Override
 	public SnapshotStore getLastSnapshotStore() {
 		VersionedFile file = lastVersionedFile(baseDir, SNAPSHOT_PREFIX);
 		if (file != null) {
@@ -82,11 +87,11 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 		if (txs.size() != evns.size())
 			throw new RuntimeException(String.format("Amount of Transaction files doesn't match to Events files [%s/%s]",
 					txs.size(), evns.size()));
-		
-		return txs.stream().map(tx -> evns.stream()
-				.filter(e -> e.getVersion() == tx.getVersion())
-				.map(e -> store(tx, e)).findFirst().get()).collect(Collectors.toList())
-				.toArray(new JournalStore[0]);
+
+        List<JournalStore> collect = txs.stream().map(tx -> evns.stream()
+                .filter(e -> e.getVersion() == tx.getVersion())
+                .map(e -> store(tx, e)).findFirst().get()).collect(Collectors.toList());
+        return collect.toArray(new JournalStore[collect.size()]);
 	}
 
 	@Override
@@ -127,11 +132,11 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 
 	@Override
 	public FolderItem[] getItems(Folder folder) {
-		return listFiles(new File(baseDir, folder.getGroupAddress()).toPath()).stream()
-			.map(Path::toFile)
-			.map(f -> new FolderItem(f.getName(), folder.getGroupAddress() + "/ " + f.getName()))
-			.collect(Collectors.toList())
-			.toArray(new FolderItem[0]);
+        List<FolderItem> collect = listFiles(new File(baseDir, folder.getGroupAddress()).toPath()).stream()
+                .map(Path::toFile)
+                .map(f -> new FolderItem(f.getName(), folder.getGroupAddress() + "/ " + f.getName()))
+                .collect(Collectors.toList());
+        return collect.toArray(new FolderItem[collect.size()]);
 	}
 
 	@Override
@@ -185,19 +190,14 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 		}
 		return new JournalStore(txFile.getName(), evnFile.getName(), Long.toString(txFile.getVersion()));
 	}
-	
-
-	public FileSystemStorage(String baseDir) {
-		this.baseDir = new File(baseDir);
-	}
 
 	public FileSystemStorage(File baseDir) {
 		this.baseDir = baseDir;
 	}
 
-	private File baseDir;
-	private static final String TRANSACTION_PREFIX = "tx";
-	private static final String SNAPSHOT_PREFIX = "snp";
-	private static final String EVENTS_PREFIX = "evn";
+	protected final File baseDir;
+	protected static final String TRANSACTION_PREFIX = "tx";
+	protected static final String SNAPSHOT_PREFIX = "snp";
+	protected static final String EVENTS_PREFIX = "evn";
 
 }

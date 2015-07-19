@@ -33,7 +33,6 @@ import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
 public class FileChannel implements Channel {
 	
 	public static final int PAGE_SIZE = 1024 * 4;
-	public static final long FILE_SIZE = PAGE_SIZE * 2000L * 1000L;
 	public static final byte[] BLANK_PAGE = new byte[PAGE_SIZE];
 
 	@Override
@@ -126,35 +125,22 @@ public class FileChannel implements Channel {
 			throw new RuntimeException(e);
 		}
 	}
+
+    public FileChannel(File file, String mode) {
+        this(file, mode, 0L);
+    }
 	
-	public FileChannel(File file, String mode) {
+	public FileChannel(File file, String mode, long size) {
 		try {
 			this.file = file;
 			this.raf = new RandomAccessFile(file, mode);
-			
-			/*log.info("Preallocating started.");
-			for (long i = 0; i < FILE_SIZE; i += PAGE_SIZE) {
-				raf.write(BLANK_PAGE, 0, PAGE_SIZE);
-			}
-			log.info("Preallocating finished.");
-			raf.close();
-			
-			this.raf = new RandomAccessFile(file, mode);
-			this.raf.seek(0);
-			channel().position(0);*/
+
+            if (size != 0) {
+                preallocateFiles(file,size, mode);
+            }
             revenoBuffer.writeInt(1);
 		} catch (Throwable e) {
 			throw new org.reveno.atp.api.exceptions.FileNotFoundException(file);
-		}
-	}
-	
-	public FileChannel(String filename, String mode) {
-		try {
-			this.file = new File(filename);
-			this.raf = new RandomAccessFile(filename, mode);
-            revenoBuffer.writeInt(1);
-		} catch (Throwable e) {
-			throw new org.reveno.atp.api.exceptions.FileNotFoundException(new File(filename));
 		}
 	}
 	
@@ -162,6 +148,19 @@ public class FileChannel implements Channel {
 	public String toString() {
 		return file.getName();
 	}
+
+    protected void preallocateFiles(File file, long size, String mode) throws IOException {
+        log.info("Preallocating started.");
+        for (long i = 0; i < size; i += PAGE_SIZE) {
+            raf.write(BLANK_PAGE, 0, PAGE_SIZE);
+        }
+        log.info("Preallocating finished.");
+        raf.close();
+
+        this.raf = new RandomAccessFile(file, mode);
+        this.raf.seek(0);
+        channel().position(0);
+    }
 	
 	protected final File file;
 	protected RandomAccessFile raf;
