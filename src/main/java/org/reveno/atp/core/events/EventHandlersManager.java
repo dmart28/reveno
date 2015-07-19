@@ -16,19 +16,15 @@
 
 package org.reveno.atp.core.events;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import org.reveno.atp.api.EventsManager;
+import org.reveno.atp.utils.MapUtils;
+
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import org.reveno.atp.api.EventsManager;
-import org.reveno.atp.utils.MapUtils;
 
 @SuppressWarnings("unchecked")
 public class EventHandlersManager implements EventsManager {

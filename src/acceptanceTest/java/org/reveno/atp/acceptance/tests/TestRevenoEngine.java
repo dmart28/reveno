@@ -16,10 +16,10 @@
 
 package org.reveno.atp.acceptance.tests;
 
-import java.io.File;
-
 import org.reveno.atp.core.Engine;
 import org.reveno.atp.core.api.InterceptorCollection;
+
+import java.io.File;
 
 public class TestRevenoEngine extends Engine {
 

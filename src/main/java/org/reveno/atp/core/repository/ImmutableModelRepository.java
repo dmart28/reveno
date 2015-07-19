@@ -16,15 +16,15 @@
 
 package org.reveno.atp.core.repository;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.utils.MapUtils;
+
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Deprecated
 public class ImmutableModelRepository implements TxRepository {

@@ -16,11 +16,11 @@
 
 package org.reveno.atp.core.data;
 
-import static org.reveno.atp.utils.BinaryUtils.bytesToInt;
-
 import org.reveno.atp.core.api.Decoder;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
+
+import static org.reveno.atp.utils.BinaryUtils.bytesToInt;
 
 public class ChannelDecoder implements Decoder<Buffer> {
 

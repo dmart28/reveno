@@ -16,8 +16,10 @@
 
 package org.reveno.atp.core.channel;
 
-import static org.reveno.atp.utils.MeasureUtils.mb;
-import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
+import org.reveno.atp.core.api.channel.Buffer;
+import org.reveno.atp.core.api.channel.Channel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,10 +27,8 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
-import org.reveno.atp.core.api.channel.Buffer;
-import org.reveno.atp.core.api.channel.Channel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.reveno.atp.utils.MeasureUtils.mb;
+import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
 
 public class FileChannel implements Channel {
 	

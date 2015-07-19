@@ -16,12 +16,11 @@
 
 package org.reveno.atp.core.channel;
 
-import java.util.Random;
-
 import org.junit.Assert;
-
 import org.junit.Test;
 import org.reveno.atp.core.api.channel.Buffer;
+
+import java.util.Random;
 
 public class NettyBufferTest {
 

@@ -16,12 +16,12 @@
 
 package org.reveno.atp.core.engine.components;
 
+import org.reveno.atp.api.commands.CommandContext;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-
-import org.reveno.atp.api.commands.CommandContext;
 
 public class CommandsManager {
 

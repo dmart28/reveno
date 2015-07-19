@@ -16,13 +16,13 @@
 
 package org.reveno.atp.acceptance.model.immutable;
 
+import org.reveno.atp.acceptance.model.Fill;
+import org.reveno.atp.acceptance.model.Position;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import org.reveno.atp.acceptance.model.Fill;
-import org.reveno.atp.acceptance.model.Position;
 
 public class ImmutablePosition implements Position {
 

@@ -16,8 +16,6 @@
 
 package org.reveno.atp.acceptance.tests;
 
-import java.util.Optional;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.reveno.atp.acceptance.model.Order.OrderStatus;
@@ -25,6 +23,8 @@ import org.reveno.atp.acceptance.model.Order.OrderType;
 import org.reveno.atp.acceptance.model.immutable.ImmutableAccount;
 import org.reveno.atp.acceptance.model.immutable.ImmutableFill;
 import org.reveno.atp.acceptance.model.immutable.ImmutableOrder;
+
+import java.util.Optional;
 
 public class TestModel {
 

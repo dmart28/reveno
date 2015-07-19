@@ -16,12 +16,12 @@
 
 package org.reveno.atp.core.storage;
 
-import static org.reveno.atp.utils.VersionedFileUtils.lastVersionFile;
-import static org.reveno.atp.utils.VersionedFileUtils.lastVersionedFile;
-import static org.reveno.atp.utils.VersionedFileUtils.listFolders;
-import static org.reveno.atp.utils.VersionedFileUtils.listVersioned;
-import static org.reveno.atp.utils.VersionedFileUtils.nextVersionFile;
-import static org.reveno.atp.utils.VersionedFileUtils.parseVersionedFile;
+import org.reveno.atp.core.api.channel.Channel;
+import org.reveno.atp.core.api.storage.FoldersStorage;
+import org.reveno.atp.core.api.storage.JournalsStorage;
+import org.reveno.atp.core.api.storage.SnapshotStorage;
+import org.reveno.atp.core.channel.FileChannel;
+import org.reveno.atp.utils.VersionedFileUtils.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,12 +34,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.reveno.atp.core.api.channel.Channel;
-import org.reveno.atp.core.api.storage.FoldersStorage;
-import org.reveno.atp.core.api.storage.JournalsStorage;
-import org.reveno.atp.core.api.storage.SnapshotStorage;
-import org.reveno.atp.core.channel.FileChannel;
-import org.reveno.atp.utils.VersionedFileUtils.VersionedFile;
+import static org.reveno.atp.utils.VersionedFileUtils.*;
 
 public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 		SnapshotStorage {

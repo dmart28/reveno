@@ -16,13 +16,13 @@
 
 package org.reveno.atp.utils;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.TreeSet;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.reveno.atp.commons.LongRange;
+
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.TreeSet;
 
 public class LongRangeTest {
 

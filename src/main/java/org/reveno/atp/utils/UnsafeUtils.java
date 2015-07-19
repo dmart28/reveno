@@ -16,12 +16,12 @@
 
 package org.reveno.atp.utils;
 
+import sun.misc.Unsafe;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
-
-import sun.misc.Unsafe;
 
 public abstract class UnsafeUtils {
 

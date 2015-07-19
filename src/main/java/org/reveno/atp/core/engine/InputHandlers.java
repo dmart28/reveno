@@ -16,9 +16,6 @@
 
 package org.reveno.atp.core.engine;
 
-import java.util.function.BiConsumer;
-import java.util.function.Supplier;
-
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.api.transaction.TransactionStage;
@@ -29,6 +26,9 @@ import org.reveno.atp.core.engine.components.TransactionExecutor;
 import org.reveno.atp.utils.MeasureUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 public class InputHandlers {
 

@@ -16,21 +16,16 @@
 
 package org.reveno.atp.core.serialization.protostuff;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Queue;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.protostuff.ByteString;
 import io.protostuff.Input;
 import io.protostuff.Output;
 import io.protostuff.Schema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 public class InputOutputHolder implements Input, Output {
 	

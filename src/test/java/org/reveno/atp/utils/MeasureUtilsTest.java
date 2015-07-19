@@ -1,9 +1,9 @@
 package org.reveno.atp.utils;
 
-import static org.junit.Assert.*;
-import static org.reveno.atp.utils.MeasureUtils.*;
-
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.reveno.atp.utils.MeasureUtils.*;
 
 public class MeasureUtilsTest {
 

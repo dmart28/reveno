@@ -1,6 +1,5 @@
 package org.reveno.atp.core.serialization.protostuff;
 
-import io.protostuff.IntSerializer;
 import io.protostuff.LinkBuffer;
 import org.reveno.atp.core.api.channel.Buffer;
 

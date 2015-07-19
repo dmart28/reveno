@@ -1,14 +1,5 @@
 package org.reveno.atp.core.serialization;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.ObjectStreamClass;
-import java.util.List;
-
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.exceptions.SerializerException;
 import org.reveno.atp.api.exceptions.SerializerException.Action;
@@ -19,6 +10,9 @@ import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.*;
+import java.util.List;
 
 public class DefaultJavaSerializer implements RepositoryDataSerializer,
 		TransactionInfoSerializer {

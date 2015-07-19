@@ -16,13 +16,13 @@
 
 package org.reveno.atp.core.channel;
 
-import static org.reveno.atp.utils.MeasureUtils.kb;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
+import org.reveno.atp.core.api.channel.Buffer;
 
 import java.nio.ByteBuffer;
 
-import org.reveno.atp.core.api.channel.Buffer;
+import static org.reveno.atp.utils.MeasureUtils.kb;
 
 public class NettyBasedBuffer implements Buffer {
 

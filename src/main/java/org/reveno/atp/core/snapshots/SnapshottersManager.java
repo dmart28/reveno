@@ -16,14 +16,14 @@
 
 package org.reveno.atp.core.snapshots;
 
+import org.reveno.atp.api.RepositorySnapshotter;
+import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
+import org.reveno.atp.core.api.storage.SnapshotStorage;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
-
-import org.reveno.atp.api.RepositorySnapshotter;
-import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
-import org.reveno.atp.core.api.storage.SnapshotStorage;
 
 public class SnapshottersManager {
 	

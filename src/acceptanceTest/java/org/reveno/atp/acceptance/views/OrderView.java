@@ -16,11 +16,11 @@
 
 package org.reveno.atp.acceptance.views;
 
-import java.util.Optional;
-
 import org.reveno.atp.acceptance.model.Order.OrderStatus;
 import org.reveno.atp.acceptance.model.Order.OrderType;
 import org.reveno.atp.api.query.QueryManager;
+
+import java.util.Optional;
 
 public class OrderView extends ViewBase {
 

@@ -16,18 +16,16 @@
 
 package org.reveno.atp.core.serialization;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
+import org.reveno.atp.core.channel.ByteBufferWrapper;
+import org.reveno.atp.core.engine.components.SerializersChain;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import org.junit.Assert;
-import org.junit.Test;
-import org.reveno.atp.core.api.channel.Buffer;
-import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
-import org.reveno.atp.core.channel.ByteBufferWrapper;
-import org.reveno.atp.core.channel.NettyBasedBuffer;
-import org.reveno.atp.core.engine.components.SerializersChain;
 
 public class SerializersChainTest {
 

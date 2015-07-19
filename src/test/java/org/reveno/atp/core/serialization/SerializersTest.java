@@ -1,17 +1,16 @@
 package org.reveno.atp.core.serialization;
 
-import java.util.Arrays;
-import java.util.HashMap;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.core.api.TransactionCommitInfo;
-import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.reveno.atp.core.channel.ByteBufferWrapper;
 import org.reveno.atp.core.impl.TransactionCommitInfoImpl;
+
+import java.util.Arrays;
+import java.util.HashMap;
 
 public class SerializersTest {
 

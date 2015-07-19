@@ -16,11 +16,11 @@
 
 package org.reveno.atp.core.channel;
 
-import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
+import org.reveno.atp.core.api.channel.Buffer;
 
 import java.nio.ByteBuffer;
 
-import org.reveno.atp.core.api.channel.Buffer;
+import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
 
 /**
  * Not super correct currently - we should use separate reader and writer indexes.

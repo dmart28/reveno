@@ -16,13 +16,13 @@
 
 package org.reveno.atp.acceptance.model.mutable;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.reveno.atp.acceptance.model.Account;
 import org.reveno.atp.acceptance.model.Fill;
 import org.reveno.atp.acceptance.model.PositionBook;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class MutableAccount implements Account {
 

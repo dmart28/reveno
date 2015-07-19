@@ -1,12 +1,9 @@
 package org.reveno.atp.core.serialization;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import io.protostuff.*;
+import io.protostuff.Input;
+import io.protostuff.LowCopyProtostuffOutput;
+import io.protostuff.Schema;
+import io.protostuff.runtime.RuntimeSchema;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.core.api.TransactionCommitInfo;
@@ -14,10 +11,12 @@ import org.reveno.atp.core.api.TransactionCommitInfo.Builder;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
-
-import io.protostuff.runtime.RuntimeSchema;
 import org.reveno.atp.core.serialization.protostuff.ZeroCopyBufferInput;
 import org.reveno.atp.core.serialization.protostuff.ZeroCopyLinkBuffer;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ProtostuffSerializer implements RepositoryDataSerializer, TransactionInfoSerializer {
 

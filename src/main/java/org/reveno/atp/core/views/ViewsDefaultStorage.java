@@ -16,15 +16,15 @@
 
 package org.reveno.atp.core.views;
 
+import org.reveno.atp.api.query.QueryManager;
+import org.reveno.atp.core.api.ViewsStorage;
+import org.reveno.atp.utils.MapUtils;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import org.reveno.atp.api.query.QueryManager;
-import org.reveno.atp.core.api.ViewsStorage;
-import org.reveno.atp.utils.MapUtils;
 
 /**
  * Not efficient version, consider for changing it.

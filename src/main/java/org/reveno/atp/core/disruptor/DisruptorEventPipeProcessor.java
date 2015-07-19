@@ -16,14 +16,13 @@
 
 package org.reveno.atp.core.disruptor;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-
+import com.lmax.disruptor.EventFactory;
 import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.core.events.Event;
 import org.reveno.atp.core.events.EventPublisher;
 
-import com.lmax.disruptor.EventFactory;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 
 public class DisruptorEventPipeProcessor extends DisruptorPipeProcessor<Event> {
 	

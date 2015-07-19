@@ -16,8 +16,6 @@
 
 package org.reveno.atp.performance_tests;
 
-import java.text.DecimalFormat;
-
 import org.junit.Test;
 import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
 import org.reveno.atp.acceptance.api.transactions.Credit;
@@ -25,6 +23,8 @@ import org.reveno.atp.acceptance.tests.RevenoBaseTest;
 import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.core.Engine;
+
+import java.text.DecimalFormat;
 
 public class LatencyTest extends RevenoBaseTest {
 

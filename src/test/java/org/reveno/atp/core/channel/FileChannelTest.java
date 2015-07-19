@@ -1,6 +1,8 @@
 package org.reveno.atp.core.channel;
 
-import static org.reveno.atp.utils.MeasureUtils.mb;
+import com.google.common.io.Files;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,11 +11,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.reveno.atp.core.api.channel.Buffer;
-
-import com.google.common.io.Files;
+import static org.reveno.atp.utils.MeasureUtils.mb;
 
 public class FileChannelTest {
 
