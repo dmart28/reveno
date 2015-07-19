@@ -102,8 +102,12 @@ public class RevenoBaseTest {
 	protected TestRevenoEngine createEngine() {
 		return createEngine((r) -> {});
 	}
-
+	
 	protected TestRevenoEngine createEngine(Consumer<TestRevenoEngine> consumer) {
+		return createEngine(consumer, true);
+	}
+
+	protected TestRevenoEngine createEngine(Consumer<TestRevenoEngine> consumer, boolean meter) {
 		TestRevenoEngine reveno = new TestRevenoEngine(tempDir);
 		
 		reveno.config().cpuConsumption(CpuConsumption.HIGH);

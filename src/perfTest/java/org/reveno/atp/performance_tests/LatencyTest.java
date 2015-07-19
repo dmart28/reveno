@@ -20,11 +20,13 @@ import org.junit.Test;
 import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
 import org.reveno.atp.acceptance.api.transactions.Credit;
 import org.reveno.atp.acceptance.tests.RevenoBaseTest;
+import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.core.Engine;
 
 import java.text.DecimalFormat;
+import java.util.concurrent.ExecutionException;
 
 public class LatencyTest extends RevenoBaseTest {
 
@@ -35,19 +37,55 @@ public class LatencyTest extends RevenoBaseTest {
 		LatencyTest test = new LatencyTest();
 		test.modelType = ModelType.IMMUTABLE;
 		test.setUp();
-		test.test();
+		test.testLow();
+		test.tearDown();
+		
+		test.setUp();
+		test.testNormal();
+		test.tearDown();
+		
+		test.setUp();
+		test.testHigh();
+		test.tearDown();
+		
+		test.setUp();
+		test.testPhased();
 		test.tearDown();
 	}
 	
 	@Test
-	public void test() throws Exception {
+	public void testLow() throws Exception {
+		log.info("Testing with LOW consumption:");
+		doTest(CpuConsumption.LOW);
+	}
+	
+	@Test
+	public void testNormal() throws Exception {
+		log.info("Testing with NORMAL consumption:");
+		doTest(CpuConsumption.NORMAL);
+	}
+	
+	@Test
+	public void testHigh() throws Exception {
+		log.info("Testing with HIGH consumption:");
+		doTest(CpuConsumption.HIGH);
+	}
+	
+	@Test
+	public void testPhased() throws Exception {
+		log.info("Testing with PHASED consumption:");
+		doTest(CpuConsumption.PHASED);
+	}
+
+	private void doTest(CpuConsumption consumption) throws InterruptedException, ExecutionException {
 		final long[] counter = { 0L };
 		final long[] latency = { 0L };
 		final long[] worstLatency = { 0L };
 		final long[] worstCount = { 0L };
 		final long[] bestCount = { 0L };
 		Engine engine = createEngine(e -> {
-            e.config().preallocationSize(8 * 1024 * 1024 * 1024L);
+			e.config().cpuConsumption(consumption);
+            //e.config().preallocationSize(8 * 1024 * 1024 * 1024L);
 			e.interceptors().add(TransactionStage.REPLICATION, (id, time, r, s) -> {
 				if (++counter[0] > COLD_START_COUNT) {
 					final long lat = System.nanoTime() - time;
@@ -63,7 +101,7 @@ public class LatencyTest extends RevenoBaseTest {
 					}
 				}
 			});
-		});
+		}, false);
 		engine.startup();
 		
 		final long accountId = sendCommandSync(engine, new CreateNewAccountCommand("USD", 1000_000L));
