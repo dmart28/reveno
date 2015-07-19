@@ -34,8 +34,9 @@ import java.util.concurrent.ExecutorService;
 public class DisruptorTransactionPipeProcessor extends DisruptorPipeProcessor<ProcessorContext> implements TransactionPipeProcessor<ProcessorContext> {
 
 	public DisruptorTransactionPipeProcessor(TransactionCommitInfo.Builder builder, 
-			CpuConsumption cpuConsumption, ExecutorService executor) {
+			CpuConsumption cpuConsumption, int bufferSize, ExecutorService executor) {
 		this.cpuConsumption = cpuConsumption;
+		this.bufferSize = bufferSize;
 		this.executor = executor;
 		this.eventFactory = () -> new ProcessorContext(builder.create());
 	}
@@ -43,6 +44,11 @@ public class DisruptorTransactionPipeProcessor extends DisruptorPipeProcessor<Pr
 	@Override
 	public CpuConsumption cpuConsumption() {
 		return cpuConsumption;
+	}
+	
+	@Override
+	public int bufferSize() {
+		return bufferSize;
 	}
 
 	@Override
@@ -98,6 +104,7 @@ public class DisruptorTransactionPipeProcessor extends DisruptorPipeProcessor<Pr
 	
 	
 	protected final CpuConsumption cpuConsumption;
+	protected final int bufferSize;
 	protected final ExecutorService executor;
 	protected final EventFactory<ProcessorContext> eventFactory;
 	private static final Logger log = LoggerFactory.getLogger(DisruptorTransactionPipeProcessor.class);

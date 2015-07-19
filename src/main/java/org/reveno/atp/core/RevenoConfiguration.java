@@ -27,6 +27,14 @@ public class RevenoConfiguration implements Configuration {
 	public RevenoSnapshotConfiguration revenoSnapshotting() {
 		return snapshotting;
 	}
+	
+	@Override
+	public DisruptorConfiguration disruptor() {
+		return revenoDisruptor();
+	}
+	public RevenoDisruptorConfiguration revenoDisruptor() {
+		return disruptor;
+	}
 
 	@Override
 	public void modelType(ModelType modelType) {
@@ -57,6 +65,7 @@ public class RevenoConfiguration implements Configuration {
 	}
 	
 	protected RevenoSnapshotConfiguration snapshotting = new RevenoSnapshotConfiguration();
+	protected RevenoDisruptorConfiguration disruptor = new RevenoDisruptorConfiguration();
 	protected CpuConsumption cpuConsumption = CpuConsumption.PHASED;
 	protected ModelType modelType = ModelType.IMMUTABLE;
     protected long preallocationSize = 0L;
@@ -81,6 +90,23 @@ public class RevenoConfiguration implements Configuration {
 		
 		private boolean snapshotAtShutdown = false;
 		private long snapshotEvery = -1;
+		
+	}
+	
+	public static class RevenoDisruptorConfiguration implements DisruptorConfiguration {
+
+		@Override
+		public void bufferSize(int bufferSize) {
+			if (Integer.bitCount(bufferSize) != 1) {
+				throw new IllegalArgumentException("Disruptor buffer size must be of power of 2.");
+			}
+			this.bufferSize = bufferSize;
+		}
+		public int bufferSize() {
+			return bufferSize;
+		}
+		
+		private int bufferSize = 1024;
 		
 	}
 	

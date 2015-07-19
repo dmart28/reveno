@@ -20,16 +20,23 @@ public interface Configuration {
 	
 	SnapshotConfiguration snapshotting();
 	
+	DisruptorConfiguration disruptor();
+	
 	void modelType(ModelType modelType);
 	
 	void cpuConsumption(CpuConsumption cpuConsumption);
 
     void preallocationSize(long size);
 	
+    
 	public static interface SnapshotConfiguration {
 		void snapshotAtShutdown(boolean takeSnapshot);
 		
 		void snapshotEvery(long transactionCount);
+	}
+	
+	public static interface DisruptorConfiguration {
+		void bufferSize(int bufferSize);
 	}
 	
 	public static enum ModelType { MUTABLE, IMMUTABLE }

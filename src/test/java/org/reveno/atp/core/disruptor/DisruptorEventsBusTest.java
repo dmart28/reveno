@@ -76,7 +76,7 @@ public class DisruptorEventsBusTest {
 		EventsCommitInfo.Builder builder = new EventsCommitInfoImpl.PojoBuilder();
 		EventsInfoSerializer serializer = new SimpleEventsSerializer();
 		
-		PipeProcessor<Event> pipe = new DisruptorEventPipeProcessor(CpuConsumption.HIGH, Executors.newCachedThreadPool());
+		PipeProcessor<Event> pipe = new DisruptorEventPipeProcessor(CpuConsumption.HIGH, 1024, Executors.newCachedThreadPool());
 		EventPublisher eventsBus = new EventPublisher(pipe, new Context(journaler, builder, serializer, manager));
 		eventsBus.getPipe().start();
 		

@@ -41,6 +41,8 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 	
 	abstract CpuConsumption cpuConsumption();
 	
+	abstract int bufferSize();
+	
 	abstract boolean singleProducer();
 	
 	abstract EventFactory<T> eventFactory();
@@ -53,7 +55,7 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 	public void start() {
 		if (isStarted) throw new IllegalStateException("The Pipe Processor is alredy started.");
 		
-		disruptor = new Disruptor<T>(eventFactory(), 1 * 1024, executor(),
+		disruptor = new Disruptor<T>(eventFactory(), bufferSize(), executor(),
 				singleProducer() ? ProducerType.SINGLE : ProducerType.MULTI,
 				createWaitStrategy());
 
@@ -80,7 +82,7 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 		stop();
 		disruptor.shutdown();
 		
-		for (int i = 0; i < 1 * 1024; i++)
+		for (int i = 0; i < bufferSize(); i++)
 			disruptor.getRingBuffer().get(i).destroy();
 	}
 

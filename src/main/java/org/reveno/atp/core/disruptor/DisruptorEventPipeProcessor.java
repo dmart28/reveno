@@ -26,8 +26,9 @@ import java.util.concurrent.ExecutorService;
 
 public class DisruptorEventPipeProcessor extends DisruptorPipeProcessor<Event> {
 	
-	public DisruptorEventPipeProcessor(CpuConsumption cpuConsumption, ExecutorService executor) {
+	public DisruptorEventPipeProcessor(CpuConsumption cpuConsumption, int bufferSize, ExecutorService executor) {
 		this.cpuConsumption = cpuConsumption;
+		this.bufferSize = bufferSize;
 		this.executor = executor;
 	}
 
@@ -44,6 +45,11 @@ public class DisruptorEventPipeProcessor extends DisruptorPipeProcessor<Event> {
 	@Override
 	public CpuConsumption cpuConsumption() {
 		return cpuConsumption;
+	}
+	
+	@Override
+	public int bufferSize() {
+		return bufferSize;
 	}
 
 	@Override
@@ -66,6 +72,7 @@ public class DisruptorEventPipeProcessor extends DisruptorPipeProcessor<Event> {
 	}
 
 	protected final CpuConsumption cpuConsumption;
+	protected final int bufferSize;
 	protected final ExecutorService executor;
 	protected static final EventFactory<Event> eventFactory = () -> new Event();
 	
