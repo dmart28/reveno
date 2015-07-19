@@ -46,7 +46,17 @@ public class ByteBufferWrapper implements Buffer {
 		return readBytes();
 	}
 
-	@Override
+    @Override
+    public int position() {
+        return buffer.position();
+    }
+
+    @Override
+    public int limit() {
+        return buffer.limit();
+    }
+
+    @Override
 	public long capacity() {
 		return buffer.capacity();
 	}
@@ -76,13 +86,35 @@ public class ByteBufferWrapper implements Buffer {
 		return buffer.remaining() > 0;
 	}
 
-	@Override
+    @Override
+    public void setPosition(int position) {
+        this.buffer.position(position);
+    }
+
+    @Override
+    public void setLimit(int limit) {
+        this.buffer.limit(limit);
+    }
+
+    @Override
+    public void writeByte(byte b) {
+        autoExtendIfRequired(1);
+        buffer.put(b);
+    }
+
+    @Override
 	public void writeBytes(byte[] bytes) {
 		autoExtendIfRequired(bytes.length);
 		buffer.put(bytes);
 	}
 
-	@Override
+    @Override
+    public void writeBytes(byte[] bytes, int offset, int count) {
+        autoExtendIfRequired(bytes.length);
+        buffer.put(bytes, offset, count);
+    }
+
+    @Override
 	public void writeLong(long value) {
 		autoExtendIfRequired(8);
 		buffer.putLong(value);
@@ -94,17 +126,34 @@ public class ByteBufferWrapper implements Buffer {
 		buffer.putInt(value);
 	}
 
-	@Override
+    @Override
+    public void writeShort(short s) {
+        autoExtendIfRequired(2);
+        buffer.putShort(s);
+    }
+
+    @Override
 	public void writeFromBuffer(ByteBuffer b) {
+        autoExtendIfRequired(b.limit());
 		buffer.put(b);
 	}
 
-	@Override
+    @Override
+    public ByteBuffer writeToBuffer() {
+        return buffer.slice();
+    }
+
+    @Override
 	public void writeFromBuffer(Buffer b) {
 		buffer.put(b.getBytes());
 	}
 
-	@Override
+    @Override
+    public byte readByte() {
+        return buffer.get();
+    }
+
+    @Override
 	public byte[] readBytes() {
 		byte[] b = new byte[buffer.remaining()];
 		buffer.get(b);
@@ -133,7 +182,12 @@ public class ByteBufferWrapper implements Buffer {
 		return buffer.getInt();
 	}
 
-	@Override
+    @Override
+    public short readShort() {
+        return buffer.getShort();
+    }
+
+    @Override
 	public void mark() {
 		buffer.mark();
 	}
@@ -145,12 +199,28 @@ public class ByteBufferWrapper implements Buffer {
 	
 	protected void autoExtendIfRequired(int length) {
 		if (buffer.position() + length > buffer.capacity()) {
-			ByteBuffer newBuffer = ByteBuffer.allocateDirect((int)((buffer.position() + length) * 1.5));
+			ByteBuffer newBuffer = ByteBuffer.allocateDirect(next2n(buffer.position() + length));
 			buffer.flip();
 			newBuffer.put(buffer);
 			destroyDirectBuffer(buffer);
 			buffer = newBuffer;
 		}
 	}
+
+    /**
+     * We should consider only numbers that mod FS page size with 0 remainder, means
+     * any number of 2^n
+     *
+     * @param size comparing size
+     * @return result 2^n, which is higher or equal to size
+     */
+    protected int next2n(int size) {
+        int i = 1;
+        while (true) {
+            if (Math.pow(2, ++i) > size)
+                break;
+        }
+        return (int)Math.pow(2, i);
+    }
 
 }

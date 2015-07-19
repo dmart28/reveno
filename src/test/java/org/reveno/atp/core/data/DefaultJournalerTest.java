@@ -79,9 +79,9 @@ public class DefaultJournalerTest {
 		// when we call journaler.roll(..), we must to flush all previous data regardless 'endOfBatch' param
 		Assert.assertEquals(file.length(), 0);
 		journaler.writeData(b -> b.writeBytes(new byte[0]), true);
-		Assert.assertEquals(file.length(), mb(10) + 8);
+		Assert.assertEquals(file.length(), mb(10) + 4);
 		journaler.writeData(b -> b.writeBytes(new byte[] { 1, 2, 3 }), true);
-		Assert.assertEquals(file.length(), (mb(10) + 8) + (8 + 3));
+		Assert.assertEquals(file.length(), (mb(10) + 4) + (4 + 3));
 	}
 	
 }

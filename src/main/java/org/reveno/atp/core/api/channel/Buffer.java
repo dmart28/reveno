@@ -6,7 +6,11 @@ import java.nio.ByteBuffer;
 public interface Buffer {
 	
 	byte[] getBytes();
-	
+
+    int position();
+
+    int limit();
+
 	long capacity();
 	
 	int length();
@@ -18,17 +22,31 @@ public interface Buffer {
 	void release();
 	
 	boolean isAvailable();
-	
+
+    void setPosition(int position);
+
+    void setLimit(int limit);
+
+    void writeByte(byte b);
+
 	void writeBytes(byte[] bytes);
+
+    void writeBytes(byte[] buffer, int offset, int count);
 	
 	void writeLong(long value);
 	
 	void writeInt(int value);
+
+    void writeShort(short s);
 	
 	void writeFromBuffer(ByteBuffer buffer);
+
+    ByteBuffer writeToBuffer();
 	
 	void writeFromBuffer(Buffer buffer);
-	
+
+    byte readByte();
+
 	byte[] readBytes();
 	
 	byte[] readBytes(int length);
@@ -38,7 +56,9 @@ public interface Buffer {
 	long readLong();
 	
 	int readInt();
-	
+
+    short readShort();
+
 	
 	void mark();
 	

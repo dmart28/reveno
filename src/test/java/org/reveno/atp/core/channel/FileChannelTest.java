@@ -25,19 +25,20 @@ public class FileChannelTest {
 		Files.write(testData, testFile);
 		
 		FileChannel fc = new FileChannel(testFile, "rw");
-		Buffer buf = new BufferMock();
+        ByteBufferWrapper buf = new ByteBufferWrapper(java.nio.ByteBuffer.allocate(1024 * 1024));
 		
 		try {
-		while (fc.isReadAvailable())
-			fc.read(buf);
-		
-		Assert.assertEquals(mb(3) + 13, buf.length());
-		Assert.assertArrayEquals(testData, buf.getBytes());
-		
-		Assert.assertTrue(fc.isOpen());
-		fc.close();
-		Assert.assertFalse(fc.isOpen());
-		} finally {
+            while (fc.isReadAvailable())
+                fc.read(buf);
+
+            Assert.assertEquals(mb(3) + 13, buf.position());
+            buf.getBuffer().flip();
+            Assert.assertArrayEquals(testData, buf.getBytes());
+
+            Assert.assertTrue(fc.isOpen());
+            fc.close();
+            Assert.assertFalse(fc.isOpen());
+        } finally {
 			testFile.delete();
 		}
 	}
@@ -54,7 +55,7 @@ public class FileChannelTest {
 			dataSets.forEach((ds) -> fc.write(b -> b.writeBytes(ds), true));
 			fc.close();
 		
-			Assert.assertEquals(mb(chunks) + (chunks * 8), testFile.length());
+			Assert.assertEquals(mb(chunks) + (chunks * 4), testFile.length());
 			Assert.assertFalse(fc.isOpen());
 		} finally {
 			testFile.delete();

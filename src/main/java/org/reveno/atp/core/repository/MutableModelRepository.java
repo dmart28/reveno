@@ -29,8 +29,8 @@ import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.core.serialization.protostuff.InputOutputHolder;
 import org.reveno.atp.utils.MapUtils;
 
-import com.dyuproject.protostuff.Schema;
-import com.dyuproject.protostuff.runtime.RuntimeSchema;
+import io.protostuff.Schema;
+import io.protostuff.runtime.RuntimeSchema;
 
 public class MutableModelRepository implements TxRepository {
 

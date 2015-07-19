@@ -52,13 +52,15 @@ sourceSets {
 
 dependencies {
 	compile "com.lmax:disruptor:$disruptorVersion"
-	compile "com.dyuproject.protostuff:protostuff-uberjar:$protostuffVersion"
+	compile "io.protostuff:protostuff-uberjar:$protostuffVersion"
 	compile "io.netty:netty-buffer:$nettyVersion"
 	
 	compile "org.jgroups:jgroups:$jgroupsVersion"
 	
 	compile "org.slf4j:slf4j-api:$slf4jVersion"
 	compile "org.slf4j:slf4j-log4j12:$log4jVersion"
+
+    compile "it.unimi.dsi:fastutil:$fastutilVersion"
 	
 	compile "com.google.guava:guava:$guavaVersion"
 	compile "junit:junit:$junitVersion"

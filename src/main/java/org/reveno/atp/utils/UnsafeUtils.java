@@ -41,8 +41,8 @@ public abstract class UnsafeUtils {
 	}
 
 	public static void destroyDirectBuffer(ByteBuffer toBeDestroyed) {
-		Preconditions.checkArgument(toBeDestroyed.isDirect(),
-				"toBeDestroyed isn't direct!");
+		if (!toBeDestroyed.isDirect())
+            return;
 
 		Method cleanerMethod;
 		try {
