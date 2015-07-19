@@ -49,6 +49,11 @@ public class RecordingRepository implements WriteableRepository {
 			markedRecords.get(entityType).put(id, result.get());
 		return result;
 	}
+	
+	@Override
+	public <T> Optional<T> getClean(Class<T> entityType, long id) {
+		return underlyingRepo.getClean(entityType, id);
+	}
 
 	@Override
 	public RepositoryData getData() {
@@ -62,6 +67,11 @@ public class RecordingRepository implements WriteableRepository {
 		Map<Long, Object> result = underlyingRepo.getEntities(entityType);
 		markedRecords.get(entityType).putAll(result);
 		return result;
+	}
+	
+	@Override
+	public Map<Long, Object> getEntitiesClean(Class<?> entityType) {
+		return underlyingRepo.getEntitiesClean(entityType);
 	}
 
 	@Override
@@ -95,4 +105,5 @@ public class RecordingRepository implements WriteableRepository {
 	
 	protected Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> markedRecords;
 	protected static final Object EMPTY = new Object();
+	
 }

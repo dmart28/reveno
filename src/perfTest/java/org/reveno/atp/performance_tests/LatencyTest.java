@@ -85,7 +85,7 @@ public class LatencyTest extends RevenoBaseTest {
 		final long[] bestCount = { 0L };
 		Engine engine = createEngine(e -> {
 			e.config().cpuConsumption(consumption);
-            //e.config().preallocationSize(8 * 1024 * 1024 * 1024L);
+            e.config().preallocationSize(8 * 1024 * 1024 * 1024L);
 			e.interceptors().add(TransactionStage.REPLICATION, (id, time, r, s) -> {
 				if (++counter[0] > COLD_START_COUNT) {
 					final long lat = System.nanoTime() - time;

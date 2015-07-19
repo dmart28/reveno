@@ -40,6 +40,16 @@ public class SnapshotBasedModelRepository implements TxRepository {
 	public <T> Optional<T> get(Class<T> entityType, long id) {
 		return repository.get(entityType, id);
 	}
+	
+	@Override
+	public <T> Optional<T> getClean(Class<T> entityType, long id) {
+		return get(entityType, id);
+	}
+
+	@Override
+	public Map<Long, Object> getEntitiesClean(Class<?> entityType) {
+		return getEntities(entityType);
+	}
 
 	@Override
 	public RepositoryData getData() {

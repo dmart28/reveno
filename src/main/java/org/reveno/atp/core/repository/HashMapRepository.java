@@ -34,6 +34,11 @@ public class HashMapRepository implements WriteableRepository {
 		
 		return Optional.ofNullable(entity);
 	}
+	
+	@Override
+	public <T> Optional<T> getClean(Class<T> entityType, long id) {
+		return get(entityType, id);
+	}
 
 	@Override
 	public RepositoryData getData() {
@@ -70,6 +75,11 @@ public class HashMapRepository implements WriteableRepository {
 	@Override
 	public Map<Long, Object> getEntities(Class<?> entityType) {
 		return map.get(entityType);
+	}
+	
+	@Override
+	public Map<Long, Object> getEntitiesClean(Class<?> entityType) {
+		return getEntities(entityType);
 	}
 	
 	@Override

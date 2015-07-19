@@ -26,10 +26,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Replaced by more simple and efficient immutable repository SnapshotBasedModelRepository.
+ * 
+ * @author Artem Dmitriev <art.dm.ser@gmail.com>
+ *
+ */
 @Deprecated
 public class ImmutableModelRepository implements TxRepository {
-	
-	// TODO rewrite class to use collections only on rollback();
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -45,6 +49,11 @@ public class ImmutableModelRepository implements TxRepository {
 		} else {
 			return entity;
 		}
+	}
+	
+	@Override
+	public <T> Optional<T> getClean(Class<T> entityType, long id) {
+		return get(entityType, id);
 	}
 
 	@Override
@@ -79,6 +88,11 @@ public class ImmutableModelRepository implements TxRepository {
 			return notRemoved.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 		} else
 			return entities;
+	}
+	
+	@Override
+	public Map<Long, Object> getEntitiesClean(Class<?> entityType) {
+		return getEntities(entityType);
 	}
 
 	@Override

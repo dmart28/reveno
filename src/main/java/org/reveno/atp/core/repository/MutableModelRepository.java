@@ -80,6 +80,16 @@ public class MutableModelRepository implements TxRepository {
 			entities.forEach((id, e) -> saveEntityState(id, entityType, e, EntityRecoveryState.UPDATE));
 		return entities;
 	}
+	
+	@Override
+	public <T> Optional<T> getClean(Class<T> entityType, long id) {
+		return get(entityType, id);
+	}
+
+	@Override
+	public Map<Long, Object> getEntitiesClean(Class<?> entityType) {
+		return getEntities(entityType);
+	}
 
 	@Override
 	public void begin() {
