@@ -1,16 +1,15 @@
 package org.reveno.atp.core.repository;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.utils.MapUtils;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 @SuppressWarnings("unchecked")
 public class SnapshotBasedModelRepository implements TxRepository {

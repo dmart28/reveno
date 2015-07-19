@@ -16,6 +16,8 @@
 
 package org.reveno.atp.utils;
 
+import org.reveno.atp.api.exceptions.IllegalFileName;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,8 +29,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import org.reveno.atp.api.exceptions.IllegalFileName;
 
 /*
  * File name pattern:

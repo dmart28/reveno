@@ -37,7 +37,7 @@ sourceSets {
 
 dependencies {
 	compile "com.lmax:disruptor:$disruptorVersion"
-	compile "com.dyuproject.protostuff:protostuff-uberjar:$protostuffVersion"
+	compile "io.protostuff:protostuff-uberjar:$protostuffVersion"
 	compile "io.netty:netty-buffer:$nettyVersion"
 	
 	compile "org.jgroups:jgroups:$jgroupsVersion"

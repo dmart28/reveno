@@ -63,7 +63,7 @@ public class DefaultSnapshotter implements RepositorySnapshotter {
 			while (c.isReadAvailable())
 				c.read(buffer);
 			
-			buffer.readLong();
+			buffer.readInt();
 			return repoSerializer.deserialize(buffer);
 		} catch (Throwable t) {
 			log.error("", t);

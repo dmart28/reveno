@@ -16,10 +16,7 @@
 
 package org.reveno.atp.core.disruptor;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-
+import com.lmax.disruptor.EventFactory;
 import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.EventsManager.EventMetadata;
 import org.reveno.atp.api.commands.EmptyResult;
@@ -30,7 +27,9 @@ import org.reveno.atp.core.engine.processor.TransactionPipeProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.lmax.disruptor.EventFactory;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 
 public class DisruptorTransactionPipeProcessor extends DisruptorPipeProcessor<ProcessorContext> implements TransactionPipeProcessor<ProcessorContext> {
 

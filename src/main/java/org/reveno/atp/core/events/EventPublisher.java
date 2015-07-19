@@ -16,14 +16,14 @@
 
 package org.reveno.atp.core.events;
 
-import java.util.concurrent.ExecutorService;
-import java.util.function.BiConsumer;
-
 import org.reveno.atp.api.EventsManager.EventMetadata;
 import org.reveno.atp.core.api.EventsCommitInfo;
 import org.reveno.atp.core.engine.processor.PipeProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ExecutorService;
+import java.util.function.BiConsumer;
 
 public class EventPublisher {
 	

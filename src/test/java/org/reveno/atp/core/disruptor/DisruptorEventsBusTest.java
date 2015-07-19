@@ -16,12 +16,7 @@
 
 package org.reveno.atp.core.disruptor;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
+import com.google.common.io.Files;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -42,7 +37,11 @@ import org.reveno.atp.core.serialization.SimpleEventsSerializer;
 import org.reveno.atp.core.storage.FileSystemStorage;
 import org.reveno.atp.test.utils.FileUtils;
 
-import com.google.common.io.Files;
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class DisruptorEventsBusTest {
 	

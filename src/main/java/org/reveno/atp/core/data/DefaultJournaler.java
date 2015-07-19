@@ -16,14 +16,14 @@
 
 package org.reveno.atp.core.data;
 
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 public class DefaultJournaler implements Journaler {
 

@@ -16,12 +16,12 @@
 
 package org.reveno.atp.clustering.api;
 
+import org.reveno.atp.clustering.api.message.Message;
+
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-
-import org.reveno.atp.clustering.api.message.Message;
 
 public interface ClusterConnector {
 

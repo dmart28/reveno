@@ -16,12 +16,7 @@
 
 package org.reveno.atp.core.data;
 
-import static org.reveno.atp.utils.MeasureUtils.mb;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Random;
-
+import com.google.common.io.Files;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -30,7 +25,11 @@ import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.channel.FileChannel;
 
-import com.google.common.io.Files;
+import java.io.File;
+import java.io.IOException;
+import java.util.Random;
+
+import static org.reveno.atp.utils.MeasureUtils.mb;
 
 public class DefaultJournalerTest {
 
@@ -79,9 +78,9 @@ public class DefaultJournalerTest {
 		// when we call journaler.roll(..), we must to flush all previous data regardless 'endOfBatch' param
 		Assert.assertEquals(file.length(), 0);
 		journaler.writeData(b -> b.writeBytes(new byte[0]), true);
-		Assert.assertEquals(file.length(), mb(10) + 8);
+		Assert.assertEquals(file.length(), mb(10) + 4);
 		journaler.writeData(b -> b.writeBytes(new byte[] { 1, 2, 3 }), true);
-		Assert.assertEquals(file.length(), (mb(10) + 8) + (8 + 3));
+		Assert.assertEquals(file.length(), (mb(10) + 4) + (4 + 3));
 	}
 	
 }

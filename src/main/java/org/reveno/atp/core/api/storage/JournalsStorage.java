@@ -22,6 +22,8 @@ public interface JournalsStorage {
 
 	Channel channel(String address);
 
+    Channel channel(String address, long size);
+
 	JournalStore[] getLastStores();
 
 	void mergeStores();

@@ -16,15 +16,14 @@
 
 package org.reveno.atp.core.views;
 
-import java.util.Map;
-import java.util.Optional;
-
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import org.reveno.atp.api.domain.Repository;
 import org.reveno.atp.api.query.ViewsRepository;
 import org.reveno.atp.core.api.ViewsStorage;
 import org.reveno.atp.core.views.ViewsManager.ViewHandlerHolder;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import java.util.Map;
+import java.util.Optional;
 
 public class ViewsProcessor {
 

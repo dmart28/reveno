@@ -16,9 +16,9 @@
 
 package org.reveno.atp.acceptance.api.transactions;
 
-import java.util.Optional;
-
 import org.reveno.atp.acceptance.model.Order.OrderType;
+
+import java.util.Optional;
 
 public class AcceptOrder {
 

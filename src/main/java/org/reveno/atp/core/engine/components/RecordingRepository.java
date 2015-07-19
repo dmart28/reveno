@@ -16,14 +16,13 @@
 
 package org.reveno.atp.core.engine.components;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /*
  * Used for recording which entities were modified on stage of Transaction execution, since

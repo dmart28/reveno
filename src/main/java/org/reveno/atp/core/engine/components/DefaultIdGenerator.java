@@ -16,15 +16,15 @@
 
 package org.reveno.atp.core.engine.components;
 
+import org.reveno.atp.api.commands.CommandContext;
+import org.reveno.atp.api.transaction.TransactionContext;
+import org.reveno.atp.core.api.IdGenerator;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
-
-import org.reveno.atp.api.commands.CommandContext;
-import org.reveno.atp.api.transaction.TransactionContext;
-import org.reveno.atp.core.api.IdGenerator;
 
 public class DefaultIdGenerator implements IdGenerator, BiConsumer<DefaultIdGenerator.NextIdTransaction, TransactionContext> {
 	

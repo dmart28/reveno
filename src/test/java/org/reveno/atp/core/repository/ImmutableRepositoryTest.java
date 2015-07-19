@@ -16,13 +16,13 @@
 
 package org.reveno.atp.core.repository;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.reveno.atp.api.domain.WriteableRepository;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ImmutableRepositoryTest {
 

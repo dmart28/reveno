@@ -16,13 +16,7 @@
 
 package org.reveno.atp.core.storage;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.IOException;
-
+import com.google.common.io.Files;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,7 +24,10 @@ import org.reveno.atp.core.api.storage.JournalsStorage.JournalStore;
 import org.reveno.atp.core.api.storage.SnapshotStorage.SnapshotStore;
 import org.reveno.atp.test.utils.FileUtils;
 
-import com.google.common.io.Files;
+import java.io.File;
+import java.io.IOException;
+
+import static org.junit.Assert.*;
 
 public class FileSystemStorageTest {
 

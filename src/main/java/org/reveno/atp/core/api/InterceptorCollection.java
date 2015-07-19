@@ -16,13 +16,13 @@
 
 package org.reveno.atp.core.api;
 
+import org.reveno.atp.api.transaction.TransactionInterceptor;
+import org.reveno.atp.api.transaction.TransactionStage;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.reveno.atp.api.transaction.TransactionInterceptor;
-import org.reveno.atp.api.transaction.TransactionStage;
 
 public class InterceptorCollection {
 

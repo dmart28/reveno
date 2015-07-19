@@ -16,11 +16,11 @@
 
 package org.reveno.atp.core.data;
 
-import static org.reveno.atp.utils.BinaryUtils.bytesToLong;
-
 import org.reveno.atp.core.api.Decoder;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
+
+import static org.reveno.atp.utils.BinaryUtils.bytesToInt;
 
 public class ChannelDecoder implements Decoder<Buffer> {
 
@@ -29,26 +29,26 @@ public class ChannelDecoder implements Decoder<Buffer> {
 		if (prevBuffer != null && prevBuffer.remaining() > 0) {
 			int remains = prevBuffer.remaining();
 			if (lastSize == 0L) {
-				byte[] lengthBytes = prevBuffer.readBytes(8);
-				buffer.readBytes(lengthBytes, remains, 8 - remains);
-				lastSize = bytesToLong(lengthBytes);
+				byte[] lengthBytes = prevBuffer.readBytes(4);
+				buffer.readBytes(lengthBytes, remains, 4 - remains);
+				lastSize = bytesToInt(lengthBytes);
 				if (lastSize == 0) return null;
 				return readBuffer(buffer);
 			} else {
-				byte[] data = prevBuffer.readBytes((int)lastSize);
+				byte[] data = prevBuffer.readBytes(lastSize);
 				if (lastSize == 0) return null;
-				buffer.readBytes(data, remains, (int)(lastSize - remains));
-				NettyBasedBuffer b = new NettyBasedBuffer((int)lastSize, false);
+				buffer.readBytes(data, remains, (lastSize - remains));
+				NettyBasedBuffer b = new NettyBasedBuffer(lastSize, false);
 				b.writeBytes(data);
 				return b;
 			}
 		} else {
-			if (buffer.remaining() < 8) {
-				lastSize = 0L;
+			if (buffer.remaining() < 4) {
+				lastSize = 0;
 				return null;
 			}
 			if (!useLastSize)
-				lastSize = buffer.readLong();
+				lastSize = buffer.readInt();
 			else
 				useLastSize = false;
 			if (lastSize == 0) return null;
@@ -58,8 +58,8 @@ public class ChannelDecoder implements Decoder<Buffer> {
 
 	protected Buffer readBuffer(Buffer buffer) {
 		if (lastSize <= buffer.remaining()) {
-			NettyBasedBuffer b = new NettyBasedBuffer((int)lastSize, (int)lastSize, false);
-			byte[] data = buffer.readBytes((int)lastSize);
+			NettyBasedBuffer b = new NettyBasedBuffer(lastSize, lastSize, false);
+			byte[] data = buffer.readBytes(lastSize);
 			b.writeBytes(data);
 			return b;
 		} else {
@@ -70,6 +70,6 @@ public class ChannelDecoder implements Decoder<Buffer> {
 	}
 	
 	private boolean useLastSize = false;
-	private long lastSize = 0L;
+	private int lastSize = 0;
 
 }

@@ -16,10 +16,10 @@
 
 package org.reveno.atp.core.events;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.reveno.atp.api.EventsManager.EventMetadata;
 import org.reveno.atp.core.api.Destroyable;
+
+import java.util.concurrent.CompletableFuture;
 
 public class Event implements Destroyable {
 	

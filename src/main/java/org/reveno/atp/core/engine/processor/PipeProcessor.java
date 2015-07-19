@@ -16,10 +16,10 @@
 
 package org.reveno.atp.core.engine.processor;
 
+import org.reveno.atp.core.api.Destroyable;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
-
-import org.reveno.atp.core.api.Destroyable;
 
 @SuppressWarnings("unchecked")
 public interface PipeProcessor<T extends Destroyable> {

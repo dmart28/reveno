@@ -16,8 +16,6 @@
 
 package org.reveno.atp.performance_tests;
 
-import java.text.DecimalFormat;
-
 import org.junit.Test;
 import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
 import org.reveno.atp.acceptance.api.transactions.Credit;
@@ -26,10 +24,12 @@ import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.core.Engine;
 
+import java.text.DecimalFormat;
+
 public class LatencyTest extends RevenoBaseTest {
 
-	public static final long TOTAL_TRANSACTIONS = 103_000_000;
-	public static final long COLD_START_COUNT = 10_000_000;
+	public static final long TOTAL_TRANSACTIONS = 120_000_000;
+	public static final long COLD_START_COUNT = 20_000_000;
 	
 	public static void main(String[] args) throws Exception {
 		LatencyTest test = new LatencyTest();
@@ -46,7 +46,8 @@ public class LatencyTest extends RevenoBaseTest {
 		final long[] worstLatency = { 0L };
 		final long[] worstCount = { 0L };
 		final long[] bestCount = { 0L };
-		Engine engine = createEngine((e) -> {
+		Engine engine = createEngine(e -> {
+            e.config().preallocationSize(8 * 1024 * 1024 * 1024L);
 			e.interceptors().add(TransactionStage.REPLICATION, (id, time, r, s) -> {
 				if (++counter[0] > COLD_START_COUNT) {
 					final long lat = System.nanoTime() - time;
@@ -68,13 +69,18 @@ public class LatencyTest extends RevenoBaseTest {
 		final long accountId = sendCommandSync(engine, new CreateNewAccountCommand("USD", 1000_000L));
 		
 		Credit cmd = new Credit(accountId, 2, 0L);
-		Thread[] ths = new Thread[Runtime.getRuntime().availableProcessors() / 2];
+		Thread[] ths = new Thread[threadCount()];
 		for (int a = 0; a < ths.length; a++) {
 			Thread t1 = new Thread(() -> {
+				try {
 				for (long j = 1; j < TOTAL_TRANSACTIONS / 100_000; j++) {
 					for (long i = 1; i <= 100_000; i++) {
 						engine.executeCommand(cmd);
 					}
+					Thread.yield();
+				}
+				} catch (Throwable t) {
+					t.printStackTrace();
 				}
 				});
 				t1.start();
@@ -87,23 +93,19 @@ public class LatencyTest extends RevenoBaseTest {
 		
 		sendCommandSync(engine, new Credit(accountId, 2, System.currentTimeMillis()));
 		
-		log.info("Avg latency: " + ((double)latency[0] / ((TOTAL_TRANSACTIONS) * (Runtime.getRuntime().availableProcessors()/2) - COLD_START_COUNT)));
-		log.info("Worst latency: " + worstLatency[0]);
+		log.info("Avg latency: " + (int)(((double)latency[0] / ((TOTAL_TRANSACTIONS) * threadCount() - COLD_START_COUNT))) + " nanos");
+		log.info("Worst latency: " + new DecimalFormat("##.###").format(worstLatency[0] / 1_000_000d) + " millis");
 		log.info("Worst precent: " + 
-				new DecimalFormat("##.########").format((((double)worstCount[0] / (TOTAL_TRANSACTIONS * (Runtime.getRuntime().availableProcessors()/2) - COLD_START_COUNT)) * 100)) + "%");
+				new DecimalFormat("##.########").format((((double)worstCount[0] / (TOTAL_TRANSACTIONS * threadCount() - COLD_START_COUNT)) * 100)) + "%");
 		log.info("Best precent: " + 
-				new DecimalFormat("##.########").format((((double)bestCount[0] / (TOTAL_TRANSACTIONS * (Runtime.getRuntime().availableProcessors()/2) - COLD_START_COUNT)) * 100)) + "%");
+				new DecimalFormat("##.########").format((((double)bestCount[0] / (TOTAL_TRANSACTIONS * threadCount() - COLD_START_COUNT)) * 100)) + "%");
 		sleep(2000);
 		
 		engine.shutdown();
 	}
-	
-	public static class TimeHolder {
-		public final long time;
-		
-		public TimeHolder(long time) {
-			this.time = time;
-		}
-	}
-	
+
+    private int threadCount() {
+        return Math.max(1, Runtime.getRuntime().availableProcessors() / 4);
+    }
+
 }

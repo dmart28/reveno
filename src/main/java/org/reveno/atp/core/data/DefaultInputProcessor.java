@@ -16,12 +16,6 @@
 
 package org.reveno.atp.core.data;
 
-import java.io.Closeable;
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
 import org.reveno.atp.core.api.InputProcessor;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
@@ -29,6 +23,12 @@ import org.reveno.atp.core.api.storage.JournalsStorage;
 import org.reveno.atp.core.api.storage.JournalsStorage.JournalStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.Closeable;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class DefaultInputProcessor implements InputProcessor, Closeable {
 	

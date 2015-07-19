@@ -16,17 +16,16 @@
 
 package org.reveno.atp.core.serialization;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
+import org.reveno.atp.core.channel.ByteBufferWrapper;
+import org.reveno.atp.core.engine.components.SerializersChain;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import org.junit.Assert;
-import org.junit.Test;
-import org.reveno.atp.core.api.channel.Buffer;
-import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
-import org.reveno.atp.core.channel.NettyBasedBuffer;
-import org.reveno.atp.core.engine.components.SerializersChain;
 
 public class SerializersChainTest {
 
@@ -37,11 +36,13 @@ public class SerializersChainTest {
 		serializers.add(new DefaultJavaSerializer());
 		
 		SerializersChain chain = new SerializersChain(serializers);
-		Buffer buffer = new NettyBasedBuffer();
+        ByteBufferWrapper buffer = new ByteBufferWrapper(java.nio.ByteBuffer.allocate(1024 * 1024));
 		chain.registerTransactionType(User.class);
 		
 		User user = new User("Artem", 22);
 		chain.serializeCommands(Arrays.asList(new Object[] { user }), buffer);
+
+        buffer.getBuffer().flip();
 
 		user = (User)chain.deserializeCommands(buffer).get(0);
 		Assert.assertEquals("Artem", user.getName());
@@ -55,26 +56,14 @@ public class SerializersChainTest {
 		serializers.add(new DefaultJavaSerializer());
 		
 		SerializersChain chain = new SerializersChain(serializers);
-		Buffer buffer = new NettyBasedBuffer();
+        ByteBufferWrapper buffer = new ByteBufferWrapper(java.nio.ByteBuffer.allocate(1024 * 1024));
 		chain.registerTransactionType(Empty.class);
 		chain.serializeCommands(Arrays.asList(new Object[] { new Empty() }), buffer);
+        buffer.getBuffer().flip();
 		Empty empty = (Empty)chain.deserializeCommands(buffer).get(0);
 		
 		Assert.assertNotNull(empty);
 	}
-	
-	@Test(expected = RuntimeException.class)
-	public void testProtostuffFailJavaFail() {
-		List<TransactionInfoSerializer> serializers = new ArrayList<>();
-		serializers.add(new ProtostuffSerializer());
-		serializers.add(new DefaultJavaSerializer());
-		
-		SerializersChain chain = new SerializersChain(serializers);
-		Buffer buffer = new NettyBasedBuffer();
-		chain.registerTransactionType(FullyEmpty.class);
-		chain.serializeCommands(Arrays.asList(new Object[] { new FullyEmpty() }), buffer);
-	}
-	
 	
 	public static class FullyEmpty {}
 	@SuppressWarnings("serial")

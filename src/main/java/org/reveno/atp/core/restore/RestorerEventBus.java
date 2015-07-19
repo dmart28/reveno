@@ -16,10 +16,6 @@
 
 package org.reveno.atp.core.restore;
 
-import java.util.Iterator;
-import java.util.Set;
-import java.util.TreeSet;
-
 import org.reveno.atp.api.transaction.EventBus;
 import org.reveno.atp.commons.LongRange;
 import org.reveno.atp.core.api.EventsCommitInfo;
@@ -27,6 +23,10 @@ import org.reveno.atp.core.api.RestoreableEventBus;
 import org.reveno.atp.core.events.EventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class RestorerEventBus implements RestoreableEventBus {
 

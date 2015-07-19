@@ -23,7 +23,8 @@ public interface Configuration {
 	void modelType(ModelType modelType);
 	
 	void cpuConsumption(CpuConsumption cpuConsumption);
-	
+
+    void preallocationSize(long size);
 	
 	public static interface SnapshotConfiguration {
 		void snapshotAtShutdown(boolean takeSnapshot);

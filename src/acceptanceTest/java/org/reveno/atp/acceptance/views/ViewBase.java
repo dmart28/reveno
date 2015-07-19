@@ -16,10 +16,10 @@
 
 package org.reveno.atp.acceptance.views;
 
+import org.reveno.atp.api.query.QueryManager;
+
 import java.util.Optional;
 import java.util.stream.Stream;
-
-import org.reveno.atp.api.query.QueryManager;
 
 public class ViewBase {
 

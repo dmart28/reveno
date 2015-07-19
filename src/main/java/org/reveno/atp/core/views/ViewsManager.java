@@ -16,10 +16,10 @@
 
 package org.reveno.atp.core.views;
 
+import org.reveno.atp.api.query.ViewsMapper;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.reveno.atp.api.query.ViewsMapper;
 
 public class ViewsManager {
 

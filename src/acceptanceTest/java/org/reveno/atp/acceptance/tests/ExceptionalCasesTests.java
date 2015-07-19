@@ -16,11 +16,6 @@
 
 package org.reveno.atp.acceptance.tests;
 
-import java.io.File;
-import java.io.RandomAccessFile;
-import java.util.Collection;
-import java.util.Optional;
-
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,6 +25,11 @@ import org.reveno.atp.acceptance.api.events.OrderCreatedEvent;
 import org.reveno.atp.acceptance.model.Order.OrderType;
 import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
+
+import java.io.File;
+import java.io.RandomAccessFile;
+import java.util.Collection;
+import java.util.Optional;
 
 public class ExceptionalCasesTests extends RevenoBaseTest {
 

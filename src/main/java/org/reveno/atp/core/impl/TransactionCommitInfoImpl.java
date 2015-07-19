@@ -16,9 +16,9 @@
 
 package org.reveno.atp.core.impl;
 
-import java.util.List;
-
 import org.reveno.atp.core.api.TransactionCommitInfo;
+
+import java.util.List;
 
 public class TransactionCommitInfoImpl implements TransactionCommitInfo {
 

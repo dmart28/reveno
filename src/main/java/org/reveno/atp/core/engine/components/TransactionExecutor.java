@@ -16,9 +16,6 @@
 
 package org.reveno.atp.core.engine.components;
 
-import java.util.List;
-import java.util.Optional;
-
 import org.reveno.atp.api.commands.CommandContext;
 import org.reveno.atp.api.domain.Repository;
 import org.reveno.atp.api.domain.WriteableRepository;
@@ -30,6 +27,9 @@ import org.reveno.atp.core.disruptor.ProcessorContext;
 import org.reveno.atp.core.engine.WorkflowContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Optional;
 
 public class TransactionExecutor {
 

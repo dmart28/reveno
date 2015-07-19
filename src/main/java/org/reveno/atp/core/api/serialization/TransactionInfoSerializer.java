@@ -1,9 +1,9 @@
 package org.reveno.atp.core.api.serialization;
 
-import java.util.List;
-
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.channel.Buffer;
+
+import java.util.List;
 
 public interface TransactionInfoSerializer {
 

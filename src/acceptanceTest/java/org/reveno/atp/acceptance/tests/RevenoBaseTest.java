@@ -16,18 +16,7 @@
 
 package org.reveno.atp.acceptance.tests;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-
+import com.google.common.io.Files;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -64,7 +53,13 @@ import org.reveno.atp.test.utils.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.io.Files;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 @RunWith(Parameterized.class)
 public class RevenoBaseTest {

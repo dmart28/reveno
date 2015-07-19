@@ -16,10 +16,10 @@
 
 package org.reveno.atp.clustering.api;
 
-import java.util.function.Consumer;
-
 import org.reveno.atp.clustering.api.message.Marshaller;
 import org.reveno.atp.clustering.api.message.Message;
+
+import java.util.function.Consumer;
 
 
 public interface Cluster {

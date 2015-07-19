@@ -16,14 +16,14 @@
 
 package org.reveno.atp.acceptance.model.mutable;
 
+import org.reveno.atp.acceptance.model.Fill;
+import org.reveno.atp.acceptance.model.Position;
+import org.reveno.atp.acceptance.model.PositionBook;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import org.reveno.atp.acceptance.model.Fill;
-import org.reveno.atp.acceptance.model.Position;
-import org.reveno.atp.acceptance.model.PositionBook;
 
 public class MutablePositionBook implements PositionBook {
 

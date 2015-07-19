@@ -16,20 +16,16 @@
 
 package org.reveno.atp.core.serialization.protostuff;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Queue;
-
+import io.protostuff.ByteString;
+import io.protostuff.Input;
+import io.protostuff.Output;
+import io.protostuff.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.dyuproject.protostuff.ByteString;
-import com.dyuproject.protostuff.Input;
-import com.dyuproject.protostuff.Output;
-import com.dyuproject.protostuff.Schema;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 public class InputOutputHolder implements Input, Output {
 	
@@ -177,8 +173,13 @@ public class InputOutputHolder implements Input, Output {
 		}
 		insert(fieldNumber, cb);
 	}
-	
-	private void insert(int fieldNumber, Object value) {
+
+    @Override
+    public void writeBytes(int i, ByteBuffer byteBuffer, boolean b) throws IOException {
+
+    }
+
+    private void insert(int fieldNumber, Object value) {
 		fields.add(fieldNumber);
 		data.add(value);
 	}
@@ -286,7 +287,12 @@ public class InputOutputHolder implements Input, Output {
 		return (byte[]) data.remove();
 	}
 
-	@Override
+    @Override
+    public ByteBuffer readByteBuffer() throws IOException {
+        return null;
+    }
+
+    @Override
 	public <T> T mergeObject(T value, Schema<T> schema) throws IOException {
 		InputOutputHolder cb = (InputOutputHolder) data.remove();
 		try {

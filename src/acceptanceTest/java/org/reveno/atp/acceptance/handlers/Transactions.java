@@ -16,8 +16,6 @@
 
 package org.reveno.atp.acceptance.handlers;
 
-import java.util.Optional;
-
 import org.reveno.atp.acceptance.api.events.AccountCreatedEvent;
 import org.reveno.atp.acceptance.api.events.OrderCreatedEvent;
 import org.reveno.atp.acceptance.api.transactions.AcceptOrder;
@@ -30,6 +28,8 @@ import org.reveno.atp.acceptance.model.Order;
 import org.reveno.atp.acceptance.model.Order.OrderFactory;
 import org.reveno.atp.acceptance.model.Order.OrderStatus;
 import org.reveno.atp.api.transaction.TransactionContext;
+
+import java.util.Optional;
 
 public abstract class Transactions {
 

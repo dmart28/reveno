@@ -16,9 +16,9 @@
 
 package org.reveno.atp.core.api;
 
-import java.util.function.Consumer;
-
 import org.reveno.atp.core.api.channel.Buffer;
+
+import java.util.function.Consumer;
 
 public interface FailoverManager {
 	

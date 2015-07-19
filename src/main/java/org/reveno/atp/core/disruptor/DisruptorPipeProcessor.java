@@ -16,6 +16,17 @@
 
 package org.reveno.atp.core.disruptor;
 
+import com.lmax.disruptor.*;
+import com.lmax.disruptor.dsl.Disruptor;
+import com.lmax.disruptor.dsl.EventHandlerGroup;
+import com.lmax.disruptor.dsl.ProducerType;
+import org.reveno.atp.api.Configuration.CpuConsumption;
+import org.reveno.atp.core.api.Destroyable;
+import org.reveno.atp.core.engine.processor.PipeProcessor;
+import org.reveno.atp.core.engine.processor.ProcessorHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -24,24 +35,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import org.reveno.atp.api.Configuration.CpuConsumption;
-import org.reveno.atp.core.api.Destroyable;
-import org.reveno.atp.core.engine.processor.PipeProcessor;
-import org.reveno.atp.core.engine.processor.ProcessorHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.lmax.disruptor.BlockingWaitStrategy;
-import com.lmax.disruptor.EventFactory;
-import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.PhasedBackoffWaitStrategy;
-import com.lmax.disruptor.SleepingWaitStrategy;
-import com.lmax.disruptor.WaitStrategy;
-import com.lmax.disruptor.YieldingWaitStrategy;
-import com.lmax.disruptor.dsl.Disruptor;
-import com.lmax.disruptor.dsl.EventHandlerGroup;
-import com.lmax.disruptor.dsl.ProducerType;
 
 @SuppressWarnings("unchecked")
 public abstract class DisruptorPipeProcessor<T extends Destroyable> implements PipeProcessor<T> {

@@ -16,12 +16,12 @@
 
 package org.reveno.atp.api;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.api.query.QueryManager;
+
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Core engine interface. It provides with all starting points for working

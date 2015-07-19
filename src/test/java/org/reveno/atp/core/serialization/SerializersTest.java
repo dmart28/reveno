@@ -1,17 +1,16 @@
 package org.reveno.atp.core.serialization;
 
-import java.util.Arrays;
-import java.util.HashMap;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.core.api.TransactionCommitInfo;
-import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
-import org.reveno.atp.core.channel.BufferMock;
+import org.reveno.atp.core.channel.ByteBufferWrapper;
 import org.reveno.atp.core.impl.TransactionCommitInfoImpl;
+
+import java.util.Arrays;
+import java.util.HashMap;
 
 public class SerializersTest {
 
@@ -45,9 +44,10 @@ public class SerializersTest {
 		data.data.put(User.class, new HashMap<>());
 		data.data.get(User.class).put(1L, u1);
 		data.data.get(User.class).put(2L, u2);
-		
-		Buffer buffer = new BufferMock();
+
+        ByteBufferWrapper buffer = new ByteBufferWrapper(java.nio.ByteBuffer.allocate(1024 * 1024));
 		rdSer.serialize(data, buffer);
+        buffer.getBuffer().flip();
 		data = rdSer.deserialize(buffer);
 		
 		Assert.assertEquals(u1, data.data.get(User.class).get(1L));
@@ -58,6 +58,7 @@ public class SerializersTest {
 		TransactionCommitInfo ti = new TransactionCommitInfoImpl.PojoBuilder().create()
 				.transactionId(2).version(3).time(4).transactionCommits(Arrays.asList(new Object[] { u1, u2 }));
 		tiSer.serialize(ti, buffer);
+        buffer.getBuffer().flip();
 		ti = tiSer.deserialize(new TransactionCommitInfoImpl.PojoBuilder(), buffer);
 		
 		Assert.assertEquals(ti.transactionId(), 2L);

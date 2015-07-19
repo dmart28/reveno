@@ -16,10 +16,10 @@
 
 package org.reveno.atp.acceptance.views;
 
+import org.reveno.atp.api.query.QueryManager;
+
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import org.reveno.atp.api.query.QueryManager;
 
 public class AccountView extends ViewBase {
 	public final long accountId;

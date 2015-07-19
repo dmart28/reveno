@@ -16,13 +16,13 @@
 
 package org.reveno.atp.core.channel;
 
-import static org.reveno.atp.utils.MeasureUtils.kb;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
+import org.reveno.atp.core.api.channel.Buffer;
 
 import java.nio.ByteBuffer;
 
-import org.reveno.atp.core.api.channel.Buffer;
+import static org.reveno.atp.utils.MeasureUtils.kb;
 
 public class NettyBasedBuffer implements Buffer {
 
@@ -49,8 +49,18 @@ public class NettyBasedBuffer implements Buffer {
 		
 		return bytes;
 	}
-	
-	@Override
+
+    @Override
+    public int position() {
+        return buffer.readerIndex();
+    }
+
+    @Override
+    public int limit() {
+        return buffer.writerIndex();
+    }
+
+    @Override
 	public long capacity() {
 		return buffer.capacity();
 	}
@@ -64,8 +74,23 @@ public class NettyBasedBuffer implements Buffer {
 	public boolean isAvailable() {
 		return buffer.writerIndex() - buffer.readerIndex() > 0;
 	}
-	
-	@Override 
+
+    @Override
+    public void setPosition(int position) {
+        buffer.readerIndex(position);
+    }
+
+    @Override
+    public void setLimit(int limit) {
+        buffer.writerIndex(limit);
+    }
+
+    @Override
+    public void writeByte(byte b) {
+        buffer.writeByte(b);
+    }
+
+    @Override
 	public int remaining() {
 		return buffer.readableBytes();
 	}
@@ -86,7 +111,12 @@ public class NettyBasedBuffer implements Buffer {
 		buffer.writeBytes(bytes);
 	}
 
-	@Override
+    @Override
+    public void writeBytes(byte[] bytes, int offset, int count) {
+        buffer.writeBytes(bytes, offset, count);
+    }
+
+    @Override
 	public void writeLong(long value) {
 		buffer.writeLong(value);
 	}
@@ -95,13 +125,23 @@ public class NettyBasedBuffer implements Buffer {
 	public void writeInt(int value) {
 		buffer.writeInt(value);
 	}
-	
-	@Override 
+
+    @Override
+    public void writeShort(short s) {
+        buffer.writeShort(s);
+    }
+
+    @Override
 	public void writeFromBuffer(ByteBuffer bb) {
 		buffer.writeBytes(bb);
 	}
-	
-	@Override
+
+    @Override
+    public ByteBuffer writeToBuffer() {
+        return buffer.nioBuffer();
+    }
+
+    @Override
 	public void writeFromBuffer(Buffer b) {
 		if (b instanceof NettyBasedBuffer) {
 			buffer.writeBytes(((NettyBasedBuffer)b).buffer);
@@ -110,7 +150,12 @@ public class NettyBasedBuffer implements Buffer {
 		}
 	}
 
-	@Override
+    @Override
+    public byte readByte() {
+        return buffer.readByte();
+    }
+
+    @Override
 	public byte[] readBytes() {
 		return readBytes(buffer.readableBytes());
 	}
@@ -136,8 +181,13 @@ public class NettyBasedBuffer implements Buffer {
 	public int readInt() {
 		return buffer.readInt();
 	}
-	
-	@Override
+
+    @Override
+    public short readShort() {
+        return buffer.readShort();
+    }
+
+    @Override
 	public int hashCode() {
 		return buffer.hashCode();
 	}

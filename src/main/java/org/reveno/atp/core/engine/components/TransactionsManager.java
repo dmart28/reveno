@@ -16,12 +16,12 @@
 
 package org.reveno.atp.core.engine.components;
 
+import org.reveno.atp.api.transaction.TransactionContext;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
-
-import org.reveno.atp.api.transaction.TransactionContext;
 
 public class TransactionsManager {
 

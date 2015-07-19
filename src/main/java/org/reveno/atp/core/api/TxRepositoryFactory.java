@@ -16,9 +16,9 @@
 
 package org.reveno.atp.core.api;
 
-import java.util.Optional;
-
 import org.reveno.atp.api.domain.RepositoryData;
+
+import java.util.Optional;
 
 @FunctionalInterface
 public interface TxRepositoryFactory {

@@ -16,9 +16,9 @@
 
 package org.reveno.atp.acceptance.model.immutable;
 
-import java.util.Optional;
-
 import org.reveno.atp.acceptance.model.Order;
+
+import java.util.Optional;
 
 public class ImmutableOrder implements Order {
 

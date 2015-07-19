@@ -16,13 +16,13 @@
 
 package org.reveno.atp.acceptance.model.immutable;
 
+import org.reveno.atp.acceptance.model.Account;
+import org.reveno.atp.acceptance.model.Fill;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.reveno.atp.acceptance.model.Account;
-import org.reveno.atp.acceptance.model.Fill;
 
 public class ImmutableAccount implements Account {
 
