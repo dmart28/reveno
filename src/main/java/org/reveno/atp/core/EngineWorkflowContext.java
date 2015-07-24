@@ -31,6 +31,16 @@ import org.reveno.atp.core.views.ViewsProcessor;
 
 public class EngineWorkflowContext implements WorkflowContext {
 
+	private RevenoConfiguration configuration;
+	@Override
+	public RevenoConfiguration configuration() {
+		return configuration;
+	}
+	public EngineWorkflowContext configuration(RevenoConfiguration configuration) {
+		this.configuration = configuration;
+		return this;
+	}
+	
 	private IdGenerator idGenerator;
 	@Override
 	public IdGenerator idGenerator() {

@@ -166,6 +166,13 @@ public class Engine implements Reveno {
 			}
 			
 			@Override
+			public <T> void transactionWithRollbackAction(Class<T> transaction,
+					BiConsumer<T, TransactionContext> handler, BiConsumer<T, TransactionContext> rollbackHandler) {
+				serializer.registerTransactionType(transaction);
+				transactionsManager.registerTransaction(transaction, handler, true);
+			}
+			
+			@Override
 			public RevenoManager snapshotWith(RepositorySnapshotter snapshotter) {
 				snapshotsManager.registerSnapshotter(snapshotter);
 				lastSnapshotter = snapshotter;
@@ -261,7 +268,8 @@ public class Engine implements Reveno {
 		EngineWorkflowContext workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
 				.viewsProcessor(viewsProcessor).transactionsManager(transactionsManager).commandsManager(commandsManager)
 				.eventPublisher(eventPublisher).transactionCommitBuilder(txBuilder).transactionJournaler(transactionsJournaler)
-				.idGenerator(idGenerator).roller(roller).snapshotsManager(snapshotsManager).interceptorCollection(interceptors);
+				.idGenerator(idGenerator).roller(roller).snapshotsManager(snapshotsManager).interceptorCollection(interceptors)
+				.configuration(config);
 		workflowEngine = new WorkflowEngine(processor, workflowContext, config.modelType());
 		restorer = new DefaultSystemStateRestorer(journalsStorage, workflowContext, eventsContext, workflowEngine);
 	}

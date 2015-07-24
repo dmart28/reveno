@@ -35,6 +35,14 @@ public class RevenoConfiguration implements Configuration {
 	public RevenoDisruptorConfiguration revenoDisruptor() {
 		return disruptor;
 	}
+	
+	@Override
+	public void mutableModelFailover(MutableModelFailover mutableModelFailover) {
+		this.mutableModelFailover = mutableModelFailover;
+	}
+	public MutableModelFailover mutableModelFailover() {
+		return mutableModelFailover;
+	}
 
 	@Override
 	public void modelType(ModelType modelType) {
@@ -66,8 +74,9 @@ public class RevenoConfiguration implements Configuration {
 	
 	protected RevenoSnapshotConfiguration snapshotting = new RevenoSnapshotConfiguration();
 	protected RevenoDisruptorConfiguration disruptor = new RevenoDisruptorConfiguration();
-	protected CpuConsumption cpuConsumption = CpuConsumption.PHASED;
+	protected CpuConsumption cpuConsumption = CpuConsumption.NORMAL;
 	protected ModelType modelType = ModelType.IMMUTABLE;
+	protected MutableModelFailover mutableModelFailover = MutableModelFailover.SNAPSHOTS;
     protected long preallocationSize = 0L;
 	
 	public static class RevenoSnapshotConfiguration implements SnapshotConfiguration {

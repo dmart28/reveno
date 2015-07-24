@@ -16,24 +16,35 @@
 
 package org.reveno.atp.core.engine.components;
 
-import org.reveno.atp.api.transaction.TransactionContext;
-
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
+import org.reveno.atp.api.transaction.TransactionContext;
+
 public class TransactionsManager {
 
-	@SuppressWarnings("unchecked")
 	public <T> void registerTransaction(Class<T> transactionType, BiConsumer<T, TransactionContext> handler) {
-		txs.put(transactionType, (BiConsumer<Object, TransactionContext>) handler);
+		registerTransaction(transactionType, handler, false);
 	}
 	
-	public void execute(List<Object> transactions, TransactionContext context) {
-		transactions.forEach(t -> txs.get(t.getClass()).accept(t, context));
+	@SuppressWarnings("unchecked")
+	public <T> void registerTransaction(Class<T> transactionType, BiConsumer<T, TransactionContext> handler, boolean rollback) {
+		if (!rollback)
+			txs.put(transactionType, (BiConsumer<Object, TransactionContext>) handler);
+		else 
+			rollbackTxs.put(transactionType, (BiConsumer<Object, TransactionContext>) handler);
+	}
+	
+	public void execute(Object transaction, TransactionContext context) {
+		txs.get(transaction.getClass()).accept(transaction, context);
+	}
+	
+	public void rollback(Object transaction, TransactionContext context) {
+		rollbackTxs.get(transaction.getClass()).accept(transaction, context);
 	}
 	
 	protected Map<Class<?>, BiConsumer<Object, TransactionContext>> txs = new HashMap<>();
+	protected Map<Class<?>, BiConsumer<Object, TransactionContext>> rollbackTxs = new HashMap<>();
 	
 }

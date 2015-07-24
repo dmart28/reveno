@@ -17,6 +17,7 @@
 package org.reveno.atp.core.engine;
 
 import org.reveno.atp.core.JournalsRoller;
+import org.reveno.atp.core.RevenoConfiguration;
 import org.reveno.atp.core.api.*;
 import org.reveno.atp.core.engine.components.CommandsManager;
 import org.reveno.atp.core.engine.components.SerializersChain;
@@ -26,6 +27,9 @@ import org.reveno.atp.core.snapshots.SnapshottersManager;
 import org.reveno.atp.core.views.ViewsProcessor;
 
 public interface WorkflowContext {
+	
+	public RevenoConfiguration configuration();
+	
 	
 	public IdGenerator idGenerator();
 	

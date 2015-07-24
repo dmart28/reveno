@@ -24,6 +24,8 @@ public interface Configuration {
 	
 	void modelType(ModelType modelType);
 	
+	void mutableModelFailover(MutableModelFailover mutableModelFailover);
+	
 	void cpuConsumption(CpuConsumption cpuConsumption);
 
     void preallocationSize(long size);
@@ -40,6 +42,8 @@ public interface Configuration {
 	}
 	
 	public static enum ModelType { MUTABLE, IMMUTABLE }
+	
+	public static enum MutableModelFailover { SNAPSHOTS, ROLLBACK_ACTIONS }
 	
 	public static enum CpuConsumption { LOW, NORMAL, HIGH, PHASED }
 	

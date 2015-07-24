@@ -16,6 +16,15 @@
 
 package org.reveno.atp.core.engine.components;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
+
+import org.reveno.atp.api.Configuration.ModelType;
+import org.reveno.atp.api.Configuration.MutableModelFailover;
 import org.reveno.atp.api.commands.CommandContext;
 import org.reveno.atp.api.domain.Repository;
 import org.reveno.atp.api.domain.WriteableRepository;
@@ -28,42 +37,73 @@ import org.reveno.atp.core.engine.WorkflowContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Optional;
-
 public class TransactionExecutor {
 
 	public void executeCommands(ProcessorContext c, WorkflowContext services) {
+		ListIterator<Object> cmdIterator = c.getCommands().listIterator();
+		ListIterator<Object> transactionIterator = c.getTransactions().listIterator();
 		try {
 			c.eventBus().currentTransactionId(c.transactionId()).underlyingEventBus(c.defaultEventBus());
 			repository.underlying(services.repository()).map(c.getMarkedRecords());
-			transactionContext.withContext(c).withRepository(repository);
+			transactionContext.withContext(c).withRepository(repository).reset();
 			commandContext.withRepository(repository).withTransactionsHolder(c.getTransactions()).idGenerator(services.idGenerator());
 			
-			services.repository().begin();
+			begin(services);
 			
-			 if (c.isRestore()) {
-				executeTransactions(services, c);
+			if (c.isRestore()) {
+				executeTransactions(services, transactionIterator);
 			} else {
-				c.getCommands().forEach(cmd -> {
-					Object result = services.commandsManager().execute(cmd, commandContext);
-					executeTransactions(services, c);
+				while (cmdIterator.hasNext()) {
+					Object result = services.commandsManager().execute(cmdIterator.next(), commandContext);
+					transactionIterator = c.getTransactions().listIterator();
+					executeTransactions(services, transactionIterator);
 					if (c.hasResult())
 						c.commandResult(result);
-				});
+				}
 			}
 			
-			services.repository().commit();
+			commit(services);
 			setSystemInfo(services, c.transactionId());
 		} catch (Throwable t) {
 			c.abort(t);
 			log.error("executeCommands", t);
-			services.repository().rollback();
+			rollback(services, c, cmdIterator, transactionIterator);
 		}
 	}
 
-	protected void executeTransactions(WorkflowContext services, ProcessorContext c) {
-		services.transactionsManager().execute(c.getTransactions(), transactionContext);
+	protected void rollback(WorkflowContext services, ProcessorContext c, ListIterator<Object> cmdIterator, ListIterator<Object> transactionIterator) {
+		if (services.configuration().modelType() == ModelType.MUTABLE && 
+				services.configuration().mutableModelFailover() == MutableModelFailover.SNAPSHOTS) {
+			services.repository().rollback();
+		} else {
+			rollbackTransactions(services, transactionIterator);
+			while (cmdIterator.hasPrevious()) {
+				transactionIterator = c.getTransactions().listIterator();
+				services.commandsManager().execute(cmdIterator.previous(), commandContext);
+				rollbackTransactions(services, transactionIterator);
+			}
+		}
+	}
+
+	protected void commit(WorkflowContext services) {
+		if (services.configuration().modelType() == ModelType.MUTABLE && 
+				services.configuration().mutableModelFailover() == MutableModelFailover.SNAPSHOTS)
+			services.repository().commit();
+	}
+
+	protected void begin(WorkflowContext services) {
+		if (services.configuration().modelType() == ModelType.MUTABLE && 
+				services.configuration().mutableModelFailover() == MutableModelFailover.SNAPSHOTS)
+			services.repository().begin();
+	}
+
+	protected void executeTransactions(WorkflowContext services, ListIterator<Object> i) {
+		while (i.hasNext())
+			services.transactionsManager().execute(i.next(), transactionContext);
+	}
+	
+	protected void rollbackTransactions(WorkflowContext services, ListIterator<Object> transactionIterator) {
+		forEachPrev(transactionIterator, t -> services.transactionsManager().rollback(t, transactionContext));
 	}
 	
 	protected void setSystemInfo(WorkflowContext services, long transactionId) {
@@ -72,6 +112,12 @@ public class TransactionExecutor {
 			si.get().lastTransactionId = transactionId;
 		else
 			services.repository().store(0L, SystemInfo.class, new SystemInfo(transactionId));
+	}
+	
+	protected void forEachPrev(ListIterator<Object> i, Consumer<Object> c) {
+		while (i.hasPrevious()) {
+			c.accept(i.previous());
+		}
 	}
 	
 	protected RecordingRepository repository = new RecordingRepository();
@@ -120,6 +166,7 @@ public class TransactionExecutor {
 	protected static class InnerTransactionContext implements TransactionContext {
 		public EventBus eventBus;
 		public WriteableRepository repository;
+		protected Map<Object, Object> map = new HashMap<>();
 
 		@Override
 		public EventBus eventBus() {
@@ -139,6 +186,15 @@ public class TransactionExecutor {
 		public InnerTransactionContext withRepository(WriteableRepository repository) {
 			this.repository = repository;
 			return this;
+		}
+		
+		public void reset() {
+			map.clear();
+		}
+
+		@Override
+		public Map<Object, Object> data() {
+			return map;
 		}
 	}
 	
