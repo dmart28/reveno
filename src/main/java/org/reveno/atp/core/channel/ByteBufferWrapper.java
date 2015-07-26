@@ -47,7 +47,12 @@ public class ByteBufferWrapper implements Buffer {
 	}
 
     @Override
-    public int position() {
+    public int readerPosition() {
+        return buffer.position();
+    }
+    
+    @Override
+    public int writerPosition() {
         return buffer.position();
     }
 
@@ -87,7 +92,12 @@ public class ByteBufferWrapper implements Buffer {
 	}
 
     @Override
-    public void setPosition(int position) {
+    public void setReaderPosition(int position) {
+        this.buffer.position(position);
+    }
+    
+    @Override
+    public void setWriterPosition(int position) {
         this.buffer.position(position);
     }
 
@@ -188,12 +198,22 @@ public class ByteBufferWrapper implements Buffer {
     }
 
     @Override
-	public void mark() {
+	public void markReader() {
+		buffer.mark();
+	}
+    
+    @Override
+	public void markWriter() {
 		buffer.mark();
 	}
 
 	@Override
-	public void reset() {
+	public void resetReader() {
+		buffer.reset();
+	}
+	
+	@Override
+	public void resetWriter() {
 		buffer.reset();
 	}
 	

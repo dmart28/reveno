@@ -7,7 +7,9 @@ public interface Buffer {
 	
 	byte[] getBytes();
 
-    int position();
+    int readerPosition();
+    
+    int writerPosition();
 
     int limit();
 
@@ -23,7 +25,9 @@ public interface Buffer {
 	
 	boolean isAvailable();
 
-    void setPosition(int position);
+    void setReaderPosition(int position);
+    
+    void setWriterPosition(int position);
 
     void setLimit(int limit);
 
@@ -60,8 +64,12 @@ public interface Buffer {
     short readShort();
 
 	
-	void mark();
+	void markReader();
 	
-	void reset();
+	void markWriter();
+	
+	void resetReader();
+	
+	void resetWriter();
 	
 }

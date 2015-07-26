@@ -16,13 +16,15 @@
 
 package org.reveno.atp.core.repository;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.reveno.atp.api.domain.WriteableRepository;
-
-import java.util.HashSet;
-import java.util.Set;
+import org.reveno.atp.core.serialization.ProtostuffSerializer;
 
 public class MutableRepositoryTest {
 
@@ -32,7 +34,12 @@ public class MutableRepositoryTest {
 	@Before
 	public void setUp() {
 		underlyingRepository = new HashMapRepository();
-		repository = new MutableModelRepository(underlyingRepository);
+		repository = new MutableModelRepository(underlyingRepository, new ProtostuffSerializer());
+	}
+	
+	@After
+	public void tearDown() {
+		repository.destroy();
 	}
 	
 	@Test

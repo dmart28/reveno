@@ -40,6 +40,11 @@ public class SerializersChain implements TransactionInfoSerializer {
 	}
 	
 	@Override
+	public boolean isRegistered(Class<?> type) {
+		return preferedSerializer.isRegistered(type);
+	}
+	
+	@Override
 	public void registerTransactionType(Class<?> txDataType) {
 		transactionSerializers.forEach(s -> { try { s.registerTransactionType(txDataType);
 			} catch (Throwable t) { log.error("registerType", t); }});
@@ -65,10 +70,20 @@ public class SerializersChain implements TransactionInfoSerializer {
 		return tryToD(buffer, s -> s.deserializeCommands(buffer));
 	}
 	
+	@Override
+	public void serializeObject(Buffer buffer, Object tc) {
+		tryTo(buffer, s -> s.serializeObject(buffer, tc));
+	}
+
+	@Override
+	public Object deserializeObject(Buffer buffer) {
+		return tryToD(buffer, s -> s.deserializeObject(buffer));
+	}
+	
 	@SuppressWarnings("serial")
-	public SerializersChain() {
+	public SerializersChain(ClassLoader classLoader) {
 		this(new ArrayList<TransactionInfoSerializer>() {{
-			add(new ProtostuffSerializer());
+			add(new ProtostuffSerializer(classLoader));
 			add(new DefaultJavaSerializer());
 		}});
 	}
@@ -81,11 +96,11 @@ public class SerializersChain implements TransactionInfoSerializer {
 	
 	
 	protected <T> T tryToD(Buffer buffer, Function<TransactionInfoSerializer, T> f) {
-		buffer.mark();
+		buffer.markReader();
 		int serializerType = buffer.readInt();
 		TransactionInfoSerializer s = transactionSerializersMap.get(serializerType);
 		if (s == null) {
-			buffer.reset();
+			buffer.resetReader();
 			throw new IllegalArgumentException(String.format("Can't find serializer for %d.", serializerType));
 		}
 		return f.apply(s);
@@ -104,13 +119,13 @@ public class SerializersChain implements TransactionInfoSerializer {
 	protected boolean accept(Buffer buffer, Consumer<TransactionInfoSerializer> c,
 			TransactionInfoSerializer s) {
 		try {
-			buffer.mark();
+			buffer.markWriter();
 			buffer.writeInt(s.getSerializerType());
 			c.accept(s);
 			return true;
 		} catch (Throwable tw) {
 			log.error("serialize", tw);
-			buffer.reset();
+			buffer.resetWriter();
 			return false;
 		}
 	}

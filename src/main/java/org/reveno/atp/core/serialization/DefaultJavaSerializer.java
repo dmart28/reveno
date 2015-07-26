@@ -21,6 +21,11 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 	public int getSerializerType() {
 		return DEFAULT_TYPE;
 	}
+	
+	@Override
+	public boolean isRegistered(Class<?> type) {
+		return true;
+	}
 
 	@Override
 	public void registerTransactionType(Class<?> txDataType) {
@@ -109,6 +114,32 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 				ObjectInputStreamEx os = new ObjectInputStreamEx(is,
 						classLoader)) {
 			return (List<Object>) os.readObject();
+		} catch (IOException | ClassNotFoundException e) {
+			log.error("", e);
+			throw new SerializerException(Action.DESERIALIZATION, getClass(), e);
+		}
+	}
+	
+	@Override
+	public void serializeObject(Buffer buffer, Object tc) {
+		try (ByteArrayOutputStream ba = new ByteArrayOutputStream(); 
+				ObjectOutputStream os = new ObjectOutputStream(ba)) {
+			os.writeObject(tc);
+			buffer.writeInt(ba.size());
+			buffer.writeBytes(ba.toByteArray());
+		} catch (IOException e) {
+			log.error("", e);
+			throw new SerializerException(Action.SERIALIZATION, getClass(), e);
+		}
+	}
+
+	@Override
+	public Object deserializeObject(Buffer buffer) {
+		try (ByteArrayInputStream is = new ByteArrayInputStream(
+				buffer.readBytes(buffer.readInt()));
+				ObjectInputStreamEx os = new ObjectInputStreamEx(is,
+						classLoader)) {
+			return os.readObject();
 		} catch (IOException | ClassNotFoundException e) {
 			log.error("", e);
 			throw new SerializerException(Action.DESERIALIZATION, getClass(), e);

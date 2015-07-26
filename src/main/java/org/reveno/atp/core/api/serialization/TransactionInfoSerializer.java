@@ -5,11 +5,7 @@ import org.reveno.atp.core.api.channel.Buffer;
 
 import java.util.List;
 
-public interface TransactionInfoSerializer {
-
-	int getSerializerType();
-	
-	void registerTransactionType(Class<?> txDataType);
+public interface TransactionInfoSerializer extends Serializer {
 	
 	void serialize(TransactionCommitInfo info, Buffer buffer);
 	

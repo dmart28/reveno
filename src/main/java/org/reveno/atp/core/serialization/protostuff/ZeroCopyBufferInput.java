@@ -15,12 +15,12 @@ public final class ZeroCopyBufferInput implements Input {
 
     public ZeroCopyBufferInput(Buffer buffer, int limit, boolean protostuffMessage) {
         this.buffer = buffer;
-        this.limit = (int)buffer.position() + limit;
+        this.limit = buffer.readerPosition() + limit;
         this.decodeNestedMessageAsGroup = protostuffMessage;
     }
 
     public int currentOffset() {
-        return (int)this.buffer.position();
+        return (int)this.buffer.readerPosition();
     }
 
     public int currentLimit() {
@@ -28,7 +28,7 @@ public final class ZeroCopyBufferInput implements Input {
     }
 
     public boolean isCurrentFieldPacked() {
-        return this.packedLimit != 0 && this.packedLimit != this.buffer.position();
+        return this.packedLimit != 0 && this.packedLimit != this.buffer.readerPosition();
     }
 
     public int getLastTag() {
@@ -70,7 +70,7 @@ public final class ZeroCopyBufferInput implements Input {
                     throw new ProtobufException("CodedInput encountered an embedded string or message which claimed to have negative size.");
                 }
 
-                this.buffer.setPosition(this.buffer.position() + size);
+                this.buffer.setReaderPosition(this.buffer.readerPosition() + size);
                 return true;
             case 3:
                 this.skipMessage();
@@ -103,7 +103,7 @@ public final class ZeroCopyBufferInput implements Input {
             this.lastTag = 0;
             return 0;
         } else if (this.isCurrentFieldPacked()) {
-            if (this.packedLimit < this.buffer.position()) {
+            if (this.packedLimit < this.buffer.readerPosition()) {
                 throw new ProtobufException("CodedInput encountered an embedded string or bytes that misreported its size.");
             } else {
                 return this.lastTag >>> 3;
@@ -136,11 +136,11 @@ public final class ZeroCopyBufferInput implements Input {
                 throw new ProtobufException("CodedInput encountered an embedded string or message which claimed to have negative size.");
             }
 
-            if (this.buffer.position() + length > this.buffer.limit()) {
+            if (this.buffer.readerPosition() + length > this.buffer.limit()) {
                 throw new ProtobufException("CodedInput encountered an embedded string or bytes that misreported its size.");
             }
 
-            this.packedLimit = (int)this.buffer.position() + length;
+            this.packedLimit = (int)this.buffer.readerPosition() + length;
         }
 
     }
@@ -270,7 +270,7 @@ public final class ZeroCopyBufferInput implements Input {
                     throw new UninitializedMessageException(value, schema);
                 } else {
                     nestedInput.checkLastTagWas(0);
-                    this.buffer.setPosition(this.buffer.position() + length);
+                    this.buffer.setReaderPosition(this.buffer.readerPosition() + length);
                     return value;
                 }
             }
@@ -365,7 +365,7 @@ public final class ZeroCopyBufferInput implements Input {
             ByteBuffer dup1 = this.buffer.writeToBuffer();
             dup1.limit(length);
             output.writeBytes(fieldNumber, dup1, repeated);
-            this.buffer.setPosition(this.buffer.position() + length);
+            this.buffer.setReaderPosition(this.buffer.readerPosition() + length);
         }
     }
 

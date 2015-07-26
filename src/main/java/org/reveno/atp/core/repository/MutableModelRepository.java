@@ -16,18 +16,27 @@
 
 package org.reveno.atp.core.repository;
 
-import io.protostuff.Schema;
-import io.protostuff.runtime.RuntimeSchema;
+import static org.reveno.atp.utils.MeasureUtils.kb;
+
+import java.nio.charset.Charset;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
+import org.reveno.atp.core.api.Destroyable;
 import org.reveno.atp.core.api.TxRepository;
-import org.reveno.atp.core.serialization.protostuff.InputOutputHolder;
+import org.reveno.atp.core.api.channel.Buffer;
+import org.reveno.atp.core.api.serialization.Serializer;
+import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.utils.MapUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.*;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 
-public class MutableModelRepository implements TxRepository {
+public class MutableModelRepository implements TxRepository, Destroyable {
 
 	@Override
 	public <T> T store(long entityId, T entity) {
@@ -69,26 +78,25 @@ public class MutableModelRepository implements TxRepository {
 
 	@Override
 	public RepositoryData getData() {
-		// TODO ?
 		return repository.getData();
 	}
 
 	@Override
 	public Map<Long, Object> getEntities(Class<?> entityType) {
 		Map<Long, Object> entities = repository.getEntities(entityType);
-		if (isTransaction.get()) 
+		if (isTransaction.get())
 			entities.forEach((id, e) -> saveEntityState(id, entityType, e, EntityRecoveryState.UPDATE));
 		return entities;
 	}
 	
 	@Override
 	public <T> Optional<T> getClean(Class<T> entityType, long id) {
-		return get(entityType, id);
+		return repository.get(entityType, id);
 	}
 
 	@Override
 	public Map<Long, Object> getEntitiesClean(Class<?> entityType) {
-		return getEntities(entityType);
+		return repository.getEntities(entityType);
 	}
 
 	@Override
@@ -105,13 +113,33 @@ public class MutableModelRepository implements TxRepository {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void rollback() {
-		restoreEntities().forEach(se -> {
-			switch (states.get(se.getEntity().getClass()).get(se.getEntityId())) {
-			case ADD: case UPDATE: repository.store(se.getEntityId(), (Class<Object>)se.getType(), se.getEntity()); break;
-			case REMOVE: repository.remove(se.getEntity().getClass(), se.getEntityId()); break;
+		try {
+			for (int i = 0; i < stashedObjects; i++) {
+				EntityRecoveryState state = EntityRecoveryState.getByType(buffer.readByte());
+				long entityId = buffer.readLong();
+				Class<?> type = null;
+				if (buffer.readByte() == 1) {
+					byte[] classNameBin = new byte[buffer.readInt()];
+					buffer.readBytes(classNameBin, 0, classNameBin.length);
+					try {
+						type = classLoader.loadClass(new String(classNameBin));
+					} catch (ClassNotFoundException e) {
+						log.error(e.getMessage(), e);
+					}
+				}
+				Object entity = serializer.deserializeObject(buffer);
+				if (type == null)
+					type = entity.getClass();
+
+				switch (state) {
+				case ADD:
+				case UPDATE:repository.store(entityId, (Class<Object>) type, entity);break;
+				case REMOVE:repository.remove(type, entityId);break;
+				}
 			}
-		});
-		clearResources();
+		} finally {
+			clearResources();
+		}
 	}
 	
 	@Override
@@ -119,100 +147,83 @@ public class MutableModelRepository implements TxRepository {
 		return repository.getEntityTypes();
 	}
 	
+	@Override
+	public void destroy() {
+		buffer.release();
+	}
+	
 	protected boolean saveEntityState(long entityId, Class<?> type, Object entity, EntityRecoveryState state) {
-		if (!states.get(type).containsKey(entityId)) {
-			marshallEntity(new SavedEntity(entity, type, entityId));
-			fixedEntities.get(type).add(entityId);
-			states.get(type).put(entityId, state);
+		if (!stashed.get(type).contains(entityId)) {
+			if (!serializer.isRegistered(entity.getClass()))
+				serializer.registerTransactionType(entity.getClass());
+			marshallEntity(entityId, type, entity, state);
+			stashed.get(type).add(entityId);
 			return true;
 		} else
 			return false;
 	}
 	
-	protected List<SavedEntity> restoreEntities() {
-		List<SavedEntity> result = new ArrayList<>();
-		bufferMapping.forEach((type, hs) -> { hs.forEach(h -> {
-			SavedEntity msg = schema.newMessage();
-			try {
-				schema.mergeFrom(h, msg);
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-			result.add(msg);
-			h.clear();
-		});
-			hs.clear();
-		});
-		bufferMapping.clear();
-		return result;
-	}
-	
-	protected void marshallEntity(SavedEntity entity) {
-		InputOutputHolder holder = new InputOutputHolder();
-		try {
-			schema.writeTo(holder, entity);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+	protected void marshallEntity(long entityId, Class<?> type, Object entity, EntityRecoveryState state) {
+		stashedObjects++;
+		
+		buffer.writeByte(state.getType());
+		buffer.writeLong(entityId);
+		if (!entity.getClass().equals(type)) {
+			buffer.writeByte((byte)1);
+			buffer.writeInt(type.getName().length());
+			buffer.writeBytes(type.getName().getBytes(Charset.forName("ISO-8859-1")));
+		} else {
+			buffer.writeByte((byte)0);
 		}
-		bufferMapping.get(entity.getType()).add(holder);
+		serializer.serializeObject(buffer, entity);
 	}
 	
 	protected void clearResources() {
-		bufferMapping.values().forEach(List::clear);
-		bufferMapping.clear();
-		fixedEntities.clear();
-		states.clear();
+		stashedObjects = 0;
+		buffer.clear();
+		stashed.forEach((k,v) -> v.clear());
 	}
 	
-	public MutableModelRepository(WriteableRepository repository) {
+	public MutableModelRepository(WriteableRepository repository, Serializer serializer) {
+		this(repository, serializer, MutableModelRepository.class.getClassLoader());
+	}
+	
+	public MutableModelRepository(WriteableRepository repository, Serializer serializer, ClassLoader classLoader) {
 		this.repository = repository;
+		this.serializer = serializer;
+		this.classLoader = classLoader;
 	}
 	
-	protected final Map<Class<?>, List<InputOutputHolder>> bufferMapping = MapUtils.repositoryList();
-	protected final Map<Class<?>, Set<Long>> fixedEntities = MapUtils.repositorySet();
-	protected final Map<Class<?>, Map<Long, EntityRecoveryState>> states = MapUtils.repositoryMap();
+	protected int stashedObjects = 0;
+	protected final Map<Class<?>, LongOpenHashSet> stashed = MapUtils.fastSetRepo();
 	protected final WriteableRepository repository;
+	protected final Serializer serializer;
+	protected final ClassLoader classLoader;
+	protected final Buffer buffer = new NettyBasedBuffer(kb(128), true);
 	protected final ThreadLocal<Boolean> isTransaction = new ThreadLocal<Boolean>() {
 		protected Boolean initialValue() {
 			return false;
 		}
 	};
-	protected static final Schema<SavedEntity> schema = RuntimeSchema.getSchema(SavedEntity.class);
+	protected static final Logger log = LoggerFactory.getLogger(MutableModelRepository.class);
 	
 	public static enum EntityRecoveryState {
-		ADD, REMOVE, UPDATE
-	}
-	
-	public static class SavedEntity {
-		public SavedEntity(Object entity, Class<?> type, long entityId) {
-			this.entity = entity;
-			this.entityId = entityId;
-			this.type = type;
-		}
+		ADD((byte)1), REMOVE((byte)2), UPDATE((byte)3);
 		
-		private Object entity;
-		public Object getEntity() {
-			return entity;
-		}
-		
-		private long entityId;
-		public long getEntityId() {
-			return entityId;
-		}
-		
-		private Class<?> type;
-		public Class<?> getType() {
+		protected byte type;
+		public byte getType() {
 			return type;
 		}
-		
-		@Override
-		public int hashCode() {
-			int result = 1;
-			result = 31 * result + (int) (entityId ^ (entityId >>> 32));
-			result = 31 * result + type.hashCode();
-			return result;
+		public static EntityRecoveryState getByType(byte type) {
+			for (EntityRecoveryState s : values())
+				if (s.getType() == type)
+					return s;
+			throw new IllegalArgumentException(String.format("Can't find Entity Recovery type %d", type));
 		}
 		
+		EntityRecoveryState(byte type) {
+			this.type = type;
+		}
 	}
 	
 }

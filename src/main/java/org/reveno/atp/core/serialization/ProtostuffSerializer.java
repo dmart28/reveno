@@ -24,6 +24,11 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	public int getSerializerType() {
 		return PROTO_TYPE;
 	}
+	
+	@Override
+	public boolean isRegistered(Class<?> type) {
+		return registered.containsKey(type.hashCode());
+	}
 
 	@Override
 	public void registerTransactionType(Class<?> txDataType) {
@@ -116,7 +121,7 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	}
 
 	@SuppressWarnings("unchecked")
-	protected void serializeObject(Buffer buffer, Object tc) {
+	public void serializeObject(Buffer buffer, Object tc) {
         int classHash = tc.getClass().hashCode();
         ZeroCopyLinkBuffer zeroCopyLinkBuffer = linkedBuff.get();
         LowCopyProtostuffOutput lowCopyProtostuffOutput = output.get();
@@ -126,7 +131,7 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
         lowCopyProtostuffOutput.buffer = zeroCopyLinkBuffer;
 
         buffer.writeInt(classHash);
-        int oldPos = buffer.position();
+        int oldPos = buffer.writerPosition();
         buffer.writeInt(0);
         try {
             schema.writeTo(lowCopyProtostuffOutput, tc);
@@ -134,35 +139,39 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
             throw new RuntimeException(e);
         }
 
-        int newPos = buffer.position();
-        buffer.setPosition(oldPos);
+        int newPos = buffer.writerPosition();
+        buffer.setWriterPosition(oldPos);
         buffer.writeInt(newPos - oldPos - 4);
-        buffer.setPosition(newPos);
+        buffer.setWriterPosition(newPos);
     }
-
-	@SuppressWarnings("unchecked")
+	
 	protected List<Object> deserializeObjects(Buffer buffer) {
 		int len = buffer.readInt();
 		List<Object> commits =  new ArrayList<>(len);
 
 		for (int i = 0; i < len; i++) {
-			int classHash = buffer.readInt();
-            int size = buffer.readInt();
-
-            Input input = new ZeroCopyBufferInput(buffer, size, true);
-			Schema<Object> schema = (Schema<Object>)registered.get(classHash).schema;
-			Object message = schema.newMessage();
-            try {
-                int oldLimit = buffer.limit();
-                buffer.setLimit(buffer.position() + size);
-                schema.mergeFrom(input, message);
-                buffer.setLimit(oldLimit);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-			commits.add(i, message);
+			commits.add(i, deserializeObject(buffer));
 		}
 		return commits;
+	}
+
+	@SuppressWarnings("unchecked")
+	public Object deserializeObject(Buffer buffer) {
+		int classHash = buffer.readInt();
+		int size = buffer.readInt();
+
+		Input input = new ZeroCopyBufferInput(buffer, size, true);
+		Schema<Object> schema = (Schema<Object>)registered.get(classHash).schema;
+		Object message = schema.newMessage();
+		try {
+		    int oldLimit = buffer.limit();
+		    buffer.setLimit(buffer.readerPosition() + size);
+		    schema.mergeFrom(input, message);
+		    buffer.setLimit(oldLimit);
+		} catch (IOException e) {
+		    throw new RuntimeException(e);
+		}
+		return message;
 	}
 
 	protected void changeClassLoaderIfRequired() {

@@ -29,7 +29,7 @@ public class FileChannelTest {
             while (fc.isReadAvailable())
                 fc.read(buf);
 
-            Assert.assertEquals(mb(3) + 13, buf.position());
+            Assert.assertEquals(mb(3) + 13, buf.readerPosition());
             buf.getBuffer().flip();
             Assert.assertArrayEquals(testData, buf.getBytes());
 

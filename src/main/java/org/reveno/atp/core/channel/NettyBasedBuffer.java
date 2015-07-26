@@ -51,8 +51,13 @@ public class NettyBasedBuffer implements Buffer {
 	}
 
     @Override
-    public int position() {
+    public int readerPosition() {
         return buffer.readerIndex();
+    }
+    
+    @Override
+    public int writerPosition() {
+        return buffer.writerIndex();
     }
 
     @Override
@@ -76,8 +81,13 @@ public class NettyBasedBuffer implements Buffer {
 	}
 
     @Override
-    public void setPosition(int position) {
+    public void setReaderPosition(int position) {
         buffer.readerIndex(position);
+    }
+    
+    @Override
+    public void setWriterPosition(int position) {
+        buffer.writerIndex(position);
     }
 
     @Override
@@ -193,14 +203,22 @@ public class NettyBasedBuffer implements Buffer {
 	}
 	
 	@Override
-	public void mark() {
+	public void markReader() {
 		buffer.markReaderIndex();
+	}
+	
+	@Override
+	public void markWriter() {
 		buffer.markWriterIndex();
 	}
 	
 	@Override
-	public void reset() {
+	public void resetReader() {
 		buffer.resetReaderIndex();
+	}
+	
+	@Override
+	public void resetWriter() {
 		buffer.resetWriterIndex();
 	}
 	

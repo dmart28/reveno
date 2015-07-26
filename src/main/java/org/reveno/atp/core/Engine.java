@@ -77,23 +77,35 @@ import java.util.function.BiFunction;
 public class Engine implements Reveno {
 	
 	public Engine(FoldersStorage foldersStorage, JournalsStorage journalsStorage,
-			SnapshotStorage snapshotStorage) {
+			SnapshotStorage snapshotStorage, ClassLoader classLoader) {
+		this.classLoader = classLoader;
 		this.foldersStorage = foldersStorage;
 		this.journalsStorage = journalsStorage;
 		this.snapshotStorage = snapshotStorage;
 		this.snapshotsManager = new SnapshottersManager(snapshotStorage, repositorySerializer);
+		serializer = new SerializersChain(classLoader);
 	}
 	
 	public Engine(File baseDir) {
+		this(baseDir, Engine.class.getClassLoader());
+	}
+	
+	public Engine(File baseDir, ClassLoader classLoader) {
 		FileSystemStorage storage = new FileSystemStorage(baseDir);
+		this.classLoader = classLoader;
 		this.foldersStorage = storage;
 		this.journalsStorage = storage;
 		this.snapshotStorage = storage;
 		this.snapshotsManager = new SnapshottersManager(snapshotStorage, repositorySerializer);
+		serializer = new SerializersChain(classLoader);
 	}
 	
 	public Engine(String baseDir) {
-		this(new File(baseDir));
+		this(new File(baseDir), Engine.class.getClassLoader());
+	}
+	
+	public Engine(String baseDir, ClassLoader classLoader) {
+		this(new File(baseDir), classLoader);
 	}
 
 	@Override
@@ -144,6 +156,9 @@ public class Engine implements Reveno {
 		if (config.revenoSnapshotting().snapshotAtShutdown()) {
 			log.info("Preforming shutdown snapshotting...");
 			snapshotAll();
+		}
+		if (repository instanceof Destroyable) {
+			((Destroyable)repository).destroy();
 		}
 		
 		log.info("Engine was stopped.");
@@ -297,7 +312,7 @@ public class Engine implements Reveno {
 	protected TxRepository createRepository() {
 		switch (config.modelType()) {
 		case IMMUTABLE : return new SnapshotBasedModelRepository(repository());
-		case MUTABLE : return new MutableModelRepository(repository());
+		case MUTABLE : return new MutableModelRepository(repository(), new SerializersChain(classLoader), classLoader);
 		}
 		return null;
 	}
@@ -308,6 +323,7 @@ public class Engine implements Reveno {
 
 	protected volatile boolean isStarted = false;
 	protected TxRepository repository;
+	protected SerializersChain serializer;
 	protected SystemStateRestorer restorer;
 	protected ViewsProcessor viewsProcessor;
 	protected WorkflowEngine workflowEngine;
@@ -319,7 +335,6 @@ public class Engine implements Reveno {
 	protected RepositorySnapshotter restoreWith;
 	
 	protected RepositoryDataSerializer repositorySerializer = new DefaultJavaSerializer(getClass().getClassLoader());
-	protected SerializersChain serializer = new SerializersChain();
 	protected Journaler transactionsJournaler = new DefaultJournaler();
 	protected Journaler eventsJournaler = new DefaultJournaler();
 	protected EventsInfoSerializer eventsSerializer = new SimpleEventsSerializer();
@@ -335,6 +350,7 @@ public class Engine implements Reveno {
 	protected DefaultIdGenerator idGenerator = new DefaultIdGenerator();
 	
 	protected final RevenoConfiguration config = new RevenoConfiguration();
+	protected final ClassLoader classLoader;
 	protected final JournalsStorage journalsStorage;
 	protected final FoldersStorage foldersStorage;
 	protected final SnapshotStorage snapshotStorage;
