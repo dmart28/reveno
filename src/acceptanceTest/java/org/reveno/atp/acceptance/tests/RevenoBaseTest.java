@@ -116,6 +116,7 @@ public class RevenoBaseTest {
 		reveno.domain().command(CreateNewAccountCommand.class, Long.class, Commands::createAccount);
 		reveno.domain().command(NewOrderCommand.class, Long.class, Commands::newOrder);
 		reveno.domain().command(Credit.class, Commands::credit);
+		reveno.domain().command(Debit.class, Commands::debit);
 		reveno.domain().transactionAction(CreateAccount.class, Transactions::createAccount);
 		reveno.domain().transactionAction(AcceptOrder.class, Transactions::acceptOrder);
 		reveno.domain().transactionAction(Credit.class, Transactions::credit);

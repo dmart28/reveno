@@ -53,12 +53,14 @@ public class TransactionExecutor {
 			if (c.isRestore()) {
 				executeTransactions(services, transactionIterator);
 			} else {
+				int index = 0;
 				while (cmdIterator.hasNext()) {
 					Object result = services.commandsManager().execute(cmdIterator.next(), commandContext);
-					transactionIterator = c.getTransactions().listIterator();
+					transactionIterator = c.getTransactions().listIterator(index);
 					executeTransactions(services, transactionIterator);
 					if (c.hasResult())
 						c.commandResult(result);
+					index = c.getTransactions().size();
 				}
 			}
 			
@@ -67,21 +69,16 @@ public class TransactionExecutor {
 		} catch (Throwable t) {
 			c.abort(t);
 			log.error("executeCommands", t);
-			rollback(services, c, cmdIterator, transactionIterator);
+			rollback(services, c);
 		}
 	}
 
-	protected void rollback(WorkflowContext services, ProcessorContext c, ListIterator<Object> cmdIterator, ListIterator<Object> transactionIterator) {
+	protected void rollback(WorkflowContext services, ProcessorContext c) {
 		if (services.configuration().modelType() == ModelType.MUTABLE && 
 				services.configuration().mutableModelFailover() == MutableModelFailover.SNAPSHOTS) {
 			services.repository().rollback();
 		} else {
-			rollbackTransactions(services, transactionIterator);
-			while (cmdIterator.hasPrevious()) {
-				transactionIterator = c.getTransactions().listIterator();
-				services.commandsManager().execute(cmdIterator.previous(), commandContext);
-				rollbackTransactions(services, transactionIterator);
-			}
+			rollbackTransactions(services, c.getTransactions().listIterator(c.getTransactions().size() - 1));
 		}
 	}
 

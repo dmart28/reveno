@@ -41,7 +41,9 @@ public class TransactionsManager {
 	}
 	
 	public void rollback(Object transaction, TransactionContext context) {
-		rollbackTxs.get(transaction.getClass()).accept(transaction, context);
+		BiConsumer<Object, TransactionContext> rollback = rollbackTxs.get(transaction.getClass());
+		if (rollback != null)
+			rollback.accept(transaction, context);
 	}
 	
 	protected Map<Class<?>, BiConsumer<Object, TransactionContext>> txs = new HashMap<>();

@@ -16,30 +16,42 @@
 
 package org.reveno.atp.acceptance.tests;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.stream.IntStream;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
 import org.reveno.atp.acceptance.api.commands.NewOrderCommand;
 import org.reveno.atp.acceptance.api.events.AccountCreatedEvent;
 import org.reveno.atp.acceptance.api.events.OrderCreatedEvent;
+import org.reveno.atp.acceptance.api.transactions.AcceptOrder;
+import org.reveno.atp.acceptance.api.transactions.CreateAccount;
+import org.reveno.atp.acceptance.api.transactions.Credit;
+import org.reveno.atp.acceptance.api.transactions.Debit;
+import org.reveno.atp.acceptance.handlers.RollbackTransactions;
+import org.reveno.atp.acceptance.handlers.Transactions;
+import org.reveno.atp.acceptance.model.Account;
 import org.reveno.atp.acceptance.model.Order.OrderType;
 import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
+import org.reveno.atp.api.Configuration.ModelType;
+import org.reveno.atp.api.Configuration.MutableModelFailover;
 import org.reveno.atp.api.Reveno;
+import org.reveno.atp.api.commands.EmptyResult;
+import org.reveno.atp.api.domain.Repository;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.serialization.DefaultJavaSerializer;
 import org.reveno.atp.core.serialization.ProtostuffSerializer;
 import org.reveno.atp.core.snapshots.DefaultSnapshotter;
 import org.reveno.atp.core.storage.FileSystemStorage;
-
-import java.io.File;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
-import java.util.stream.IntStream;
 
 public class Tests extends RevenoBaseTest {
 	
@@ -315,6 +327,48 @@ public class Tests extends RevenoBaseTest {
 		Assert.assertEquals(counter.get(), reveno.query().select(AccountView.class).size());
 		
 		revenoRestarted.shutdown();
+	}
+	
+	@Test
+	public void testRollbackModel() throws Exception {
+		if (modelType != ModelType.MUTABLE) 
+			return;
+		
+		class TestTx {};
+		class TestCmd {};
+		
+		Repository[] repo = new Repository[1];
+		Consumer<TestRevenoEngine> consumer = r -> {
+			r.config().modelType(ModelType.MUTABLE);
+			r.config().mutableModelFailover(MutableModelFailover.ROLLBACK_ACTIONS);
+			r.domain().transactionWithRollbackAction(CreateAccount.class, Transactions::createAccount, RollbackTransactions::rollbackCreateAccount);
+			r.domain().transactionWithRollbackAction(AcceptOrder.class, Transactions::acceptOrder, RollbackTransactions::rollbackAcceptOrder);
+			r.domain().transactionWithRollbackAction(Credit.class, Transactions::credit, RollbackTransactions::rollbackCredit);
+			r.domain().transactionWithRollbackAction(Debit.class, Transactions::debit, RollbackTransactions::rollbackDebit);
+			
+			r.domain().command(TestCmd.class, (c,d) -> d.executeTransaction(new TestTx()));
+			r.domain().transactionAction(TestTx.class, (a,b) -> { repo[0] = b.repository(); throw new RuntimeException(); });
+		};
+		Reveno reveno = createEngine(consumer);
+		reveno.startup();
+		
+		long accountId = sendCommandSync(reveno, new CreateNewAccountCommand("USD", 1000));
+		Future<EmptyResult> f = reveno.performCommands(Arrays.asList(new Credit(accountId, 15, 0), new Debit(accountId, 8),
+				new NewOrderCommand(accountId, Optional.empty(), "EUR/USD", 134000, 1, OrderType.MARKET), new TestCmd()));
+		
+		Assert.assertFalse(f.get().isSuccess());
+		Assert.assertEquals(RuntimeException.class, f.get().getException().getClass());
+		Assert.assertEquals(1000, repo[0].get(Account.class, accountId).get().balance());
+		Assert.assertEquals(1000, reveno.query().find(AccountView.class, accountId).get().balance);
+		
+		reveno.shutdown();
+		
+		reveno = createEngine(consumer);
+		reveno.startup();
+		
+		Assert.assertEquals(1000, reveno.query().find(AccountView.class, accountId).get().balance);
+		
+		reveno.shutdown();
 	}
 	
 }

@@ -48,11 +48,6 @@ public abstract class Transactions {
 	
 	public static void debit(Debit tx, TransactionContext ctx) {
 		Optional<Account> acc = ctx.repository().get(Account.class, tx.accountId);
-		if (!acc.isPresent())
-			throw new RuntimeException("Can't find account with id=" + tx.accountId);
-		
-		if (acc.get().balance() < tx.amount)
-			throw new IllegalStateException("The account balance is less than debit amount!");
 		
 		if (acc.get().isImmutable()) 
 			ctx.repository().store(tx.accountId, Account.class, acc.get().addBalance(-tx.amount));
@@ -64,7 +59,7 @@ public abstract class Transactions {
 		Account account = ctx.repository().get(Account.class, tx.accountId).get();
 		if (account.isImmutable())
 			ctx.repository().store(tx.accountId, Account.class, account.addOrder(tx.id));
-		else 
+		else
 			account.addOrder(tx.id);
 		
 		ctx.repository().store(tx.id, Order.class, orderFactory.create(tx.id, tx.accountId, tx.positionId, tx.symbol,

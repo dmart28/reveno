@@ -16,20 +16,21 @@
 
 package org.reveno.atp.acceptance.handlers;
 
+import static java.lang.String.format;
+
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
 import org.reveno.atp.acceptance.api.commands.NewOrderCommand;
 import org.reveno.atp.acceptance.api.transactions.AcceptOrder;
 import org.reveno.atp.acceptance.api.transactions.CreateAccount;
 import org.reveno.atp.acceptance.api.transactions.Credit;
+import org.reveno.atp.acceptance.api.transactions.Debit;
 import org.reveno.atp.acceptance.model.Account;
 import org.reveno.atp.acceptance.model.Order;
 import org.reveno.atp.acceptance.model.Position;
 import org.reveno.atp.api.commands.CommandContext;
-
-import java.util.Optional;
-import java.util.stream.Stream;
-
-import static java.lang.String.format;
 
 public abstract class Commands {
 
@@ -47,6 +48,12 @@ public abstract class Commands {
 		ctx.repository().get(Account.class, credit.accountId).isPresent();
 		
 		ctx.executeTransaction(credit);
+	}
+	
+	public static void debit(Debit debit, CommandContext ctx) {
+		ctx.repository().get(Account.class, debit.accountId).isPresent();
+		
+		ctx.executeTransaction(debit);
 	}
 	
 	public static Long newOrder(NewOrderCommand cmd, CommandContext ctx) { 

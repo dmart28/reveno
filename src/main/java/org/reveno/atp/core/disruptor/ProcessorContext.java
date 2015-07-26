@@ -16,19 +16,20 @@
 
 package org.reveno.atp.core.disruptor;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
 import org.reveno.atp.api.EventsManager.EventMetadata;
 import org.reveno.atp.api.transaction.EventBus;
 import org.reveno.atp.core.api.Destroyable;
 import org.reveno.atp.core.api.RestoreableEventBus;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.utils.MapUtils;
-import sun.misc.Contended;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import sun.misc.Contended;
 
 @SuppressWarnings("rawtypes")
 public class ProcessorContext implements Destroyable {
