@@ -58,7 +58,7 @@ public class ZeroCopyLinkBuffer extends LinkBuffer {
 
     @Override
     public LinkBuffer writeInt32LE(int value) throws IOException {
-        buffer.writeByte((byte) (value >>> 0 & 255));
+        buffer.writeByte((byte) (value & 255));
         buffer.writeByte((byte) (value >>> 8 & 255));
         buffer.writeByte((byte) (value >>> 16 & 255));
         buffer.writeByte((byte) (value >>> 24 & 255));
@@ -73,7 +73,7 @@ public class ZeroCopyLinkBuffer extends LinkBuffer {
 
     @Override
     public LinkBuffer writeInt64LE(long value) throws IOException {
-        buffer.writeByte((byte) ((int) (value >>> 0)));
+        buffer.writeByte((byte) ((int) (value)));
         buffer.writeByte((byte) ((int) (value >>> 8)));
         buffer.writeByte((byte) ((int) (value >>> 16)));
         buffer.writeByte((byte) ((int) (value >>> 24)));

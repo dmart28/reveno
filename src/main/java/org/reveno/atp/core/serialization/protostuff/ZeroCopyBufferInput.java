@@ -6,6 +6,10 @@ import org.reveno.atp.core.api.channel.Buffer;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+/**
+ * Some customized implementation of ZeroCopyInput, most
+ * parts of it is kindly taken from Protostuff source code.
+ */
 public final class ZeroCopyBufferInput implements Input {
     private final Buffer buffer;
     private int lastTag = 0;

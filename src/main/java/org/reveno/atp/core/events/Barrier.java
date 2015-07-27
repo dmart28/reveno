@@ -16,6 +16,15 @@
 
 package org.reveno.atp.core.events;
 
+/**
+ *
+ * Barrier class used for denoting end of async
+ * event execution flow of handlers. It is being put
+ * at the end of the chain of async event handlers in sungle
+ * executor, and if all previous tasks were executed successfully,
+ * it sends async commit event to {@link EventPublisher}
+ *
+ */
 public class Barrier implements Runnable {
 
 	@Override

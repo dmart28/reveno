@@ -28,6 +28,14 @@ import org.slf4j.LoggerFactory;
 
 public class DefaultSystemStateRestorer implements SystemStateRestorer {
 
+	/**
+	 * Reads all journals and restores all previous system mode state from them
+	 * into the given repository. Also, re-publish all events that were not sent
+	 * by the reason of failure, abortion, etc.
+	 *
+	 * @param repository into which latest state of model will be loaded
+	 * @return information about last system state, such as last transactionId, etc.
+	 */
 	@Override
 	public SystemState restore(TxRepository repository) {
 		workflowContext.repository(repository);

@@ -28,6 +28,19 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
+/**
+ * Special {@link EventBus} implementation, which is used on
+ * restoration process. Basically, the workflow for this class
+ * is following:
+ *
+ * 1) During all events commit files processing, {@code processNextEvent}
+ * 	method is called, noting that events for transaction N were processed.
+ * 	Unless, new LongRange is added.
+ * 2) During transaction replay, they publish events to {@code publishEvent}
+ *  as normally. If current transactionId is not belong to any LongRange, then
+ *  it is skipped, unless, it is being replayed as well.
+ *
+ */
 public class RestorerEventBus implements RestoreableEventBus {
 
 	@Override

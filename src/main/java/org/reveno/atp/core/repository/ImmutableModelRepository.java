@@ -27,9 +27,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Replaced by more simple and efficient immutable repository SnapshotBasedModelRepository.
+ * Immutable model repository which stores new values to separate place during the transaction.
  * 
  * @author Artem Dmitriev <art.dm.ser@gmail.com>
+ *
+ * @deprecated see {@link SnapshotBasedModelRepository}
  *
  */
 @Deprecated
