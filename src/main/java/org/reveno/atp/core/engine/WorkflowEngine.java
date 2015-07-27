@@ -36,7 +36,8 @@ public class WorkflowEngine {
 			inputProcessor.pipe(handlers::replication)
 			.then((c, eof) -> {
 				handlers.transactionExecution(c, eof);
-				handlers.viewsUpdate(c, eof);
+				if (!c.isAborted())
+					handlers.viewsUpdate(c, eof);
 			})
 			.then(handlers::journaling)
 			.then(handlers::result, handlers::eventsPublishing);
