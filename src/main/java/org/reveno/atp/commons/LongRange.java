@@ -18,6 +18,12 @@ package org.reveno.atp.commons;
 
 import java.util.Iterator;
 
+/**
+ * Range of two long numbers. It is used for replaying process, to mark unprocessed
+ * gaps in events commits log files.
+ *
+ * @author Artem Dmitriev <art.dm.ser@gmail.com>
+ */
 public final class LongRange implements Iterable<Long>, Comparable<LongRange> {
 
 	public LongRange(long start, long end) {
