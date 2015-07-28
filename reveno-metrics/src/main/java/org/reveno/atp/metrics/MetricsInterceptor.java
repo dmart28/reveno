@@ -26,8 +26,8 @@ public class MetricsInterceptor implements TransactionInterceptor {
 		}
 	}
 
-	public MetricsInterceptor(Configuration config) {
-		String prefix = "reveno.instances." + config.hostName() + ".";
+	public MetricsInterceptor(ConfigurationImpl config) {
+		String prefix = "reveno.instances." + config.hostName().replace(".", "_") + "." + config.instanceName() + ".";
 		this.latency = prefix + "latency";
 		this.throughput = prefix + "throughput";
 		this.config = config;
@@ -53,9 +53,18 @@ public class MetricsInterceptor implements TransactionInterceptor {
 		}
 	}
 	
+	public void shutdown() {
+		if (reporter != null) {
+			reporter.stop();
+		}
+		if (slf4jReporter != null) {
+			slf4jReporter.stop();
+		}
+	}
+	
 	protected final MetricRegistry metrics = new MetricRegistry();
 	protected final String latency, throughput;
-	protected final Configuration config;
+	protected final ConfigurationImpl config;
 	protected Graphite graphite;
 	protected GraphiteReporter reporter;
 	protected Slf4jReporter slf4jReporter;

@@ -9,12 +9,17 @@ public class RevenoMetrics {
 		return config;
 	}
 	
-	public void connectTo(Engine engine) {
+	public void listen(Engine engine) {
 		engine.interceptors().add(TransactionStage.REPLICATION, interceptor);
 		interceptor.init();
 	}
 	
-	protected Configuration config = new Configuration();
+	public void shutdown(Engine engine) {
+		engine.interceptors().getInterceptors(TransactionStage.REPLICATION).remove(interceptor);
+		interceptor.shutdown();
+	}
+	
+	protected ConfigurationImpl config = new ConfigurationImpl();
 	protected MetricsInterceptor interceptor = new MetricsInterceptor(config);
 	
 }
