@@ -1,3 +1,5 @@
 dependencies {
+  compile project(":reveno-core")
+
   compile "io.dropwizard.metrics:metrics-core:$metricsVersion"
 }
