@@ -1,0 +1,34 @@
+sourceSets {
+	acceptanceTest {
+		java {
+			srcDir 'java'
+		}
+		resources {
+			srcDir 'resources'
+		}
+	}
+	perfTest {
+		java {
+			srcDir 'java'
+		}
+		resources {
+			srcDir 'resources'
+		}
+			}
+	test {
+		java {
+			srcDirs = ['src/test/java', 'src/acceptanceTest/java']
+		}
+	}
+}
+
+dependencies {
+	compile "it.unimi.dsi:fastutil:$fastutilVersion"
+	compile "com.lmax:disruptor:$disruptorVersion"
+	compile "io.protostuff:protostuff-uberjar:$protostuffVersion"
+	compile "io.netty:netty-buffer:$nettyVersion"
+
+	acceptanceTestCompile "com.google.guava:guava:$guavaVersion"
+	acceptanceTestCompile "junit:junit:$junitVersion"
+	acceptanceTestCompile "org.easymock:easymock:$easymockVersion"
+}

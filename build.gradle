@@ -1,78 +1,44 @@
-apply plugin: "java"
-apply plugin: "idea"
-apply plugin: "eclipse"
-apply plugin: "maven"
+allprojects {
+	apply plugin: "java"
+	apply plugin: "idea"
+	apply plugin: "eclipse"
+	apply plugin: "maven"
 
-group = 'org.reveno'
-version = '0.1.0'
+	group = 'org.reveno'
+	version = '0.1.0'
 
-repositories {
-	mavenLocal()
-	mavenCentral()
-}
-
-sourceSets {
-	acceptanceTest {
-		java {
-            srcDir 'java'
-        }
-        resources {
-            srcDir 'resources'
-        }
+	repositories {
+		mavenLocal()
+		mavenCentral()
 	}
-    perfTest {
-        java {
-            srcDir 'java'
-        }
-        resources {
-            srcDir 'resources'
-        }
-    }
+
+	dependencies {
+		compile "org.slf4j:slf4j-api:$slf4jVersion"
+		compile "org.slf4j:slf4j-log4j12:$log4jVersion"
+
+		testCompile "com.google.guava:guava:$guavaVersion"
+		testCompile "junit:junit:$junitVersion"
+		testCompile "org.easymock:easymock:$easymockVersion"
+	}
+
+	def forks = Math.max(1, (int) (Runtime.runtime.availableProcessors() / 2))
+
 	test {
-		java {
-			srcDirs = ['src/test/java', 'src/acceptanceTest/java']
+		minHeapSize = "512m"
+		maxParallelForks = forks
+		systemProperty 'protostuff.runtime.collection_schema_on_repeated_fields', 'true'
+
+		testLogging {
+			showExceptions = true
+			showCauses = true
+			showStackTraces = true
+			events "passed", "skipped", "failed", "standardOut", "standardError"
 		}
 	}
+
+	task wrapper(type: Wrapper) {
+		gradleVersion = '2.5'
+	}
+
+	defaultTasks 'clean', 'build'
 }
-
-dependencies {
-	compile "com.lmax:disruptor:$disruptorVersion"
-	compile "io.protostuff:protostuff-uberjar:$protostuffVersion"
-	compile "io.netty:netty-buffer:$nettyVersion"
-	
-	compile "org.jgroups:jgroups:$jgroupsVersion"
-	
-	compile "org.slf4j:slf4j-api:$slf4jVersion"
-	compile "org.slf4j:slf4j-log4j12:$log4jVersion"
-	
-	compile "it.unimi.dsi:fastutil:$fastutilVersion"
-	
-	testCompile "com.google.guava:guava:$guavaVersion"
-	testCompile "junit:junit:$junitVersion"
-	testCompile "org.easymock:easymock:$easymockVersion"
-	
-	acceptanceTestCompile "com.google.guava:guava:$guavaVersion"
-	acceptanceTestCompile "junit:junit:$junitVersion"
-	acceptanceTestCompile "org.easymock:easymock:$easymockVersion"
-}
-
-def forks = Math.max(1, (int) (Runtime.runtime.availableProcessors() / 2))
-
-test {
-	minHeapSize = "512m"
-	maxParallelForks = forks
-	systemProperty 'protostuff.runtime.collection_schema_on_repeated_fields', 'true'
-  	
-    testLogging {
-    	showExceptions = true
-    	showCauses = true
-    	showStackTraces = true
-        events "passed", "skipped", "failed", "standardOut", "standardError"
-    }
-}
-
-task wrapper(type: Wrapper) {
-   gradleVersion = '2.5'
-}
-
-defaultTasks 'clean', 'build'
