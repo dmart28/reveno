@@ -263,6 +263,10 @@ public class Engine implements Reveno {
 		return workflowEngine.getPipe().process(commands);
 	}
 	
+	public InterceptorCollection interceptors() {
+		return interceptors;
+	}
+	
 	protected void checkIsStarted() {
 		if (!isStarted)
 			throw new IllegalStateException("The Engine must be started first.");

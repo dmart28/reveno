@@ -27,10 +27,6 @@ public class TestRevenoEngine extends Engine {
 		super(baseDir);
 	}
 	
-	public InterceptorCollection interceptors() {
-		return interceptors;
-	}
-	
 	public synchronized void roll(Runnable r) {
 		roller.roll(r);
 	}
