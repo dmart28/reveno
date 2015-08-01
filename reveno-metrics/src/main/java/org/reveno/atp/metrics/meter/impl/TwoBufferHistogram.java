@@ -1,6 +1,7 @@
 package org.reveno.atp.metrics.meter.impl;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
@@ -8,6 +9,7 @@ import java.util.concurrent.atomic.LongAdder;
 import org.reveno.atp.metrics.Sink;
 import org.reveno.atp.metrics.meter.Histogram;
 import org.reveno.atp.metrics.meter.HistogramType;
+import org.reveno.atp.utils.UnsafeUtils;
 
 public class TwoBufferHistogram implements Histogram {
 	
@@ -18,11 +20,12 @@ public class TwoBufferHistogram implements Histogram {
 	protected static final byte RESET_DONE = 3;
 
 	@Override
-	public void sendTo(Sink sink, boolean sync) {
+	public void sendTo(List<Sink> sinks, boolean sync) {
 		switchNext(sync);
 		ByteBuffer buffer = this.bufs[prevIndex()];
 		
-		long amount = Math.min(count.sumThenReset(), buffer.limit() / BYTES_PER_LONG);
+		long sum = count.sumThenReset();
+		long amount = Math.min(sum, buffer.limit() / BYTES_PER_LONG);
 		long timestamp = System.currentTimeMillis() / 1000;
 		buffer.clear();
 		
@@ -46,19 +49,22 @@ public class TwoBufferHistogram implements Histogram {
 				stddev += Math.pow(prevMean - metric, 2);
 			}
 		}
-		mean /= count;
+		mean /= count - 1;
 		if (prevMean == -1) {
-			stddev = mean;
+			stddev = 0;
 		} else {
 			stddev /= count;
 			stddev = (long) Math.sqrt(stddev);
 		}
 		prevMean = mean;
 		
-		sink.send(name + ".mean", Long.toString(mean), timestamp);
-		sink.send(name + ".min", Long.toString(min), timestamp);
-		sink.send(name + ".max", Long.toString(max), timestamp);
-		sink.send(name + ".stddev", Long.toString(stddev), timestamp);
+		for (Sink sink : sinks) {
+			sink.send(name + ".count", Long.toString(sum), timestamp);
+			sink.send(name + ".mean", Long.toString(mean), timestamp);
+			sink.send(name + ".min", Long.toString(min), timestamp);
+			sink.send(name + ".max", Long.toString(max), timestamp);
+			sink.send(name + ".stddev", Long.toString(stddev), timestamp);
+		}
 		
 		buffer.clear();
 	}
@@ -77,7 +83,7 @@ public class TwoBufferHistogram implements Histogram {
 	}
 
 	@Override
-	public void update(long value, long time) {
+	public Histogram update(long value) {
 		count.increment();
 		int currBit = bit;
 		int currentIndex = currBit >> 2;
@@ -97,6 +103,7 @@ public class TwoBufferHistogram implements Histogram {
 			cur.position(pos);
 			cur.putLong(value);
 		}
+		return this;
 	}
 	
 	@Override
@@ -104,8 +111,14 @@ public class TwoBufferHistogram implements Histogram {
 		return bufs[bit >> 2].remaining() == 0;
 	}
 	
+	@Override
+	public void destroy() {
+		UnsafeUtils.destroyDirectBuffer(this.bufs[0]);
+		UnsafeUtils.destroyDirectBuffer(this.bufs[1]);
+	}
+	
 	protected int currentIndex() {
-		return (int) (switcher.get() & bufferCount);
+		return (int) (switcher.get() % bufferCount);
 	}
 	
 	protected int prevIndex() {
@@ -130,7 +143,7 @@ public class TwoBufferHistogram implements Histogram {
     }
     
     public TwoBufferHistogram(String name, int bufferSize) {
-    	this(name, bufferSize, HistogramType.DISCARD_OVERFLOW);
+    	this(name, bufferSize, HistogramType.RANDOM_VITTERS_R);
     }
 
 	public TwoBufferHistogram(String name, int bufferSize, HistogramType type) {

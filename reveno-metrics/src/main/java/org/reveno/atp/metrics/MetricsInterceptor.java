@@ -1,18 +1,20 @@
 package org.reveno.atp.metrics;
 
-import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.api.transaction.TransactionStage;
-import org.slf4j.LoggerFactory;
-
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Slf4jReporter;
-import com.codahale.metrics.graphite.Graphite;
-import com.codahale.metrics.graphite.GraphiteReporter;
+import org.reveno.atp.metrics.impl.GraphiteSink;
+import org.reveno.atp.metrics.impl.Slf4jSink;
+import org.reveno.atp.metrics.meter.Counter;
+import org.reveno.atp.metrics.meter.Histogram;
+import org.reveno.atp.metrics.meter.impl.SimpleCounter;
+import org.reveno.atp.metrics.meter.impl.TwoBufferHistogram;
 
 public class MetricsInterceptor implements TransactionInterceptor {
 	
@@ -21,8 +23,8 @@ public class MetricsInterceptor implements TransactionInterceptor {
 	@Override
 	public void intercept(long transactionId, long time, WriteableRepository repository, TransactionStage stage) {
 		if (stage == TransactionStage.REPLICATION) {
-			metrics.meter(throughput).mark();
-			metrics.histogram(latency).update(System.nanoTime() - time);
+			counter.inc();
+			histogram.update(System.nanoTime() - time);
 		}
 	}
 
@@ -31,41 +33,36 @@ public class MetricsInterceptor implements TransactionInterceptor {
 		this.latency = prefix + "latency";
 		this.throughput = prefix + "throughput";
 		this.config = config;
+		this.counter = new SimpleCounter(throughput);
+		this.histogram = new TwoBufferHistogram(latency, config.metricBufferSize());
 	}
 	
 	public void init() {
 		if (config.sendToGraphite()) {
-			graphite = new Graphite(new InetSocketAddress(config.graphiteServer(), config.graphitePort()));
-			reporter = GraphiteReporter.forRegistry(metrics)
-					.convertRatesTo(TimeUnit.SECONDS)
-                    .convertDurationsTo(TimeUnit.MILLISECONDS)
-					.filter(MetricFilter.ALL)
-					.build(graphite);
-			reporter.start(1, TimeUnit.MINUTES);
+			sinks.add(new GraphiteSink(config.graphiteServer(), config.graphitePort()));
 		}
 		if (config.sendToLog()) {
-			slf4jReporter = Slf4jReporter.forRegistry(metrics)
-                    .outputTo(LoggerFactory.getLogger(MetricsInterceptor.class))
-                    .convertRatesTo(TimeUnit.SECONDS)
-                    .convertDurationsTo(TimeUnit.MILLISECONDS)
-                    .build();
-			slf4jReporter.start(1, TimeUnit.MINUTES);
+			sinks.add(new Slf4jSink());
 		}
+		sinks.forEach(Sink::init);
+		executor.scheduleAtFixedRate(() -> {
+			histogram.sendTo(sinks, true);
+			counter.sendTo(sinks, true);
+		}, 15, 15, TimeUnit.SECONDS);
 	}
 	
 	public void shutdown() {
-		if (reporter != null) {
-			reporter.stop();
+		sinks.forEach(Sink::close);
+		if (histogram != null) {
+			histogram.destroy();
 		}
-		if (slf4jReporter != null) {
-			slf4jReporter.stop();
-		}
+		executor.shutdown();
 	}
 	
-	protected final MetricRegistry metrics = new MetricRegistry();
+	protected Counter counter;
+	protected Histogram histogram;
+	protected List<Sink> sinks = new ArrayList<>();
 	protected final String latency, throughput;
 	protected final ConfigurationImpl config;
-	protected Graphite graphite;
-	protected GraphiteReporter reporter;
-	protected Slf4jReporter slf4jReporter;
+	protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 }

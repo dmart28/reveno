@@ -13,5 +13,7 @@ public interface Configuration {
 	Configuration instanceName(String instanceName);
 
 	Configuration hostName(String hostName);
+	
+	Configuration metricBufferSize(int size);
 
 }

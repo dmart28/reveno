@@ -3,6 +3,7 @@ package org.reveno.atp.metrics;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import org.reveno.atp.utils.MeasureUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,7 @@ public class ConfigurationImpl implements Configuration {
 		return this;
 	}
 	
-	protected int graphitePort = 2003;
+	protected int graphitePort = 2004;
 	public int graphitePort() {
 		return graphitePort;
 	}
@@ -65,6 +66,16 @@ public class ConfigurationImpl implements Configuration {
 	@Override
 	public Configuration hostName(String hostName) {
 		this.hostName = hostName;
+		return this;
+	}
+	
+	protected int metricBufferSize = MeasureUtils.kb(128);
+	public int metricBufferSize() {
+		return metricBufferSize;
+	}
+	@Override
+	public Configuration metricBufferSize(int size) {
+		this.metricBufferSize = size;
 		return this;
 	}
 	

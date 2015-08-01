@@ -1,8 +1,10 @@
 package org.reveno.atp.metrics.meter;
 
-public interface Histogram extends Sinkable {
+import org.reveno.atp.core.api.Destroyable;
 
-	void update(long value, long time);
+public interface Histogram extends Sinkable, Destroyable {
+
+	Histogram update(long value);
 	
 	boolean isReady();
 	
