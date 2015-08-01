@@ -20,6 +20,7 @@ import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.core.api.channel.Buffer;
+import org.reveno.atp.core.channel.ByteBufferWrapper;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.core.disruptor.ProcessorContext;
 import org.reveno.atp.core.engine.components.TransactionExecutor;
@@ -27,6 +28,7 @@ import org.reveno.atp.utils.MeasureUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -83,7 +85,7 @@ public class InputHandlers {
 		marshalled.release();
 	}
 	
-	protected final Buffer marshalled = new NettyBasedBuffer(MeasureUtils.mb(1), true);
+	protected final Buffer marshalled = new ByteBufferWrapper(ByteBuffer.allocateDirect(MeasureUtils.mb(1)));
 	protected WorkflowContext services;
 	protected TransactionExecutor txExecutor;
 	protected Supplier<Long> nextTransactionId;

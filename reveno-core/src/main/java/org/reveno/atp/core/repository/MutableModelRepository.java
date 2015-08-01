@@ -18,6 +18,7 @@ package org.reveno.atp.core.repository;
 
 import static org.reveno.atp.utils.MeasureUtils.kb;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Optional;
@@ -29,7 +30,7 @@ import org.reveno.atp.core.api.Destroyable;
 import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.serialization.Serializer;
-import org.reveno.atp.core.channel.NettyBasedBuffer;
+import org.reveno.atp.core.channel.ByteBufferWrapper;
 import org.reveno.atp.utils.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,6 +115,7 @@ public class MutableModelRepository implements TxRepository, Destroyable {
 	@Override
 	public void rollback() {
 		try {
+			buffer.setReaderPosition(0);
 			for (int i = 0; i < stashedObjects; i++) {
 				EntityRecoveryState state = EntityRecoveryState.getByType(buffer.readByte());
 				long entityId = buffer.readLong();
@@ -199,7 +201,7 @@ public class MutableModelRepository implements TxRepository, Destroyable {
 	protected final WriteableRepository repository;
 	protected final Serializer serializer;
 	protected final ClassLoader classLoader;
-	protected final Buffer buffer = new NettyBasedBuffer(kb(128), true);
+	protected final Buffer buffer = new ByteBufferWrapper(ByteBuffer.allocateDirect(kb(128)));
 	protected final ThreadLocal<Boolean> isTransaction = new ThreadLocal<Boolean>() {
 		protected Boolean initialValue() {
 			return false;
