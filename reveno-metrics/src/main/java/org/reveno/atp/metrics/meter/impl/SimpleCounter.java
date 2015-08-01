@@ -1,18 +1,15 @@
 package org.reveno.atp.metrics.meter.impl;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.reveno.atp.metrics.Sink;
 import org.reveno.atp.metrics.meter.Counter;
 
 public class SimpleCounter implements Counter {
 
 	@Override
-	public Map<String, String> snapshot() {
-		Map<String, String> map = new HashMap<>();
-		map.put(name + ".hits", Long.toString(counter.getAndSet(0)));
-		return map;
+	public void sendTo(Sink sink) {
+		sink.send(name + ".hits", Long.toString(counter.getAndSet(0)), System.currentTimeMillis() / 1000);
 	}
 
 	@Override

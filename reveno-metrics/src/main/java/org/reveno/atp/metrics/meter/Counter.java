@@ -1,6 +1,6 @@
 package org.reveno.atp.metrics.meter;
 
-public interface Counter extends Snapshotable {
+public interface Counter extends Sinkable {
 
 	void inc(long i);
 	

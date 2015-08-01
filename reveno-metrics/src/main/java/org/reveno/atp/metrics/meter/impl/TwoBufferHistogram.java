@@ -1,30 +1,71 @@
 package org.reveno.atp.metrics.meter.impl;
 
 import java.nio.ByteBuffer;
-import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
+import org.reveno.atp.metrics.Sink;
 import org.reveno.atp.metrics.meter.Histogram;
 import org.reveno.atp.metrics.meter.HistogramType;
 
 public class TwoBufferHistogram implements Histogram {
 	
 	protected static final int BITS_PER_LONG = 63;
+	protected static final int BYTES_PER_LONG = 8; 
 	protected static final byte WRITING = 1;
 	protected static final byte NEED_RESET = 2;
 	protected static final byte RESET_DONE = 3;
 
 	@Override
-	public Map<String, String> snapshot() {
-		return null;
+	public void sendTo(Sink sink) {
+		switchNext();
+		ByteBuffer buffer = this.bufs[prevIndex()];
+		
+		long amount = Math.min(count.sumThenReset(), buffer.limit() / BYTES_PER_LONG);
+		long timestamp = System.currentTimeMillis() / 1000;
+		buffer.reset();
+		
+		long mean = 0;
+		long min = Long.MAX_VALUE;
+		long max = 0;
+		long stddev = 0;
+		
+		int count = 0;
+		while (buffer.position() <= buffer.limit() && (count += 1) <= amount) {
+			final long metric = buffer.getLong();
+			mean += metric;
+			if (metric > max) {
+				max = metric;
+			}
+			if (metric < min) {
+				min = metric;
+			}
+			
+			if (prevMean != -1) {
+				stddev += Math.pow(prevMean - metric, 2);
+			}
+		}
+		mean /= count;
+		if (prevMean == -1) {
+			stddev = mean;
+			prevMean = mean;
+		} else {
+			stddev /= count;
+			stddev = (long) Math.sqrt(stddev);
+		}
+		
+		sink.send(name + ".mean", Long.toString(mean), timestamp);
+		sink.send(name + ".min", Long.toString(min), timestamp);
+		sink.send(name + ".max", Long.toString(max), timestamp);
+		sink.send(name + ".stddev", Long.toString(stddev), timestamp);
 	}
 	
 	public void switchNext() {
 		int nextIndex = (int) (switcher.incrementAndGet() % bufferCount);
-		bit = (nextIndex << 2) & NEED_RESET; 
+		bit = (nextIndex << 2) | NEED_RESET; 
 		for (;;) {
-			if ((bit << 30) >> 30 == RESET_DONE)
+			if ((bit << 30) >>> 30 == RESET_DONE)
 				break;
 			else
 				Thread.yield();
@@ -33,23 +74,30 @@ public class TwoBufferHistogram implements Histogram {
 
 	@Override
 	public void update(long value, long time) {
-		int currentIndex = bit >> 2;
+		count.increment();
+		int currBit = bit;
+		int currentIndex = currBit >> 2;
 		ByteBuffer cur = bufs[currentIndex];
-		if ((bit << 30) >> 30 == NEED_RESET) {
-			bit = currentIndex << 2 & RESET_DONE;
+		if ((currBit << 30) >>> 30 == NEED_RESET) {
+			bit = currentIndex << 2 | RESET_DONE;
 		}
-		if (cur.remaining() >= 16) {
+		if (cur.remaining() > 0) {
 			cur.putLong(value);
-			cur.putLong(time);
 		} else if (type == HistogramType.RANDOM_VITTERS_R) {
-			long pos = cur.position();
-			
+			long next;
+			for (;;) {
+				if ((next = nextLong(cur.limit())) <= cur.limit() - BYTES_PER_LONG)
+					break;
+			}
+			int pos = (int) Math.round((double) next / BYTES_PER_LONG) * BYTES_PER_LONG;
+			cur.position(pos);
+			cur.putLong(value);
 		}
 	}
 	
 	@Override
 	public boolean isReady() {
-		return bufs[bit >> 2].remaining() < 16;
+		return bufs[bit >> 2].remaining() == 0;
 	}
 	
 	protected int currentIndex() {
@@ -76,8 +124,12 @@ public class TwoBufferHistogram implements Histogram {
         } while (bits - val + (n - 1) < 0L);
         return val;
     }
+    
+    public TwoBufferHistogram(String name, int bufferSize) {
+    	this(name, bufferSize, HistogramType.DISCARD_OVERFLOW);
+    }
 
-	public TwoBufferHistogram(int bufferSize, HistogramType type) {
+	public TwoBufferHistogram(String name, int bufferSize, HistogramType type) {
 		if (Integer.bitCount(bufferSize) != 1) {
 			throw new IllegalArgumentException("Buffer size must be pow(2, n) number!");
 		}
@@ -87,9 +139,13 @@ public class TwoBufferHistogram implements Histogram {
 			this.bufs[i] = ByteBuffer.allocateDirect(bufferSize);
 		}
 		this.type = type;
+		this.name = name;
 	}
 	
+	protected long prevMean = -1L;
+	protected LongAdder count = new LongAdder();
 	protected volatile int bit = WRITING;
+	protected final String name;
 	protected final ByteBuffer[] bufs;
 	protected final int bufferSize;
 	protected final int bufferCount = 2;
