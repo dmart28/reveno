@@ -77,7 +77,7 @@ public class ReadWriteTest {
 			for (int j = 1; j <= totalCount / 10; j++) {
 				User user = new User(Double.toString(Math.random()));
 				TransactionCommitInfo d = builder.create()
-						.transactionId(System.currentTimeMillis()).version(count++).time(0).transactionCommits(
+						.transactionId(System.currentTimeMillis()).time(count++).transactionCommits(
 								Arrays.asList(new Object[] { user }));
 				journaler.writeData(b -> serializer.serialize(d, b), Math.random() < 0.1);
 			}
@@ -92,7 +92,7 @@ public class ReadWriteTest {
 		processor.process((b) -> {
 			try {
 				while (b.isAvailable()) {
-					Assert.assertEquals(totalCount - l.getCount(), serializer.deserialize(builder, b).version());
+					Assert.assertEquals(totalCount - l.getCount(), serializer.deserialize(builder, b).time());
 					l.countDown();
 				}
 			} catch (Throwable t) {

@@ -41,7 +41,6 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 
 		buffer.writeLong(info.transactionId());
 		buffer.writeLong(info.time());
-		buffer.writeInt(info.version());
 		buffer.writeInt(info.transactionCommits().size());
 
 		serializeObjects(buffer, info.transactionCommits());
@@ -53,10 +52,9 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 
 		long transactionId = buffer.readLong();
 		long time = buffer.readLong();
-		int version = buffer.readInt();
 		List<Object> commits = deserializeObjects(buffer);
 
-		return builder.create().transactionId(transactionId).time(time).version(version).transactionCommits(commits);
+		return builder.create().transactionId(transactionId).time(time).transactionCommits(commits);
 	}
 
 	@Override

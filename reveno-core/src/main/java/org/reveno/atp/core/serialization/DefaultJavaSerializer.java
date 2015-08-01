@@ -35,7 +35,6 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 	public void serialize(TransactionCommitInfo info, Buffer buffer) {
 		buffer.writeLong(info.transactionId());
 		buffer.writeLong(info.time());
-		buffer.writeInt(info.version());
 
 		try (ByteArrayOutputStream ba = new ByteArrayOutputStream(); // TODO global
 				ObjectOutputStream os = new ObjectOutputStream(ba)) {
@@ -53,14 +52,12 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 	public TransactionCommitInfo deserialize(Builder builder, Buffer buffer) {
 		long transactionId = buffer.readLong();
 		long time = buffer.readLong();
-		int version = buffer.readInt();
 
 		try (ByteArrayInputStream is = new ByteArrayInputStream(
 				buffer.readBytes(buffer.readInt()));
 				ObjectInputStreamEx os = new ObjectInputStreamEx(is,
 						classLoader)) {
-			return builder.create().transactionId(transactionId).time(time)
-					.version(version).transactionCommits((List<Object>)os.readObject());
+			return builder.create().transactionId(transactionId).time(time).transactionCommits((List<Object>)os.readObject());
 		} catch (IOException | ClassNotFoundException e) {
 			log.error("", e);
 			throw new SerializerException(Action.DESERIALIZATION, getClass(), e);

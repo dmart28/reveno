@@ -24,10 +24,6 @@ public interface TransactionCommitInfo {
 	
 	TransactionCommitInfo transactionId(long transactionId);
 	
-	int version();
-	
-	TransactionCommitInfo version(int version);
-	
 	long time();
 	
 	TransactionCommitInfo time(long time);

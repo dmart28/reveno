@@ -108,7 +108,7 @@ public class InputHandlers {
 		interceptors(TransactionStage.JOURNALING, c);
 		
 		services.transactionJournaler().writeData(b -> {
-			c.commitInfo().transactionId(c.transactionId()).version(1).time(c.time()).transactionCommits(c.getTransactions());
+			c.commitInfo().transactionId(c.transactionId()).time(c.time()).transactionCommits(c.getTransactions());
 			services.serializer().serialize(c.commitInfo(), b);
 		}, eob);
 	};
