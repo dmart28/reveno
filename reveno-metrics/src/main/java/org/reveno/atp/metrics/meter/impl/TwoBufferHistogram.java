@@ -18,13 +18,13 @@ public class TwoBufferHistogram implements Histogram {
 	protected static final byte RESET_DONE = 3;
 
 	@Override
-	public void sendTo(Sink sink) {
-		switchNext();
+	public void sendTo(Sink sink, boolean sync) {
+		switchNext(sync);
 		ByteBuffer buffer = this.bufs[prevIndex()];
 		
 		long amount = Math.min(count.sumThenReset(), buffer.limit() / BYTES_PER_LONG);
 		long timestamp = System.currentTimeMillis() / 1000;
-		buffer.reset();
+		buffer.clear();
 		
 		long mean = 0;
 		long min = Long.MAX_VALUE;
@@ -49,26 +49,30 @@ public class TwoBufferHistogram implements Histogram {
 		mean /= count;
 		if (prevMean == -1) {
 			stddev = mean;
-			prevMean = mean;
 		} else {
 			stddev /= count;
 			stddev = (long) Math.sqrt(stddev);
 		}
+		prevMean = mean;
 		
 		sink.send(name + ".mean", Long.toString(mean), timestamp);
 		sink.send(name + ".min", Long.toString(min), timestamp);
 		sink.send(name + ".max", Long.toString(max), timestamp);
 		sink.send(name + ".stddev", Long.toString(stddev), timestamp);
+		
+		buffer.clear();
 	}
 	
-	public void switchNext() {
+	public void switchNext(boolean sync) {
 		int nextIndex = (int) (switcher.incrementAndGet() % bufferCount);
 		bit = (nextIndex << 2) | NEED_RESET; 
-		for (;;) {
-			if ((bit << 30) >>> 30 == RESET_DONE)
-				break;
-			else
-				Thread.yield();
+		if (sync) {
+			for (;;) {
+				if ((bit << 30) >>> 30 == RESET_DONE)
+					break;
+				else
+					Thread.yield();
+			}
 		}
 	}
 
