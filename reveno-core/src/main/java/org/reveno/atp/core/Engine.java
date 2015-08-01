@@ -353,12 +353,12 @@ public class Engine implements Reveno {
 	
 	protected DefaultIdGenerator idGenerator = new DefaultIdGenerator();
 	
-	protected final RevenoConfiguration config = new RevenoConfiguration();
-	protected final ClassLoader classLoader;
-	protected final JournalsStorage journalsStorage;
-	protected final FoldersStorage foldersStorage;
-	protected final SnapshotStorage snapshotStorage;
-	protected final SnapshottersManager snapshotsManager;
+	protected RevenoConfiguration config = new RevenoConfiguration();
+	protected ClassLoader classLoader;
+	protected JournalsStorage journalsStorage;
+	protected FoldersStorage foldersStorage;
+	protected SnapshotStorage snapshotStorage;
+	protected SnapshottersManager snapshotsManager;
 	
 	protected final ExecutorService executor = Executors.newFixedThreadPool(7);
 	protected final ExecutorService eventExecutor = Executors.newFixedThreadPool(3);

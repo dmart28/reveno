@@ -59,9 +59,6 @@ public class RevenoConfiguration implements Configuration {
 
     @Override
     public void preallocationSize(long size) {
-        if (Long.bitCount(size) != 1) {
-            throw new IllegalArgumentException("Files must have size of power of 2!");
-        }
         this.preallocationSize = size;
     }
     public long preallocationSize() {

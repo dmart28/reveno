@@ -17,7 +17,6 @@
 package org.reveno.atp.acceptance.tests;
 
 import org.reveno.atp.core.Engine;
-import org.reveno.atp.core.api.InterceptorCollection;
 
 import java.io.File;
 
