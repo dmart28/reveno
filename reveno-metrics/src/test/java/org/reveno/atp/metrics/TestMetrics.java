@@ -38,7 +38,7 @@ public class TestMetrics {
 		histogram.destroy();
 		sink.getMetrics().clear();
 		
-		histogram = new TwoBufferHistogram(NAME, 16);
+		histogram = new TwoBufferHistogram(NAME, 16, HistogramType.DISCARD_OVERFLOW);
 		histogram.update(13).update(23).update(12).update(44).update(55);
 		histogram.sendTo(Collections.singletonList(sink), false);
 		
