@@ -331,8 +331,9 @@ public class Tests extends RevenoBaseTest {
 	
 	@Test
 	public void testRollbackModel() throws Exception {
-		if (modelType != ModelType.MUTABLE) 
+		if (modelType != ModelType.MUTABLE) {
 			return;
+		}
 		
 		class TestTx {};
 		class TestCmd {};

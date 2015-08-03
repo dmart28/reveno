@@ -29,6 +29,20 @@ import java.util.function.Supplier;
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public abstract class MapUtils {
 	
+	public static Map<String, Object> map(Object... objs) {
+		if (objs.length % 2 != 0) {
+			throw new IllegalArgumentException("Input map should contain even count of arguments.");
+		}
+		
+		Map<String, Object> map = new HashMap<>();
+		
+		for (int i = 0; i < objs.length; i += 2) {
+			map.put((String) objs[i], objs[i + 1]);
+		}
+		
+		return map;
+	}
+	
 	public static SimpleMap<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> linkedFastRepo() {
 		return new SimpleMap<>((Supplier & Serializable)Long2ObjectLinkedOpenHashMap::new);
 	}

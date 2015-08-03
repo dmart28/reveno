@@ -27,6 +27,7 @@ dependencies {
 	compile "com.lmax:disruptor:$disruptorVersion"
 	compile "io.protostuff:protostuff-uberjar:$protostuffVersion"
 	compile "io.netty:netty-buffer:$nettyVersion"
+	compile "net.bytebuddy:byte-buddy:$byteBuddyVersion"
 
 	acceptanceTestCompile "com.google.guava:guava:$guavaVersion"
 	acceptanceTestCompile "junit:junit:$junitVersion"
