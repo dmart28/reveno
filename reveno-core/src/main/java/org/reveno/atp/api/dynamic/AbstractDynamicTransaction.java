@@ -1,4 +1,4 @@
-package org.reveno.atp.api.commands.dynamic;
+package org.reveno.atp.api.dynamic;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 
-public class AbstractTransaction {
+public class AbstractDynamicTransaction {
 	
 	public Optional<Object> opArg(String name) {
 		return Optional.ofNullable(args.get(name));
@@ -30,7 +30,7 @@ public class AbstractTransaction {
 		return ids.getLong(type);
 	}
 	
-	public AbstractTransaction() {
+	public AbstractDynamicTransaction() {
 	}
 	
 	protected Object2LongOpenHashMap<Class<?>> ids = new Object2LongOpenHashMap<Class<?>>();

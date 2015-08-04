@@ -1,4 +1,4 @@
-/** 
+/**
  *  Copyright (c) 2015 The original author or authors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,13 +14,22 @@
  *  limitations under the License.
  */
 
+
 package org.reveno.atp.api.query;
 
+import it.unimi.dsi.fastutil.longs.LongCollection;
+
+import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Collector;
+import java.util.stream.Stream;
 
-@FunctionalInterface
-public interface ViewsMapper<Entity, View> {
+public interface MappingContext {
 
-	View map(Entity entity, Optional<View> oldView, MappingContext repository);
-	
+	<V> Optional<V> get(Class<V> viewType, long id);
+
+	<V, U extends Collection<V>> U link(Stream<Long> ids, Class<V> viewType, Collector<V, ?, U> collector);
+
+	<V, U extends Collection<V>> U link(LongCollection ids, Class<V> viewType);
+
 }

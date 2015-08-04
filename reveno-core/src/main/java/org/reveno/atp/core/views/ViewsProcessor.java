@@ -18,7 +18,7 @@ package org.reveno.atp.core.views;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import org.reveno.atp.api.domain.Repository;
-import org.reveno.atp.api.query.ViewsRepository;
+import org.reveno.atp.api.query.MappingContext;
 import org.reveno.atp.core.api.ViewsStorage;
 import org.reveno.atp.core.views.ViewsManager.ViewHandlerHolder;
 
@@ -59,14 +59,14 @@ public class ViewsProcessor {
 	public ViewsProcessor(ViewsManager manager, ViewsStorage storage) {
 		this.manager = manager;
 		this.storage = storage;
-		this.repository = new OnDemandViewsRepository();
+		this.repository = new OnDemandViewsContext();
 	}
 	
 	protected ViewsManager manager;
 	protected ViewsStorage storage;
-	protected OnDemandViewsRepository repository;
+	protected OnDemandViewsContext repository;
 	
-	protected class OnDemandViewsRepository implements ViewsRepository {
+	protected class OnDemandViewsContext implements MappingContext {
 
 		@Override
 		public <V> Optional<V> get(Class<V> viewType, long id) {

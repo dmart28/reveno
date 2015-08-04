@@ -1,4 +1,4 @@
-package org.reveno.atp.api.commands.dynamic;
+package org.reveno.atp.api.dynamic;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -18,11 +18,11 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 
 public class DirectTransactionBuilder {
 	
-	protected static final String PACKAGE = "org.reveno.atp.api.commands.dynamic.";
+	protected static final String PACKAGE = "org.reveno.atp.api.dynamic.";
 	protected static final String COMMAND_NAME_PREFIX = "DynamicCommand_";
 	protected static final String TRANSACTION_NAME_PREFIX = "DynamicTransaction_";
 
-	public DirectTransactionBuilder(String name, BiConsumer<AbstractTransaction, TransactionContext> handler,
+	public DirectTransactionBuilder(String name, BiConsumer<AbstractDynamicTransaction, TransactionContext> handler,
 			SerializersChain serializer, TransactionsManager transactionsManager, CommandsManager commandsManager,
 			ClassLoader classLoader) {
 		this.name = name;
@@ -35,13 +35,13 @@ public class DirectTransactionBuilder {
 
 	protected void init() {
 		dynamicCommand = new ByteBuddy()
-				  .subclass(AbstractCommand.class)
+				  .subclass(AbstractDynamicCommand.class)
 				  .name(PACKAGE + COMMAND_NAME_PREFIX + name)
 				  .make()
 				  .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
 				  .getLoaded();
 		dynamicTransaction = new ByteBuddy()
-				  .subclass(AbstractTransaction.class)
+				  .subclass(AbstractDynamicTransaction.class)
 				  .name(PACKAGE + TRANSACTION_NAME_PREFIX + name)
 				  .make()
 				  .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
@@ -61,7 +61,7 @@ public class DirectTransactionBuilder {
 		return this;
 	}
 	
-	public DirectTransactionBuilder commandInterceptor(BiFunction<AbstractCommand, CommandContext, Object> commandInterceptor) {
+	public DirectTransactionBuilder commandInterceptor(BiFunction<AbstractDynamicCommand, CommandContext, Object> commandInterceptor) {
 		this.commandInterceptor = Optional.of(commandInterceptor);
 		return this;
 	}
@@ -70,13 +70,13 @@ public class DirectTransactionBuilder {
 	public DynamicCommand command() {
 		init();
 		
-		commandsManager.register((Class<AbstractCommand>) dynamicCommand, Object.class, (a, b) -> {
+		commandsManager.register((Class<AbstractDynamicCommand>) dynamicCommand, Object.class, (a, b) -> {
 			Object result = null;
 			if (commandInterceptor.isPresent()) {
 				result = commandInterceptor.get().apply(a, b);
 			}
 			try {
-				AbstractTransaction tx = dynamicTransaction.newInstance();
+				AbstractDynamicTransaction tx = dynamicTransaction.newInstance();
 				tx.args.putAll(a.args);
 				entityTypes.forEach(c -> tx.ids.put(c, b.id(c)));
 
@@ -90,7 +90,7 @@ public class DirectTransactionBuilder {
 			}
 			return result;
 		});
-		transactionsManager.registerTransaction((Class<AbstractTransaction>) dynamicTransaction, transactionHandler);
+		transactionsManager.registerTransaction((Class<AbstractDynamicTransaction>) dynamicTransaction, transactionHandler);
 		
 		return new DynamicCommand(dynamicCommand, dynamicTransaction);
 	}
@@ -98,11 +98,11 @@ public class DirectTransactionBuilder {
 	protected String name;
 	protected Set<Class<?>> entityTypes = new HashSet<>();
 	protected Optional<Class<?>> entityReturnIdType = Optional.empty();
-	protected Class<? extends AbstractCommand> dynamicCommand;
-	protected Class<? extends AbstractTransaction> dynamicTransaction;
-	protected Optional<BiFunction<AbstractCommand, CommandContext, Object>> commandInterceptor = Optional.empty();
+	protected Class<? extends AbstractDynamicCommand> dynamicCommand;
+	protected Class<? extends AbstractDynamicTransaction> dynamicTransaction;
+	protected Optional<BiFunction<AbstractDynamicCommand, CommandContext, Object>> commandInterceptor = Optional.empty();
 	
-	protected BiConsumer<AbstractTransaction, TransactionContext> transactionHandler;
+	protected BiConsumer<AbstractDynamicTransaction, TransactionContext> transactionHandler;
 	protected SerializersChain serializer;
 	protected TransactionsManager transactionsManager;
 	protected CommandsManager commandsManager;

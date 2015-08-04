@@ -38,9 +38,9 @@ import org.reveno.atp.api.RevenoManager;
 import org.reveno.atp.api.commands.CommandContext;
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
-import org.reveno.atp.api.commands.dynamic.AbstractTransaction;
-import org.reveno.atp.api.commands.dynamic.DirectTransactionBuilder;
-import org.reveno.atp.api.commands.dynamic.DynamicCommand;
+import org.reveno.atp.api.dynamic.AbstractDynamicTransaction;
+import org.reveno.atp.api.dynamic.DirectTransactionBuilder;
+import org.reveno.atp.api.dynamic.DynamicCommand;
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.query.QueryManager;
@@ -192,7 +192,7 @@ public class Engine implements Reveno {
 			
 			@Override
 			public DirectTransactionBuilder transaction(String name,
-					BiConsumer<AbstractTransaction, TransactionContext> handler) {
+					BiConsumer<AbstractDynamicTransaction, TransactionContext> handler) {
 				return new DirectTransactionBuilder(name, handler, serializer, transactionsManager,
 						commandsManager, classLoader);
 			}

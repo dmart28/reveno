@@ -22,7 +22,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
-import org.reveno.atp.api.commands.dynamic.DynamicCommand;
+import org.reveno.atp.api.dynamic.DynamicCommand;
 import org.reveno.atp.api.query.QueryManager;
 
 /**

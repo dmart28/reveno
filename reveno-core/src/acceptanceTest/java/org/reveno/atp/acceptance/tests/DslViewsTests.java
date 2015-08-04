@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 import org.reveno.atp.api.Configuration.ModelType;
-import org.reveno.atp.api.commands.dynamic.DynamicCommand;
+import org.reveno.atp.api.dynamic.DynamicCommand;
 import org.reveno.atp.utils.MapUtils;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -32,7 +32,7 @@ public class DslViewsTests extends RevenoBaseTest {
 		
 		reveno.domain().viewMapper(Link.class, LinkView.class, (e,o,r) -> new LinkView(e.id, e.name, e.url));
 		reveno.domain().viewMapper(Page.class, PageView.class, (e,o,r) -> 
-			new PageView(e.id, e.name, r.dynamic(e.linksIds.stream(), LinkView.class, Collectors.toList()));
+			new PageView(e.id, e.name, r.link(e.linksIds.stream(), LinkView.class, Collectors.toList())));
 		
 		reveno.startup();
 		
