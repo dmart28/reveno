@@ -16,14 +16,14 @@
 
 package org.reveno.atp.core.views;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import java.util.Map;
+import java.util.Optional;
+
 import org.reveno.atp.api.domain.Repository;
-import org.reveno.atp.api.query.MappingContext;
 import org.reveno.atp.core.api.ViewsStorage;
 import org.reveno.atp.core.views.ViewsManager.ViewHandlerHolder;
 
-import java.util.Map;
-import java.util.Optional;
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 
 public class ViewsProcessor {
 
@@ -59,40 +59,11 @@ public class ViewsProcessor {
 	public ViewsProcessor(ViewsManager manager, ViewsStorage storage) {
 		this.manager = manager;
 		this.storage = storage;
-		this.repository = new OnDemandViewsContext();
+		this.repository = new OnDemandViewsContext(this, storage, manager);
 	}
 	
 	protected ViewsManager manager;
 	protected ViewsStorage storage;
 	protected OnDemandViewsContext repository;
-	
-	protected class OnDemandViewsContext implements MappingContext {
-
-		@Override
-		public <V> Optional<V> get(Class<V> viewType, long id) {
-			Class<?> entityType = manager.resolveEntityType(viewType);
-			Object entity;
-			if (repository == null) {
-				entity = marked.get(entityType).get(id);
-			} else {
-				entity = repository.get(entityType, id);
-			}
-			if (entity != null) {
-				map(entityType, id, entity);
-			}
-			return storage.find(viewType, id);
-		}
-		
-		protected Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> marked;
-		public void marked(Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> marked) {
-			this.marked = marked;
-		}
-		
-		protected Repository repository;
-		public void repositorySource(Repository repository) {
-			this.repository = repository;
-		}
-		
-	}
 	
 }
