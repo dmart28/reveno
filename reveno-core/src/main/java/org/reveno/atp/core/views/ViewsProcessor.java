@@ -17,7 +17,6 @@
 package org.reveno.atp.core.views;
 
 import java.util.Map;
-import java.util.Optional;
 
 import org.reveno.atp.api.domain.Repository;
 import org.reveno.atp.core.api.ViewsStorage;
@@ -49,7 +48,10 @@ public class ViewsProcessor {
 			return;
 		
 		if (id >= 0) {
-			Object view = holder.mapper.map(entity, (Optional<Object>) storage.find(holder.viewType, id), repository);
+			repository.currentId(id);
+			repository.currentViewType(holder.viewType);
+			
+			Object view = holder.mapper.map(id, entity, repository);
 			storage.insert(id, view);
 		} else {
 			storage.remove(holder.viewType, Math.abs(id));

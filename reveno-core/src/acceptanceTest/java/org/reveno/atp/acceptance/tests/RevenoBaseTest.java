@@ -122,11 +122,11 @@ public class RevenoBaseTest {
 		reveno.domain().transactionAction(Credit.class, Transactions::credit);
 		reveno.domain().transactionAction(Debit.class, Transactions::debit);
 		
-		reveno.domain().viewMapper(Account.class, AccountView.class, (e, ov, r) -> {
-			return new AccountView(e.id(), e.currency(), e.balance(), e.orders(), reveno.query());
+		reveno.domain().viewMapper(Account.class, AccountView.class, (id,e,r) -> {
+			return new AccountView(id, e.currency(), e.balance(), e.orders(), reveno.query());
 		});
-		reveno.domain().viewMapper(Order.class, OrderView.class, (e, ov, r) -> {
-			return new OrderView(e.id(), e.accountId(), e.size(), e.price(), e.time(), e.positionId(),
+		reveno.domain().viewMapper(Order.class, OrderView.class, (id,e,r) -> {
+			return new OrderView(id, e.accountId(), e.size(), e.price(), e.time(), e.positionId(),
 					e.symbol(), e.orderStatus(), e.orderType(), reveno.query());
 		});
 		

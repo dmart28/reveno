@@ -16,14 +16,16 @@
 
 package org.reveno.atp.core;
 
-import com.google.common.io.Files;
+import java.io.File;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.reveno.atp.api.Reveno;
 import org.reveno.atp.api.commands.Result;
 
-import java.io.File;
-import java.util.concurrent.ExecutionException;
+import com.google.common.io.Files;
 
 public class TestEngineStarts {
 	
@@ -74,7 +76,8 @@ public class TestEngineStarts {
 		engine.domain().transactionAction(WriteLastCalculationTransaction.class, (t, u) -> {
 			u.repository().store(t.id, t.sqrt);
 		});
-		engine.domain().viewMapper(Double.class, LastCalculatedView.class, (e, old, r) -> {
+		engine.domain().viewMapper(Double.class, LastCalculatedView.class, (id,e,r) -> {
+			Optional<LastCalculatedView> old = r.get(LastCalculatedView.class, id);
 			if (old.isPresent()) {
 				old.get().sqrt = e;
 				return old.get();

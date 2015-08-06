@@ -25,6 +25,10 @@ public class OnDemandViewsContext implements MappingContext {
 
 	@Override
 	public <V> Optional<V> get(Class<V> viewType, long id) {
+		if (viewType == this.viewType && id == this.id) {
+			return storage.find(viewType, id);
+		}
+		
 		Class<?> entityType = manager.resolveEntityType(viewType);
 		Object entity;
 		if (repository == null) {
@@ -34,6 +38,9 @@ public class OnDemandViewsContext implements MappingContext {
 		}
 		if (entity != null) {
 			processor.map(entityType, id, entity);
+			if (repository == null) {
+				marked.get(entityType).remove(id);
+			}
 		}
 		return storage.find(viewType, id);
 	}
@@ -71,6 +78,15 @@ public class OnDemandViewsContext implements MappingContext {
 	protected Repository repository;
 	public void repositorySource(Repository repository) {
 		this.repository = repository;
+	}
+	
+	protected long id;
+	public void currentId(long id) {
+		this.id = id;
+	}
+	protected Class<?> viewType;
+	public void currentViewType(Class<?> viewType) {
+		this.viewType = viewType;
 	}
 	
 	public OnDemandViewsContext(ViewsProcessor processor, ViewsStorage storage, ViewsManager manager) {
