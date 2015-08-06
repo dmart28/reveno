@@ -13,6 +13,16 @@ public class AbstractDynamicCommand {
 		return this;
 	}
 	
+	@SuppressWarnings("unchecked")
+	public <T> T arg() {
+		return (T) args.values().iterator().next();
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T> T arg(String name) {
+		return (T) args.get(name);
+	}
+	
 	public AbstractDynamicCommand() {
 	}
 	

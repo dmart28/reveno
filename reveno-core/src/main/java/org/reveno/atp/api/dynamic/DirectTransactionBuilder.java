@@ -61,8 +61,13 @@ public class DirectTransactionBuilder {
 		return this;
 	}
 	
-	public DirectTransactionBuilder commandInterceptor(BiFunction<AbstractDynamicCommand, CommandContext, Object> commandInterceptor) {
+	public DirectTransactionBuilder command(BiFunction<AbstractDynamicCommand, CommandContext, Object> commandInterceptor) {
 		this.commandInterceptor = Optional.of(commandInterceptor);
+		return this;
+	}
+	
+	public DirectTransactionBuilder conditionalCommand(BiFunction<AbstractDynamicCommand, CommandContext, Boolean> commandConditionInterceptor) {
+		this.commandConditionInterceptor = Optional.of(commandConditionInterceptor);
 		return this;
 	}
 	
@@ -74,6 +79,10 @@ public class DirectTransactionBuilder {
 			Object result = null;
 			if (commandInterceptor.isPresent()) {
 				result = commandInterceptor.get().apply(a, b);
+			} else if (commandConditionInterceptor.isPresent()) {
+				if (!commandConditionInterceptor.get().apply(a, b)) {
+					return null;
+				}
 			}
 			try {
 				AbstractDynamicTransaction tx = dynamicTransaction.newInstance();
@@ -101,6 +110,7 @@ public class DirectTransactionBuilder {
 	protected Class<? extends AbstractDynamicCommand> dynamicCommand;
 	protected Class<? extends AbstractDynamicTransaction> dynamicTransaction;
 	protected Optional<BiFunction<AbstractDynamicCommand, CommandContext, Object>> commandInterceptor = Optional.empty();
+	protected Optional<BiFunction<AbstractDynamicCommand, CommandContext, Boolean>> commandConditionInterceptor = Optional.empty();
 	
 	protected BiConsumer<AbstractDynamicTransaction, TransactionContext> transactionHandler;
 	protected SerializersChain serializer;

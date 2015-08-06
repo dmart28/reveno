@@ -8,7 +8,10 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.function.Supplier;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import org.reveno.atp.api.domain.Repository;
@@ -42,8 +45,7 @@ public class OnDemandViewsContext implements MappingContext {
 
 	@Override
 	public <V> Set<V> linkSet(Stream<Long> ids, Class<V> viewType) {
-		// TODO Auto-generated method stub
-		return null;
+		return new LinkViewSet<V>(ids.mapToLong(i->i).toArray(), viewType);
 	}
 
 	@Override
@@ -53,8 +55,7 @@ public class OnDemandViewsContext implements MappingContext {
 
 	@Override
 	public <V> Set<V> linkSet(LongCollection ids, Class<V> viewType) {
-		// TODO Auto-generated method stub
-		return null;
+		return new LinkViewSet<V>(ids.toLongArray(), viewType);
 	}
 
 	@Override
@@ -286,6 +287,68 @@ public class OnDemandViewsContext implements MappingContext {
 			@Override
 			public void add(V e) {
 				throw new UnsupportedOperationException("The List is read-only!");
+			}
+			
+		}
+	}
+	
+	protected class LinkViewSet<V> extends LinkViewList<V> implements Set<V> {
+		
+		public LinkViewSet(long[] ids, Class<V> viewType) {
+			super(LongStream.of(ids).distinct().toArray(), viewType);
+		}
+
+		@Override
+		public Iterator<V> iterator() {
+			return new SetIterator();
+		}
+
+		@Override
+		public boolean add(V e) {
+			throw new UnsupportedOperationException("The Set is read-only!");
+		}
+
+		@Override
+		public boolean remove(Object o) {
+			throw new UnsupportedOperationException("The Set is read-only!");
+		}
+
+		@Override
+		public boolean addAll(Collection<? extends V> c) {
+			throw new UnsupportedOperationException("The Set is read-only!");
+		}
+
+		@Override
+		public boolean retainAll(Collection<?> c) {
+			throw new UnsupportedOperationException("The Set is read-only!");
+		}
+
+		@Override
+		public boolean removeAll(Collection<?> c) {
+			throw new UnsupportedOperationException("The Set is read-only!");
+		}
+
+		@Override
+		public void clear() {
+			throw new UnsupportedOperationException("The Set is read-only!");
+		}
+		
+		@Override
+		public Spliterator<V> spliterator() {
+			return Spliterators.spliterator(this, Spliterator.DISTINCT);
+		}
+
+		protected class SetIterator implements Iterator<V> {
+			protected int index = 0;
+
+			@Override
+			public boolean hasNext() {
+				return ids.length - 1 <= index;
+			}
+
+			@Override
+			public V next() {
+				return LinkViewSet.this.get(index++);
 			}
 			
 		}

@@ -33,6 +33,8 @@ public interface Repository {
 	 */
 	<T> Optional<T> get(Class<T> entityType, long id);
 	
+	<T> boolean has(Class<T> entityType, long id);
+	
 	/**
 	 * Gets entity from repository without marking it as dirty, 
 	 * hence no view mapping will happen after transaction, in which this method is invoked.

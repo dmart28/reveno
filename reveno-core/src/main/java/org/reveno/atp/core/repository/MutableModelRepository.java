@@ -76,6 +76,11 @@ public class MutableModelRepository implements TxRepository, Destroyable {
 			saveEntityState(id, entityType, entity.get(), EntityRecoveryState.UPDATE);
 		return entity;
 	}
+	
+	@Override
+	public <T> boolean has(Class<T> entityType, long id) {
+		return getClean(entityType, id).isPresent();
+	}
 
 	@Override
 	public RepositoryData getData() {

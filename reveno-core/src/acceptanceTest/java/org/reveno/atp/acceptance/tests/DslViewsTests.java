@@ -2,7 +2,6 @@ package org.reveno.atp.acceptance.tests;
 
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -16,13 +15,14 @@ import it.unimi.dsi.fastutil.longs.LongList;
 public class DslViewsTests extends RevenoBaseTest {
 	
 	@Test
-	public void onDemandViewCreationTest() throws Exception {
+	public void dynamicViewCreationTest() throws Exception {
 		TestRevenoEngine reveno = new TestRevenoEngine(tempDir);
 		reveno.config().modelType(ModelType.MUTABLE);
 		
 		DynamicCommand createPage = reveno.domain().transaction("createPage", (tx, ctx) -> {
 		    ctx.repository().store(tx.id(), new Page(tx.id(), tx.arg()));
 		}).uniqueIdFor(Page.class).command();
+		
 		DynamicCommand createLink = reveno.domain().transaction("createLink", (tx, ctx) -> {
 			if (tx.opArg("page").isPresent()) {
 		    	ctx.repository().get(Page.class, tx.arg("page")).ifPresent(p -> p.linksIds.add(tx.arg("page")));
@@ -30,9 +30,12 @@ public class DslViewsTests extends RevenoBaseTest {
 		    ctx.repository().store(tx.id(), new Link(tx.id(), tx.arg("name"), tx.arg("url")));
 		}).uniqueIdFor(Link.class).command();
 		
+		DynamicCommand updateLink = reveno.domain().transaction("updateLink", (tx, ctx) -> {
+			ctx.repository().get(Link.class, tx.arg("id")).get().url = tx.arg("newUrl");
+		}).conditionalCommand((c,ctx) -> ctx.repository().has(Link.class, c.arg("id"))).command();
+		
 		reveno.domain().viewMapper(Link.class, LinkView.class, (e,o,r) -> new LinkView(e.id, e.name, e.url));
-		reveno.domain().viewMapper(Page.class, PageView.class, (e,o,r) -> 
-			new PageView(e.id, e.name, r.link(e.linksIds.stream(), LinkView.class, Collectors.toList())));
+		reveno.domain().viewMapper(Page.class, PageView.class, (e,o,r) -> new PageView(e.id, e.name, r.link(e.linksIds, LinkView.class)));
 		
 		reveno.startup();
 		
@@ -43,6 +46,20 @@ public class DslViewsTests extends RevenoBaseTest {
 		PageView page = reveno.query().find(PageView.class, pageId).get();
 		Assert.assertEquals(page.links.size(), 1);
 		Assert.assertEquals(page.links.get(0).id, linkId);
+		Assert.assertEquals(page.links.get(0).url, "http://reveno.org");
+		
+		reveno.executeSync(updateLink, MapUtils.map("id", linkId, "newUrl", "http://new.reveno.org"));
+		
+		// since links array is dynamic, it will automatically catch up changes
+		Assert.assertEquals(page.links.size(), 1);
+		Assert.assertEquals(page.links.get(0).id, linkId);
+		Assert.assertEquals(page.links.get(0).url, "http://new.reveno.org");
+		
+		reveno.executeSync(updateLink, MapUtils.map("id", linkId + 1, "newUrl", "http://new.reveno.org"));
+		
+		Assert.assertSame(page.links.get(0), reveno.query().find(LinkView.class, linkId).get());
+		
+		reveno.shutdown();
 	}
 	
 	@Test

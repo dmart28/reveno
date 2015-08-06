@@ -54,6 +54,11 @@ public class RecordingRepository implements WriteableRepository {
 	}
 	
 	@Override
+	public <T> boolean has(Class<T> entityType, long id) {
+		return underlyingRepo.has(entityType, id);
+	}
+	
+	@Override
 	public <T> Optional<T> getClean(Class<T> entityType, long id) {
 		return underlyingRepo.getClean(entityType, id);
 	}

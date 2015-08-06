@@ -54,6 +54,11 @@ public class ImmutableModelRepository implements TxRepository {
 	}
 	
 	@Override
+	public <T> boolean has(Class<T> entityType, long id) {
+		return get(entityType, id).isPresent();
+	}
+	
+	@Override
 	public <T> Optional<T> getClean(Class<T> entityType, long id) {
 		return get(entityType, id);
 	}
