@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core.api.storage;
 
+import org.reveno.atp.api.RepositorySnapshotter.SnapshotIdentifier;
 import org.reveno.atp.core.api.channel.Channel;
 
 public interface SnapshotStorage {
@@ -29,7 +30,13 @@ public interface SnapshotStorage {
 	void removeLastSnapshotStore();
 	
 	
-	public static class SnapshotStore {
+	public static class SnapshotStore implements SnapshotIdentifier {
+		public static final byte TYPE = 0x1;
+		
+		public byte getType() {
+			return TYPE;
+		}
+		
 		private String snapshotPath;
 		public String getSnapshotPath() {
 			return snapshotPath;

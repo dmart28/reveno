@@ -35,11 +35,20 @@ public interface RepositorySnapshotter {
 	boolean hasAny();
 	
 	/**
+	 * Prepares SnapshotIdentifier pointer, using which snapshot
+	 * can be writen in particular way.
+	 * 
+	 * @return
+	 */
+	SnapshotIdentifier prepare();
+	
+	/**
 	 * Performs snapshotting of {@link RepositoryData} to some {@link SnapshotStorage}
 	 * 
 	 * @param repo latest state of domain model
+	 * @param identifier the result of perviously called {@link prepare()} method call
 	 */
-	void snapshot(RepositoryData repo);
+	void snapshot(RepositoryData repo, SnapshotIdentifier identifier);
 	
 	/**
 	 * Loads last snapshot into {@link RepositoryData}
@@ -47,4 +56,14 @@ public interface RepositorySnapshotter {
 	 * @return snapshotted state of domain model
 	 */
 	RepositoryData load();
+	
+	
+	public interface SnapshotIdentifier {
+		
+		byte getType();
+		
+		long getTime();
+		
+	}
+	
 }

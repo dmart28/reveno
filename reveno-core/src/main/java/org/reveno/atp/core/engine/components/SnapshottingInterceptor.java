@@ -16,7 +16,19 @@
 
 package org.reveno.atp.core.engine.components;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 import org.reveno.atp.api.Configuration.ModelType;
+import org.reveno.atp.api.RepositorySnapshotter;
+import org.reveno.atp.api.RepositorySnapshotter.SnapshotIdentifier;
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.transaction.TransactionInterceptor;
@@ -25,11 +37,12 @@ import org.reveno.atp.core.JournalsRoller;
 import org.reveno.atp.core.RevenoConfiguration;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
+import org.reveno.atp.core.api.storage.SnapshotStorage;
+import org.reveno.atp.core.api.storage.SnapshotStorage.SnapshotStore;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.core.snapshots.SnapshottersManager;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SnapshottingInterceptor implements TransactionInterceptor {
 	
@@ -56,28 +69,62 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 					buffer.release();
 					snapshotsMutable.remove(transactionId);
 					
-					snapshotsManager.getAll().forEach(s -> s.snapshot(data));
+					asyncSnapshot(data);
 					roller.roll(() -> {});
 				} else if (snapshotsImmutable.containsKey(transactionId)) {
-					snapshotsManager.getAll().forEach(s -> s.snapshot(snapshotsImmutable.get(transactionId)));
+					asyncSnapshot(snapshotsImmutable.get(transactionId));
 					snapshotsImmutable.remove(transactionId);
 					roller.roll(() -> {});
 				}
 			}
 	}
 	
+	@Override
+	public void destroy() {
+		if (!executor.isShutdown()) {
+			executor.shutdown();
+			try {
+				executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+			} catch (InterruptedException e) {
+				log.error(e.getMessage(), e);
+			}
+		}
+	}
+
+	private void asyncSnapshot(RepositoryData data) {
+		final Collection<RepositorySnapshotter> snaps = snapshotsManager.getAll();
+		// TODO optimise!
+		final List<SnapshotIdentifier> ids = snaps.stream()
+				.map(RepositorySnapshotter::prepare)
+				.collect(Collectors.toList());
+		executor.submit(() -> {
+			int count = 0;
+			for (Iterator<RepositorySnapshotter> i = snaps.iterator(); i.hasNext();) {
+				i.next().snapshot(data, ids.get(count++));
+			}
+		});
+	}
+	
 	public SnapshottingInterceptor(RevenoConfiguration configuration,
-			SnapshottersManager snapshotsManager, JournalsRoller roller,
-			RepositoryDataSerializer serializer) {
+			SnapshottersManager snapshotsManager, SnapshotStorage snapshotStorage,
+			JournalsRoller roller, RepositoryDataSerializer serializer) {
 		this.configuration = configuration;
 		this.snapshotsManager = snapshotsManager;
 		this.roller = roller;
 		this.serializer = serializer;
+		this.snapshotStorage = snapshotStorage;
+	}
+	
+	protected SnapshotStore nextStore() {
+		return snapshotStorage.nextSnapshotStore();
 	}
 	
 	protected RevenoConfiguration configuration;
 	protected SnapshottersManager snapshotsManager;
+	protected SnapshotStorage snapshotStorage;
 	protected JournalsRoller roller;
 	protected RepositoryDataSerializer serializer;
+	protected final ExecutorService executor = Executors.newSingleThreadExecutor();
+	protected static final Logger log = LoggerFactory.getLogger(SnapshottingInterceptor.class);
 
 }

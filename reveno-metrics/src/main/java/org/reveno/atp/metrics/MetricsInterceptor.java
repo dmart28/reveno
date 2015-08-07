@@ -27,6 +27,12 @@ public class MetricsInterceptor implements TransactionInterceptor {
 			histogram.update(System.nanoTime() - time);
 		}
 	}
+	
+	@Override
+	public void destroy() {
+		if (!executor.isShutdown())
+			executor.shutdown();
+	}
 
 	public MetricsInterceptor(ConfigurationImpl config) {
 		String prefix = "reveno.instances." + config.hostName().replace(".", "_") + "." + config.instanceName() + ".";

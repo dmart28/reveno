@@ -167,6 +167,10 @@ public class Engine implements Reveno {
 		workflowEngine.shutdown();
 		eventPublisher.getPipe().shutdown();
 		
+		interceptors.getInterceptors(TransactionStage.JOURNALING).forEach(TransactionInterceptor::destroy);
+		interceptors.getInterceptors(TransactionStage.REPLICATION).forEach(TransactionInterceptor::destroy);
+		interceptors.getInterceptors(TransactionStage.TRANSACTION).forEach(TransactionInterceptor::destroy);
+		
 		transactionsJournaler.destroy();
 		eventsJournaler.destroy();
 		
@@ -358,7 +362,7 @@ public class Engine implements Reveno {
 	protected void connectSystemHandlers() {
 		domain().transactionAction(NextIdTransaction.class, idGenerator);
 		if (config.revenoSnapshotting().snapshotEvery() != -1) {
-			TransactionInterceptor nTimeSnapshotter = new SnapshottingInterceptor(config, snapshotsManager,
+			TransactionInterceptor nTimeSnapshotter = new SnapshottingInterceptor(config, snapshotsManager, snapshotStorage,
 					roller, repositorySerializer);
 			interceptors.add(TransactionStage.TRANSACTION, nTimeSnapshotter);
 			interceptors.add(TransactionStage.JOURNALING, nTimeSnapshotter);
@@ -374,7 +378,7 @@ public class Engine implements Reveno {
 	}
 	
 	protected void snapshotAll() {
-		snapshotsManager.getAll().forEach(s -> s.snapshot(repository.getData()));
+		snapshotsManager.getAll().forEach(s -> s.snapshot(repository.getData(), s.prepare()));
 	}
 
 	protected volatile boolean isStarted = false;

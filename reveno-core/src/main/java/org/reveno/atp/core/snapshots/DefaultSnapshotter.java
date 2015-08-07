@@ -33,11 +33,18 @@ public class DefaultSnapshotter implements RepositorySnapshotter {
 	public boolean hasAny() {
 		return storage.getLastSnapshotStore() != null;
 	}
+	
+	@Override
+	public SnapshotIdentifier prepare() {
+		return storage.nextSnapshotStore();
+	}
 
 	@Override
-	public void snapshot(RepositoryData repo) {
-		SnapshotStore snap = storage.nextSnapshotStore();
-		
+	public void snapshot(RepositoryData repo, SnapshotIdentifier identifier) {
+		if (identifier.getType() != SnapshotStore.TYPE) {
+			return;
+		}
+		SnapshotStore snap = (SnapshotStore) identifier;
 		Buffer buffer = new NettyBasedBuffer(false);
 		try (Channel c = storage.channel(snap.getSnapshotPath())) {
 			log.info("Performing default repository snapshot to " + snap);

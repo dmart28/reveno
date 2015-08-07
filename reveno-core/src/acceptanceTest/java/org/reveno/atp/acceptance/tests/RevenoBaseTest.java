@@ -159,6 +159,9 @@ public class RevenoBaseTest {
 					start = System.currentTimeMillis();
 				}
 			}
+			@Override
+			public void destroy() {
+			}
 		});
 	}
 	

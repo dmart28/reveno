@@ -17,6 +17,7 @@
 package org.reveno.atp.api.transaction;
 
 import org.reveno.atp.api.domain.WriteableRepository;
+import org.reveno.atp.core.api.Destroyable;
 
 /*
  * Allowes you to intercept into transaction processing.
@@ -27,8 +28,7 @@ import org.reveno.atp.api.domain.WriteableRepository;
  * Good practice is to use it for some statistics gathering, snapshotting logic, etc.
  * 
  */
-@FunctionalInterface
-public interface TransactionInterceptor {
+public interface TransactionInterceptor extends Destroyable {
 
 	void intercept(long transactionId, long time, WriteableRepository repository, TransactionStage stage);
 	
