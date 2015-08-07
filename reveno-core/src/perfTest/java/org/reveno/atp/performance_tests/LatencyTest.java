@@ -22,6 +22,8 @@ import org.reveno.atp.acceptance.api.transactions.Credit;
 import org.reveno.atp.acceptance.tests.RevenoBaseTest;
 import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.Configuration.ModelType;
+import org.reveno.atp.api.domain.WriteableRepository;
+import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.core.Engine;
 
@@ -86,18 +88,24 @@ public class LatencyTest extends RevenoBaseTest {
 		Engine engine = createEngine(e -> {
 			e.config().cpuConsumption(consumption);
             e.config().preallocationSize(8 * 1024 * 1024 * 1024L);
-			e.interceptors().add(TransactionStage.REPLICATION, (id, time, r, s) -> {
-				if (++counter[0] > COLD_START_COUNT) {
-					final long lat = System.nanoTime() - time;
-					latency[0] += lat;
-					if (lat > worstLatency[0]) {
-						worstLatency[0] = lat;
-					}
-					if (lat > 3_000_000) {
-						worstCount[0]++;
-					}
-					if (lat <= 1000) {
-						bestCount[0]++;
+			e.interceptors().add(TransactionStage.REPLICATION, new TransactionInterceptor() {
+				@Override
+				public void destroy() {
+				}
+				@Override
+				public void intercept(long transactionId, long time, WriteableRepository repository, TransactionStage stage) {
+					if (++counter[0] > COLD_START_COUNT) {
+						final long lat = System.nanoTime() - time;
+						latency[0] += lat;
+						if (lat > worstLatency[0]) {
+							worstLatency[0] = lat;
+						}
+						if (lat > 3_000_000) {
+							worstCount[0]++;
+						}
+						if (lat <= 1000) {
+							bestCount[0]++;
+						}
 					}
 				}
 			});

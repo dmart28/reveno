@@ -29,6 +29,8 @@ public interface Configuration {
 	void cpuConsumption(CpuConsumption cpuConsumption);
 
     void preallocationSize(long size);
+    
+    //void fsync(boolean fsync);
 	
     
 	public static interface SnapshotConfiguration {

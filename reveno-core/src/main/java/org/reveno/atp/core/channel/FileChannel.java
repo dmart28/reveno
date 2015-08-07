@@ -91,6 +91,11 @@ public class FileChannel implements Channel {
 			int size = buffer.position();
 			buffer.putInt(0, size - 4).flip();
 			write(buffer, size);
+			try {
+				raf.getFD().sync();
+			} catch (IOException e) {
+				log.error(e.getMessage(), e);
+			}
 			buffer.clear();
             revenoBuffer.writeInt(1);
 		} else if (flush) {
