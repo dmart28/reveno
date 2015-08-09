@@ -121,8 +121,8 @@ public class LatencyTest extends RevenoBaseTest {
 		for (int a = 0; a < ths.length; a++) {
 			Thread t1 = new Thread(() -> {
 				try {
-				for (long j = 1; j < TOTAL_TRANSACTIONS / 100_000; j++) {
-					for (long i = 1; i <= 100_000; i++) {
+				for (long j = 1; j < TOTAL_TRANSACTIONS / 200_000; j++) {
+					for (long i = 1; i <= 200_000; i++) {
 						engine.executeCommand(cmd);
 					}
 					Thread.yield();

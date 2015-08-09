@@ -67,7 +67,8 @@ public interface RevenoManager {
 	 * @param transaction
 	 * @param handler
 	 */
-	<T> void transactionWithRollbackAction(Class<T> transaction, BiConsumer<T, TransactionContext> handler, BiConsumer<T, TransactionContext> rollbackHandler);
+	<T> void transactionWithCompensatingAction(Class<T> transaction, BiConsumer<T, TransactionContext> handler,
+											   BiConsumer<T, TransactionContext> compensatingAction);
 	
 	/**
 	 * TODO

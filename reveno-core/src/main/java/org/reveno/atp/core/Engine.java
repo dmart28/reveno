@@ -215,11 +215,12 @@ public class Engine implements Reveno {
 			}
 			
 			@Override
-			public <T> void transactionWithRollbackAction(Class<T> transaction,
-					BiConsumer<T, TransactionContext> handler, BiConsumer<T, TransactionContext> rollbackHandler) {
+			public <T> void transactionWithCompensatingAction(Class<T> transaction,
+															  BiConsumer<T, TransactionContext> handler,
+															  BiConsumer<T, TransactionContext> compensatingAction) {
 				serializer.registerTransactionType(transaction);
 				transactionsManager.registerTransaction(transaction, handler);
-				transactionsManager.registerTransaction(transaction, rollbackHandler, true);
+				transactionsManager.registerTransaction(transaction, compensatingAction, true);
 			}
 			
 			@Override

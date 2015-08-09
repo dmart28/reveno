@@ -341,11 +341,11 @@ public class Tests extends RevenoBaseTest {
 		Repository[] repo = new Repository[1];
 		Consumer<TestRevenoEngine> consumer = r -> {
 			r.config().modelType(ModelType.MUTABLE);
-			r.config().mutableModelFailover(MutableModelFailover.ROLLBACK_ACTIONS);
-			r.domain().transactionWithRollbackAction(CreateAccount.class, Transactions::createAccount, RollbackTransactions::rollbackCreateAccount);
-			r.domain().transactionWithRollbackAction(AcceptOrder.class, Transactions::acceptOrder, RollbackTransactions::rollbackAcceptOrder);
-			r.domain().transactionWithRollbackAction(Credit.class, Transactions::credit, RollbackTransactions::rollbackCredit);
-			r.domain().transactionWithRollbackAction(Debit.class, Transactions::debit, RollbackTransactions::rollbackDebit);
+			r.config().mutableModelFailover(MutableModelFailover.COMPENSATING_ACTIONS);
+			r.domain().transactionWithCompensatingAction(CreateAccount.class, Transactions::createAccount, RollbackTransactions::rollbackCreateAccount);
+			r.domain().transactionWithCompensatingAction(AcceptOrder.class, Transactions::acceptOrder, RollbackTransactions::rollbackAcceptOrder);
+			r.domain().transactionWithCompensatingAction(Credit.class, Transactions::credit, RollbackTransactions::rollbackCredit);
+			r.domain().transactionWithCompensatingAction(Debit.class, Transactions::debit, RollbackTransactions::rollbackDebit);
 			
 			r.domain().command(TestCmd.class, (c,d) -> d.executeTransaction(new TestTx()));
 			r.domain().transactionAction(TestTx.class, (a,b) -> { repo[0] = b.repository(); throw new RuntimeException(); });

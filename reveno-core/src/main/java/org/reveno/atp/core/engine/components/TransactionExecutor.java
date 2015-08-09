@@ -78,7 +78,7 @@ public class TransactionExecutor {
 				services.configuration().mutableModelFailover() == MutableModelFailover.SNAPSHOTS) {
 			services.repository().rollback();
 		} else {
-			rollbackTransactions(services, c.getTransactions().listIterator(c.getTransactions().size() - 1));
+			compensateTransactions(services, c.getTransactions().listIterator(c.getTransactions().size() - 1));
 		}
 	}
 
@@ -99,8 +99,8 @@ public class TransactionExecutor {
 			services.transactionsManager().execute(i.next(), transactionContext);
 	}
 	
-	protected void rollbackTransactions(WorkflowContext services, ListIterator<Object> transactionIterator) {
-		forEachPrev(transactionIterator, t -> services.transactionsManager().rollback(t, transactionContext));
+	protected void compensateTransactions(WorkflowContext services, ListIterator<Object> transactionIterator) {
+		forEachPrev(transactionIterator, t -> services.transactionsManager().compensate(t, transactionContext));
 	}
 	
 	protected void setSystemInfo(WorkflowContext services, long transactionId) {

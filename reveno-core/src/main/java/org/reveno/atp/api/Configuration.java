@@ -49,7 +49,7 @@ public interface Configuration {
 	
 	public static enum ModelType { MUTABLE, IMMUTABLE }
 	
-	public static enum MutableModelFailover { SNAPSHOTS, ROLLBACK_ACTIONS }
+	public static enum MutableModelFailover { SNAPSHOTS, COMPENSATING_ACTIONS}
 	
 	public static enum CpuConsumption { LOW, NORMAL, HIGH, PHASED }
 	

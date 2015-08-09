@@ -29,24 +29,24 @@ public class TransactionsManager {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <T> void registerTransaction(Class<T> transactionType, BiConsumer<T, TransactionContext> handler, boolean rollback) {
-		if (!rollback)
+	public <T> void registerTransaction(Class<T> transactionType, BiConsumer<T, TransactionContext> handler, boolean isCompensate) {
+		if (!isCompensate)
 			txs.put(transactionType, (BiConsumer<Object, TransactionContext>) handler);
 		else 
-			rollbackTxs.put(transactionType, (BiConsumer<Object, TransactionContext>) handler);
+			compensateTxs.put(transactionType, (BiConsumer<Object, TransactionContext>) handler);
 	}
 	
 	public void execute(Object transaction, TransactionContext context) {
 		txs.get(transaction.getClass()).accept(transaction, context);
 	}
 	
-	public void rollback(Object transaction, TransactionContext context) {
-		BiConsumer<Object, TransactionContext> rollback = rollbackTxs.get(transaction.getClass());
-		if (rollback != null)
-			rollback.accept(transaction, context);
+	public void compensate(Object transaction, TransactionContext context) {
+		BiConsumer<Object, TransactionContext> compensate = compensateTxs.get(transaction.getClass());
+		if (compensate != null)
+			compensate.accept(transaction, context);
 	}
 	
 	protected Map<Class<?>, BiConsumer<Object, TransactionContext>> txs = new HashMap<>();
-	protected Map<Class<?>, BiConsumer<Object, TransactionContext>> rollbackTxs = new HashMap<>();
+	protected Map<Class<?>, BiConsumer<Object, TransactionContext>> compensateTxs = new HashMap<>();
 	
 }
