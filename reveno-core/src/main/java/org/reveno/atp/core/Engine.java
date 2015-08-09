@@ -144,8 +144,10 @@ public class Engine implements Reveno {
 		connectSystemHandlers();
 		
 		JournalStore store = journalsStorage.nextStore();
-		transactionsJournaler.startWriting(journalsStorage.channel(store.getTransactionCommitsAddress(), config.preallocationSize()));
-		eventsJournaler.startWriting(journalsStorage.channel(store.getEventsCommitsAddress(), config.preallocationSize()));
+		transactionsJournaler.startWriting(journalsStorage.channel(store.getTransactionCommitsAddress(),
+				config.channelOptions(), config.preallocationSize()));
+		eventsJournaler.startWriting(journalsStorage.channel(store.getEventsCommitsAddress(),
+				config.channelOptions(), config.preallocationSize()));
 		
 		eventPublisher.getPipe().start();
 		workflowEngine.init();

@@ -20,8 +20,8 @@ import java.io.File;
 
 public class FileNotFoundException extends RuntimeException {
 
-	public FileNotFoundException(File file) {
-		super(String.format("File %s not found.", file.getAbsolutePath()));
+	public FileNotFoundException(File file, Throwable e) {
+		super(String.format("File %s not found.", file.getAbsolutePath()), e);
 	}
 	
 	private static final long serialVersionUID = 1718559297558833658L;

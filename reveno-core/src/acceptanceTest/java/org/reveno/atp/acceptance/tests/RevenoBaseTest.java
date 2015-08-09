@@ -42,6 +42,7 @@ import org.reveno.atp.acceptance.model.mutable.MutableAccount;
 import org.reveno.atp.acceptance.model.mutable.MutableOrder;
 import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
+import org.reveno.atp.api.ChannelOptions;
 import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.Reveno;
@@ -112,6 +113,7 @@ public class RevenoBaseTest {
 		
 		reveno.config().cpuConsumption(CpuConsumption.HIGH);
 		reveno.config().modelType(modelType);
+		reveno.config().channelOptions(ChannelOptions.UNBUFFERED_IO);
 		
 		reveno.domain().command(CreateNewAccountCommand.class, Long.class, Commands::createAccount);
 		reveno.domain().command(NewOrderCommand.class, Long.class, Commands::newOrder);

@@ -29,6 +29,10 @@ public interface Configuration {
 	void cpuConsumption(CpuConsumption cpuConsumption);
 
     void preallocationSize(long size);
+
+	void volumes(int volumes);
+
+	void channelOptions(ChannelOptions options);
     
     //void fsync(boolean fsync);
 	

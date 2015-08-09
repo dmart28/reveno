@@ -16,12 +16,15 @@
 
 package org.reveno.atp.core.api.storage;
 
+import org.reveno.atp.api.ChannelOptions;
 import org.reveno.atp.core.api.channel.Channel;
 
 
 public interface FoldersStorage {
-	
+
 	Channel channel(String address);
+
+	Channel channel(String address, ChannelOptions options);
 
 	Folder nextFolder(String prefix);
 

@@ -3,6 +3,7 @@ package org.reveno.atp.core.channel;
 import com.google.common.io.Files;
 import org.junit.Assert;
 import org.junit.Test;
+import org.reveno.atp.api.ChannelOptions;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,7 +23,7 @@ public class FileChannelTest {
 		File testFile = new File(Files.createTempDir(), "fileChannelTest.dat");
 		Files.write(testData, testFile);
 		
-		FileChannel fc = new FileChannel(testFile, "rw");
+		FileChannel fc = new FileChannel(testFile, ChannelOptions.UNBUFFERED_IO);
         ByteBufferWrapper buf = new ByteBufferWrapper(java.nio.ByteBuffer.allocate(1024 * 1024));
 		
 		try {
@@ -49,7 +50,7 @@ public class FileChannelTest {
 		
 		File testFile = new File(Files.createTempDir(), "fileChannelTest.dat");
 		try {
-			FileChannel fc = new FileChannel(testFile, "rw");
+			FileChannel fc = new FileChannel(testFile, ChannelOptions.UNBUFFERED_IO);
 			dataSets.forEach((ds) -> fc.write(b -> b.writeBytes(ds), true));
 			fc.close();
 		

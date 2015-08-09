@@ -21,6 +21,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.reveno.atp.api.ChannelOptions;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.channel.FileChannel;
@@ -52,17 +53,19 @@ public class DefaultJournalerTest {
 	public void test() throws Exception {
 		Journaler journaler = new DefaultJournaler();
 		// TODO not accurate that we use FileChannel here, need some mock in future
-		Channel fc = new FileChannel(tempFile1, "rw");
+		Channel fc = new FileChannel(tempFile1, ChannelOptions.BUFFERING_VM);
 		journaler.startWriting(fc);
 		testWithData(journaler, tempFile1);
 		
-		Channel fcRoll = new FileChannel(tempFile2, "rw");
+		Channel fcRoll = new FileChannel(tempFile2, ChannelOptions.BUFFERING_VM);
 		journaler.roll(fcRoll, () -> {});
 		testWithData(journaler, tempFile2, true);
 		
 		fc.close();
 		fcRoll.close();
 	}
+
+	// TODO other tests
 	
 	private void testWithData(Journaler journaler, File file) {
 		testWithData(journaler, file, false);

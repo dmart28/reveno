@@ -36,7 +36,7 @@ public class DefaultInputProcessor implements InputProcessor, Closeable {
 	public void process(final Consumer<Buffer> consumer, JournalType type) {
 		List<Channel> chs = Arrays.asList(stores()).stream().map((js) -> type == JournalType.EVENTS ?
 				js.getEventsCommitsAddress() : js.getTransactionCommitsAddress())
-				.map(f -> storage.channel(f)).limit(Math.abs(stores().length - 1)).collect(Collectors.toList());
+				.map(storage::channel).limit(Math.abs(stores().length - 1)).collect(Collectors.toList());
 		ChannelReader<Buffer> bufferReader = new ChannelReader<>(new ChannelDecoder(), chs);
 		bufferReader.iterator().forEachRemaining((list) -> {
 			list.forEach((b) -> {

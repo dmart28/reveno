@@ -17,8 +17,13 @@
 package org.reveno.atp.core.channel;
 
 import org.reveno.atp.core.api.channel.Buffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
 
@@ -31,7 +36,9 @@ import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
  *
  */
 public class ByteBufferWrapper implements Buffer {
-	
+
+	protected Function<Integer, ByteBuffer> nextBuf;
+
 	protected ByteBuffer buffer; 
 	public ByteBuffer getBuffer() {
 		return buffer;
@@ -39,6 +46,11 @@ public class ByteBufferWrapper implements Buffer {
 	
 	public ByteBufferWrapper(ByteBuffer buffer) {
 		this.buffer = buffer;
+	}
+
+	public ByteBufferWrapper(ByteBuffer buffer, Function<Integer, ByteBuffer> nextBuf) {
+		this.buffer = buffer;
+		this.nextBuf = nextBuf;
 	}
 
 	@Override
@@ -216,14 +228,24 @@ public class ByteBufferWrapper implements Buffer {
 	public void resetWriter() {
 		buffer.reset();
 	}
-	
+
 	protected void autoExtendIfRequired(int length) {
-		if (buffer.position() + length > buffer.capacity()) {
-			ByteBuffer newBuffer = ByteBuffer.allocateDirect(next2n(buffer.position() + length));
-			buffer.flip();
-			newBuffer.put(buffer);
-			destroyDirectBuffer(buffer);
-			buffer = newBuffer;
+		if ((buffer.position() + length) - buffer.limit() > 0) {
+			if (nextBuf == null) {
+				ByteBuffer newBuffer = ByteBuffer.allocateDirect(next2n(buffer.position() + length));
+				buffer.flip();
+				newBuffer.put(buffer);
+				destroyDirectBuffer(buffer);
+				buffer = newBuffer;
+			} else {
+				int pos = buffer.position();
+				if (log.isDebugEnabled()) {
+					log.debug("Switch mmap over (pos:{}, limit:{})", pos, buffer.limit());
+				}
+				buffer.putInt(0, pos - 4);
+				((MappedByteBuffer) buffer).force();
+				buffer = nextBuf.apply(pos);
+			}
 		}
 	}
 
@@ -243,4 +265,5 @@ public class ByteBufferWrapper implements Buffer {
         return (int)Math.pow(2, i);
     }
 
+	protected static final Logger log = LoggerFactory.getLogger(ByteBufferWrapper.class);
 }

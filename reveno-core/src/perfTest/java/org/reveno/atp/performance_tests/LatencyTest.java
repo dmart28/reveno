@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
 import org.reveno.atp.acceptance.api.transactions.Credit;
 import org.reveno.atp.acceptance.tests.RevenoBaseTest;
+import org.reveno.atp.api.ChannelOptions;
 import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.domain.WriteableRepository;
@@ -88,6 +89,7 @@ public class LatencyTest extends RevenoBaseTest {
 		Engine engine = createEngine(e -> {
 			e.config().cpuConsumption(consumption);
             e.config().preallocationSize(8 * 1024 * 1024 * 1024L);
+			e.config().channelOptions(ChannelOptions.BUFFERING_MMAP_OS);
 			e.interceptors().add(TransactionStage.REPLICATION, new TransactionInterceptor() {
 				@Override
 				public void destroy() {

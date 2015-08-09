@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core.storage;
 
+import org.reveno.atp.api.ChannelOptions;
 import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.api.storage.FoldersStorage;
 import org.reveno.atp.core.api.storage.JournalsStorage;
@@ -41,12 +42,17 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 
 	@Override
 	public Channel channel(String address) {
-		return new FileChannel(new File(baseDir, address), "rw");
+		return new FileChannel(new File(baseDir, address), ChannelOptions.BUFFERING_VM);
+	}
+
+	@Override
+	public Channel channel(String address, ChannelOptions options) {
+		return new FileChannel(new File(baseDir, address), options);
 	}
 
     @Override
-    public Channel channel(String address, long size) {
-        return new FileChannel(new File(baseDir, address), "rw", size);
+    public Channel channel(String address, ChannelOptions options, long size) {
+        return new FileChannel(new File(baseDir, address), options, size);
     }
 
     @Override

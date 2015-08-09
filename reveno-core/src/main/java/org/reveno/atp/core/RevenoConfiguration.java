@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core;
 
+import org.reveno.atp.api.ChannelOptions;
 import org.reveno.atp.api.Configuration;
 
 public class RevenoConfiguration implements Configuration {
@@ -65,6 +66,22 @@ public class RevenoConfiguration implements Configuration {
         return this.preallocationSize;
     }
 
+	@Override
+	public void volumes(int volumes) {
+		this.volumes = volumes;
+	}
+	public int volumes() {
+		return volumes;
+	}
+
+	@Override
+	public void channelOptions(ChannelOptions channelOptions) {
+		this.channelOptions = channelOptions;
+	}
+	public ChannelOptions channelOptions() {
+		return channelOptions;
+	}
+
     public CpuConsumption cpuConsumption() {
 		return cpuConsumption;
 	}
@@ -72,9 +89,11 @@ public class RevenoConfiguration implements Configuration {
 	protected RevenoSnapshotConfiguration snapshotting = new RevenoSnapshotConfiguration();
 	protected RevenoDisruptorConfiguration disruptor = new RevenoDisruptorConfiguration();
 	protected CpuConsumption cpuConsumption = CpuConsumption.NORMAL;
+	protected ChannelOptions channelOptions = ChannelOptions.BUFFERING_VM;
 	protected ModelType modelType = ModelType.IMMUTABLE;
 	protected MutableModelFailover mutableModelFailover = MutableModelFailover.SNAPSHOTS;
     protected long preallocationSize = 0L;
+	protected int volumes = 3;
 	
 	public static class RevenoSnapshotConfiguration implements SnapshotConfiguration {
 

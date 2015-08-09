@@ -21,6 +21,8 @@ import java.util.function.Consumer;
 public interface Channel extends AutoCloseable {
 	
 	long size();
+
+	long position();
 	
 	boolean isReadAvailable();
 	

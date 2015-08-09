@@ -16,13 +16,16 @@
 
 package org.reveno.atp.core.api.storage;
 
+import org.reveno.atp.api.ChannelOptions;
 import org.reveno.atp.core.api.channel.Channel;
 
 public interface JournalsStorage {
 
 	Channel channel(String address);
 
-    Channel channel(String address, long size);
+	Channel channel(String address, ChannelOptions options);
+
+    Channel channel(String address, ChannelOptions options, long size);
 
 	JournalStore[] getLastStores();
 
