@@ -33,8 +33,6 @@ public interface Configuration {
 	void volumes(int volumes);
 
 	void channelOptions(ChannelOptions options);
-    
-    //void fsync(boolean fsync);
 	
     
 	public static interface SnapshotConfiguration {

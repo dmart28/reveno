@@ -330,7 +330,7 @@ public class Tests extends RevenoBaseTest {
 	}
 	
 	@Test
-	public void testRollbackModel() throws Exception {
+	public void testTransactionWithCompensatingActions() throws Exception {
 		if (modelType != ModelType.MUTABLE) {
 			return;
 		}

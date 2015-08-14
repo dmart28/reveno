@@ -59,19 +59,15 @@ public class DefaultJournalerTest {
 		
 		Channel fcRoll = new FileChannel(tempFile2, ChannelOptions.BUFFERING_VM);
 		journaler.roll(fcRoll, () -> {});
-		testWithData(journaler, tempFile2, true);
+		testWithData(journaler, tempFile2);
 		
 		fc.close();
 		fcRoll.close();
 	}
 
 	// TODO other tests
-	
-	private void testWithData(Journaler journaler, File file) {
-		testWithData(journaler, file, false);
-	}
 
-	private void testWithData(Journaler journaler, File file, boolean rolled) {
+	private void testWithData(Journaler journaler, File file) {
 		for (int i = 0; i < 10; i++) {
 			byte[] data = new byte[mb(1)];
 			new Random().nextBytes(data);
