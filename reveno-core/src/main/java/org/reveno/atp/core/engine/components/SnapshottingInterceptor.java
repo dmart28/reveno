@@ -63,18 +63,20 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 					}
 				}
 			} else if (stage == TransactionStage.JOURNALING) {
-				if (configuration.modelType() == ModelType.MUTABLE && snapshotsMutable.containsKey(transactionId)) {
-					Buffer buffer = snapshotsMutable.get(transactionId);
-					RepositoryData data = serializer.deserialize(buffer);
-					buffer.release();
-					snapshotsMutable.remove(transactionId);
-					
-					asyncSnapshot(data);
-				} else if (snapshotsImmutable.containsKey(transactionId)) {
-					asyncSnapshot(snapshotsImmutable.get(transactionId));
-					snapshotsImmutable.remove(transactionId);
+				if (snapshotsMutable.containsKey(transactionId) || snapshotsImmutable.containsKey(transactionId)) {
+					if (configuration.modelType() == ModelType.MUTABLE) {
+						Buffer buffer = snapshotsMutable.get(transactionId);
+						RepositoryData data = serializer.deserialize(buffer);
+						buffer.release();
+						snapshotsMutable.remove(transactionId);
+
+						asyncSnapshot(data);
+					} else {
+						asyncSnapshot(snapshotsImmutable.get(transactionId));
+						snapshotsImmutable.remove(transactionId);
+					}
+					journalsRoller.roll();
 				}
-				journalsRoller.roll();
 			}
 	}
 	

@@ -23,6 +23,7 @@ import org.reveno.atp.core.api.storage.JournalsStorage;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
 import org.reveno.atp.core.channel.FileChannel;
 import org.reveno.atp.utils.UnsafeUtils;
+import org.reveno.atp.utils.VersionedFileUtils;
 import org.reveno.atp.utils.VersionedFileUtils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.reveno.atp.utils.VersionedFileUtils.*;
 
@@ -93,15 +95,18 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 			throw new RuntimeException(String.format("Amount of Transaction files doesn't match to Events files [%s/%s]",
 					txs.size(), evns.size()));
 
-        List<JournalStore> collect = txs.stream().map(tx -> evns.stream()
-                .filter(e -> e.getVersion() == tx.getVersion())
-                .map(e -> store(tx, e)).findFirst().get()).collect(Collectors.toList());
-        return collect.toArray(new JournalStore[collect.size()]);
+		return getJournalStores(txs, evns);
 	}
 
 	@Override
 	public JournalStore[] getVolumes() {
-		return new JournalStore[0];
+		final List<VersionedFile> txs = listVersioned(baseDir, VOLUME_EVENTS_PREFIX);
+		final List<VersionedFile> evns = listVersioned(baseDir, VOLUME_TRANSACTION_PREFIX);
+
+		if (txs.size() != evns.size())
+			return new JournalStore[0];
+
+		return getJournalStores(txs, evns);
 	}
 
 	@Override
@@ -116,8 +121,8 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 
 	@Override
 	public JournalStore nextStore() {
-		VersionedFile txFile = parseVersionedFile(nextVersionFile(baseDir,TRANSACTION_PREFIX));
-		VersionedFile evnFile = parseVersionedFile(nextVersionFile(baseDir,EVENTS_PREFIX));
+		VersionedFile txFile = parseVersionedFile(nextVersionFile(baseDir, TRANSACTION_PREFIX));
+		VersionedFile evnFile = parseVersionedFile(nextVersionFile(baseDir, EVENTS_PREFIX));
 
 		if (txFile.getVersion() != evnFile.getVersion())
 			throw new RuntimeException(String.format(
@@ -129,15 +134,38 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 
 	@Override
 	public JournalStore nextVolume(long txSize, long eventsSize) {
-		VersionedFile txFile = parseVersionedFile(nextVersionFile(baseDir,TRANSACTION_PREFIX));
-		VersionedFile evnFile = parseVersionedFile(nextVersionFile(baseDir,EVENTS_PREFIX));
+		VersionedFile txFile = parseVersionedFile(nextVersionFile(baseDir, VOLUME_TRANSACTION_PREFIX));
+		VersionedFile evnFile = parseVersionedFile(nextVersionFile(baseDir, VOLUME_EVENTS_PREFIX));
 
-		return store(txFile, evnFile);
+		if (txFile.getVersion() < evnFile.getVersion()) {
+			IntStream.range(0, (int) Math.abs(txFile.getVersion() - evnFile.getVersion())).forEach(i -> {
+				VersionedFile file = parseVersionedFile(nextVersionFile(baseDir, VOLUME_TRANSACTION_PREFIX));
+				preallocateFiles(new File(baseDir, file.getName()), txSize);
+			});
+			txFile = parseVersionedFile(nextVersionFile(baseDir, VOLUME_TRANSACTION_PREFIX));
+		} else if (txFile.getVersion() > evnFile.getVersion()) {
+			IntStream.range(0, (int) Math.abs(txFile.getVersion() - evnFile.getVersion())).forEach(i -> {
+				VersionedFile file = parseVersionedFile(nextVersionFile(baseDir, VOLUME_EVENTS_PREFIX));
+				preallocateFiles(new File(baseDir, file.getName()), eventsSize);
+			});
+			evnFile = parseVersionedFile(nextVersionFile(baseDir, VOLUME_EVENTS_PREFIX));
+		}
+
+		preallocateFiles(new File(baseDir, txFile.getName()), txSize);
+		preallocateFiles(new File(baseDir, evnFile.getName()), eventsSize);
+
+		return new JournalStore(txFile.getName(), evnFile.getName(), Long.toString(txFile.getVersion()), true);
 	}
 
 	@Override
 	public JournalStore convertVolumeToStore(JournalStore volume) {
-		return null;
+		VersionedFile txFile = parseVersionedFile(nextVersionFile(baseDir, TRANSACTION_PREFIX));
+		VersionedFile evnFile = parseVersionedFile(nextVersionFile(baseDir, EVENTS_PREFIX));
+
+		new File(baseDir, volume.getTransactionCommitsAddress()).renameTo(new File(baseDir, txFile.getName()));
+		new File(baseDir, volume.getEventsCommitsAddress()).renameTo(new File(baseDir, evnFile.getName()));
+
+		return new JournalStore(txFile.getName(), evnFile.getName(), Long.toString(txFile.getVersion()), false);
 	}
 
 	@Override
@@ -176,7 +204,13 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 		new File(baseDir, address).mkdir();
 		return new FolderItem(name, address);
 	}
-	
+
+	protected JournalStore[] getJournalStores(List<VersionedFile> txs, List<VersionedFile> evns) {
+		List<JournalStore> collect = txs.stream().map(tx -> evns.stream()
+				.filter(e -> e.getVersion() == tx.getVersion())
+				.map(e -> store(tx, e)).findFirst().get()).collect(Collectors.toList());
+		return collect.toArray(new JournalStore[collect.size()]);
+	}
 	
 	protected List<Path> listFiles(Path dir) {
 	       List<Path> result = new ArrayList<>();
@@ -203,29 +237,29 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 			VersionedFile lastSnap, List<VersionedFile> txs) {
 		return txs.stream().filter(f -> f.getVersion() > lastSnap.getVersion()).collect(Collectors.toList());
 	}
-
-	protected JournalStore store(VersionedFile txFile, VersionedFile evnFile) {
-		return store(txFile, evnFile, false);
-	}
 	
-	protected JournalStore store(VersionedFile txFile, VersionedFile evnFile, boolean isVolume) {
+	protected JournalStore store(VersionedFile txFile, VersionedFile evnFile) {
 		try {
 			new File(baseDir, txFile.getName()).createNewFile();
 			new File(baseDir, evnFile.getName()).createNewFile();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		return new JournalStore(txFile.getName(), evnFile.getName(), Long.toString(txFile.getVersion()), isVolume);
+		return new JournalStore(txFile.getName(), evnFile.getName(), Long.toString(txFile.getVersion()), false);
 	}
 
-	protected void preallocateFiles(File file, long size, String mode) throws IOException {
-		RandomAccessFile raf = new RandomAccessFile(file, mode);
-		LOG.info("Preallocating started.");
-		for (long i = 0; i < size; i += PAGE_SIZE) {
-			raf.write(BLANK_PAGE, 0, PAGE_SIZE);
+	protected void preallocateFiles(File file, long size) {
+		try {
+			RandomAccessFile raf = new RandomAccessFile(file, "rw");
+			LOG.info("Preallocating started.");
+			for (long i = 0; i < size; i += PAGE_SIZE) {
+				raf.write(BLANK_PAGE, 0, PAGE_SIZE);
+			}
+			LOG.info("Preallocating finished.");
+			raf.close();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
-		LOG.info("Preallocating finished.");
-		raf.close();
 	}
 
 	public FileSystemStorage(File baseDir) {
@@ -236,7 +270,7 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 	protected static final String TRANSACTION_PREFIX = "tx";
 	protected static final String SNAPSHOT_PREFIX = "snp";
 	protected static final String EVENTS_PREFIX = "evn";
-	protected static final String VOLUME_SNAPSHOT_PREFIX = "v_" + SNAPSHOT_PREFIX;
+	protected static final String VOLUME_TRANSACTION_PREFIX = "v_" + TRANSACTION_PREFIX;
 	protected static final String VOLUME_EVENTS_PREFIX = "v_" + EVENTS_PREFIX;
 
 	protected static final int PAGE_SIZE = UnsafeUtils.getUnsafe().pageSize();

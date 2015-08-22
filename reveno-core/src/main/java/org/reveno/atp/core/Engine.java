@@ -170,6 +170,8 @@ public class Engine implements Reveno {
 		
 		transactionsJournaler.destroy();
 		eventsJournaler.destroy();
+
+		journalsRoller.destroy();
 		
 		eventsManager.close();
 		
@@ -331,8 +333,6 @@ public class Engine implements Reveno {
 	}
 	
 	protected void init() {
-		EngineEventsContext eventsContext = new EngineEventsContext().serializer(eventsSerializer)
-				.eventsCommitBuilder(eventBuilder).eventsJournaler(eventsJournaler).manager(eventsManager);
 		repository = factory.create(loadLastSnapshot());
 		viewsProcessor = new ViewsProcessor(viewsManager, viewsStorage);
 		processor = new DisruptorTransactionPipeProcessor(txBuilder, config.cpuConsumption(), config.revenoDisruptor().bufferSize(), executor);
@@ -341,7 +341,10 @@ public class Engine implements Reveno {
 		eventsJournaler = new DefaultJournaler(journalsRoller, isPreallocated());
 		journalsRoller = new JournalsRoller(transactionsJournaler, eventsJournaler, journalsStorage, config.revenoJournaling());
 
+		EngineEventsContext eventsContext = new EngineEventsContext().serializer(eventsSerializer)
+				.eventsCommitBuilder(eventBuilder).eventsJournaler(eventsJournaler).manager(eventsManager);
 		eventPublisher = new EventPublisher(eventProcessor, eventsContext);
+
 		EngineWorkflowContext workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
 				.viewsProcessor(viewsProcessor).transactionsManager(transactionsManager).commandsManager(commandsManager)
 				.eventPublisher(eventPublisher).transactionCommitBuilder(txBuilder).transactionJournaler(transactionsJournaler)
