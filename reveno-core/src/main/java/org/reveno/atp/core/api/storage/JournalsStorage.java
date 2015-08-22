@@ -25,15 +25,19 @@ public interface JournalsStorage {
 
 	Channel channel(String address, ChannelOptions options);
 
-    Channel channel(String address, ChannelOptions options, long size);
-
 	JournalStore[] getLastStores();
+
+	JournalStore[] getVolumes();
 
 	void mergeStores();
 	
 	void deleteOldStores();
 
 	JournalStore nextStore();
+
+	JournalStore nextVolume(long txSize, long eventsSize);
+
+	JournalStore convertVolumeToStore(JournalStore volume);
 
 	public static class JournalStore implements Comparable<JournalStore> {
 
@@ -52,11 +56,17 @@ public interface JournalsStorage {
 			return storeVersion;
 		}
 
+		private final boolean isVolume;
+		public boolean isVolume() {
+			return isVolume;
+		}
+
 		public JournalStore(String transactionCommitsAddress,
-				String eventsCommitsAddress, String storeVersion) {
+				String eventsCommitsAddress, String storeVersion, boolean isVolume) {
 			this.transactionCommitsAddress = transactionCommitsAddress;
 			this.eventsCommitsAddress = eventsCommitsAddress;
 			this.storeVersion = storeVersion;
+			this.isVolume = isVolume;
 		}
 
 		@Override

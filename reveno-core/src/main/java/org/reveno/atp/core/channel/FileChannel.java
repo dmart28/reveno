@@ -34,9 +34,6 @@ import static org.reveno.atp.utils.MeasureUtils.mb;
 import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
 
 public class FileChannel implements Channel {
-	
-	public static final int PAGE_SIZE = UnsafeUtils.getUnsafe().pageSize();
-	public static final byte[] BLANK_PAGE = new byte[PAGE_SIZE];
 
 	@Override
 	public long size() {
@@ -120,21 +117,18 @@ public class FileChannel implements Channel {
 	}
 
     public FileChannel(File file, ChannelOptions channelOptions) {
-        this(file, channelOptions, 0L);
+        this(file, channelOptions, false);
     }
 	
-	public FileChannel(File file, ChannelOptions channelOptions, long size) {
+	public FileChannel(File file, ChannelOptions channelOptions, boolean isPreallocated) {
 		try {
-			if (channelOptions == ChannelOptions.BUFFERING_MMAP_OS && size == 0) {
+			if (channelOptions == ChannelOptions.BUFFERING_MMAP_OS && !isPreallocated) {
 				throw new IllegalArgumentException("mmap can't be used for non pre-allocated journals.");
 			}
 
 			this.file = file;
 			this.raf = new RandomAccessFile(file, mode(channelOptions));
 
-            if (size != 0) {
-                preallocateFiles(file,size, mode(channelOptions));
-            }
 			if (channelOptions == ChannelOptions.BUFFERING_MMAP_OS) {
 				destroyDirectBuffer(buffer);
 				buffer = mmap(0, Math.min(size0(), Integer.MAX_VALUE));
@@ -168,6 +162,7 @@ public class FileChannel implements Channel {
 					java.nio.channels.FileChannel.MapMode.READ_WRITE,
 					p, remainSize);
 			mb.putInt(0, mb.capacity() - 4);
+			mmapBufferGeneration++;
 			return mb;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -181,19 +176,6 @@ public class FileChannel implements Channel {
 			throw new RuntimeException(e);
 		}
 	}
-
-    protected void preallocateFiles(File file, long size, String mode) throws IOException {
-        log.info("Preallocating started.");
-        for (long i = 0; i < size; i += PAGE_SIZE) {
-            raf.write(BLANK_PAGE, 0, PAGE_SIZE);
-        }
-        log.info("Preallocating finished.");
-        raf.close();
-
-        this.raf = new RandomAccessFile(file, mode);
-        this.raf.seek(0);
-        channel().position(0);
-    }
 	
 	protected final File file;
 	protected final ChannelWriter writer;
@@ -201,6 +183,7 @@ public class FileChannel implements Channel {
     protected java.nio.channels.FileChannel channel;
 
 	protected long position = 0L;
+	protected int mmapBufferGeneration = 0;
 	protected ByteBuffer buffer = ByteBuffer.allocateDirect(mb(1));
 	protected ByteBufferWrapper revenoBuffer = new ByteBufferWrapper(buffer);
 
@@ -257,16 +240,11 @@ public class FileChannel implements Channel {
 		@Override
 		public void write(Consumer<Buffer> writer, boolean flush) {
 			writer.accept(revenoBuffer);
-			position = buffer.position();
+			position = (mmapBufferGeneration * Integer.MAX_VALUE) + buffer.position();
 		}
 	}
 
 	class UnbufferedIOWriter extends BufferedVMWriter {
-		@Override
-		public void init() {
-			revenoBuffer.writeInt(1);
-		}
-
 		/**
 		 * Difference from BufferedOSWriter is that {@link RandomAccessFile} was
 		 * created with options "rwd".

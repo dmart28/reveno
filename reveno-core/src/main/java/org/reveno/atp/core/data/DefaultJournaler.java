@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core.data;
 
+import org.reveno.atp.core.JournalsRoller;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
@@ -30,9 +31,14 @@ public class DefaultJournaler implements Journaler {
 	@Override
 	public void writeData(Consumer<Buffer> writer, boolean endOfBatch) {
 		requireWriting();
-
 		Channel ch = channel.get();
-		ch.write(writer::accept, endOfBatch);
+
+		try {
+			rollIfRequired();
+			ch.write(writer::accept, endOfBatch);
+		} catch (IndexOutOfBoundsException | IllegalArgumentException e) {
+			journalsRoller.roll();
+		}
 
 		if (!oldChannel.compareAndSet(ch, ch)) {
 			if (oldChannel.get().isOpen())
@@ -44,6 +50,16 @@ public class DefaultJournaler implements Journaler {
 				rolledHandler = null;
 			}
 		}
+	}
+
+	protected void rollIfRequired() {
+		if (isRollRequired(channel.get())) {
+            journalsRoller.roll(() -> isRollRequired(channel.get()));
+        }
+	}
+
+	private boolean isRollRequired(Channel ch) {
+		return isPreallocated && ch.size() - ch.position() <= 0;
 	}
 
 	@Override
@@ -67,6 +83,10 @@ public class DefaultJournaler implements Journaler {
 
 	@Override
 	public void roll(Channel ch, Runnable rolled) {
+		if (!isWriting) {
+			startWriting(ch);
+		}
+
 		this.rolledHandler = rolled;
 		channel.set(ch);
 	}
@@ -90,8 +110,18 @@ public class DefaultJournaler implements Journaler {
 		if (!isWriting)
 			throw new RuntimeException("Journaler must be in writing mode.");
 	}
-	
-	
+
+	public DefaultJournaler() {
+		this(null, false);
+	}
+
+	public DefaultJournaler(JournalsRoller journalsRoller, boolean isPreallocated) {
+		this.journalsRoller = journalsRoller;
+		this.isPreallocated = isPreallocated;
+	}
+
+	protected JournalsRoller journalsRoller;
+	protected boolean isPreallocated;
 	protected AtomicReference<Channel> channel = new AtomicReference<Channel>();
 	protected AtomicReference<Channel> oldChannel = new AtomicReference<Channel>();
 	protected volatile Runnable rolledHandler;

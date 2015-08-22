@@ -36,7 +36,15 @@ public class RevenoConfiguration implements Configuration {
 	public RevenoDisruptorConfiguration revenoDisruptor() {
 		return disruptor;
 	}
-	
+
+	@Override
+	public JournalingConfiguration journaling() {
+		return journaling;
+	}
+	public RevenoJournalingConfiguration revenoJournaling() {
+		return journaling;
+	}
+
 	@Override
 	public void mutableModelFailover(MutableModelFailover mutableModelFailover) {
 		this.mutableModelFailover = mutableModelFailover;
@@ -58,42 +66,17 @@ public class RevenoConfiguration implements Configuration {
 		this.cpuConsumption = cpuConsumption;
 	}
 
-    @Override
-    public void preallocationSize(long size) {
-        this.preallocationSize = size;
-    }
-    public long preallocationSize() {
-        return this.preallocationSize;
-    }
-
-	@Override
-	public void volumes(int volumes) {
-		this.volumes = volumes;
-	}
-	public int volumes() {
-		return volumes;
-	}
-
-	@Override
-	public void channelOptions(ChannelOptions channelOptions) {
-		this.channelOptions = channelOptions;
-	}
-	public ChannelOptions channelOptions() {
-		return channelOptions;
-	}
-
     public CpuConsumption cpuConsumption() {
 		return cpuConsumption;
 	}
 	
 	protected RevenoSnapshotConfiguration snapshotting = new RevenoSnapshotConfiguration();
 	protected RevenoDisruptorConfiguration disruptor = new RevenoDisruptorConfiguration();
+	protected RevenoJournalingConfiguration journaling = new RevenoJournalingConfiguration();
 	protected CpuConsumption cpuConsumption = CpuConsumption.NORMAL;
-	protected ChannelOptions channelOptions = ChannelOptions.BUFFERING_VM;
 	protected ModelType modelType = ModelType.IMMUTABLE;
 	protected MutableModelFailover mutableModelFailover = MutableModelFailover.SNAPSHOTS;
-    protected long preallocationSize = 0L;
-	protected int volumes = 3;
+
 	
 	public static class RevenoSnapshotConfiguration implements SnapshotConfiguration {
 
@@ -133,6 +116,53 @@ public class RevenoConfiguration implements Configuration {
 		
 		private int bufferSize = 1024;
 		
+	}
+
+	public static class RevenoJournalingConfiguration implements JournalingConfiguration {
+
+		@Override
+		public void preallocationSize(long txSize, long eventsSize) {
+			this.txSize = txSize;
+			this.eventsSize = eventsSize;
+		}
+		public long txSize() {
+			return txSize;
+		}
+		public long eventsSize() {
+			return eventsSize;
+		}
+		public boolean isPreallocated() {
+			return txSize != 0 || eventsSize != 0;
+		}
+
+		@Override
+		public void volumes(int volumes) {
+			this.volumes = volumes;
+		}
+		public int volumes() {
+			return volumes;
+		}
+
+		@Override
+		public void minVolumes(int volumes) {
+			this.minVolumes = volumes;
+		}
+		public int minVolumes() {
+			return minVolumes;
+		}
+
+		@Override
+		public void channelOptions(ChannelOptions options) {
+			this.channelOptions = options;
+		}
+		public ChannelOptions channelOptions() {
+			return channelOptions;
+		}
+
+		protected long txSize = 0L, eventsSize = 0L;
+		protected int volumes = 3;
+		protected int minVolumes = 1;
+		protected ChannelOptions channelOptions = ChannelOptions.BUFFERING_VM;
 	}
 	
 }

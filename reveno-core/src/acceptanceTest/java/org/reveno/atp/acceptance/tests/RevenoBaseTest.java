@@ -113,7 +113,7 @@ public class RevenoBaseTest {
 		
 		reveno.config().cpuConsumption(CpuConsumption.HIGH);
 		reveno.config().modelType(modelType);
-		reveno.config().channelOptions(ChannelOptions.UNBUFFERED_IO);
+		reveno.config().journaling().channelOptions(ChannelOptions.UNBUFFERED_IO);
 		
 		reveno.domain().command(CreateNewAccountCommand.class, Long.class, Commands::createAccount);
 		reveno.domain().command(NewOrderCommand.class, Long.class, Commands::newOrder);

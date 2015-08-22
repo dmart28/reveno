@@ -27,7 +27,7 @@ public class TestRevenoEngine extends Engine {
 	}
 	
 	public synchronized void roll(Runnable r) {
-		roller.roll(r);
+		journalsRoller.roll(r);
 	}
 	
 	public void syncAll() {

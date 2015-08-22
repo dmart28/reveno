@@ -61,7 +61,6 @@ import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.reveno.atp.core.api.storage.FoldersStorage;
 import org.reveno.atp.core.api.storage.JournalsStorage;
-import org.reveno.atp.core.api.storage.JournalsStorage.JournalStore;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
 import org.reveno.atp.core.data.DefaultJournaler;
 import org.reveno.atp.core.disruptor.DisruptorEventPipeProcessor;
@@ -142,12 +141,8 @@ public class Engine implements Reveno {
 		
 		init();
 		connectSystemHandlers();
-		
-		JournalStore store = journalsStorage.nextStore();
-		transactionsJournaler.startWriting(journalsStorage.channel(store.getTransactionCommitsAddress(),
-				config.channelOptions(), config.preallocationSize()));
-		eventsJournaler.startWriting(journalsStorage.channel(store.getEventsCommitsAddress(),
-				config.channelOptions(), config.preallocationSize()));
+
+		journalsRoller.roll();
 		
 		eventPublisher.getPipe().start();
 		workflowEngine.init();
@@ -342,17 +337,24 @@ public class Engine implements Reveno {
 		viewsProcessor = new ViewsProcessor(viewsManager, viewsStorage);
 		processor = new DisruptorTransactionPipeProcessor(txBuilder, config.cpuConsumption(), config.revenoDisruptor().bufferSize(), executor);
 		eventProcessor = new DisruptorEventPipeProcessor(CpuConsumption.NORMAL, config.revenoDisruptor().bufferSize(), eventExecutor);
-		roller = new JournalsRoller(transactionsJournaler, eventsJournaler, journalsStorage);
+		transactionsJournaler = new DefaultJournaler(journalsRoller, isPreallocated());
+		eventsJournaler = new DefaultJournaler(journalsRoller, isPreallocated());
+		journalsRoller = new JournalsRoller(transactionsJournaler, eventsJournaler, journalsStorage, config.revenoJournaling());
+
 		eventPublisher = new EventPublisher(eventProcessor, eventsContext);
 		EngineWorkflowContext workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
 				.viewsProcessor(viewsProcessor).transactionsManager(transactionsManager).commandsManager(commandsManager)
 				.eventPublisher(eventPublisher).transactionCommitBuilder(txBuilder).transactionJournaler(transactionsJournaler)
-				.idGenerator(idGenerator).roller(roller).snapshotsManager(snapshotsManager).interceptorCollection(interceptors)
+				.idGenerator(idGenerator).roller(journalsRoller).snapshotsManager(snapshotsManager).interceptorCollection(interceptors)
 				.configuration(config);
 		workflowEngine = new WorkflowEngine(processor, workflowContext, config.modelType());
 		restorer = new DefaultSystemStateRestorer(journalsStorage, workflowContext, eventsContext, workflowEngine);
 	}
-	
+
+	protected boolean isPreallocated() {
+		return config.revenoJournaling().isPreallocated();
+	}
+
 	protected Optional<RepositoryData> loadLastSnapshot() {
 		if (restoreWith != null && restoreWith.hasAny()) {
 			return Optional.of(restoreWith.load());
@@ -366,7 +368,7 @@ public class Engine implements Reveno {
 		domain().transactionAction(NextIdTransaction.class, idGenerator);
 		if (config.revenoSnapshotting().snapshotEvery() != -1) {
 			TransactionInterceptor nTimeSnapshotter = new SnapshottingInterceptor(config, snapshotsManager, snapshotStorage,
-					roller, repositorySerializer);
+					journalsRoller, repositorySerializer);
 			interceptors.add(TransactionStage.TRANSACTION, nTimeSnapshotter);
 			interceptors.add(TransactionStage.JOURNALING, nTimeSnapshotter);
 		}
@@ -393,13 +395,13 @@ public class Engine implements Reveno {
 	protected EventPublisher eventPublisher;
 	protected TransactionPipeProcessor<ProcessorContext> processor;
 	protected PipeProcessor<Event> eventProcessor;
-	protected JournalsRoller roller;
+	protected JournalsRoller journalsRoller;
+	protected Journaler transactionsJournaler;
+	protected Journaler eventsJournaler;
 	
 	protected RepositorySnapshotter restoreWith;
 	
 	protected RepositoryDataSerializer repositorySerializer = new DefaultJavaSerializer(getClass().getClassLoader());
-	protected Journaler transactionsJournaler = new DefaultJournaler();
-	protected Journaler eventsJournaler = new DefaultJournaler();
 	protected EventsInfoSerializer eventsSerializer = new SimpleEventsSerializer();
 	protected TransactionCommitInfo.Builder txBuilder = new TransactionCommitInfoImpl.PojoBuilder();
 	protected EventsCommitInfo.Builder eventBuilder = new EventsCommitInfoImpl.PojoBuilder();

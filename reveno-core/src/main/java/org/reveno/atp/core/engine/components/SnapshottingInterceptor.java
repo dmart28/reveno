@@ -70,12 +70,11 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 					snapshotsMutable.remove(transactionId);
 					
 					asyncSnapshot(data);
-					roller.roll(() -> {});
 				} else if (snapshotsImmutable.containsKey(transactionId)) {
 					asyncSnapshot(snapshotsImmutable.get(transactionId));
 					snapshotsImmutable.remove(transactionId);
-					roller.roll(() -> {});
 				}
+				journalsRoller.roll();
 			}
 	}
 	
@@ -107,10 +106,10 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 	
 	public SnapshottingInterceptor(RevenoConfiguration configuration,
 			SnapshottersManager snapshotsManager, SnapshotStorage snapshotStorage,
-			JournalsRoller roller, RepositoryDataSerializer serializer) {
+			JournalsRoller journalsRoller, RepositoryDataSerializer serializer) {
 		this.configuration = configuration;
 		this.snapshotsManager = snapshotsManager;
-		this.roller = roller;
+		this.journalsRoller = journalsRoller;
 		this.serializer = serializer;
 		this.snapshotStorage = snapshotStorage;
 	}
@@ -122,7 +121,7 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 	protected RevenoConfiguration configuration;
 	protected SnapshottersManager snapshotsManager;
 	protected SnapshotStorage snapshotStorage;
-	protected JournalsRoller roller;
+	protected JournalsRoller journalsRoller;
 	protected RepositoryDataSerializer serializer;
 	protected final ExecutorService executor = Executors.newSingleThreadExecutor();
 	protected static final Logger log = LoggerFactory.getLogger(SnapshottingInterceptor.class);
