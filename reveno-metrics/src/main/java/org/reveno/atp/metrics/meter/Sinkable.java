@@ -1,8 +1,8 @@
 package org.reveno.atp.metrics.meter;
 
-import java.util.List;
-
 import org.reveno.atp.metrics.Sink;
+
+import java.util.List;
 
 public interface Sinkable {
 

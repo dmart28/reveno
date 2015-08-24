@@ -1,15 +1,15 @@
 package org.reveno.atp.metrics.meter.impl;
 
+import org.reveno.atp.metrics.Sink;
+import org.reveno.atp.metrics.meter.Histogram;
+import org.reveno.atp.metrics.meter.HistogramType;
+import org.reveno.atp.utils.UnsafeUtils;
+
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
-
-import org.reveno.atp.metrics.Sink;
-import org.reveno.atp.metrics.meter.Histogram;
-import org.reveno.atp.metrics.meter.HistogramType;
-import org.reveno.atp.utils.UnsafeUtils;
 
 public class TwoBufferHistogram implements Histogram {
 	

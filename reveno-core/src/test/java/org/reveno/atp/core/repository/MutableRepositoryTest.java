@@ -16,15 +16,15 @@
 
 package org.reveno.atp.core.repository;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.core.serialization.ProtostuffSerializer;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class MutableRepositoryTest {
 

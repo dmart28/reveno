@@ -23,7 +23,6 @@ import org.reveno.atp.core.api.storage.JournalsStorage;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
 import org.reveno.atp.core.channel.FileChannel;
 import org.reveno.atp.utils.UnsafeUtils;
-import org.reveno.atp.utils.VersionedFileUtils;
 import org.reveno.atp.utils.VersionedFileUtils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

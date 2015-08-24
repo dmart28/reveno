@@ -1,7 +1,5 @@
 package org.reveno.atp.acceptance.handlers;
 
-import java.util.Optional;
-
 import org.reveno.atp.acceptance.api.transactions.AcceptOrder;
 import org.reveno.atp.acceptance.api.transactions.CreateAccount;
 import org.reveno.atp.acceptance.api.transactions.Credit;
@@ -9,6 +7,8 @@ import org.reveno.atp.acceptance.api.transactions.Debit;
 import org.reveno.atp.acceptance.model.Account;
 import org.reveno.atp.acceptance.model.Order;
 import org.reveno.atp.api.transaction.TransactionContext;
+
+import java.util.Optional;
 
 public class RollbackTransactions {
 

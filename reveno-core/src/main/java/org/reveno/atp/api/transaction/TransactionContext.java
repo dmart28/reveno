@@ -16,9 +16,9 @@
 
 package org.reveno.atp.api.transaction;
 
-import java.util.Map;
-
 import org.reveno.atp.api.domain.WriteableRepository;
+
+import java.util.Map;
 
 public interface TransactionContext {
 	

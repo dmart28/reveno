@@ -1,10 +1,10 @@
 package org.reveno.atp.api.dynamic;
 
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 
 public class AbstractDynamicTransaction {
 	

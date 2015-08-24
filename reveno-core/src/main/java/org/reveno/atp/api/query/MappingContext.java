@@ -17,13 +17,13 @@
 
 package org.reveno.atp.api.query;
 
+import it.unimi.dsi.fastutil.longs.LongCollection;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-
-import it.unimi.dsi.fastutil.longs.LongCollection;
 
 public interface MappingContext {
 

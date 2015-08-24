@@ -1,10 +1,10 @@
 package org.reveno.atp.metrics.impl;
 
-import java.util.Date;
-
 import org.reveno.atp.metrics.Sink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Date;
 
 public class Slf4jSink implements Sink {
 

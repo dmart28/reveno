@@ -16,16 +16,6 @@
 
 package org.reveno.atp.acceptance.tests;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
-import java.util.stream.IntStream;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
@@ -52,6 +42,16 @@ import org.reveno.atp.core.serialization.DefaultJavaSerializer;
 import org.reveno.atp.core.serialization.ProtostuffSerializer;
 import org.reveno.atp.core.snapshots.DefaultSnapshotter;
 import org.reveno.atp.core.storage.FileSystemStorage;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 public class Tests extends RevenoBaseTest {
 	

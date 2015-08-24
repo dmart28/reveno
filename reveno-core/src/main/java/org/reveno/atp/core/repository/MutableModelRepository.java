@@ -16,14 +16,7 @@
 
 package org.reveno.atp.core.repository;
 
-import static org.reveno.atp.utils.MeasureUtils.kb;
-
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.core.api.Destroyable;
@@ -35,7 +28,13 @@ import org.reveno.atp.utils.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import static org.reveno.atp.utils.MeasureUtils.kb;
 
 public class MutableModelRepository implements TxRepository, Destroyable {
 

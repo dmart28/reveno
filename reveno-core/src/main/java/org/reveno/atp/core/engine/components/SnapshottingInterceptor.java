@@ -16,16 +16,6 @@
 
 package org.reveno.atp.core.engine.components;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
 import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.RepositorySnapshotter;
 import org.reveno.atp.api.RepositorySnapshotter.SnapshotIdentifier;
@@ -43,6 +33,16 @@ import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.core.snapshots.SnapshottersManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class SnapshottingInterceptor implements TransactionInterceptor {
 	

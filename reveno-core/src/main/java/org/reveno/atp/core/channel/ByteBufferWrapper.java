@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
 

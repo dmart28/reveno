@@ -1,18 +1,17 @@
 package org.reveno.atp.acceptance.tests;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.function.Function;
-
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import org.junit.Assert;
 import org.junit.Test;
 import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.dynamic.DynamicCommand;
 import org.reveno.atp.utils.MapUtils;
 
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongList;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.function.Function;
 
 public class DslViewsTests extends RevenoBaseTest {
 	

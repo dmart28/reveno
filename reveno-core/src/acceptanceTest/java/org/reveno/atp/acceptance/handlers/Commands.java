@@ -16,11 +16,6 @@
 
 package org.reveno.atp.acceptance.handlers;
 
-import static java.lang.String.format;
-
-import java.util.Optional;
-import java.util.stream.Stream;
-
 import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
 import org.reveno.atp.acceptance.api.commands.NewOrderCommand;
 import org.reveno.atp.acceptance.api.transactions.AcceptOrder;
@@ -31,6 +26,11 @@ import org.reveno.atp.acceptance.model.Account;
 import org.reveno.atp.acceptance.model.Order;
 import org.reveno.atp.acceptance.model.Position;
 import org.reveno.atp.api.commands.CommandContext;
+
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import static java.lang.String.format;
 
 public abstract class Commands {
 

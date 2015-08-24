@@ -1,11 +1,11 @@
 package org.reveno.atp.metrics;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
 import org.reveno.atp.utils.MeasureUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class ConfigurationImpl implements Configuration {
 

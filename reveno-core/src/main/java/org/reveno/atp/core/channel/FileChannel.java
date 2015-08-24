@@ -19,7 +19,6 @@ package org.reveno.atp.core.channel;
 import org.reveno.atp.api.ChannelOptions;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
-import org.reveno.atp.utils.UnsafeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
