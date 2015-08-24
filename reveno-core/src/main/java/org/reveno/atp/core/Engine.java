@@ -51,7 +51,6 @@ import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.core.api.Destroyable;
 import org.reveno.atp.core.api.EventsCommitInfo;
 import org.reveno.atp.core.api.InterceptorCollection;
-import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.SystemStateRestorer;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.TxRepository;
@@ -62,7 +61,6 @@ import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.reveno.atp.core.api.storage.FoldersStorage;
 import org.reveno.atp.core.api.storage.JournalsStorage;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
-import org.reveno.atp.core.data.DefaultJournaler;
 import org.reveno.atp.core.disruptor.DisruptorEventPipeProcessor;
 import org.reveno.atp.core.disruptor.DisruptorTransactionPipeProcessor;
 import org.reveno.atp.core.disruptor.ProcessorContext;
@@ -343,7 +341,7 @@ public class Engine implements Reveno {
 		EngineWorkflowContext workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
 				.viewsProcessor(viewsProcessor).transactionsManager(transactionsManager).commandsManager(commandsManager)
 				.eventPublisher(eventPublisher).transactionCommitBuilder(txBuilder).transactionJournaler(journalsManager.getTransactionsJournaler())
-				.idGenerator(idGenerator).roller(journalsManager).snapshotsManager(snapshotsManager).interceptorCollection(interceptors)
+				.idGenerator(idGenerator).journalsManager(journalsManager).snapshotsManager(snapshotsManager).interceptorCollection(interceptors)
 				.configuration(config);
 		workflowEngine = new WorkflowEngine(processor, workflowContext, config.modelType());
 		restorer = new DefaultSystemStateRestorer(journalsStorage, workflowContext, eventsContext, workflowEngine);

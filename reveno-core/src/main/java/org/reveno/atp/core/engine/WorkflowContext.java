@@ -53,7 +53,7 @@ public interface WorkflowContext {
 	
 	public Journaler transactionJournaler();
 	
-	public JournalsManager roller();
+	public JournalsManager journalsManager();
 	
 	
 	public SnapshottersManager snapshotsManager();
