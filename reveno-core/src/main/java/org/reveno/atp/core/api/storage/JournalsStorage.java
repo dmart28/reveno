@@ -56,17 +56,11 @@ public interface JournalsStorage {
 			return storeVersion;
 		}
 
-		private final boolean isVolume;
-		public boolean isVolume() {
-			return isVolume;
-		}
-
 		public JournalStore(String transactionCommitsAddress,
-				String eventsCommitsAddress, String storeVersion, boolean isVolume) {
+				String eventsCommitsAddress, String storeVersion) {
 			this.transactionCommitsAddress = transactionCommitsAddress;
 			this.eventsCommitsAddress = eventsCommitsAddress;
 			this.storeVersion = storeVersion;
-			this.isVolume = isVolume;
 		}
 
 		@Override

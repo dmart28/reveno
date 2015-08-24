@@ -37,10 +37,7 @@ public class FileChannel implements Channel {
 
 	@Override
 	public long size() {
-		if (isOpen())
-			return size0();
-		else
-			return 0;
+		return size;
 	}
 
 	@Override
@@ -99,15 +96,6 @@ public class FileChannel implements Channel {
 		return channel;
 	}
 	
-	protected void write0(ByteBuffer buf, long size) {
-		try {
-			channel().write(buf, position);
-            position += size;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
 	protected void read(ByteBuffer buf) {
 		try {
 			channel().read(buf);
@@ -142,6 +130,7 @@ public class FileChannel implements Channel {
 				default: throw new RuntimeException("unknown channel writer.");
 			}
 			writer.init();
+			this.size = size0();
 		} catch (Throwable e) {
 			throw new org.reveno.atp.api.exceptions.FileNotFoundException(file, e);
 		}
@@ -169,6 +158,15 @@ public class FileChannel implements Channel {
 		}
 	}
 
+	private void write0(ByteBuffer buf, long size) {
+		try {
+			channel().write(buf, position);
+			position += size;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	private long size0() {
 		try {
 			return channel().size();
@@ -183,7 +181,8 @@ public class FileChannel implements Channel {
     protected java.nio.channels.FileChannel channel;
 
 	protected long position = 0L;
-	protected int mmapBufferGeneration = 0;
+	protected long size = 0L;
+	protected int mmapBufferGeneration = -1;
 	protected ByteBuffer buffer = ByteBuffer.allocateDirect(mb(1));
 	protected ByteBufferWrapper revenoBuffer = new ByteBufferWrapper(buffer);
 

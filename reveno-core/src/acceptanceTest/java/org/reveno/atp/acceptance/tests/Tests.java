@@ -371,5 +371,10 @@ public class Tests extends RevenoBaseTest {
 		
 		reveno.shutdown();
 	}
+
+	@Test
+	public void testPreallocatedStorages() throws Exception {
+
+	}
 	
 }

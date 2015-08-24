@@ -142,7 +142,7 @@ public class Engine implements Reveno {
 		init();
 		connectSystemHandlers();
 
-		journalsRoller.roll();
+		journalsManager.roll();
 		
 		eventPublisher.getPipe().start();
 		workflowEngine.init();
@@ -167,11 +167,8 @@ public class Engine implements Reveno {
 		interceptors.getInterceptors(TransactionStage.JOURNALING).forEach(TransactionInterceptor::destroy);
 		interceptors.getInterceptors(TransactionStage.REPLICATION).forEach(TransactionInterceptor::destroy);
 		interceptors.getInterceptors(TransactionStage.TRANSACTION).forEach(TransactionInterceptor::destroy);
-		
-		transactionsJournaler.destroy();
-		eventsJournaler.destroy();
 
-		journalsRoller.destroy();
+		journalsManager.destroy();
 		
 		eventsManager.close();
 		
@@ -337,25 +334,19 @@ public class Engine implements Reveno {
 		viewsProcessor = new ViewsProcessor(viewsManager, viewsStorage);
 		processor = new DisruptorTransactionPipeProcessor(txBuilder, config.cpuConsumption(), config.revenoDisruptor().bufferSize(), executor);
 		eventProcessor = new DisruptorEventPipeProcessor(CpuConsumption.NORMAL, config.revenoDisruptor().bufferSize(), eventExecutor);
-		transactionsJournaler = new DefaultJournaler(journalsRoller, isPreallocated());
-		eventsJournaler = new DefaultJournaler(journalsRoller, isPreallocated());
-		journalsRoller = new JournalsRoller(transactionsJournaler, eventsJournaler, journalsStorage, config.revenoJournaling());
+		journalsManager = new JournalsManager(journalsStorage, config.revenoJournaling());
 
 		EngineEventsContext eventsContext = new EngineEventsContext().serializer(eventsSerializer)
-				.eventsCommitBuilder(eventBuilder).eventsJournaler(eventsJournaler).manager(eventsManager);
+				.eventsCommitBuilder(eventBuilder).eventsJournaler(journalsManager.getEventsJournaler()).manager(eventsManager);
 		eventPublisher = new EventPublisher(eventProcessor, eventsContext);
 
 		EngineWorkflowContext workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
 				.viewsProcessor(viewsProcessor).transactionsManager(transactionsManager).commandsManager(commandsManager)
-				.eventPublisher(eventPublisher).transactionCommitBuilder(txBuilder).transactionJournaler(transactionsJournaler)
-				.idGenerator(idGenerator).roller(journalsRoller).snapshotsManager(snapshotsManager).interceptorCollection(interceptors)
+				.eventPublisher(eventPublisher).transactionCommitBuilder(txBuilder).transactionJournaler(journalsManager.getTransactionsJournaler())
+				.idGenerator(idGenerator).roller(journalsManager).snapshotsManager(snapshotsManager).interceptorCollection(interceptors)
 				.configuration(config);
 		workflowEngine = new WorkflowEngine(processor, workflowContext, config.modelType());
 		restorer = new DefaultSystemStateRestorer(journalsStorage, workflowContext, eventsContext, workflowEngine);
-	}
-
-	protected boolean isPreallocated() {
-		return config.revenoJournaling().isPreallocated();
 	}
 
 	protected Optional<RepositoryData> loadLastSnapshot() {
@@ -371,7 +362,7 @@ public class Engine implements Reveno {
 		domain().transactionAction(NextIdTransaction.class, idGenerator);
 		if (config.revenoSnapshotting().snapshotEvery() != -1) {
 			TransactionInterceptor nTimeSnapshotter = new SnapshottingInterceptor(config, snapshotsManager, snapshotStorage,
-					journalsRoller, repositorySerializer);
+					journalsManager, repositorySerializer);
 			interceptors.add(TransactionStage.TRANSACTION, nTimeSnapshotter);
 			interceptors.add(TransactionStage.JOURNALING, nTimeSnapshotter);
 		}
@@ -398,9 +389,7 @@ public class Engine implements Reveno {
 	protected EventPublisher eventPublisher;
 	protected TransactionPipeProcessor<ProcessorContext> processor;
 	protected PipeProcessor<Event> eventProcessor;
-	protected JournalsRoller journalsRoller;
-	protected Journaler transactionsJournaler;
-	protected Journaler eventsJournaler;
+	protected JournalsManager journalsManager;
 	
 	protected RepositorySnapshotter restoreWith;
 	

@@ -16,7 +16,6 @@
 
 package org.reveno.atp.core.data;
 
-import org.reveno.atp.core.JournalsRoller;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
@@ -25,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class DefaultJournaler implements Journaler {
 
@@ -37,7 +37,7 @@ public class DefaultJournaler implements Journaler {
 			rollIfRequired();
 			ch.write(writer::accept, endOfBatch);
 		} catch (IndexOutOfBoundsException | IllegalArgumentException e) {
-			journalsRoller.roll();
+			journalsRoller.accept(() -> true);
 		}
 
 		if (!oldChannel.compareAndSet(ch, ch)) {
@@ -54,7 +54,7 @@ public class DefaultJournaler implements Journaler {
 
 	protected void rollIfRequired() {
 		if (isRollRequired(channel.get())) {
-            journalsRoller.roll(() -> isRollRequired(channel.get()));
+            journalsRoller.accept(() -> isRollRequired(channel.get()));
         }
 	}
 
@@ -115,12 +115,12 @@ public class DefaultJournaler implements Journaler {
 		this(null, false);
 	}
 
-	public DefaultJournaler(JournalsRoller journalsRoller, boolean isPreallocated) {
+	public DefaultJournaler(Consumer<Supplier<Boolean>> journalsRoller, boolean isPreallocated) {
 		this.journalsRoller = journalsRoller;
 		this.isPreallocated = isPreallocated;
 	}
 
-	protected JournalsRoller journalsRoller;
+	protected Consumer<Supplier<Boolean>> journalsRoller;
 	protected boolean isPreallocated;
 	protected AtomicReference<Channel> channel = new AtomicReference<Channel>();
 	protected AtomicReference<Channel> oldChannel = new AtomicReference<Channel>();

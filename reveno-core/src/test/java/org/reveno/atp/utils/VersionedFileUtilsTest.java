@@ -32,7 +32,7 @@ public class VersionedFileUtilsTest {
 		
 		String fileName = VersionedFileUtils.nextVersionFile(temp, "tx");
 		
-		Assert.assertTrue(fileName.startsWith("tx-" + VersionedFileUtils.FORMAT.format(new Date()) + "-0000000001"));
+		Assert.assertTrue(fileName.startsWith("tx-" + VersionedFileUtils.format().format(new Date()) + "-0000000001"));
 		
 		new File(temp, fileName).createNewFile();
 		

@@ -21,12 +21,15 @@ import org.reveno.atp.core.api.Destroyable;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.storage.JournalsStorage;
 import org.reveno.atp.core.api.storage.JournalsStorage.JournalStore;
+import org.reveno.atp.core.data.DefaultJournaler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
-public class JournalsRoller implements Destroyable {
+public class JournalsManager implements Destroyable {
 
 	public void roll() {
 		roll(() -> {}, () -> true);
@@ -41,6 +44,7 @@ public class JournalsRoller implements Destroyable {
 	}
 
 	public synchronized void roll(Runnable completed, Supplier<Boolean> condition) {
+		log.info("Rolling to next store.");
 		isRolling = true;
 
 		try {
@@ -49,19 +53,17 @@ public class JournalsRoller implements Destroyable {
 			}
 			JournalStore store;
 
-			if (configuration.isPreallocated() && configuration.volumes() > 0) {
-				allocateNewVolumeIfRequired();
-				store = storage.convertVolumeToStore(storage.getVolumes()[0]);
-			} else if (configuration.isPreallocated() && configuration.volumes() > 0
-					&& storage.getVolumes().length == 0) {
-				IntStream.range(0, configuration.volumes()).forEach(i -> allocateNewVolumeIfRequired());
+			if (configuration.isPreallocated() && configuration.volumes() > 0 && storage.getVolumes().length == 0) {
+				IntStream.range(0, configuration.volumes()).forEach(i -> allocateNewVolume(true));
 				roll(completed);
 				return;
+			} else if (configuration.isPreallocated() && configuration.volumes() > 0) {
+				allocateNewVolumeIfRequired();
+				store = storage.convertVolumeToStore(storage.getVolumes()[0]);
 			} else {
 				store = storage.nextStore();
 			}
-			eventsJournaler.roll(storage.channel(store.getEventsCommitsAddress()), () -> {
-			});
+			eventsJournaler.roll(storage.channel(store.getEventsCommitsAddress()), () -> {});
 			transactionsJournaler.roll(storage.channel(store.getTransactionCommitsAddress()), completed);
 		} finally {
 			isRolling = false;
@@ -72,20 +74,37 @@ public class JournalsRoller implements Destroyable {
 		return isRolling;
 	}
 
+	public Journaler getTransactionsJournaler() {
+		return transactionsJournaler;
+	}
+
+	public Journaler getEventsJournaler() {
+		return eventsJournaler;
+	}
+
 	protected void allocateNewVolumeIfRequired() {
 		if (storage.getVolumes().length <= configuration.minVolumes()) {
-            Future<?> f = prepareNextVolume();
-            if (storage.getVolumes().length == 1) {
-                try {
-                    f.get();
-                } catch (InterruptedException | ExecutionException ignored) {
-                }
+			log.info("Allocating {} new volumes", configuration.minVolumes());
+			IntStream.range(0, configuration.minVolumes() + 1).forEach(i -> allocateNewVolume(false));
+        }
+	}
+
+	protected void allocateNewVolume(boolean alwaysWait) {
+		Future<?> f = prepareNextVolume();
+		if (storage.getVolumes().length <= 1 || alwaysWait) {
+            try {
+                f.get();
+            } catch (InterruptedException | ExecutionException ignored) {
             }
         }
 	}
 
 	protected Future<?> prepareNextVolume() {
-		return executor.submit(() -> storage.nextVolume(configuration.txSize(), configuration.eventsSize()));
+		return executor.submit(() -> { try {
+			storage.nextVolume(configuration.txSize(), configuration.eventsSize());
+		} catch (Throwable t) {
+			log.error("prepareNextVolume", t);
+		}});
 	}
 
 	@Override
@@ -95,14 +114,15 @@ public class JournalsRoller implements Destroyable {
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException ignored) {
 		}
+		transactionsJournaler.destroy();
+		eventsJournaler.destroy();
 	}
 	
-	public JournalsRoller(Journaler transactionsJournaler, Journaler eventsJournaler,
-			JournalsStorage storage, RevenoJournalingConfiguration configuration) {
-		this.transactionsJournaler = transactionsJournaler;
-		this.eventsJournaler = eventsJournaler;
+	public JournalsManager(JournalsStorage storage, RevenoJournalingConfiguration configuration) {
 		this.storage = storage;
 		this.configuration = configuration;
+		this.transactionsJournaler = new DefaultJournaler(this::roll, configuration.isPreallocated());
+		this.eventsJournaler = new DefaultJournaler(this::roll, configuration.isPreallocated());
 	}
 
 	protected volatile boolean isRolling = false;
@@ -111,5 +131,7 @@ public class JournalsRoller implements Destroyable {
 	protected JournalsStorage storage;
 	protected RevenoJournalingConfiguration configuration;
 	protected ExecutorService executor = Executors.newSingleThreadExecutor();
+
+	protected static final Logger log = LoggerFactory.getLogger(JournalsManager.class);
 
 }

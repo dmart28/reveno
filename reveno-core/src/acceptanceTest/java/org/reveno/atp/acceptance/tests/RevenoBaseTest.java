@@ -87,6 +87,7 @@ public class RevenoBaseTest {
 	@Before
 	public void setUp() {
 		tempDir = Files.createTempDir();
+		log.info("Dir: " + tempDir);
 	}
 	
 	@After

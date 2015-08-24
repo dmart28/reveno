@@ -88,6 +88,8 @@ public class LatencyTest extends RevenoBaseTest {
 		final long[] bestCount = { 0L };
 		Engine engine = createEngine(e -> {
 			e.config().cpuConsumption(consumption);
+			e.config().journaling().volumes(1);
+			e.config().journaling().minVolumes(0);
             e.config().journaling().preallocationSize(8 * 1024 * 1024 * 1024L, 1024);
 			e.config().journaling().channelOptions(ChannelOptions.BUFFERING_MMAP_OS);
 			e.interceptors().add(TransactionStage.REPLICATION, new TransactionInterceptor() {

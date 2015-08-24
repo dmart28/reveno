@@ -131,12 +131,12 @@ public class EngineWorkflowContext implements WorkflowContext {
 		return this;
 	}
 	
-	private JournalsRoller roller;
+	private JournalsManager roller;
 	@Override
-	public JournalsRoller roller() {
+	public JournalsManager roller() {
 		return roller;
 	}
-	public EngineWorkflowContext roller(JournalsRoller roller) {
+	public EngineWorkflowContext roller(JournalsManager roller) {
 		this.roller = roller;
 		return this;
 	}

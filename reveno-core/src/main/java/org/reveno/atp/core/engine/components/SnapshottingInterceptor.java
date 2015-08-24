@@ -33,7 +33,7 @@ import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.api.transaction.TransactionStage;
-import org.reveno.atp.core.JournalsRoller;
+import org.reveno.atp.core.JournalsManager;
 import org.reveno.atp.core.RevenoConfiguration;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
@@ -75,7 +75,7 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 						asyncSnapshot(snapshotsImmutable.get(transactionId));
 						snapshotsImmutable.remove(transactionId);
 					}
-					journalsRoller.roll();
+					journalsManager.roll();
 				}
 			}
 	}
@@ -108,10 +108,10 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 	
 	public SnapshottingInterceptor(RevenoConfiguration configuration,
 			SnapshottersManager snapshotsManager, SnapshotStorage snapshotStorage,
-			JournalsRoller journalsRoller, RepositoryDataSerializer serializer) {
+			JournalsManager journalsManager, RepositoryDataSerializer serializer) {
 		this.configuration = configuration;
 		this.snapshotsManager = snapshotsManager;
-		this.journalsRoller = journalsRoller;
+		this.journalsManager = journalsManager;
 		this.serializer = serializer;
 		this.snapshotStorage = snapshotStorage;
 	}
@@ -123,7 +123,7 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 	protected RevenoConfiguration configuration;
 	protected SnapshottersManager snapshotsManager;
 	protected SnapshotStorage snapshotStorage;
-	protected JournalsRoller journalsRoller;
+	protected JournalsManager journalsManager;
 	protected RepositoryDataSerializer serializer;
 	protected final ExecutorService executor = Executors.newSingleThreadExecutor();
 	protected static final Logger log = LoggerFactory.getLogger(SnapshottingInterceptor.class);
