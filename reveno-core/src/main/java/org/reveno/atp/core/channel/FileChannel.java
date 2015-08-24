@@ -37,7 +37,10 @@ public class FileChannel implements Channel {
 
 	@Override
 	public long size() {
-		return size;
+		if (isPreallocated)
+			return size;
+		else
+			return size0();
 	}
 
 	@Override
@@ -131,6 +134,7 @@ public class FileChannel implements Channel {
 			}
 			writer.init();
 			this.size = size0();
+			this.isPreallocated = isPreallocated;
 		} catch (Throwable e) {
 			throw new org.reveno.atp.api.exceptions.FileNotFoundException(file, e);
 		}
@@ -183,6 +187,7 @@ public class FileChannel implements Channel {
 	protected long position = 0L;
 	protected long size = 0L;
 	protected int mmapBufferGeneration = -1;
+	protected boolean isPreallocated = false;
 	protected ByteBuffer buffer = ByteBuffer.allocateDirect(mb(1));
 	protected ByteBufferWrapper revenoBuffer = new ByteBufferWrapper(buffer);
 
