@@ -226,8 +226,9 @@ public class FileChannel implements Channel {
 			writer.accept(revenoBuffer);
 			buffer = revenoBuffer.getBuffer();
 			if (flush && buffer.position() > 0) {
+				int size = buffer.position();
 				buffer.flip();
-				write0(buffer, buffer.position());
+				write0(buffer, size);
 				buffer.clear();
 			} else if (flush) {
 				write0(ZERO, 0);

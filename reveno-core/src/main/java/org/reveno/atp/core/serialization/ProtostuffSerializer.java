@@ -6,6 +6,7 @@ import io.protostuff.Schema;
 import io.protostuff.runtime.RuntimeSchema;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.reveno.atp.api.domain.RepositoryData;
+import org.reveno.atp.api.exceptions.BufferOutOfBoundsException;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.TransactionCommitInfo.Builder;
 import org.reveno.atp.core.api.channel.Buffer;
@@ -52,6 +53,9 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 
 		long transactionId = buffer.readLong();
 		long time = buffer.readLong();
+		if (transactionId == 0 && time == 0) {
+			throw new BufferOutOfBoundsException();
+		}
 		List<Object> commits = deserializeObjects(buffer);
 
 		return builder.create().transactionId(transactionId).time(time).transactionCommits(commits);
@@ -78,7 +82,7 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	public RepositoryData deserialize(Buffer buffer) {
 		changeClassLoaderIfRequired();
 
-        Input input = new ZeroCopyBufferInput(buffer, (int)buffer.limit(), true);
+        Input input = new ZeroCopyBufferInput(buffer, buffer.limit(), true);
         RepositoryData repoData = repoSchema.newMessage();
         try {
             repoSchema.mergeFrom(input, repoData);

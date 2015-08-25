@@ -1,6 +1,7 @@
 package org.reveno.atp.core.serialization;
 
 import org.reveno.atp.api.domain.RepositoryData;
+import org.reveno.atp.api.exceptions.BufferOutOfBoundsException;
 import org.reveno.atp.api.exceptions.SerializerException;
 import org.reveno.atp.api.exceptions.SerializerException.Action;
 import org.reveno.atp.core.api.TransactionCommitInfo;
@@ -52,6 +53,9 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 	public TransactionCommitInfo deserialize(Builder builder, Buffer buffer) {
 		long transactionId = buffer.readLong();
 		long time = buffer.readLong();
+		if (transactionId == 0 && time == 0) {
+			throw new BufferOutOfBoundsException();
+		}
 
 		try (ByteArrayInputStream is = new ByteArrayInputStream(
 				buffer.readBytes(buffer.readInt()));

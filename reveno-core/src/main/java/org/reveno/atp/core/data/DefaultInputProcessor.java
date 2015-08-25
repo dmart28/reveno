@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core.data;
 
+import org.reveno.atp.api.exceptions.BufferOutOfBoundsException;
 import org.reveno.atp.core.RevenoConfiguration.RevenoJournalingConfiguration;
 import org.reveno.atp.core.api.InputProcessor;
 import org.reveno.atp.core.api.channel.Buffer;
@@ -45,10 +46,15 @@ public class DefaultInputProcessor implements InputProcessor, Closeable {
 				while (b.isAvailable()) {
 					consumer.accept(b);
 				}
-			} catch (Exception ignored) { // TODO special exception type here from Serializer like EmptySerializedException
+			}
+			catch (BufferOutOfBoundsException ignored) {
+			}
+			catch (Exception e) {
+				log.error(e.getMessage(), e);
 			}
 			finally {
-				b.release();
+				if (b != null)
+					b.release();
 			}
 		});
 	}
