@@ -21,6 +21,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.reveno.atp.core.RevenoConfiguration;
 import org.reveno.atp.core.api.InputProcessor;
 import org.reveno.atp.core.api.InputProcessor.JournalType;
 import org.reveno.atp.core.api.Journaler;
@@ -88,7 +89,7 @@ public class ReadWriteTest {
 
 		storage.nextStore();
 		CountDownLatch l = new CountDownLatch(totalCount);
-		InputProcessor processor = new DefaultInputProcessor(storage);
+		InputProcessor processor = new DefaultInputProcessor(storage, new RevenoConfiguration.RevenoJournalingConfiguration());
 		processor.process((b) -> {
 			try {
 				while (b.isAvailable()) {

@@ -64,11 +64,11 @@ public class DefaultSnapshotter implements RepositorySnapshotter {
 			return null;
 		
 		SnapshotStore snap = storage.getLastSnapshotStore();
-		Buffer buffer = new NettyBasedBuffer(false);
+		Buffer buffer = null;/*new NettyBasedBuffer(false);*/
 		try (Channel c = storage.channel(snap.getSnapshotPath())) {
 			log.info("Loading repository snapshot from " + snap);
 			while (c.isReadAvailable())
-				c.read(buffer);
+				buffer = c.read();
 			
 			buffer.readInt();
 			return repoSerializer.deserialize(buffer);

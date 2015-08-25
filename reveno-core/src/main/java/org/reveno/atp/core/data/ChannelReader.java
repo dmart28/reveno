@@ -27,41 +27,42 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class ChannelReader<T> implements Iterable<List<T>> {
+public class ChannelReader implements Iterable<Buffer> {
 	private static final long CHUNK_SIZE = 256 * 1024;
-	private final Decoder<T> decoder;
+	private final Decoder<Buffer> decoder;
 	private Iterator<Channel> channels;
 
-	public ChannelReader(Decoder<T> decoder, List<Channel> channels) {
+	public ChannelReader(Decoder<Buffer> decoder, List<Channel> channels) {
 		this.channels = channels.iterator();
 		this.decoder = decoder;
 	}
 
 	@Override
-	public Iterator<List<T>> iterator() {
-		return new Iterator<List<T>>() {
-			private List<T> entries;
+	public Iterator<Buffer> iterator() {
+		return new Iterator<Buffer>() {
 			private long chunkPos = 0;
 			private Buffer prevBuffer, buffer;
 			private Channel channel;
 
 			@Override
 			public boolean hasNext() {
-				if (buffer == null || !buffer.isAvailable()) {
-					buffer = nextBuffer(chunkPos);
+				if (buffer == null) {
+					buffer = nextBuffer();
 					if (buffer == null) {
 						return false;
+					} else {
+						return true;
 					}
+				} else {
+					buffer = nextBuffer();
+					return channels.hasNext();
 				}
 				// set next MappedByteBuffer chunk
-				chunkPos += buffer.length();
+				/*chunkPos += buffer.length();
 				T result = null;
 				try {
-					while ((result = decoder.decode(prevBuffer, buffer)) != null) {
-						if (entries == null) {
-							entries = new ArrayList<T>();
-						}
-						entries.add(result);
+					if ((result = decoder.decode(prevBuffer, buffer)) != null) {
+						entry = result;
 					}
 				} catch (Exception e) {
 					buffer.release();
@@ -85,27 +86,24 @@ public class ChannelReader<T> implements Iterable<List<T>> {
 					if (entries == null)
 						entries = new ArrayList<>();
 					return true;
-				}
+				}*/
 			}
 
-			private Buffer nextBuffer(long position) {
+			private Buffer nextBuffer() {
 				try {
-					if (channel == null || channel.size() == position) {
-						if (channel != null) {
-							channel.close();
-							channel = null;
-						}
-						if (channels.hasNext()) {
-							channel = channels.next();
-							log.info("Processing channel: " + channel);
-							prevBuffer = null;
-							chunkPos = 0;
-							position = 0;
-						} else {
-							return null;
-						}
+					if (channel != null) {
+						channel.close();
+						channel = null;
 					}
-					long chunkSize = CHUNK_SIZE;
+					if (channels.hasNext()) {
+						channel = channels.next();
+						log.info("Processing channel: " + channel);
+						prevBuffer = null;
+						chunkPos = 0;
+					} else {
+						return null;
+					}
+					/*long chunkSize = CHUNK_SIZE;
 					if (channel.size() - position < chunkSize) {
 						chunkSize = channel.size() - position;
 					}
@@ -113,21 +111,18 @@ public class ChannelReader<T> implements Iterable<List<T>> {
 						channel.close();
 						channel = null;
 						return nextBuffer(0);
-					}
-					Buffer buffer = new NettyBasedBuffer((int) chunkSize, false);
-					channel.read(buffer);
-					return buffer;
+					}*/
+					return channel.read();
 				} catch (Throwable e) {
-					channel.close();
+					if (channel != null)
+						channel.close();
 					throw new RuntimeException(e);
 				}
 			}
 
 			@Override
-			public List<T> next() {
-				List<T> res = entries;
-				entries = null;
-				return res;
+			public Buffer next() {
+				return buffer;
 			}
 
 			@Override

@@ -18,6 +18,7 @@ package org.reveno.atp.core.restore;
 
 import org.reveno.atp.core.EngineEventsContext;
 import org.reveno.atp.core.EngineWorkflowContext;
+import org.reveno.atp.core.RevenoConfiguration;
 import org.reveno.atp.core.api.*;
 import org.reveno.atp.core.api.InputProcessor.JournalType;
 import org.reveno.atp.core.api.storage.JournalsStorage;
@@ -40,7 +41,7 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 	public SystemState restore(TxRepository repository) {
 		workflowContext.repository(repository);
 		final long[] transactionId = { repository.get(SystemInfo.class, 0L).orElse(new SystemInfo(0L)).lastTransactionId };
-		try (InputProcessor processor = new DefaultInputProcessor(journalStorage)) {
+		try (InputProcessor processor = new DefaultInputProcessor(journalStorage, configuration.revenoJournaling())) {
 			processor.process(b -> {
 				EventsCommitInfo e = eventsContext.serializer().deserialize(eventsContext.eventsCommitBuilder(), b);
 				eventBus.processNextEvent(e);
@@ -62,14 +63,16 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 	public DefaultSystemStateRestorer(JournalsStorage journalStorage,
 			EngineWorkflowContext workflowContext,
 			EngineEventsContext eventsContext,
-			WorkflowEngine workflowEngine) {
+			WorkflowEngine workflowEngine, RevenoConfiguration configuration) {
 		this.journalStorage = journalStorage;
 		this.workflowContext = workflowContext;
 		this.eventsContext = eventsContext;
 		this.workflowEngine = workflowEngine;
+		this.configuration = configuration;
 	}
-	
+
 	protected final RestorerEventBus eventBus = new RestorerEventBus();
+	protected final RevenoConfiguration configuration;
 	protected final JournalsStorage journalStorage;
 	protected final EngineWorkflowContext workflowContext;
 	protected final EngineEventsContext eventsContext;

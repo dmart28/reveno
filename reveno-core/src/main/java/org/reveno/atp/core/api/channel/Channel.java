@@ -26,7 +26,7 @@ public interface Channel extends AutoCloseable {
 	
 	boolean isReadAvailable();
 	
-	void read(Buffer buffer);
+	Buffer read();
 	
 	void write(Consumer<Buffer> channelBuffer, boolean flush);
 	

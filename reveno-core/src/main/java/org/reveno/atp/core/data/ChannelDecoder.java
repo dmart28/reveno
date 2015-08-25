@@ -58,10 +58,11 @@ public class ChannelDecoder implements Decoder<Buffer> {
 
 	protected Buffer readBuffer(Buffer buffer) {
 		if (lastSize <= buffer.remaining()) {
-			NettyBasedBuffer b = new NettyBasedBuffer(lastSize, lastSize, false);
-			byte[] data = buffer.readBytes(lastSize);
-			b.writeBytes(data);
-			return b;
+			//NettyBasedBuffer b = new NettyBasedBuffer(lastSize, lastSize, false);
+			//byte[] data = buffer.readBytes(lastSize);
+			//b.writeBytes(data);
+			buffer.setLimit(lastSize);
+			return buffer;
 		} else {
 			if (buffer.remaining() == 0)
 				useLastSize = true;

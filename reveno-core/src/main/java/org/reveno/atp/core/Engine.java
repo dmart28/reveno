@@ -325,7 +325,7 @@ public class Engine implements Reveno {
 				.idGenerator(idGenerator).journalsManager(journalsManager).snapshotsManager(snapshotsManager).interceptorCollection(interceptors)
 				.configuration(config);
 		workflowEngine = new WorkflowEngine(processor, workflowContext, config.modelType());
-		restorer = new DefaultSystemStateRestorer(journalsStorage, workflowContext, eventsContext, workflowEngine);
+		restorer = new DefaultSystemStateRestorer(journalsStorage, workflowContext, eventsContext, workflowEngine, config);
 	}
 
 	protected Optional<RepositoryData> loadLastSnapshot() {

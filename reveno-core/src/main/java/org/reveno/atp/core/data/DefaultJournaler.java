@@ -31,13 +31,15 @@ public class DefaultJournaler implements Journaler {
 	@Override
 	public void writeData(Consumer<Buffer> writer, boolean endOfBatch) {
 		requireWriting();
-		Channel ch = channel.get();
 
+		Channel ch;
 		try {
 			rollIfRequired();
+			ch = channel.get();
 			ch.write(writer::accept, endOfBatch);
 		} catch (IndexOutOfBoundsException | IllegalArgumentException e) {
 			journalsRoller.accept(() -> true);
+			return;
 		}
 
 		if (!oldChannel.compareAndSet(ch, ch)) {

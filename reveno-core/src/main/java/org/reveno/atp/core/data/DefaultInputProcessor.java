@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core.data;
 
+import org.reveno.atp.core.RevenoConfiguration.RevenoJournalingConfiguration;
 import org.reveno.atp.core.api.InputProcessor;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
@@ -36,15 +37,19 @@ public class DefaultInputProcessor implements InputProcessor, Closeable {
 	public void process(final Consumer<Buffer> consumer, JournalType type) {
 		List<Channel> chs = Arrays.asList(stores()).stream().map((js) -> type == JournalType.EVENTS ?
 				js.getEventsCommitsAddress() : js.getTransactionCommitsAddress())
-				.map(storage::channel).limit(Math.abs(stores().length - 1)).collect(Collectors.toList());
-		ChannelReader<Buffer> bufferReader = new ChannelReader<>(new ChannelDecoder(), chs);
-		bufferReader.iterator().forEachRemaining((list) -> {
-			list.forEach((b) -> {
+				.map(s -> storage.channel(s, config.channelOptions(), config.isPreallocated()))
+				.limit(Math.abs(stores().length - 1)).collect(Collectors.toList());
+		ChannelReader bufferReader = new ChannelReader(new ChannelDecoder(), chs);
+		bufferReader.iterator().forEachRemaining(b -> {
+			try {
 				while (b.isAvailable()) {
 					consumer.accept(b);
 				}
+			} catch (Exception ignored) { // TODO special exception type here from Serializer like EmptySerializedException
+			}
+			finally {
 				b.release();
-			});
+			}
 		});
 	}
 	
@@ -52,8 +57,9 @@ public class DefaultInputProcessor implements InputProcessor, Closeable {
 	public void close() {
 	}
 	
-	public DefaultInputProcessor(JournalsStorage storage) {
+	public DefaultInputProcessor(JournalsStorage storage, RevenoJournalingConfiguration config) {
 		this.storage = storage;
+		this.config = config;
 	}
 	
 	
@@ -63,6 +69,7 @@ public class DefaultInputProcessor implements InputProcessor, Closeable {
 	
 	
 	protected JournalsStorage storage;
+	protected RevenoJournalingConfiguration config;
 	protected static final Logger log = LoggerFactory.getLogger(DefaultInputProcessor.class);
 
 }

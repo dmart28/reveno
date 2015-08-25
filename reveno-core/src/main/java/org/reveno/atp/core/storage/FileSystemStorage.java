@@ -55,6 +55,11 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 		return new FileChannel(new File(baseDir, address), options);
 	}
 
+	@Override
+	public Channel channel(String address, ChannelOptions options, boolean isVolumeBased) {
+		return new FileChannel(new File(baseDir, address), options, isVolumeBased);
+	}
+
     @Override
 	public SnapshotStore getLastSnapshotStore() {
 		VersionedFile file = lastVersionedFile(baseDir, SNAPSHOT_PREFIX);

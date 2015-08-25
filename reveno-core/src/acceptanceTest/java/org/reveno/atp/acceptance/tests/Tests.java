@@ -32,6 +32,7 @@ import org.reveno.atp.acceptance.model.Account;
 import org.reveno.atp.acceptance.model.Order.OrderType;
 import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
+import org.reveno.atp.api.ChannelOptions;
 import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.Configuration.MutableModelFailover;
 import org.reveno.atp.api.Reveno;
@@ -335,8 +336,8 @@ public class Tests extends RevenoBaseTest {
 			return;
 		}
 		
-		class TestTx {};
-		class TestCmd {};
+		class TestTx {}
+		class TestCmd {}
 		
 		Repository[] repo = new Repository[1];
 		Consumer<TestRevenoEngine> consumer = r -> {
@@ -373,8 +374,70 @@ public class Tests extends RevenoBaseTest {
 	}
 
 	@Test
-	public void testPreallocatedStorages() throws Exception {
+	public void testPreallocatedUnbufferedOverbounds() throws Exception {
+		testPreallocatedJournals(227_800, ChannelOptions.UNBUFFERED_IO, reveno -> {
+			Assert.assertEquals(1, reveno.getJournalsStorage().getVolumes().length);
+			Assert.assertEquals(11, reveno.getJournalsStorage().getLastStores().length);
+		});
+	}
 
+	@Test
+	public void testPreallocatedSingleBuffer() throws Exception {
+		dontDelete = true;
+		Consumer<TestRevenoEngine> c = reveno -> {
+			Assert.assertEquals(9, reveno.getJournalsStorage().getVolumes().length);
+			Assert.assertEquals(1, reveno.getJournalsStorage().getLastStores().length);
+		};
+		//testPreallocatedJournals(2_357_916, ChannelOptions.UNBUFFERED_IO, c);
+		//testPreallocatedJournals(2_357_916, ChannelOptions.BUFFERING_VM, c);
+		testPreallocatedJournals(2_358_000, ChannelOptions.BUFFERING_VM, c);
+		//testPreallocatedJournals(2_357_916, ChannelOptions.BUFFERING_VM, c);
+	}
+
+	public void testPreallocatedJournals(long txSize, ChannelOptions channelOptions, Consumer<TestRevenoEngine> checks) throws Exception {
+		setUp();
+
+		Consumer<TestRevenoEngine> consumer = r -> {
+			r.config().journaling().minVolumes(1);
+			r.config().journaling().volumes(10);
+			r.config().journaling().preallocationSize(txSize, 500_000L);
+			r.config().journaling().channelOptions(channelOptions);
+		};
+		TestRevenoEngine reveno = createEngine(consumer);
+		Waiter accountsWaiter = listenFor(reveno, AccountCreatedEvent.class, 10_000);
+		Waiter ordersWaiter = listenFor(reveno, OrderCreatedEvent.class, 10_000);
+		reveno.startup();
+
+		generateAndSendCommands(reveno, 10_000);
+
+		Assert.assertEquals(10_000, reveno.query().select(AccountView.class).size());
+		Assert.assertEquals(10_000, reveno.query().select(OrderView.class).size());
+
+		Assert.assertTrue(accountsWaiter.isArrived());
+		Assert.assertTrue(ordersWaiter.isArrived());
+
+		checks.accept(reveno);
+		reveno.shutdown();
+
+		reveno = createEngine(consumer);
+		accountsWaiter = listenFor(reveno, AccountCreatedEvent.class, 1);
+		ordersWaiter = listenFor(reveno, OrderCreatedEvent.class, 1);
+		reveno.startup();
+
+		Assert.assertEquals(10_000, reveno.query().select(AccountView.class).size());
+		Assert.assertEquals(10_000, reveno.query().select(OrderView.class).size());
+
+		Assert.assertFalse(accountsWaiter.isArrived());
+		Assert.assertFalse(ordersWaiter.isArrived());
+
+		long accountId = sendCommandSync(reveno, new CreateNewAccountCommand("USD", 1000_000L));
+		Assert.assertEquals(10_001, accountId);
+		long orderId = sendCommandSync(reveno, new NewOrderCommand(accountId, Optional.empty(), "EUR/USD", 134000, 1000, OrderType.MARKET));
+		Assert.assertEquals(10_001, orderId);
+
+		reveno.shutdown();
+
+		tearDown();
 	}
 	
 }

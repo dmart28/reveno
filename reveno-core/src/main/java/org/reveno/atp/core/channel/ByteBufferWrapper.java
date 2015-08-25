@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
@@ -37,6 +39,7 @@ import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
 public class ByteBufferWrapper implements Buffer {
 
 	protected Function<Integer, ByteBuffer> nextBuf;
+	protected BiConsumer<ByteBuffer, Integer> reader;
 
 	protected ByteBuffer buffer; 
 	public ByteBuffer getBuffer() {
@@ -47,9 +50,10 @@ public class ByteBufferWrapper implements Buffer {
 		this.buffer = buffer;
 	}
 
-	public ByteBufferWrapper(ByteBuffer buffer, Function<Integer, ByteBuffer> nextBuf) {
+	public ByteBufferWrapper(ByteBuffer buffer, Function<Integer, ByteBuffer> nextBuf, BiConsumer<ByteBuffer, Integer> reader) {
 		this.buffer = buffer;
 		this.nextBuf = nextBuf;
+		this.reader = reader;
 	}
 
 	@Override
@@ -171,6 +175,7 @@ public class ByteBufferWrapper implements Buffer {
 
     @Override
     public byte readByte() {
+		autoExtendIfRequired(1, true);
         return buffer.get();
     }
 
@@ -183,6 +188,7 @@ public class ByteBufferWrapper implements Buffer {
 
 	@Override
 	public byte[] readBytes(int length) {
+		autoExtendIfRequired(length, true);
 		byte[] b = new byte[length];
 		buffer.get(b);
 		return b;
@@ -190,22 +196,26 @@ public class ByteBufferWrapper implements Buffer {
 
 	@Override
 	public void readBytes(byte[] data, int offset, int length) {
+		autoExtendIfRequired(length, true);
 		buffer.get(data, offset, length);
 	}
 
 	@Override
 	public long readLong() {
+		autoExtendIfRequired(8, true);
 		return buffer.getLong();
 	}
 
 	@Override
 	public int readInt() {
+		autoExtendIfRequired(4, true);
 		return buffer.getInt();
 	}
 
     @Override
     public short readShort() {
-        return buffer.getShort();
+		autoExtendIfRequired(2, true);
+		return buffer.getShort();
     }
 
     @Override
@@ -229,19 +239,24 @@ public class ByteBufferWrapper implements Buffer {
 	}
 
 	protected void autoExtendIfRequired(int length) {
+		autoExtendIfRequired(length, false);
+	}
+
+	protected void autoExtendIfRequired(int length, boolean read) {
 		if ((buffer.position() + length) - buffer.limit() > 0) {
-			if (nextBuf == null) {
+			if (nextBuf == null && !read) {
 				ByteBuffer newBuffer = ByteBuffer.allocateDirect(next2n(buffer.position() + length));
 				buffer.flip();
 				newBuffer.put(buffer);
 				destroyDirectBuffer(buffer);
 				buffer = newBuffer;
+			} else if (nextBuf == null) {
+				reader.accept(buffer, Math.abs(buffer.position() - buffer.limit()));
 			} else {
 				int pos = buffer.position();
 				if (log.isDebugEnabled()) {
 					log.debug("Switch mmap over (pos:{}, limit:{})", pos, buffer.limit());
 				}
-				buffer.putInt(0, pos - 4);
 				((MappedByteBuffer) buffer).force();
 				buffer = nextBuf.apply(pos);
 			}

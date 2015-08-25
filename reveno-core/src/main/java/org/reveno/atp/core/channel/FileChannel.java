@@ -50,8 +50,12 @@ public class FileChannel implements Channel {
 	@Override
 	public void close() {
 		try {
-			if (channel().isOpen()) {
-				write(b -> {}, true);
+			if (channel().isOpen() && writer.isInitialized()) {
+				if (channelOptions == ChannelOptions.BUFFERING_MMAP_OS) {
+					((MappedByteBuffer)buffer).force();
+				} else {
+					write(b -> {}, true);
+				}
 				raf.close();
 			}
 		} catch (Throwable t) {
@@ -71,19 +75,21 @@ public class FileChannel implements Channel {
 	}
 
 	@Override
-	public void read(Buffer data) {
+	public Buffer read() {
 		if (isOpen()) {
-			buffer.clear();
-			read(buffer);
-			buffer.flip();
-			
-			data.writeFromBuffer(buffer);
-			buffer.rewind();
+			if (channelOptions != ChannelOptions.BUFFERING_MMAP_OS) {
+				read0(buffer, 0);
+			}
+			return revenoBuffer;
+		} else {
+			return null;
 		}
 	}
 	
 	@Override
 	public void write(Consumer<Buffer> visitor, boolean flush) {
+		if (!writer.isInitialized())
+			writer.init();
 		writer.write(visitor, flush);
 	}
 
@@ -96,14 +102,6 @@ public class FileChannel implements Channel {
         if (channel == null)
             channel = raf.getChannel();
 		return channel;
-	}
-	
-	protected void read(ByteBuffer buf) {
-		try {
-			channel().read(buf);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
     public FileChannel(File file, ChannelOptions channelOptions) {
@@ -121,8 +119,8 @@ public class FileChannel implements Channel {
 
 			if (channelOptions == ChannelOptions.BUFFERING_MMAP_OS) {
 				destroyDirectBuffer(buffer);
-				buffer = mmap(0, Math.min(size0(), Integer.MAX_VALUE));
-				revenoBuffer = new ByteBufferWrapper(buffer, p -> mmap(p, Math.min(size0() - p, Integer.MAX_VALUE)));
+				buffer = mmap(0, Math.min(size0(), MAX_VALUE));
+				revenoBuffer = new ByteBufferWrapper(buffer, p -> mmap(p, Math.min(size0() - p, MAX_VALUE)), this::read0);
 			}
 			switch (channelOptions) {
 				case BUFFERING_VM: writer = new BufferedVMWriter(); break;
@@ -131,7 +129,8 @@ public class FileChannel implements Channel {
 				case UNBUFFERED_IO: writer = new UnbufferedIOWriter(); break;
 				default: throw new RuntimeException("unknown channel writer.");
 			}
-			writer.init();
+
+			this.channelOptions = channelOptions;
 			this.size = size0();
 			this.isPreallocated = isPreallocated;
 		} catch (Throwable e) {
@@ -148,12 +147,11 @@ public class FileChannel implements Channel {
 		return channelOptions == ChannelOptions.UNBUFFERED_IO ? "rwd" : "rw";
 	}
 
-	private MappedByteBuffer mmap(Integer p, long remainSize) {
+	protected MappedByteBuffer mmap(Integer p, long remainSize) {
 		try {
 			MappedByteBuffer mb = channel().map(
 					java.nio.channels.FileChannel.MapMode.READ_WRITE,
 					p, remainSize);
-			mb.putInt(0, mb.capacity() - 4);
 			mmapBufferGeneration++;
 			return mb;
 		} catch (IOException e) {
@@ -161,7 +159,17 @@ public class FileChannel implements Channel {
 		}
 	}
 
-	private void write0(ByteBuffer buf, long size) {
+	protected void read0(ByteBuffer buf, int offset) {
+		try {
+			buf.clear();
+			channel().read(buf, channel().position() - offset);
+			buf.flip();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected void write0(ByteBuffer buf, long size) {
 		try {
 			channel().write(buf, position);
 			position += size;
@@ -170,7 +178,7 @@ public class FileChannel implements Channel {
 		}
 	}
 
-	private long size0() {
+	protected long size0() {
 		try {
 			return channel().size();
 		} catch (IOException e) {
@@ -186,36 +194,41 @@ public class FileChannel implements Channel {
 	protected long position = 0L;
 	protected long size = 0L;
 	protected int mmapBufferGeneration = -1;
+	protected ChannelOptions channelOptions;
 	protected boolean isPreallocated = false;
 	protected ByteBuffer buffer = ByteBuffer.allocateDirect(mb(1));
-	protected ByteBufferWrapper revenoBuffer = new ByteBufferWrapper(buffer);
+	protected ByteBufferWrapper revenoBuffer = new ByteBufferWrapper(buffer, null, this::read0);
 
 	protected static final ByteBuffer ZERO = java.nio.ByteBuffer.allocate(0);
 	private static final Logger log = LoggerFactory.getLogger(FileChannel.class);
+	public static final int MAX_VALUE = Integer.MAX_VALUE - 8;
 
 
-	interface ChannelWriter {
-		void init();
+	abstract class ChannelWriter {
 
-		void write(Consumer<Buffer> writer, boolean flush);
+		public boolean isInitialized() {
+			return isInitialized;
+		}
+
+		public void init() {
+			isInitialized = true;
+		}
+
+		abstract void write(Consumer<Buffer> writer, boolean flush);
+
+		protected boolean isInitialized = false;
 	}
 
-	class BufferedVMWriter implements ChannelWriter {
-		@Override
-		public void init() {
-			revenoBuffer.writeInt(1);
-		}
+	class BufferedVMWriter extends ChannelWriter {
 
 		@Override
 		public void write(Consumer<Buffer> writer, boolean flush) {
 			writer.accept(revenoBuffer);
 			buffer = revenoBuffer.getBuffer();
-			if (flush && buffer.position() > 4) {
-				int size = buffer.position();
-				buffer.putInt(0, size - 4).flip();
-				write0(buffer, size);
+			if (flush && buffer.position() > 0) {
+				buffer.flip();
+				write0(buffer, buffer.position());
 				buffer.clear();
-				revenoBuffer.writeInt(1);
 			} else if (flush) {
 				write0(ZERO, 0);
 			}
@@ -224,26 +237,16 @@ public class FileChannel implements Channel {
 
 	class BufferedOSWriter extends BufferedVMWriter {
 		@Override
-		public void init() {
-			revenoBuffer.writeInt(1);
-		}
-
-		@Override
 		public void write(Consumer<Buffer> writer, boolean flush) {
 			super.write(writer, true);
 		}
 	}
 
-	class BufferedMmapWriter implements ChannelWriter {
-		@Override
-		public void init() {
-			revenoBuffer.writeInt(buffer.capacity() - 4);
-		}
-
+	class BufferedMmapWriter extends ChannelWriter {
 		@Override
 		public void write(Consumer<Buffer> writer, boolean flush) {
 			writer.accept(revenoBuffer);
-			position = (mmapBufferGeneration * Integer.MAX_VALUE) + buffer.position();
+			position = (mmapBufferGeneration * MAX_VALUE) + buffer.position();
 		}
 	}
 
