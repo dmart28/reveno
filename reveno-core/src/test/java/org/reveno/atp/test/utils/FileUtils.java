@@ -27,8 +27,7 @@ public abstract class FileUtils {
 			for (File c : f.listFiles())
 				delete(c);
 		}
-		if (!f.delete())
-			throw new FileNotFoundException("Failed to delete file: " + f);
+		f.delete();
 	}
 	
 }

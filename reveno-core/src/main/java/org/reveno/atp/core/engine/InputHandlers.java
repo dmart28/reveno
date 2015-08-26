@@ -20,7 +20,7 @@ import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.core.api.channel.Buffer;
-import org.reveno.atp.core.channel.ByteBufferWrapper;
+import org.reveno.atp.core.channel.AutoExtendableBuffer;
 import org.reveno.atp.core.disruptor.ProcessorContext;
 import org.reveno.atp.core.engine.components.TransactionExecutor;
 import org.reveno.atp.utils.MeasureUtils;
@@ -84,7 +84,7 @@ public class InputHandlers {
 		marshalled.release();
 	}
 	
-	protected final Buffer marshalled = new ByteBufferWrapper(ByteBuffer.allocateDirect(MeasureUtils.mb(1)));
+	protected final Buffer marshalled = new AutoExtendableBuffer(ByteBuffer.allocateDirect(MeasureUtils.mb(1)));
 	protected WorkflowContext services;
 	protected TransactionExecutor txExecutor;
 	protected Supplier<Long> nextTransactionId;
@@ -107,7 +107,8 @@ public class InputHandlers {
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> journaler = (c, eob) -> {
 		interceptors(TransactionStage.JOURNALING, c);
-		
+
+		// TODO move rolling here
 		services.transactionJournaler().writeData(b -> {
 			c.commitInfo().transactionId(c.transactionId()).time(c.time()).transactionCommits(c.getTransactions());
 			services.serializer().serialize(c.commitInfo(), b);

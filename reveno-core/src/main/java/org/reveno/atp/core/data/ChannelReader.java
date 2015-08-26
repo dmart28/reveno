@@ -55,7 +55,7 @@ public class ChannelReader implements Iterable<Buffer> {
 					}
 				} else {
 					buffer = nextBuffer();
-					return channels.hasNext();
+					return buffer != null;
 				}
 				// set next MappedByteBuffer chunk
 				/*chunkPos += buffer.length();

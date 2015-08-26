@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core.engine.components;
 
+import org.reveno.atp.api.exceptions.BufferOutOfBoundsException;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.TransactionCommitInfo.Builder;
 import org.reveno.atp.core.api.channel.Buffer;
@@ -96,11 +97,15 @@ public class SerializersChain implements TransactionInfoSerializer {
 	
 	
 	protected <T> T tryToD(Buffer buffer, Function<TransactionInfoSerializer, T> f) {
-		buffer.markReader();
+		if (!buffer.isAvailable()) {
+			throw new BufferOutOfBoundsException();
+		}
 		int serializerType = buffer.readInt();
+		if (serializerType == 0) {
+			throw new BufferOutOfBoundsException();
+		}
 		TransactionInfoSerializer s = transactionSerializersMap.get(serializerType);
 		if (s == null) {
-			buffer.resetReader();
 			throw new IllegalArgumentException(String.format("Can't find serializer for %d.", serializerType));
 		}
 		return f.apply(s);

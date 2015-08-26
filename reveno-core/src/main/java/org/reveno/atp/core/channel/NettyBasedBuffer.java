@@ -221,8 +221,18 @@ public class NettyBasedBuffer implements Buffer {
 	public void resetWriter() {
 		buffer.resetWriterIndex();
 	}
-	
-	
+
+	@Override
+	public void limitNext(int count) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void resetNextLimit() {
+		throw new UnsupportedOperationException();
+	}
+
+
 	private final ByteBuf buffer;
 	
 }

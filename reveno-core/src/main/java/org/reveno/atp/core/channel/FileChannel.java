@@ -120,7 +120,7 @@ public class FileChannel implements Channel {
 			if (channelOptions == ChannelOptions.BUFFERING_MMAP_OS) {
 				destroyDirectBuffer(buffer);
 				buffer = mmap(0, Math.min(size0(), MAX_VALUE));
-				revenoBuffer = new ByteBufferWrapper(buffer, p -> mmap(p, Math.min(size0() - p, MAX_VALUE)), this::read0);
+				revenoBuffer = new AutoExtendableBuffer(buffer, p -> mmap(p, Math.min(size0() - p, MAX_VALUE)), this::read0);
 			}
 			switch (channelOptions) {
 				case BUFFERING_VM: writer = new BufferedVMWriter(); break;
@@ -162,7 +162,8 @@ public class FileChannel implements Channel {
 	protected void read0(ByteBuffer buf, int offset) {
 		try {
 			buf.clear();
-			channel().read(buf, channel().position() - offset);
+			channel().read(buf, position - offset);
+			position += buf.position() - offset;
 			buf.flip();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -197,7 +198,7 @@ public class FileChannel implements Channel {
 	protected ChannelOptions channelOptions;
 	protected boolean isPreallocated = false;
 	protected ByteBuffer buffer = ByteBuffer.allocateDirect(mb(1));
-	protected ByteBufferWrapper revenoBuffer = new ByteBufferWrapper(buffer, null, this::read0);
+	protected AutoExtendableBuffer revenoBuffer = new AutoExtendableBuffer(buffer, null, this::read0);
 
 	protected static final ByteBuffer ZERO = java.nio.ByteBuffer.allocate(0);
 	private static final Logger log = LoggerFactory.getLogger(FileChannel.class);

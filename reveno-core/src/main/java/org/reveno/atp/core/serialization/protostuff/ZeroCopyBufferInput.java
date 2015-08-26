@@ -40,7 +40,7 @@ public final class ZeroCopyBufferInput implements Input {
     }
 
     public int readTag() throws IOException {
-        if (!this.buffer.isAvailable()) {
+        if (!(this.buffer.remaining() > 0)) {
             this.lastTag = 0;
             return 0;
         } else {
@@ -103,7 +103,7 @@ public final class ZeroCopyBufferInput implements Input {
     }
 
     public <T> int readFieldNumber(Schema<T> schema) throws IOException {
-        if (!this.buffer.isAvailable()) {
+        if (!(this.buffer.remaining() > 0)) {
             this.lastTag = 0;
             return 0;
         } else if (this.isCurrentFieldPacked()) {
@@ -225,8 +225,6 @@ public final class ZeroCopyBufferInput implements Input {
         int length = this.readRawVarint32();
         if (length < 0) {
             throw new ProtobufException("CodedInput encountered an embedded string or message which claimed to have negative size.");
-        } else if (this.buffer.remaining() < length) {
-            throw new ProtobufException("CodedInput encountered an embedded string or bytes that misreported its size.");
         } else {
             byte[] tmp = new byte[length];
             this.buffer.readBytes(tmp, 0, tmp.length);
@@ -242,8 +240,6 @@ public final class ZeroCopyBufferInput implements Input {
         int length = this.readRawVarint32();
         if (length < 0) {
             throw new ProtobufException("CodedInput encountered an embedded string or message which claimed to have negative size.");
-        } else if (this.buffer.remaining() < length) {
-            throw new ProtobufException("CodedInput encountered an embedded string or bytes that misreported its size.");
         } else {
             byte[] copy = new byte[length];
             this.buffer.readBytes(copy, 0, copy.length);
@@ -258,8 +254,6 @@ public final class ZeroCopyBufferInput implements Input {
             int length = this.readRawVarint32();
             if (length < 0) {
                 throw new ProtobufException("CodedInput encountered an embedded string or message which claimed to have negative size.");
-            } else if (this.buffer.remaining() < length) {
-                throw new ProtobufException("CodedInput encountered an embedded string or bytes that misreported its size.");
             } else {
 
                 ByteBuffer dup = this.buffer.writeToBuffer();

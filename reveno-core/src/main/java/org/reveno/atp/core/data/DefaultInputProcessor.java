@@ -48,6 +48,7 @@ public class DefaultInputProcessor implements InputProcessor, Closeable {
 				}
 			}
 			catch (BufferOutOfBoundsException ignored) {
+				log.info("End of volume was reached ({})", b.readerPosition());
 			}
 			catch (Exception e) {
 				log.error(e.getMessage(), e);

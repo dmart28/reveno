@@ -44,13 +44,14 @@ public class JournalsManager implements Destroyable {
 	}
 
 	public synchronized void roll(Runnable completed, Supplier<Boolean> condition) {
-		log.info("Rolling to next store.");
+		log.debug("Trying to roll to next store.");
 		isRolling = true;
 
 		try {
 			if (!condition.get()) {
 				return;
 			}
+			log.info("Rolling to next store.");
 			JournalStore store;
 
 			boolean isVolumeBased = false;

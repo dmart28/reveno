@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
@@ -36,7 +35,7 @@ import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
  * @author Artem Dmitriev <art.dm.ser@gmail.com>
  *
  */
-public class ByteBufferWrapper implements Buffer {
+public class AutoExtendableBuffer implements Buffer {
 
 	protected Function<Integer, ByteBuffer> nextBuf;
 	protected BiConsumer<ByteBuffer, Integer> reader;
@@ -46,11 +45,11 @@ public class ByteBufferWrapper implements Buffer {
 		return buffer;
 	}
 	
-	public ByteBufferWrapper(ByteBuffer buffer) {
+	public AutoExtendableBuffer(ByteBuffer buffer) {
 		this.buffer = buffer;
 	}
 
-	public ByteBufferWrapper(ByteBuffer buffer, Function<Integer, ByteBuffer> nextBuf, BiConsumer<ByteBuffer, Integer> reader) {
+	public AutoExtendableBuffer(ByteBuffer buffer, Function<Integer, ByteBuffer> nextBuf, BiConsumer<ByteBuffer, Integer> reader) {
 		this.buffer = buffer;
 		this.nextBuf = nextBuf;
 		this.reader = reader;
@@ -103,7 +102,12 @@ public class ByteBufferWrapper implements Buffer {
 
 	@Override
 	public boolean isAvailable() {
-		return buffer.remaining() > 0;
+		boolean result = buffer.remaining() > 0;
+		if (!result) {
+			autoExtendIfRequired(1, true);
+			result = buffer.remaining() > 0;
+		}
+		return result;
 	}
 
     @Override
@@ -118,6 +122,10 @@ public class ByteBufferWrapper implements Buffer {
 
     @Override
     public void setLimit(int limit) {
+		if (limit > buffer.capacity()) {
+			nextLimitOnAutoextend = limit - buffer.capacity();
+			return;
+		}
         this.buffer.limit(limit);
     }
 
@@ -220,34 +228,55 @@ public class ByteBufferWrapper implements Buffer {
 
     @Override
 	public void markReader() {
-		buffer.mark();
+		throw new UnsupportedOperationException();
 	}
     
     @Override
 	public void markWriter() {
+		writerMark = buffer.position();
 		buffer.mark();
 	}
 
 	@Override
 	public void resetReader() {
-		buffer.reset();
+		throw new UnsupportedOperationException();
 	}
 	
 	@Override
 	public void resetWriter() {
+		writerMark = -1;
 		buffer.reset();
+	}
+
+	@Override
+	public void limitNext(int count) {
+		autoExtendIfRequired(count, true);
+		startedLimitAfterAutoextend = buffer.limit();
+		setLimit(readerPosition() + count);
+	}
+
+	@Override
+	public void resetNextLimit() {
+		setLimit(startedLimitAfterAutoextend);
 	}
 
 	protected void autoExtendIfRequired(int length) {
 		autoExtendIfRequired(length, false);
 	}
 
+	// TODO refactor!
 	protected void autoExtendIfRequired(int length, boolean read) {
 		if ((buffer.position() + length) - buffer.limit() > 0) {
 			if (nextBuf == null && !read) {
 				ByteBuffer newBuffer = ByteBuffer.allocateDirect(next2n(buffer.position() + length));
 				buffer.flip();
 				newBuffer.put(buffer);
+				if (writerMark > 0) {
+					int oldPos = buffer.position();
+					buffer.position(writerMark);
+					buffer.mark();
+					buffer.position(oldPos);
+				}
 				destroyDirectBuffer(buffer);
 				buffer = newBuffer;
 			} else if (nextBuf == null) {
@@ -259,6 +288,11 @@ public class ByteBufferWrapper implements Buffer {
 				}
 				((MappedByteBuffer) buffer).force();
 				buffer = nextBuf.apply(pos);
+			}
+			if (nextLimitOnAutoextend != 0) {
+				startedLimitAfterAutoextend = buffer.limit();
+				setLimit(nextLimitOnAutoextend);
+				nextLimitOnAutoextend = 0;
 			}
 		}
 	}
@@ -279,5 +313,9 @@ public class ByteBufferWrapper implements Buffer {
         return (int)Math.pow(2, i);
     }
 
-	protected static final Logger log = LoggerFactory.getLogger(ByteBufferWrapper.class);
+	protected int writerMark = 0;
+	protected int nextLimitOnAutoextend = 0;
+	protected int startedLimitAfterAutoextend = 0;
+
+	protected static final Logger log = LoggerFactory.getLogger(AutoExtendableBuffer.class);
 }

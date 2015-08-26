@@ -71,5 +71,10 @@ public interface Buffer {
 	void resetReader();
 	
 	void resetWriter();
+
+
+	void limitNext(int count);
+
+	void resetNextLimit();
 	
 }

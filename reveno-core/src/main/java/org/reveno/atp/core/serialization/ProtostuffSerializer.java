@@ -166,11 +166,10 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 		Schema<Object> schema = (Schema<Object>)registered.get(classHash).schema;
 		Object message = schema.newMessage();
 		try {
-		    int oldLimit = buffer.limit();
-		    buffer.setLimit(buffer.readerPosition() + size);
+		    buffer.limitNext(size);
 		    schema.mergeFrom(input, message);
-		    buffer.setLimit(oldLimit);
-		} catch (IOException e) {
+		    buffer.resetNextLimit();
+		} catch (Exception e) {
 		    throw new RuntimeException(e);
 		}
 		return message;
