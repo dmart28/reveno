@@ -21,38 +21,47 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
 
 /**
- * Not super correct currently - we should use separate reader and writer indexes.
+ * Not super correct currently - we should use separate reader and extender indexes.
  * 
  * But since for now it is only used for writing as wrapper in FileChannel - let it be.
  * 
  * @author Artem Dmitriev <art.dm.ser@gmail.com>
  *
  */
-public class AutoExtendableBuffer implements Buffer {
+public class ChannelBuffer implements Buffer {
 
-	protected Function<Integer, ByteBuffer> nextBuf;
-	protected BiConsumer<ByteBuffer, Integer> reader;
+	protected Function<ByteBuffer, ByteBuffer> reader;
+	protected BiFunction<Long, ByteBuffer, ByteBuffer> extender;
 
 	protected ByteBuffer buffer; 
 	public ByteBuffer getBuffer() {
 		return buffer;
 	}
 	
-	public AutoExtendableBuffer(ByteBuffer buffer) {
+	public ChannelBuffer(ByteBuffer buffer) {
 		this.buffer = buffer;
 	}
 
-	public AutoExtendableBuffer(ByteBuffer buffer, Function<Integer, ByteBuffer> nextBuf, BiConsumer<ByteBuffer, Integer> reader) {
+	public ChannelBuffer(ByteBuffer buffer, Function<ByteBuffer, ByteBuffer> reader,
+			BiFunction<Long, ByteBuffer, ByteBuffer> extender) {
 		this.buffer = buffer;
-		this.nextBuf = nextBuf;
+		this.extender = extender;
 		this.reader = reader;
+	}
+
+	public ChannelBuffer(ByteBuffer buffer, Consumer<ByteBuffer> reader,
+						 BiConsumer<Long, ByteBuffer> extender) {
+		this.buffer = buffer;
+		this.extender = (p,b) -> { extender.accept(p, b); return b; };
+		this.reader = (b) -> { reader.accept(b); return b; };
 	}
 
 	@Override
@@ -260,34 +269,30 @@ public class AutoExtendableBuffer implements Buffer {
 		setLimit(startedLimitAfterAutoextend);
 	}
 
+	public void extendBuffer(long length) {
+		ByteBuffer newBuffer = ByteBuffer.allocateDirect(next2n(buffer.position() + (int)length));
+		buffer.flip();
+		newBuffer.put(buffer);
+		if (writerMark > 0) {
+			int oldPos = buffer.position();
+			buffer.position(writerMark);
+			buffer.mark();
+			buffer.position(oldPos);
+		}
+		destroyDirectBuffer(buffer);
+		buffer = newBuffer;
+	}
+
 	protected void autoExtendIfRequired(int length) {
 		autoExtendIfRequired(length, false);
 	}
 
-	// TODO refactor!
 	protected void autoExtendIfRequired(int length, boolean read) {
 		if ((buffer.position() + length) - buffer.limit() > 0) {
-			if (nextBuf == null && !read) {
-				ByteBuffer newBuffer = ByteBuffer.allocateDirect(next2n(buffer.position() + length));
-				buffer.flip();
-				newBuffer.put(buffer);
-				if (writerMark > 0) {
-					int oldPos = buffer.position();
-					buffer.position(writerMark);
-					buffer.mark();
-					buffer.position(oldPos);
-				}
-				destroyDirectBuffer(buffer);
-				buffer = newBuffer;
-			} else if (nextBuf == null) {
-				reader.accept(buffer, Math.abs(buffer.position() - buffer.limit()));
+			if (read) {
+				buffer = reader.apply(buffer);
 			} else {
-				int pos = buffer.position();
-				if (log.isDebugEnabled()) {
-					log.debug("Switch mmap over (pos:{}, limit:{})", pos, buffer.limit());
-				}
-				((MappedByteBuffer) buffer).force();
-				buffer = nextBuf.apply(pos);
+				buffer = extender.apply((long) next2n(length), buffer);
 			}
 			if (nextLimitOnAutoextend != 0) {
 				startedLimitAfterAutoextend = buffer.limit();
@@ -297,7 +302,7 @@ public class AutoExtendableBuffer implements Buffer {
 		}
 	}
 
-    /**
+	/**
      * We should consider only numbers that mod FS page size with 0 remainder, means
      * any number of 2^n
      *
@@ -317,5 +322,5 @@ public class AutoExtendableBuffer implements Buffer {
 	protected int nextLimitOnAutoextend = 0;
 	protected int startedLimitAfterAutoextend = 0;
 
-	protected static final Logger log = LoggerFactory.getLogger(AutoExtendableBuffer.class);
+	protected static final Logger log = LoggerFactory.getLogger(ChannelBuffer.class);
 }

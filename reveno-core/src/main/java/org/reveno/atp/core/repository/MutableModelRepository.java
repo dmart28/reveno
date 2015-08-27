@@ -23,7 +23,7 @@ import org.reveno.atp.core.api.Destroyable;
 import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.serialization.Serializer;
-import org.reveno.atp.core.channel.AutoExtendableBuffer;
+import org.reveno.atp.core.channel.ChannelBuffer;
 import org.reveno.atp.utils.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -205,7 +205,7 @@ public class MutableModelRepository implements TxRepository, Destroyable {
 	protected final WriteableRepository repository;
 	protected final Serializer serializer;
 	protected final ClassLoader classLoader;
-	protected final Buffer buffer = new AutoExtendableBuffer(ByteBuffer.allocateDirect(kb(128)));
+	protected final Buffer buffer = new ChannelBuffer(ByteBuffer.allocateDirect(kb(128)));
 	protected final ThreadLocal<Boolean> isTransaction = new ThreadLocal<Boolean>() {
 		protected Boolean initialValue() {
 			return false;

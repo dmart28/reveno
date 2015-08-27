@@ -24,10 +24,10 @@ public class FileChannelTest {
 		Files.write(testData, testFile);
 		
 		FileChannel fc = new FileChannel(testFile, ChannelOptions.UNBUFFERED_IO);
-        AutoExtendableBuffer buf = null;/*new AutoExtendableBuffer(java.nio.ByteBuffer.allocate(1024 * 1024));*/
+        ChannelBuffer buf = null;/*new ChannelBuffer(java.nio.ByteBuffer.allocate(1024 * 1024));*/
 		
 		try {
-			buf = (AutoExtendableBuffer) fc.read();
+			buf = (ChannelBuffer) fc.read();
 
 			// TODO change
             /*Assert.assertEquals(mb(3) + 13, buf.readerPosition());

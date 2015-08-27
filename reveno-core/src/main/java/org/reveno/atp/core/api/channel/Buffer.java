@@ -76,5 +76,9 @@ public interface Buffer {
 	void limitNext(int count);
 
 	void resetNextLimit();
+
+	int lastWritten();
+
+	void resetLastWritten();
 	
 }

@@ -387,10 +387,10 @@ public class Tests extends RevenoBaseTest {
 			Assert.assertEquals(9, reveno.getJournalsStorage().getVolumes().length);
 			Assert.assertEquals(1, reveno.getJournalsStorage().getLastStores().length);
 		};
-		testPreallocatedJournals(2_500_000, ChannelOptions.UNBUFFERED_IO, c);
-		testPreallocatedJournals(2_500_000, ChannelOptions.BUFFERING_VM, c);
+		//testPreallocatedJournals(2_500_000, ChannelOptions.UNBUFFERED_IO, c);
+		//testPreallocatedJournals(2_500_000, ChannelOptions.BUFFERING_VM, c);
 		testPreallocatedJournals(2_500_000, ChannelOptions.BUFFERING_MMAP_OS, c);
-		testPreallocatedJournals(2_500_000, ChannelOptions.BUFFERING_OS, c);
+		//testPreallocatedJournals(2_500_000, ChannelOptions.BUFFERING_OS, c);
 	}
 
 	@Test
