@@ -232,6 +232,21 @@ public class NettyBasedBuffer implements Buffer {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public void markSize() {
+
+	}
+
+	@Override
+	public int sizeMarkPosition() {
+		return 0;
+	}
+
+	@Override
+	public void writeSize() {
+
+	}
+
 
 	private final ByteBuf buffer;
 	

@@ -269,6 +269,26 @@ public class ChannelBuffer implements Buffer {
 		setLimit(startedLimitAfterAutoextend);
 	}
 
+	@Override
+	public void markSize() {
+		sizePosition = buffer.position();
+		autoExtendIfRequired(4);
+		buffer.putInt(0);
+	}
+
+	@Override
+	public int sizeMarkPosition() {
+		return sizePosition;
+	}
+
+	@Override
+	public void writeSize() {
+		int newPos = buffer.position();
+		buffer.position(sizePosition);
+		buffer.putInt(newPos - sizePosition - 4);
+		buffer.position(newPos);
+	}
+
 	public void extendBuffer(long length) {
 		ByteBuffer newBuffer = ByteBuffer.allocateDirect(next2n(buffer.position() + (int)length));
 		buffer.flip();
@@ -292,7 +312,10 @@ public class ChannelBuffer implements Buffer {
 			if (read) {
 				buffer = reader.apply(buffer);
 			} else {
-				buffer = extender.apply((long) next2n(length), buffer);
+				buffer = extender.apply((long) buffer.limit(), buffer);
+				if (buffer.position() < sizePosition) {
+					sizePosition = 0;
+				}
 			}
 			if (nextLimitOnAutoextend != 0) {
 				startedLimitAfterAutoextend = buffer.limit();
@@ -318,6 +341,7 @@ public class ChannelBuffer implements Buffer {
         return (int)Math.pow(2, i);
     }
 
+	protected int sizePosition = -1;
 	protected int writerMark = 0;
 	protected int nextLimitOnAutoextend = 0;
 	protected int startedLimitAfterAutoextend = 0;

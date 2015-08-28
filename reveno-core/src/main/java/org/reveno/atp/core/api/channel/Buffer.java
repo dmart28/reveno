@@ -76,5 +76,10 @@ public interface Buffer {
 	void limitNext(int count);
 
 	void resetNextLimit();
-	
+
+	void markSize();
+
+	int sizeMarkPosition();
+
+	void writeSize();
 }

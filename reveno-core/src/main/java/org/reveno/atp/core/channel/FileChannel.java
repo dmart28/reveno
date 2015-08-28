@@ -121,7 +121,7 @@ public class FileChannel implements Channel {
 				destroyDirectBuffer(buffer);
 				buffer = mmap(size0());
 				revenoBuffer = new ChannelBuffer(buffer, b -> { return mmap(size0() - lastPos()); },
-						(p,b) -> mmap(p, true));
+						(p,b) -> mmap(p));
 			} else {
 				revenoBuffer = new ChannelBuffer(buffer, (Consumer<ByteBuffer>) b -> read0(b, Math.abs(b.position() - b.limit())),
 						(p,b) -> revenoBuffer.extendBuffer(p));
@@ -160,24 +160,18 @@ public class FileChannel implements Channel {
 	}
 
 	protected MappedByteBuffer mmap(long remainSize) {
-		return mmap(remainSize, false);
-	}
-
-	protected MappedByteBuffer mmap(long remainSize) {
 		remainSize = bounded(remainSize);
 		try {
 			if (log.isDebugEnabled()) {
 				log.debug("Switch mmap over (pos:{}, size:{})", position, remainSize);
 			}
 			int pos = buffer.position();
-			boolean extend = pos + remainSize > size;
+			int offset = revenoBuffer == null || revenoBuffer.sizeMarkPosition() == -1 ? 0 : pos - revenoBuffer.sizeMarkPosition();
 			buffer = channel().map(
 					java.nio.channels.FileChannel.MapMode.READ_WRITE,
-					extend ? 0 : mmapBufferGeneration + pos, extend ? pos + remainSize : remainSize);
-			if (extend) {
-				buffer.
-			}
-			mmapBufferGeneration += pos;
+					mmapBufferGeneration + pos - offset, remainSize + offset);
+			buffer.position(offset);
+			mmapBufferGeneration += pos - offset;
 			return (MappedByteBuffer) buffer;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
