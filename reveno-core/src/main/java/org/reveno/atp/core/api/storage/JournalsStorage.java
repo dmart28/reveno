@@ -23,8 +23,6 @@ public interface JournalsStorage {
 
 	Channel channel(String address);
 
-	Channel channel(String address, ChannelOptions options, boolean isVolumeBased);
-
 	JournalStore[] getLastStores();
 
 	JournalStore[] getVolumes();

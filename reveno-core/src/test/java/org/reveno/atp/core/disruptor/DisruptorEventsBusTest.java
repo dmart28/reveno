@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.reveno.atp.api.Configuration.CpuConsumption;
+import org.reveno.atp.core.RevenoConfiguration;
 import org.reveno.atp.core.api.EventsCommitInfo;
 import org.reveno.atp.core.api.EventsCommitInfo.Builder;
 import org.reveno.atp.core.api.Journaler;
@@ -51,7 +52,7 @@ public class DisruptorEventsBusTest {
 	@Before 
 	public void setUp() {
 		tempDir = Files.createTempDir();
-		storage = new FileSystemStorage(tempDir);
+		storage = new FileSystemStorage(tempDir, new RevenoConfiguration.RevenoJournalingConfiguration());
 	}
 	
 	@After 

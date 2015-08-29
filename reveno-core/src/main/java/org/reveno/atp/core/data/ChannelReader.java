@@ -28,20 +28,16 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ChannelReader implements Iterable<Buffer> {
-	private static final long CHUNK_SIZE = 256 * 1024;
-	private final Decoder<Buffer> decoder;
 	private Iterator<Channel> channels;
 
-	public ChannelReader(Decoder<Buffer> decoder, List<Channel> channels) {
+	public ChannelReader(List<Channel> channels) {
 		this.channels = channels.iterator();
-		this.decoder = decoder;
 	}
 
 	@Override
 	public Iterator<Buffer> iterator() {
 		return new Iterator<Buffer>() {
-			private long chunkPos = 0;
-			private Buffer prevBuffer, buffer;
+			private Buffer buffer;
 			private Channel channel;
 
 			@Override
@@ -57,36 +53,6 @@ public class ChannelReader implements Iterable<Buffer> {
 					buffer = nextBuffer();
 					return buffer != null;
 				}
-				// set next MappedByteBuffer chunk
-				/*chunkPos += buffer.length();
-				T result = null;
-				try {
-					if ((result = decoder.decode(prevBuffer, buffer)) != null) {
-						entry = result;
-					}
-				} catch (Exception e) {
-					buffer.release();
-					log.error("decode", e);
-				}
-				if (prevBuffer != null) {
-					prevBuffer.release();
-				}
-				prevBuffer = buffer;
-				buffer = null;
-				if (!channels.hasNext()) {
-					if (entries != null) {
-						return true;
-					} else {
-						channel.close();
-						if (buffer != null)
-							buffer.release();
-						return false;
-					}
-				} else {
-					if (entries == null)
-						entries = new ArrayList<>();
-					return true;
-				}*/
 			}
 
 			private Buffer nextBuffer() {
@@ -98,20 +64,9 @@ public class ChannelReader implements Iterable<Buffer> {
 					if (channels.hasNext()) {
 						channel = channels.next();
 						log.info("Processing channel: " + channel);
-						prevBuffer = null;
-						chunkPos = 0;
 					} else {
 						return null;
 					}
-					/*long chunkSize = CHUNK_SIZE;
-					if (channel.size() - position < chunkSize) {
-						chunkSize = channel.size() - position;
-					}
-					if (chunkSize == 0) {
-						channel.close();
-						channel = null;
-						return nextBuffer(0);
-					}*/
 					return channel.read();
 				} catch (Throwable e) {
 					if (channel != null)

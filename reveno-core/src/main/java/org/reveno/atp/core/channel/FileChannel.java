@@ -19,6 +19,8 @@ package org.reveno.atp.core.channel;
 import org.reveno.atp.api.ChannelOptions;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
+import org.reveno.atp.utils.MathUtils;
+import org.reveno.atp.utils.MeasureUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +31,6 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.util.function.Consumer;
 
-import static org.reveno.atp.utils.MeasureUtils.mb;
 import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
 
 public class FileChannel implements Channel {
@@ -67,7 +68,7 @@ public class FileChannel implements Channel {
 	@Override
 	public boolean isReadAvailable() {
 		try {
-			return channel().position() < raf.length();
+			return position < raf.length();
 		} catch (IOException e) {
 			log.error("", e);
 			return false;
@@ -97,6 +98,18 @@ public class FileChannel implements Channel {
 	public boolean isOpen() {
 		return channel().isOpen();
 	}
+
+	public void channelOptions(ChannelOptions channelOptions) {
+		this.channelOptions = channelOptions;
+	}
+
+	public void isPreallocated(boolean isPreallocated) {
+		this.isPreallocated = isPreallocated;
+	}
+
+	public void extendDelta(int extendDelta) {
+		this.extendDelta = extendDelta;
+	}
 	
 	public java.nio.channels.FileChannel channel() {
         if (channel == null)
@@ -104,27 +117,23 @@ public class FileChannel implements Channel {
 		return channel;
 	}
 
-    public FileChannel(File file, ChannelOptions channelOptions) {
-        this(file, channelOptions, false);
-    }
-	
-	public FileChannel(File file, ChannelOptions channelOptions, boolean isPreallocated) {
+	public FileChannel init() {
 		try {
 			if (channelOptions == ChannelOptions.BUFFERING_MMAP_OS && !isPreallocated) {
 				throw new IllegalArgumentException("mmap can't be used for non pre-allocated journals.");
 			}
-
-			this.file = file;
 			this.raf = new RandomAccessFile(file, mode(channelOptions));
 
 			if (channelOptions == ChannelOptions.BUFFERING_MMAP_OS) {
 				destroyDirectBuffer(buffer);
 				buffer = mmap(size0());
-				revenoBuffer = new ChannelBuffer(buffer, b -> { return mmap(size0() - lastPos()); },
-						(p,b) -> mmap(p));
+				revenoBuffer = new ChannelBuffer(buffer,
+						() -> mmap(size0() - lastPos()),
+						() -> mmap(extendDelta));
 			} else {
-				revenoBuffer = new ChannelBuffer(buffer, (Consumer<ByteBuffer>) b -> read0(b, Math.abs(b.position() - b.limit())),
-						(p,b) -> revenoBuffer.extendBuffer(p));
+				revenoBuffer = new ChannelBuffer(buffer,
+						() -> read0(buffer, Math.abs(buffer.position() - buffer.limit())),
+						this::extendBufferedVm);
 			}
 			switch (channelOptions) {
 				case BUFFERING_VM: writer = new BufferedVMWriter(); break;
@@ -134,12 +143,15 @@ public class FileChannel implements Channel {
 				default: throw new RuntimeException("unknown channel extender.");
 			}
 
-			this.channelOptions = channelOptions;
 			this.size = size0();
-			this.isPreallocated = isPreallocated;
 		} catch (Throwable e) {
 			throw new org.reveno.atp.api.exceptions.FileNotFoundException(file, e);
 		}
+		return this;
+	}
+
+	public FileChannel(File file) {
+		this.file = file;
 	}
 
 	@Override
@@ -157,6 +169,16 @@ public class FileChannel implements Channel {
 
 	protected String mode(ChannelOptions channelOptions) {
 		return channelOptions == ChannelOptions.UNBUFFERED_IO ? "rwd" : "rw";
+	}
+
+	protected ByteBuffer extendBufferedVm() {
+		int newLen = MathUtils.next2n(Math.min(buffer.position() + extendDelta, Integer.MAX_VALUE));
+		if (newLen == Integer.MAX_VALUE) {
+			write(b -> {}, true);
+			return buffer;
+		} else {
+			return (buffer = revenoBuffer.cloneExtended(newLen));
+		}
 	}
 
 	protected MappedByteBuffer mmap(long remainSize) {
@@ -178,7 +200,7 @@ public class FileChannel implements Channel {
 		}
 	}
 
-	protected void read0(ByteBuffer buf, int offset) {
+	protected ByteBuffer read0(ByteBuffer buf, int offset) {
 		try {
 			buf.clear();
 			channel().read(buf, position - offset);
@@ -187,6 +209,7 @@ public class FileChannel implements Channel {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+		return buf;
 	}
 
 	protected void write0(ByteBuffer buf, long size) {
@@ -207,16 +230,18 @@ public class FileChannel implements Channel {
 	}
 	
 	protected final File file;
-	protected final ChannelWriter writer;
+	protected ChannelWriter writer;
 	protected RandomAccessFile raf;
     protected java.nio.channels.FileChannel channel;
+
+	protected ChannelOptions channelOptions = ChannelOptions.BUFFERING_VM;
+	protected boolean isPreallocated = false;
+	protected int extendDelta = MeasureUtils.kb(128);
 
 	protected long position = 0L;
 	protected long size = 0L;
 	protected int mmapBufferGeneration = 0;
-	protected ChannelOptions channelOptions;
-	protected boolean isPreallocated = false;
-	protected ByteBuffer buffer = ByteBuffer.allocateDirect(mb(1));
+	protected ByteBuffer buffer = ByteBuffer.allocateDirect(MeasureUtils.kb(32));
 	protected ChannelBuffer revenoBuffer;
 
 	protected static final ByteBuffer ZERO = java.nio.ByteBuffer.allocate(0);

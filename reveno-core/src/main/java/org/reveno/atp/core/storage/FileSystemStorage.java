@@ -17,6 +17,8 @@
 package org.reveno.atp.core.storage;
 
 import org.reveno.atp.api.ChannelOptions;
+import org.reveno.atp.api.Reveno;
+import org.reveno.atp.core.RevenoConfiguration.RevenoJournalingConfiguration;
 import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.api.storage.FoldersStorage;
 import org.reveno.atp.core.api.storage.JournalsStorage;
@@ -47,20 +49,19 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 
 	@Override
 	public Channel channel(String address) {
-		return new FileChannel(new File(baseDir, address), ChannelOptions.BUFFERING_VM);
+		FileChannel fc = new FileChannel(new File(baseDir, address));
+		fc.extendDelta(config.maxObjectSize());
+		fc.channelOptions(config.channelOptions());
+		fc.isPreallocated(config.isPreallocated());
+		return fc.init();
 	}
 
 	@Override
-	public Channel channel(String address, ChannelOptions options) {
-		return new FileChannel(new File(baseDir, address), options);
+	public Channel snapshotChannel(String address) {
+		return new FileChannel(new File(baseDir, address)).init();
 	}
 
 	@Override
-	public Channel channel(String address, ChannelOptions options, boolean isVolumeBased) {
-		return new FileChannel(new File(baseDir, address), options, isVolumeBased);
-	}
-
-    @Override
 	public SnapshotStore getLastSnapshotStore() {
 		VersionedFile file = lastVersionedFile(baseDir, SNAPSHOT_PREFIX);
 		if (file != null) {
@@ -271,11 +272,13 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 		}
 	}
 
-	public FileSystemStorage(File baseDir) {
+	public FileSystemStorage(File baseDir, RevenoJournalingConfiguration config) {
 		this.baseDir = baseDir;
+		this.config = config;
 	}
 
 	protected final File baseDir;
+	protected final RevenoJournalingConfiguration config;
 	protected static final String TRANSACTION_PREFIX = "tx";
 	protected static final String SNAPSHOT_PREFIX = "snp";
 	protected static final String EVENTS_PREFIX = "evn";

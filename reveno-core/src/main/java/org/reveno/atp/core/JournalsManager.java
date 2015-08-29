@@ -54,7 +54,6 @@ public class JournalsManager implements Destroyable {
 			log.info("Rolling to next store.");
 			JournalStore store;
 
-			boolean isVolumeBased = false;
 			if (configuration.isPreallocated() && configuration.volumes() > 0 && storage.getVolumes().length == 0) {
 				IntStream.range(0, configuration.volumes()).forEach(i -> allocateNewVolume(true));
 				roll(completed);
@@ -62,12 +61,11 @@ public class JournalsManager implements Destroyable {
 			} else if (configuration.isPreallocated() && configuration.volumes() > 0) {
 				allocateNewVolumeIfRequired();
 				store = storage.convertVolumeToStore(storage.getVolumes()[0]);
-				isVolumeBased = true;
 			} else {
 				store = storage.nextStore();
 			}
-			eventsJournaler.roll(storage.channel(store.getEventsCommitsAddress(), configuration.channelOptions(), isVolumeBased), () -> {});
-			transactionsJournaler.roll(storage.channel(store.getTransactionCommitsAddress(), configuration.channelOptions(), isVolumeBased), completed);
+			eventsJournaler.roll(storage.channel(store.getEventsCommitsAddress()), () -> {});
+			transactionsJournaler.roll(storage.channel(store.getTransactionCommitsAddress()), completed);
 		} finally {
 			isRolling = false;
 		}

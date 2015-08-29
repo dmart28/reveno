@@ -24,8 +24,6 @@ public interface FoldersStorage {
 
 	Channel channel(String address);
 
-	Channel channel(String address, ChannelOptions options);
-
 	Folder nextFolder(String prefix);
 
 	Folder getLastFolder(String prefix);

@@ -14,21 +14,15 @@ public final class ZeroCopyBufferInput implements Input {
     private final Buffer buffer;
     private int lastTag = 0;
     private int packedLimit = 0;
-    private int limit = 0;
     public final boolean decodeNestedMessageAsGroup;
 
-    public ZeroCopyBufferInput(Buffer buffer, int limit, boolean protostuffMessage) {
+    public ZeroCopyBufferInput(Buffer buffer, boolean protostuffMessage) {
         this.buffer = buffer;
-        this.limit = buffer.readerPosition() + limit;
         this.decodeNestedMessageAsGroup = protostuffMessage;
     }
 
     public int currentOffset() {
-        return (int)this.buffer.readerPosition();
-    }
-
-    public int currentLimit() {
-        return limit;
+        return this.buffer.readerPosition();
     }
 
     public boolean isCurrentFieldPacked() {

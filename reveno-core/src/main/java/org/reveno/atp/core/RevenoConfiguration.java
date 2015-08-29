@@ -16,6 +16,8 @@
 
 package org.reveno.atp.core;
 
+import static org.reveno.atp.utils.MeasureUtils.kb;
+
 import org.reveno.atp.api.ChannelOptions;
 import org.reveno.atp.api.Configuration;
 
@@ -121,6 +123,16 @@ public class RevenoConfiguration implements Configuration {
 	public static class RevenoJournalingConfiguration implements JournalingConfiguration {
 
 		@Override
+		public void maxObjectSize(int size) {
+			if (maxObjectSize < MIN_MAX_OBJECT_SIZE)
+				throw new IllegalArgumentException(String.format("Max object size can't be less than %s bytes.", MIN_MAX_OBJECT_SIZE));
+			this.maxObjectSize = size;
+		}
+		public int maxObjectSize() {
+			return maxObjectSize;
+		}
+
+		@Override
 		public void preallocationSize(long txSize, long eventsSize) {
 			this.txSize = txSize;
 			this.eventsSize = eventsSize;
@@ -162,7 +174,10 @@ public class RevenoConfiguration implements Configuration {
 		protected long txSize = 0L, eventsSize = 0L;
 		protected int volumes = 3;
 		protected int minVolumes = 1;
+		protected int maxObjectSize = kb(128);
 		protected ChannelOptions channelOptions = ChannelOptions.BUFFERING_VM;
+
+		protected static final int MIN_MAX_OBJECT_SIZE = 64;
 	}
 	
 }

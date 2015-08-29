@@ -22,9 +22,7 @@ import org.reveno.atp.core.api.channel.Channel;
 
 public interface SnapshotStorage {
 
-	Channel channel(String address);
-
-	Channel channel(String address, ChannelOptions options);
+	Channel snapshotChannel(String address);
 
 	SnapshotStore getLastSnapshotStore();
 	

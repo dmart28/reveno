@@ -38,6 +38,7 @@ import org.reveno.atp.api.Configuration.MutableModelFailover;
 import org.reveno.atp.api.Reveno;
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.domain.Repository;
+import org.reveno.atp.core.RevenoConfiguration;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.serialization.DefaultJavaSerializer;
 import org.reveno.atp.core.serialization.ProtostuffSerializer;
@@ -247,7 +248,7 @@ public class Tests extends RevenoBaseTest {
 	public void testSnapshottingEvery(RepositoryDataSerializer repoSerializer) throws Exception {
 		Consumer<TestRevenoEngine> consumer = r -> {
 			r.domain().resetSnapshotters();
-			r.domain().snapshotWith(new DefaultSnapshotter(new FileSystemStorage(tempDir), repoSerializer))
+			r.domain().snapshotWith(new DefaultSnapshotter(new FileSystemStorage(tempDir, new RevenoConfiguration.RevenoJournalingConfiguration()), repoSerializer))
 				.andRestoreWithIt();
 		};
 		Reveno reveno = createEngine(consumer);
@@ -374,36 +375,28 @@ public class Tests extends RevenoBaseTest {
 	}
 
 	@Test
-	public void testPreallocatedUnbufferedOverbounds() throws Exception {
-		testPreallocatedJournals(227_800, ChannelOptions.UNBUFFERED_IO, reveno -> {
-			Assert.assertEquals(1, reveno.getJournalsStorage().getVolumes().length);
-			Assert.assertEquals(11, reveno.getJournalsStorage().getLastStores().length);
-		});
-	}
-
-	@Test
 	public void testPreallocatedSingleVolume() throws Exception {
 		Consumer<TestRevenoEngine> c = reveno -> {
 			Assert.assertEquals(9, reveno.getJournalsStorage().getVolumes().length);
 			Assert.assertEquals(1, reveno.getJournalsStorage().getLastStores().length);
 		};
-		//testPreallocatedJournals(2_500_000, ChannelOptions.UNBUFFERED_IO, c);
-		//testPreallocatedJournals(2_500_000, ChannelOptions.BUFFERING_VM, c);
+		testPreallocatedJournals(2_500_000, ChannelOptions.UNBUFFERED_IO, c);
+		testPreallocatedJournals(2_500_000, ChannelOptions.BUFFERING_VM, c);
 		testPreallocatedJournals(2_500_000, ChannelOptions.BUFFERING_MMAP_OS, c);
-		//testPreallocatedJournals(2_500_000, ChannelOptions.BUFFERING_OS, c);
+		testPreallocatedJournals(2_500_000, ChannelOptions.BUFFERING_OS, c);
 	}
 
 	@Test
 	public void testPreallocatedMultipleVolumes() throws Exception {
 		dontDelete = true;
 		Consumer<TestRevenoEngine> c = reveno -> {
-			//Assert.assertEquals(9, reveno.getJournalsStorage().getVolumes().length);
-			//Assert.assertEquals(1, reveno.getJournalsStorage().getLastStores().length);
+			Assert.assertEquals(5, reveno.getJournalsStorage().getVolumes().length);
+			Assert.assertEquals(5, reveno.getJournalsStorage().getLastStores().length);
 		};
-		//testPreallocatedJournals(500_000, ChannelOptions.UNBUFFERED_IO, c);
-		//testPreallocatedJournals(500_000, ChannelOptions.BUFFERING_VM, c);
+		testPreallocatedJournals(500_000, ChannelOptions.UNBUFFERED_IO, c);
+		testPreallocatedJournals(500_000, ChannelOptions.BUFFERING_VM, c);
 		testPreallocatedJournals(500_000, ChannelOptions.BUFFERING_MMAP_OS, c);
-		//testPreallocatedJournals(500_000, ChannelOptions.UNBUFFERED_IO, c);
+		testPreallocatedJournals(500_000, ChannelOptions.BUFFERING_OS, c);
 	}
 
 	public void testPreallocatedJournals(long txSize, ChannelOptions channelOptions, Consumer<TestRevenoEngine> checks) throws Exception {

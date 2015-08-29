@@ -17,51 +17,36 @@
 package org.reveno.atp.core.channel;
 
 import org.reveno.atp.core.api.channel.Buffer;
+import org.reveno.atp.utils.MathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.*;
 
 import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
 
-/**
- * Not super correct currently - we should use separate reader and extender indexes.
- * 
- * But since for now it is only used for writing as wrapper in FileChannel - let it be.
- * 
- * @author Artem Dmitriev <art.dm.ser@gmail.com>
- *
- */
 public class ChannelBuffer implements Buffer {
 
-	protected Function<ByteBuffer, ByteBuffer> reader;
-	protected BiFunction<Long, ByteBuffer, ByteBuffer> extender;
+	protected Supplier<ByteBuffer> reader;
+	protected Supplier<ByteBuffer> extender;
 
-	protected ByteBuffer buffer; 
+	protected ByteBuffer buffer;
+
 	public ByteBuffer getBuffer() {
 		return buffer;
 	}
-	
+
 	public ChannelBuffer(ByteBuffer buffer) {
 		this.buffer = buffer;
+		this.extender = () -> this.cloneExtended(buffer.limit());
+		this.reader = () -> buffer;
 	}
 
-	public ChannelBuffer(ByteBuffer buffer, Function<ByteBuffer, ByteBuffer> reader,
-			BiFunction<Long, ByteBuffer, ByteBuffer> extender) {
+	public ChannelBuffer(ByteBuffer buffer, Supplier<ByteBuffer> reader, Supplier<ByteBuffer> extender) {
 		this.buffer = buffer;
 		this.extender = extender;
 		this.reader = reader;
-	}
-
-	public ChannelBuffer(ByteBuffer buffer, Consumer<ByteBuffer> reader,
-						 BiConsumer<Long, ByteBuffer> extender) {
-		this.buffer = buffer;
-		this.extender = (p,b) -> { extender.accept(p, b); return b; };
-		this.reader = (b) -> { reader.accept(b); return b; };
 	}
 
 	@Override
@@ -69,22 +54,22 @@ public class ChannelBuffer implements Buffer {
 		return readBytes();
 	}
 
-    @Override
-    public int readerPosition() {
-        return buffer.position();
-    }
-    
-    @Override
-    public int writerPosition() {
-        return buffer.position();
-    }
+	@Override
+	public int readerPosition() {
+		return buffer.position();
+	}
 
-    @Override
-    public int limit() {
-        return buffer.limit();
-    }
+	@Override
+	public int writerPosition() {
+		return buffer.position();
+	}
 
-    @Override
+	@Override
+	public int limit() {
+		return buffer.limit();
+	}
+
+	@Override
 	public long capacity() {
 		return buffer.capacity();
 	}
@@ -96,7 +81,12 @@ public class ChannelBuffer implements Buffer {
 
 	@Override
 	public int remaining() {
-		return buffer.remaining();
+		int r = buffer.remaining();
+		if (r == 0 && !intentionalLimit) {
+			autoExtend(true);
+			r = buffer.remaining();
+		}
+		return r;
 	}
 
 	@Override
@@ -119,44 +109,44 @@ public class ChannelBuffer implements Buffer {
 		return result;
 	}
 
-    @Override
-    public void setReaderPosition(int position) {
-        this.buffer.position(position);
-    }
-    
-    @Override
-    public void setWriterPosition(int position) {
-        this.buffer.position(position);
-    }
+	@Override
+	public void setReaderPosition(int position) {
+		this.buffer.position(position);
+	}
 
-    @Override
-    public void setLimit(int limit) {
+	@Override
+	public void setWriterPosition(int position) {
+		this.buffer.position(position);
+	}
+
+	@Override
+	public void setLimit(int limit) {
 		if (limit > buffer.capacity()) {
 			nextLimitOnAutoextend = limit - buffer.capacity();
 			return;
 		}
-        this.buffer.limit(limit);
-    }
+		this.buffer.limit(limit);
+	}
 
-    @Override
-    public void writeByte(byte b) {
-        autoExtendIfRequired(1);
-        buffer.put(b);
-    }
+	@Override
+	public void writeByte(byte b) {
+		autoExtendIfRequired(1);
+		buffer.put(b);
+	}
 
-    @Override
+	@Override
 	public void writeBytes(byte[] bytes) {
 		autoExtendIfRequired(bytes.length);
 		buffer.put(bytes);
 	}
 
-    @Override
-    public void writeBytes(byte[] bytes, int offset, int count) {
-        autoExtendIfRequired(bytes.length);
-        buffer.put(bytes, offset, count);
-    }
+	@Override
+	public void writeBytes(byte[] bytes, int offset, int count) {
+		autoExtendIfRequired(bytes.length);
+		buffer.put(bytes, offset, count);
+	}
 
-    @Override
+	@Override
 	public void writeLong(long value) {
 		autoExtendIfRequired(8);
 		buffer.putLong(value);
@@ -168,35 +158,35 @@ public class ChannelBuffer implements Buffer {
 		buffer.putInt(value);
 	}
 
-    @Override
-    public void writeShort(short s) {
-        autoExtendIfRequired(2);
-        buffer.putShort(s);
-    }
+	@Override
+	public void writeShort(short s) {
+		autoExtendIfRequired(2);
+		buffer.putShort(s);
+	}
 
-    @Override
+	@Override
 	public void writeFromBuffer(ByteBuffer b) {
-        autoExtendIfRequired(b.limit());
+		autoExtendIfRequired(b.limit());
 		buffer.put(b);
 	}
 
-    @Override
-    public ByteBuffer writeToBuffer() {
-        return buffer.slice();
-    }
+	@Override
+	public ByteBuffer writeToBuffer() {
+		return buffer.slice();
+	}
 
-    @Override
+	@Override
 	public void writeFromBuffer(Buffer b) {
 		buffer.put(b.getBytes());
 	}
 
-    @Override
-    public byte readByte() {
+	@Override
+	public byte readByte() {
 		autoExtendIfRequired(1, true);
-        return buffer.get();
-    }
+		return buffer.get();
+	}
 
-    @Override
+	@Override
 	public byte[] readBytes() {
 		byte[] b = new byte[buffer.remaining()];
 		buffer.get(b);
@@ -229,18 +219,18 @@ public class ChannelBuffer implements Buffer {
 		return buffer.getInt();
 	}
 
-    @Override
-    public short readShort() {
+	@Override
+	public short readShort() {
 		autoExtendIfRequired(2, true);
 		return buffer.getShort();
-    }
+	}
 
-    @Override
+	@Override
 	public void markReader() {
 		throw new UnsupportedOperationException();
 	}
-    
-    @Override
+
+	@Override
 	public void markWriter() {
 		writerMark = buffer.position();
 		buffer.mark();
@@ -250,7 +240,7 @@ public class ChannelBuffer implements Buffer {
 	public void resetReader() {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	public void resetWriter() {
 		writerMark = -1;
@@ -262,11 +252,13 @@ public class ChannelBuffer implements Buffer {
 		autoExtendIfRequired(count, true);
 		startedLimitAfterAutoextend = buffer.limit();
 		setLimit(readerPosition() + count);
+		intentionalLimit = true;
 	}
 
 	@Override
 	public void resetNextLimit() {
 		setLimit(startedLimitAfterAutoextend);
+		intentionalLimit = false;
 	}
 
 	@Override
@@ -283,24 +275,22 @@ public class ChannelBuffer implements Buffer {
 
 	@Override
 	public void writeSize() {
-		int newPos = buffer.position();
-		buffer.position(sizePosition);
-		buffer.putInt(newPos - sizePosition - 4);
-		buffer.position(newPos);
+		buffer.putInt(sizePosition, buffer.position() - sizePosition - 4);
 	}
 
-	public void extendBuffer(long length) {
-		ByteBuffer newBuffer = ByteBuffer.allocateDirect(next2n(buffer.position() + (int)length));
+	public ByteBuffer cloneExtended(int length) {
+		ByteBuffer newBuffer = ByteBuffer.allocateDirect(length);
 		buffer.flip();
 		newBuffer.put(buffer);
 		if (writerMark > 0) {
 			int oldPos = buffer.position();
-			buffer.position(writerMark);
-			buffer.mark();
-			buffer.position(oldPos);
+			newBuffer.position(writerMark);
+			newBuffer.mark();
+			newBuffer.position(oldPos);
 		}
-		destroyDirectBuffer(buffer);
-		buffer = newBuffer;
+		buffer.position(buffer.limit());
+		buffer.limit(buffer.capacity());
+		return newBuffer;
 	}
 
 	protected void autoExtendIfRequired(int length) {
@@ -309,42 +299,34 @@ public class ChannelBuffer implements Buffer {
 
 	protected void autoExtendIfRequired(int length, boolean read) {
 		if ((buffer.position() + length) - buffer.limit() > 0) {
-			if (read) {
-				buffer = reader.apply(buffer);
-			} else {
-				buffer = extender.apply((long) buffer.limit(), buffer);
-				if (buffer.position() < sizePosition) {
-					sizePosition = 0;
-				}
-			}
-			if (nextLimitOnAutoextend != 0) {
-				startedLimitAfterAutoextend = buffer.limit();
-				setLimit(nextLimitOnAutoextend);
-				nextLimitOnAutoextend = 0;
-			}
+			autoExtend(read);
 		}
 	}
 
-	/**
-     * We should consider only numbers that mod FS page size with 0 remainder, means
-     * any number of 2^n
-     *
-     * @param size comparing size
-     * @return result 2^n, which is higher or equal to size
-     */
-    protected int next2n(int size) {
-        int i = 1;
-        while (true) {
-            if (Math.pow(2, ++i) > size)
-                break;
+	protected void autoExtend(boolean read) {
+		ByteBuffer buf = buffer;
+		if (read) {
+            buffer = reader.get();
+        } else {
+            buffer = extender.get();
+            if (buffer.position() < sizePosition) {
+                sizePosition = 0;
+            }
         }
-        return (int)Math.pow(2, i);
-    }
+		if (buffer != buf)
+            destroyDirectBuffer(buf);
+		if (nextLimitOnAutoextend != 0) {
+            startedLimitAfterAutoextend = buffer.limit();
+            setLimit(nextLimitOnAutoextend);
+            nextLimitOnAutoextend = 0;
+        }
+	}
 
 	protected int sizePosition = -1;
 	protected int writerMark = 0;
 	protected int nextLimitOnAutoextend = 0;
 	protected int startedLimitAfterAutoextend = 0;
+	protected boolean intentionalLimit = false;
 
 	protected static final Logger log = LoggerFactory.getLogger(ChannelBuffer.class);
 }

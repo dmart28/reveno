@@ -82,7 +82,7 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	public RepositoryData deserialize(Buffer buffer) {
 		changeClassLoaderIfRequired();
 
-        Input input = new ZeroCopyBufferInput(buffer, buffer.limit(), true);
+        Input input = new ZeroCopyBufferInput(buffer, true);
         RepositoryData repoData = repoSchema.newMessage();
         try {
             repoSchema.mergeFrom(input, repoData);
@@ -133,29 +133,7 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
         lowCopyProtostuffOutput.buffer = zeroCopyLinkBuffer;
 
         buffer.writeInt(classHash);
-		// we remember that value in ChannelBuffer
-		// if ChannelBuffer is Buffered_VM ->
-		// -- no problem that underlying buffer might change during write
-		// -- so it is safe to remember buffer.pos and write to it size.
-		// --
-		// -- We have max size of 2GB. normally we should have
-		// -- setting like maxObjectSize so, we won't go over
-		// -- that limit at all (flush forcibly if buffer.pos - buffer.limit < maxObjectSize)
-		// -- in FileChannel.write
-		//
-		// if ChannelBuffer is Buffered_Mmap ->
-		// -- problem that underlying buffer might change during write.
-		// -- Buffer should be changed in a fashion that it starts from the
-		// -- last markSize position in a file, and new buffer position will
-		// -- the last file position we have written to, so, in case buffer changed, we
-		// -- can safely write size to 0 position in buffer.
-		// --
-		// -- FileChannel on next mmap will read sizeMarkPosition
-		// -- and will start next buffer with respect of that position
-		// -- How buffer.writeSize() to know what sizeMarkPositionToUse?
-		// -- Simple - in case of extender.e(..) call make it 0.
         buffer.markSize();
-		// buffer.sizeMarkPosition();
         try {
             schema.writeTo(lowCopyProtostuffOutput, tc);
         } catch (IOException e) {
@@ -179,7 +157,7 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 		int classHash = buffer.readInt();
 		int size = buffer.readInt();
 
-		Input input = new ZeroCopyBufferInput(buffer, size, true);
+		Input input = new ZeroCopyBufferInput(buffer, true);
 		Schema<Object> schema = (Schema<Object>)registered.get(classHash).schema;
 		Object message = schema.newMessage();
 		try {

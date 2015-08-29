@@ -43,6 +43,9 @@ public interface Configuration {
 	}
 
 	public static interface JournalingConfiguration {
+
+		void maxObjectSize(int size);
+
 		void preallocationSize(long txSize, long eventsSize);
 
 		void volumes(int volumes);
@@ -50,6 +53,7 @@ public interface Configuration {
 		void minVolumes(int volumes);
 
 		void channelOptions(ChannelOptions options);
+
 	}
 	
 	public static enum ModelType { MUTABLE, IMMUTABLE }

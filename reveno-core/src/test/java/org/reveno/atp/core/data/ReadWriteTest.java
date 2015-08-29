@@ -51,7 +51,7 @@ public class ReadWriteTest {
 	@Before
 	public void setUp() {
 		tempDir = Files.createTempDir();
-		storage = new FileSystemStorage(tempDir);
+		storage = new FileSystemStorage(tempDir, new RevenoConfiguration.RevenoJournalingConfiguration());
 	}
 
 	@After

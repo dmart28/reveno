@@ -90,7 +90,7 @@ public class Engine implements Reveno {
 	}
 	
 	public Engine(File baseDir, ClassLoader classLoader) {
-		FileSystemStorage storage = new FileSystemStorage(baseDir);
+		FileSystemStorage storage = new FileSystemStorage(baseDir, config.revenoJournaling());
 		this.classLoader = classLoader;
 		this.foldersStorage = storage;
 		this.journalsStorage = storage;

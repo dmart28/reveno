@@ -45,16 +45,13 @@ public class DefaultSnapshotter implements RepositorySnapshotter {
 			return;
 		}
 		SnapshotStore snap = (SnapshotStore) identifier;
-		Buffer buffer = new NettyBasedBuffer(false);
-		try (Channel c = storage.channel(snap.getSnapshotPath())) {
+		try (Channel c = storage.snapshotChannel(snap.getSnapshotPath())) {
 			log.info("Performing default repository snapshot to " + snap);
 			
 			c.write(b -> repoSerializer.serialize(repo, b), true);
 		} catch (Throwable t) {
 			log.error("", t);
 			throw new RuntimeException(t);
-		} finally {
-			buffer.release();
 		}
 	}
 
@@ -64,19 +61,13 @@ public class DefaultSnapshotter implements RepositorySnapshotter {
 			return null;
 		
 		SnapshotStore snap = storage.getLastSnapshotStore();
-		Buffer buffer = null;/*new NettyBasedBuffer(false);*/
-		try (Channel c = storage.channel(snap.getSnapshotPath())) {
+		try (Channel c = storage.snapshotChannel(snap.getSnapshotPath())) {
 			log.info("Loading repository snapshot from " + snap);
-			while (c.isReadAvailable())
-				buffer = c.read();
-			
-			buffer.readInt();
-			return repoSerializer.deserialize(buffer);
+
+			return repoSerializer.deserialize(c.read());
 		} catch (Throwable t) {
 			log.error("", t);
 			throw new RuntimeException(t);
-		} finally {
-			buffer.release();
 		}
 	}
 
