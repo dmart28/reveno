@@ -1,3 +1,19 @@
+apply plugin: 'osgi'
+
 dependencies {
   compile project(":reveno-core")
+}
+
+jar {
+  manifest {
+    name = 'org.reveno.reveno-core'
+    instruction 'Bundle-Vendor', 'Reveno'
+    instruction 'Bundle-Description', 'Reveno: Event-Sourced transaction processing framework'
+    instruction 'Bundle-DocURL', 'http://reveno.org'
+  }
+}
+task fooJar(type: Jar) {
+  manifest = osgiManifest {
+    instruction 'Bundle-Vendor', 'Reveno'
+  }
 }

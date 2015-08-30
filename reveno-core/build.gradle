@@ -1,3 +1,5 @@
+apply plugin: 'osgi'
+
 sourceSets {
 	acceptanceTest {
 		java {
@@ -19,6 +21,20 @@ sourceSets {
 		java {
 			srcDirs = ['src/test/java', 'src/acceptanceTest/java']
 		}
+	}
+}
+
+jar {
+	manifest {
+		name = 'org.reveno.reveno-core'
+		instruction 'Bundle-Vendor', 'Reveno'
+		instruction 'Bundle-Description', 'Reveno: Event-Sourced transaction processing framework'
+		instruction 'Bundle-DocURL', 'http://reveno.org'
+	}
+}
+task fooJar(type: Jar) {
+	manifest = osgiManifest {
+		instruction 'Bundle-Vendor', 'Reveno'
 	}
 }
 
