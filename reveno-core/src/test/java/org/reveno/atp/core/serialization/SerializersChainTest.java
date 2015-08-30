@@ -50,7 +50,7 @@ public class SerializersChainTest {
 	}
 	
 	@Test
-	public void testProtostuffFailJavaFin() {
+	public void testProtostuffFailJavaWin() {
 		List<TransactionInfoSerializer> serializers = new ArrayList<>();
 		serializers.add(new ProtostuffSerializer());
 		serializers.add(new DefaultJavaSerializer());

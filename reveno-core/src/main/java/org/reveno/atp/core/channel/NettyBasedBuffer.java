@@ -37,17 +37,9 @@ public class NettyBasedBuffer implements Buffer {
 	public NettyBasedBuffer(int length, boolean direct) {
 		this.buffer = direct ? PooledByteBufAllocator.DEFAULT.directBuffer(length) : PooledByteBufAllocator.DEFAULT.buffer(length);
 	}
-	
+
 	public NettyBasedBuffer(int length, int maxLength, boolean direct) {
 		this.buffer = direct ? PooledByteBufAllocator.DEFAULT.directBuffer(length, maxLength) : PooledByteBufAllocator.DEFAULT.buffer(length, maxLength);
-	}
-	
-	@Override
-	public byte[] getBytes() {
-		byte[] bytes = new byte[buffer.writerIndex()];
-		buffer.getBytes(0, bytes);
-		
-		return bytes;
 	}
 
     @Override
@@ -88,11 +80,6 @@ public class NettyBasedBuffer implements Buffer {
     @Override
     public void setWriterPosition(int position) {
         buffer.writerIndex(position);
-    }
-
-    @Override
-    public void setLimit(int limit) {
-        buffer.writerIndex(limit);
     }
 
     @Override
@@ -152,23 +139,9 @@ public class NettyBasedBuffer implements Buffer {
     }
 
     @Override
-	public void writeFromBuffer(Buffer b) {
-		if (b instanceof NettyBasedBuffer) {
-			buffer.writeBytes(((NettyBasedBuffer)b).buffer);
-		} else {
-			buffer.writeBytes(b.getBytes());
-		}
-	}
-
-    @Override
     public byte readByte() {
         return buffer.readByte();
     }
-
-    @Override
-	public byte[] readBytes() {
-		return readBytes(buffer.readableBytes());
-	}
 
 	@Override
 	public byte[] readBytes(int length) {
@@ -234,17 +207,17 @@ public class NettyBasedBuffer implements Buffer {
 
 	@Override
 	public void markSize() {
-
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public int sizeMarkPosition() {
-		return 0;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void writeSize() {
-
+		throw new UnsupportedOperationException();
 	}
 
 

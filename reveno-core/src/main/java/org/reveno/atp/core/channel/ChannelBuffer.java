@@ -49,11 +49,6 @@ public class ChannelBuffer implements Buffer {
 	}
 
 	@Override
-	public byte[] getBytes() {
-		return readBytes();
-	}
-
-	@Override
 	public int readerPosition() {
 		return buffer.position();
 	}
@@ -118,7 +113,6 @@ public class ChannelBuffer implements Buffer {
 		this.buffer.position(position);
 	}
 
-	@Override
 	public void setLimit(int limit) {
 		if (limit > buffer.capacity()) {
 			nextLimitOnAutoextend = limit - buffer.capacity();
@@ -175,21 +169,9 @@ public class ChannelBuffer implements Buffer {
 	}
 
 	@Override
-	public void writeFromBuffer(Buffer b) {
-		buffer.put(b.getBytes());
-	}
-
-	@Override
 	public byte readByte() {
 		autoExtendIfRequired(1, true);
 		return buffer.get();
-	}
-
-	@Override
-	public byte[] readBytes() {
-		byte[] b = new byte[buffer.remaining()];
-		buffer.get(b);
-		return b;
 	}
 
 	@Override
