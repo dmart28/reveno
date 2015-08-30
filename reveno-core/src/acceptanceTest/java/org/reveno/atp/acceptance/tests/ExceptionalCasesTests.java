@@ -19,6 +19,7 @@ package org.reveno.atp.acceptance.tests;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
 import org.reveno.atp.acceptance.api.commands.NewOrderCommand;
 import org.reveno.atp.acceptance.api.events.AccountCreatedEvent;
 import org.reveno.atp.acceptance.api.events.OrderCreatedEvent;
@@ -28,7 +29,9 @@ import org.reveno.atp.acceptance.views.OrderView;
 
 import java.io.File;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class ExceptionalCasesTests extends RevenoBaseTest {
 
@@ -135,11 +138,48 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		
 		reveno.shutdown();
 	}
-	
-	
+
+	@Test
+	public void testNoPartialReplayOfCommandBatch() throws Exception {
+		TestRevenoEngine reveno = createEngine();
+		reveno.startup();
+
+		sendCommandSync(reveno, new CreateNewAccountCommand("USD", 1000_000L));
+
+		List<Object> commands = new ArrayList<>();
+		commands.add(new CreateNewAccountCommand("USD", 1000_000L));
+
+		for (int i = 0; i < 10; i++) {
+			commands.add(new NewOrderCommand(2L, null, "EUR/USD", 134000, 1000, OrderType.MARKET));
+		}
+
+		reveno.performCommands(commands).get();
+
+		AccountView account = reveno.query().find(AccountView.class, 1L).get();
+		Assert.assertEquals(0, account.orders().size());
+		account = reveno.query().find(AccountView.class, 2L).get();
+		Assert.assertEquals(10, account.orders().size());
+
+		reveno.shutdown();
+
+		eraseBuffer(findFirstFile("tx"), 0.9);
+
+		reveno = createEngine();
+		reveno.startup();
+
+		Assert.assertTrue(reveno.query().find(AccountView.class, 1L).isPresent());
+		Assert.assertFalse(reveno.query().find(AccountView.class, 2L).isPresent());
+
+		reveno.shutdown();
+	}
+
 	protected void eraseRandomBuffer(File file) throws Exception {
+		eraseBuffer(file, (Math.random() * Math.random()));
+	}
+
+	protected void eraseBuffer(File file, double ratio) throws Exception {
 		try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
-			raf.setLength((long)((raf.length() * (Math.random() * Math.random()))));
+			raf.setLength((long)((raf.length() * ratio)));
 		}
 	}
 	
