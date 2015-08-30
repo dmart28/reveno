@@ -68,7 +68,7 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 		this.eventsContext = eventsContext;
 		this.workflowEngine = workflowEngine;
 	}
-	
+
 	protected final RestorerEventBus eventBus = new RestorerEventBus();
 	protected final JournalsStorage journalStorage;
 	protected final EngineWorkflowContext workflowContext;

@@ -16,24 +16,25 @@
 
 package org.reveno.atp.core.api.storage;
 
-import org.reveno.atp.api.ChannelOptions;
 import org.reveno.atp.core.api.channel.Channel;
 
 public interface JournalsStorage {
 
 	Channel channel(String address);
 
-	Channel channel(String address, ChannelOptions options);
-
-    Channel channel(String address, ChannelOptions options, long size);
-
 	JournalStore[] getLastStores();
+
+	JournalStore[] getVolumes();
 
 	void mergeStores();
 	
 	void deleteOldStores();
 
 	JournalStore nextStore();
+
+	JournalStore nextVolume(long txSize, long eventsSize);
+
+	JournalStore convertVolumeToStore(JournalStore volume);
 
 	public static class JournalStore implements Comparable<JournalStore> {
 

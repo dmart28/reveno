@@ -1,10 +1,10 @@
 package org.reveno.atp.metrics.meter.impl;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.reveno.atp.metrics.Sink;
 import org.reveno.atp.metrics.meter.Counter;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class SimpleCounter implements Counter {
 

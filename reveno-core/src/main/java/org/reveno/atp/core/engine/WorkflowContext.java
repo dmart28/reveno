@@ -16,7 +16,7 @@
 
 package org.reveno.atp.core.engine;
 
-import org.reveno.atp.core.JournalsRoller;
+import org.reveno.atp.core.JournalsManager;
 import org.reveno.atp.core.RevenoConfiguration;
 import org.reveno.atp.core.api.*;
 import org.reveno.atp.core.engine.components.CommandsManager;
@@ -53,7 +53,7 @@ public interface WorkflowContext {
 	
 	public Journaler transactionJournaler();
 	
-	public JournalsRoller roller();
+	public JournalsManager journalsManager();
 	
 	
 	public SnapshottersManager snapshotsManager();

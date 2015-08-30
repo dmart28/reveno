@@ -16,7 +16,9 @@
 
 package org.reveno.atp.acceptance.api.transactions;
 
-public class Debit {
+import java.io.Serializable;
+
+public class Debit implements Serializable {
 	public final long accountId;
 	public final long amount;
 	

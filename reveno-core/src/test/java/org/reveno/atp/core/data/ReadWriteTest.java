@@ -21,6 +21,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.reveno.atp.core.RevenoConfiguration;
 import org.reveno.atp.core.api.InputProcessor;
 import org.reveno.atp.core.api.InputProcessor.JournalType;
 import org.reveno.atp.core.api.Journaler;
@@ -50,7 +51,7 @@ public class ReadWriteTest {
 	@Before
 	public void setUp() {
 		tempDir = Files.createTempDir();
-		storage = new FileSystemStorage(tempDir);
+		storage = new FileSystemStorage(tempDir, new RevenoConfiguration.RevenoJournalingConfiguration());
 	}
 
 	@After

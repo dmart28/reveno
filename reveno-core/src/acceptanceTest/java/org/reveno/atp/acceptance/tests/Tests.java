@@ -16,16 +16,6 @@
 
 package org.reveno.atp.acceptance.tests;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
-import java.util.stream.IntStream;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
@@ -42,16 +32,28 @@ import org.reveno.atp.acceptance.model.Account;
 import org.reveno.atp.acceptance.model.Order.OrderType;
 import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
+import org.reveno.atp.api.ChannelOptions;
 import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.Configuration.MutableModelFailover;
 import org.reveno.atp.api.Reveno;
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.domain.Repository;
+import org.reveno.atp.core.RevenoConfiguration;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.serialization.DefaultJavaSerializer;
 import org.reveno.atp.core.serialization.ProtostuffSerializer;
 import org.reveno.atp.core.snapshots.DefaultSnapshotter;
 import org.reveno.atp.core.storage.FileSystemStorage;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 public class Tests extends RevenoBaseTest {
 	
@@ -71,7 +73,7 @@ public class Tests extends RevenoBaseTest {
 		Assert.assertEquals(1000_000L, accountView.balance);
 		Assert.assertEquals(0, accountView.orders().size());
 		
-		long orderId = sendCommandSync(reveno, new NewOrderCommand(accountId, Optional.empty(), "EUR/USD", 134000, 1000, OrderType.MARKET));
+		long orderId = sendCommandSync(reveno, new NewOrderCommand(accountId, null, "EUR/USD", 134000, 1000, OrderType.MARKET));
 		OrderView orderView = reveno.query().find(OrderView.class, orderId).get();
 		accountView = reveno.query().find(AccountView.class, accountId).get();
 		
@@ -203,7 +205,7 @@ public class Tests extends RevenoBaseTest {
 		
 		long accountId = sendCommandSync(reveno, new CreateNewAccountCommand("USD", 1000_000L));
 		Assert.assertEquals(10_001, accountId);
-		long orderId = sendCommandSync(reveno, new NewOrderCommand(accountId, Optional.empty(), "EUR/USD", 134000, 1000, OrderType.MARKET));
+		long orderId = sendCommandSync(reveno, new NewOrderCommand(accountId, null, "EUR/USD", 134000, 1000, OrderType.MARKET));
 		Assert.assertEquals(10_001, orderId);
 		
 		reveno.shutdown();
@@ -246,7 +248,7 @@ public class Tests extends RevenoBaseTest {
 	public void testSnapshottingEvery(RepositoryDataSerializer repoSerializer) throws Exception {
 		Consumer<TestRevenoEngine> consumer = r -> {
 			r.domain().resetSnapshotters();
-			r.domain().snapshotWith(new DefaultSnapshotter(new FileSystemStorage(tempDir), repoSerializer))
+			r.domain().snapshotWith(new DefaultSnapshotter(new FileSystemStorage(tempDir, new RevenoConfiguration.RevenoJournalingConfiguration()), repoSerializer))
 				.andRestoreWithIt();
 		};
 		Reveno reveno = createEngine(consumer);
@@ -335,8 +337,8 @@ public class Tests extends RevenoBaseTest {
 			return;
 		}
 		
-		class TestTx {};
-		class TestCmd {};
+		class TestTx {}
+		class TestCmd {}
 		
 		Repository[] repo = new Repository[1];
 		Consumer<TestRevenoEngine> consumer = r -> {
@@ -355,7 +357,7 @@ public class Tests extends RevenoBaseTest {
 		
 		long accountId = sendCommandSync(reveno, new CreateNewAccountCommand("USD", 1000));
 		Future<EmptyResult> f = reveno.performCommands(Arrays.asList(new Credit(accountId, 15, 0), new Debit(accountId, 8),
-				new NewOrderCommand(accountId, Optional.empty(), "EUR/USD", 134000, 1, OrderType.MARKET), new TestCmd()));
+				new NewOrderCommand(accountId, null, "EUR/USD", 134000, 1, OrderType.MARKET), new TestCmd()));
 		
 		Assert.assertFalse(f.get().isSuccess());
 		Assert.assertEquals(RuntimeException.class, f.get().getException().getClass());
@@ -370,6 +372,100 @@ public class Tests extends RevenoBaseTest {
 		Assert.assertEquals(1000, reveno.query().find(AccountView.class, accountId).get().balance);
 		
 		reveno.shutdown();
+	}
+
+	@Test
+	public void testPreallocatedSingleVolume() throws Exception {
+		Consumer<TestRevenoEngine> c = reveno -> {
+			Assert.assertEquals(9, reveno.getJournalsStorage().getVolumes().length);
+			Assert.assertEquals(1, reveno.getJournalsStorage().getLastStores().length);
+		};
+		testPreallocatedJournals(2_500_000, ChannelOptions.UNBUFFERED_IO, c);
+		testPreallocatedJournals(2_500_000, ChannelOptions.BUFFERING_VM, c);
+		testPreallocatedJournals(2_500_000, ChannelOptions.BUFFERING_MMAP_OS, c);
+		testPreallocatedJournals(2_500_000, ChannelOptions.BUFFERING_OS, c);
+		testPreallocatedJournals(2_500_000, ChannelOptions.UNBUFFERED_IO, r -> {}, true);
+		testPreallocatedJournals(2_500_000, ChannelOptions.BUFFERING_VM, r -> {}, true);
+		testPreallocatedJournals(2_500_000, ChannelOptions.BUFFERING_MMAP_OS, r -> {}, true);
+		testPreallocatedJournals(2_500_000, ChannelOptions.BUFFERING_OS, r -> {}, true);
+	}
+
+	@Test
+	public void testPreallocatedMultipleVolumes() throws Exception {
+		Consumer<TestRevenoEngine> c = reveno -> {
+			Assert.assertEquals(5, reveno.getJournalsStorage().getVolumes().length);
+			Assert.assertEquals(5, reveno.getJournalsStorage().getLastStores().length);
+		};
+		testPreallocatedJournals(500_000, ChannelOptions.UNBUFFERED_IO, c);
+		testPreallocatedJournals(500_000, ChannelOptions.BUFFERING_VM, c);
+		testPreallocatedJournals(500_000, ChannelOptions.BUFFERING_MMAP_OS, c);
+		testPreallocatedJournals(500_000, ChannelOptions.BUFFERING_OS, c);
+		testPreallocatedJournals(500_000, ChannelOptions.UNBUFFERED_IO, r -> {}, true);
+		testPreallocatedJournals(500_000, ChannelOptions.BUFFERING_VM, r -> {}, true);
+		testPreallocatedJournals(500_000, ChannelOptions.BUFFERING_MMAP_OS, r -> {}, true);
+		testPreallocatedJournals(500_000, ChannelOptions.BUFFERING_OS, r -> {}, true);
+	}
+
+	@Test
+	public void testPreallocatedMultipleSmallVolumes() throws Exception {
+		testPreallocatedJournals(50_000, ChannelOptions.UNBUFFERED_IO, r -> {});
+		testPreallocatedJournals(50_000, ChannelOptions.BUFFERING_VM, r -> {});
+		testPreallocatedJournals(50_000, ChannelOptions.BUFFERING_MMAP_OS, r -> {});
+		testPreallocatedJournals(50_000, ChannelOptions.BUFFERING_OS, r -> {});
+	}
+
+	public void testPreallocatedJournals(long txSize, ChannelOptions channelOptions, Consumer<TestRevenoEngine> checks) throws Exception {
+		testPreallocatedJournals(txSize, channelOptions, checks, false);
+	}
+
+	public void testPreallocatedJournals(long txSize, ChannelOptions channelOptions, Consumer<TestRevenoEngine> checks,
+										 boolean javaSerializer) throws Exception {
+		setUp();
+
+		Consumer<TestRevenoEngine> consumer = r -> {
+			r.config().journaling().minVolumes(1);
+			r.config().journaling().volumes(10);
+			r.config().journaling().preallocationSize(txSize, 500_000L);
+			r.config().journaling().channelOptions(channelOptions);
+			if (javaSerializer) {
+				r.domain().serializeWith(Collections.singletonList(new DefaultJavaSerializer()));
+			}
+		};
+		TestRevenoEngine reveno = createEngine(consumer);
+		Waiter accountsWaiter = listenFor(reveno, AccountCreatedEvent.class, 10_000);
+		Waiter ordersWaiter = listenFor(reveno, OrderCreatedEvent.class, 10_000);
+		reveno.startup();
+
+		generateAndSendCommands(reveno, 10_000);
+
+		Assert.assertEquals(10_000, reveno.query().select(AccountView.class).size());
+		Assert.assertEquals(10_000, reveno.query().select(OrderView.class).size());
+
+		Assert.assertTrue(accountsWaiter.isArrived());
+		Assert.assertTrue(ordersWaiter.isArrived());
+
+		checks.accept(reveno);
+		reveno.shutdown();
+
+		reveno = createEngine(consumer);
+		accountsWaiter = listenFor(reveno, AccountCreatedEvent.class, 1);
+		ordersWaiter = listenFor(reveno, OrderCreatedEvent.class, 1);
+		reveno.startup();
+
+		Assert.assertEquals(10_000, reveno.query().select(AccountView.class).size());
+		Assert.assertEquals(10_000, reveno.query().select(OrderView.class).size());
+
+		Assert.assertFalse(accountsWaiter.isArrived());
+		Assert.assertFalse(ordersWaiter.isArrived());
+
+		long accountId = sendCommandSync(reveno, new CreateNewAccountCommand("USD", 1000_000L));
+		Assert.assertEquals(10_001, accountId);
+		long orderId = sendCommandSync(reveno, new NewOrderCommand(accountId, null, "EUR/USD", 134000, 1000, OrderType.MARKET));
+		Assert.assertEquals(10_001, orderId);
+
+		reveno.shutdown();
+
+		tearDown();
 	}
 	
 }

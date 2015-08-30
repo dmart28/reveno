@@ -6,7 +6,7 @@ import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
-import org.reveno.atp.core.channel.ByteBufferWrapper;
+import org.reveno.atp.core.channel.ChannelBuffer;
 import org.reveno.atp.core.impl.TransactionCommitInfoImpl;
 
 import java.util.Arrays;
@@ -45,7 +45,7 @@ public class SerializersTest {
 		data.data.get(User.class).put(1L, u1);
 		data.data.get(User.class).put(2L, u2);
 
-        ByteBufferWrapper buffer = new ByteBufferWrapper(java.nio.ByteBuffer.allocate(1024 * 1024));
+        ChannelBuffer buffer = new ChannelBuffer(java.nio.ByteBuffer.allocate(1024 * 1024));
 		rdSer.serialize(data, buffer);
         buffer.getBuffer().flip();
 		data = rdSer.deserialize(buffer);

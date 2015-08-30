@@ -17,7 +17,6 @@
 package org.reveno.atp.test.utils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public abstract class FileUtils {
@@ -27,8 +26,7 @@ public abstract class FileUtils {
 			for (File c : f.listFiles())
 				delete(c);
 		}
-		if (!f.delete())
-			throw new FileNotFoundException("Failed to delete file: " + f);
+		f.delete();
 	}
 	
 }

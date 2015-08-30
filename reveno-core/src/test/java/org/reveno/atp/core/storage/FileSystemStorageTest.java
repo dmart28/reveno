@@ -20,6 +20,7 @@ import com.google.common.io.Files;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.reveno.atp.core.RevenoConfiguration;
 import org.reveno.atp.core.api.storage.JournalsStorage.JournalStore;
 import org.reveno.atp.core.api.storage.SnapshotStorage.SnapshotStore;
 import org.reveno.atp.test.utils.FileUtils;
@@ -37,7 +38,7 @@ public class FileSystemStorageTest {
 	@Before
 	public void setUp() {
 		tempDir = Files.createTempDir();
-		storage = new FileSystemStorage(tempDir);
+		storage = new FileSystemStorage(tempDir, new RevenoConfiguration.RevenoJournalingConfiguration());
 	}
 
 	@After

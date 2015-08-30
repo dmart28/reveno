@@ -62,7 +62,7 @@ public abstract class Transactions {
 		else
 			account.addOrder(tx.id);
 		
-		ctx.repository().store(tx.id, Order.class, orderFactory.create(tx.id, tx.accountId, tx.positionId, tx.symbol,
+		ctx.repository().store(tx.id, Order.class, orderFactory.create(tx.id, tx.accountId, Optional.ofNullable(tx.positionId), tx.symbol,
 				tx.price, tx.size, System.currentTimeMillis(), OrderStatus.PENDING, tx.orderType));
 		ctx.eventBus().publishEvent(new OrderCreatedEvent(tx.id, tx.accountId));
 	}

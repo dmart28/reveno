@@ -19,16 +19,12 @@ package org.reveno.atp.utils;
 import org.reveno.atp.api.exceptions.IllegalFileName;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /*
  * File name pattern:
@@ -49,7 +45,7 @@ public abstract class VersionedFileUtils {
 	public static String nextVersionFile(File baseDir, String prefix, String version) { 
 		Optional<String> lastFile = listFiles(baseDir, prefix, true).stream().reduce((a,b)->b);
 		
-		Function<Long, String> nextFile = (v) -> String.format("%s-%s-%s", prefix, FORMAT.format(new Date()),
+		Function<Long, String> nextFile = (v) -> String.format("%s-%s-%s", prefix, format().format(new Date()),
 				version == null ? String.format("%010d", v + 1) : String.format("%010d", Long.parseLong(version)));
 		if (!lastFile.isPresent()) {
 			return nextFile.apply(0L);
@@ -64,7 +60,7 @@ public abstract class VersionedFileUtils {
 	}
 	
 	public static Optional<String> lastVersionFile(File baseDir, String prefix) {
-		return listFiles(baseDir, prefix, false).stream().reduce((a,b)->b);
+		return listFiles(baseDir, prefix, false).stream().reduce((a, b) -> b);
 	}
 	
 	public static VersionedFile lastVersionedFile(File baseDir, String prefix) {
@@ -78,49 +74,56 @@ public abstract class VersionedFileUtils {
 	public static VersionedFile parseVersionedFile(String fileName) {
 		String[] parts = fileName.split("-");
 		if (parts.length != 3) 
-			throw new IllegalFileName(fileName);
+			throw new IllegalFileName(fileName, null);
 		
 		try {
 			Calendar c = Calendar.getInstance();
-			c.setTime(FORMAT.parse(parts[1]));
+			c.setTime(format().parse(parts[1]));
 			return new VersionedFile(fileName, parts[0], c, Long.parseLong(parts[2]));
 		} catch (Throwable t) {
-			throw new IllegalFileName(fileName);
+			System.out.println(parts[1]);
+			throw new IllegalFileName(fileName, t);
 		}
 	}
 	
 	public static List<String> listFolders(File baseDir, String prefix) {
-		try {
-			return Files.list(baseDir.toPath())
-				.map(p -> p.toFile())
+		return listFiles(baseDir.getAbsolutePath())
 				.filter(File::isDirectory)
-				.map(f -> f.getName())
+				.map(File::getName)
 				.filter(fn -> fn.startsWith(prefix))
 				.sorted()
 				.collect(Collectors.toList());
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
 	}
 	
 	public static List<String> listFiles(File baseDir, String prefix, boolean listToday) {
-		try {
-			return Files.list(baseDir.toPath())
-				.map(p -> p.toFile())
+		return listFiles(baseDir.getAbsolutePath())
 				.filter(File::isFile)
-				.map(f -> f.getName())
-				.filter(fn -> fn.startsWith(prefix + (listToday ? "-" + FORMAT.format(new Date()) : "")))
+				.map(File::getName)
+				.filter(fn -> fn.startsWith(prefix + (listToday ? "-" + format().format(new Date()) : "")))
 				.sorted()
 				.collect(Collectors.toList());
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
 	}
 	
 	public static List<VersionedFile> listVersioned(File baseDir, String prefix) {
-		return listFiles(baseDir, prefix, false).stream().map(s -> parseVersionedFile(s)).collect(Collectors.toList());
+		return listFiles(baseDir, prefix, false).stream().map(VersionedFileUtils::parseVersionedFile)
+				.sorted(VersionedFileUtils::versionedSorter).collect(Collectors.toList());
 	}
-	
+
+	protected static Stream<File> listFiles(String directory) {
+		List<File> list = new ArrayList<>();
+		File folder = new File(directory);
+		File[] listOfFiles = folder.listFiles();
+
+		Collections.addAll(list, listOfFiles);
+		return list.stream();
+	}
+
+	protected static int versionedSorter(VersionedFile a, VersionedFile b) {
+		if (a.getVersion() < b.getVersion()) return -1;
+		if (a.getVersion() > b.getVersion()) return 1;
+		return 0;
+	}
+
 	protected static long daysBetween(Calendar startDate, Calendar endDate) {
 	    long end = endDate.getTimeInMillis();
 	    long start = startDate.getTimeInMillis();
@@ -167,8 +170,11 @@ public abstract class VersionedFileUtils {
 			return String.format("[%s,%s]", name, version);
 		}
 	}
-	
-	
-	protected static final SimpleDateFormat FORMAT = new SimpleDateFormat("yyyy_MM_dd");
+
+	protected static SimpleDateFormat format() {
+		return new SimpleDateFormat("yyyy_MM_dd");
+	}
+
+	//protected static final SimpleDateFormat FORMAT = new SimpleDateFormat("yyyy_MM_dd");
 	
 }

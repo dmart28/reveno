@@ -1,11 +1,5 @@
 package org.reveno.atp.metrics;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.api.transaction.TransactionStage;
@@ -15,6 +9,12 @@ import org.reveno.atp.metrics.meter.Counter;
 import org.reveno.atp.metrics.meter.Histogram;
 import org.reveno.atp.metrics.meter.impl.SimpleCounter;
 import org.reveno.atp.metrics.meter.impl.TwoBufferHistogram;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class MetricsInterceptor implements TransactionInterceptor {
 	

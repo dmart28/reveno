@@ -18,12 +18,10 @@ package org.reveno.atp.core.snapshots;
 
 import org.reveno.atp.api.RepositorySnapshotter;
 import org.reveno.atp.api.domain.RepositoryData;
-import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
 import org.reveno.atp.core.api.storage.SnapshotStorage.SnapshotStore;
-import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,16 +43,13 @@ public class DefaultSnapshotter implements RepositorySnapshotter {
 			return;
 		}
 		SnapshotStore snap = (SnapshotStore) identifier;
-		Buffer buffer = new NettyBasedBuffer(false);
-		try (Channel c = storage.channel(snap.getSnapshotPath())) {
+		try (Channel c = storage.snapshotChannel(snap.getSnapshotPath())) {
 			log.info("Performing default repository snapshot to " + snap);
 			
 			c.write(b -> repoSerializer.serialize(repo, b), true);
 		} catch (Throwable t) {
 			log.error("", t);
 			throw new RuntimeException(t);
-		} finally {
-			buffer.release();
 		}
 	}
 
@@ -64,19 +59,13 @@ public class DefaultSnapshotter implements RepositorySnapshotter {
 			return null;
 		
 		SnapshotStore snap = storage.getLastSnapshotStore();
-		Buffer buffer = new NettyBasedBuffer(false);
-		try (Channel c = storage.channel(snap.getSnapshotPath())) {
+		try (Channel c = storage.snapshotChannel(snap.getSnapshotPath())) {
 			log.info("Loading repository snapshot from " + snap);
-			while (c.isReadAvailable())
-				c.read(buffer);
-			
-			buffer.readInt();
-			return repoSerializer.deserialize(buffer);
+
+			return repoSerializer.deserialize(c.read());
 		} catch (Throwable t) {
 			log.error("", t);
 			throw new RuntimeException(t);
-		} finally {
-			buffer.release();
 		}
 	}
 

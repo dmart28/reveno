@@ -18,8 +18,8 @@ package org.reveno.atp.api.exceptions;
 
 public class IllegalFileName extends RuntimeException {
 
-	public IllegalFileName(String fileName) {
-		super(String.format("Versioned file name can't be parsed [%s]", fileName));
+	public IllegalFileName(String fileName, Throwable t) {
+		super(String.format("Versioned file name can't be parsed [%s]", fileName), t);
 	}
 	
 	private static final long serialVersionUID = 1L;

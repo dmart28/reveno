@@ -1,15 +1,15 @@
 package org.reveno.atp.metrics;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.reveno.atp.metrics.meter.Histogram;
 import org.reveno.atp.metrics.meter.HistogramType;
 import org.reveno.atp.metrics.meter.impl.TwoBufferHistogram;
 import org.reveno.atp.utils.MeasureUtils;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TestMetrics {
 

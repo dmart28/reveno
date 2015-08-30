@@ -56,7 +56,7 @@ public abstract class UnsafeUtils {
 		} catch (NoSuchMethodException | SecurityException
 				| IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException e) {
-			throw new RuntimeException(e);
+			//throw new RuntimeException(e);
 		}
 
 	}

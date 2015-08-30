@@ -66,7 +66,16 @@ public class DefaultJournaler implements Journaler {
 	}
 
 	@Override
+	public Channel currentChannel() {
+		return channel.get();
+	}
+
+	@Override
 	public void roll(Channel ch, Runnable rolled) {
+		if (!isWriting) {
+			startWriting(ch);
+		}
+
 		this.rolledHandler = rolled;
 		channel.set(ch);
 	}
@@ -78,7 +87,6 @@ public class DefaultJournaler implements Journaler {
 	
 	
 	protected void closeSilently(Channel ch) {
-		log.info("Closing channel.");
 		try {
 			ch.close();
 		} catch (Throwable t) {
@@ -90,8 +98,7 @@ public class DefaultJournaler implements Journaler {
 		if (!isWriting)
 			throw new RuntimeException("Journaler must be in writing mode.");
 	}
-	
-	
+
 	protected AtomicReference<Channel> channel = new AtomicReference<Channel>();
 	protected AtomicReference<Channel> oldChannel = new AtomicReference<Channel>();
 	protected volatile Runnable rolledHandler;

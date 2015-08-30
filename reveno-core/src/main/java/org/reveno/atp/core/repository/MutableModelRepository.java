@@ -16,7 +16,17 @@
 
 package org.reveno.atp.core.repository;
 
-import static org.reveno.atp.utils.MeasureUtils.kb;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import org.reveno.atp.api.domain.RepositoryData;
+import org.reveno.atp.api.domain.WriteableRepository;
+import org.reveno.atp.core.api.Destroyable;
+import org.reveno.atp.core.api.TxRepository;
+import org.reveno.atp.core.api.channel.Buffer;
+import org.reveno.atp.core.api.serialization.Serializer;
+import org.reveno.atp.core.channel.ChannelBuffer;
+import org.reveno.atp.utils.MapUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -24,18 +34,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.reveno.atp.api.domain.RepositoryData;
-import org.reveno.atp.api.domain.WriteableRepository;
-import org.reveno.atp.core.api.Destroyable;
-import org.reveno.atp.core.api.TxRepository;
-import org.reveno.atp.core.api.channel.Buffer;
-import org.reveno.atp.core.api.serialization.Serializer;
-import org.reveno.atp.core.channel.ByteBufferWrapper;
-import org.reveno.atp.utils.MapUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import static org.reveno.atp.utils.MeasureUtils.kb;
 
 public class MutableModelRepository implements TxRepository, Destroyable {
 
@@ -206,7 +205,7 @@ public class MutableModelRepository implements TxRepository, Destroyable {
 	protected final WriteableRepository repository;
 	protected final Serializer serializer;
 	protected final ClassLoader classLoader;
-	protected final Buffer buffer = new ByteBufferWrapper(ByteBuffer.allocateDirect(kb(128)));
+	protected final Buffer buffer = new ChannelBuffer(ByteBuffer.allocateDirect(kb(128)));
 	protected final ThreadLocal<Boolean> isTransaction = new ThreadLocal<Boolean>() {
 		protected Boolean initialValue() {
 			return false;

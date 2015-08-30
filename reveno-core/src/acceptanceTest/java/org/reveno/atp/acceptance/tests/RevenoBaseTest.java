@@ -56,7 +56,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -87,6 +90,7 @@ public class RevenoBaseTest {
 	@Before
 	public void setUp() {
 		tempDir = Files.createTempDir();
+		log.info("Dir: " + tempDir);
 	}
 	
 	@After
@@ -113,7 +117,7 @@ public class RevenoBaseTest {
 		
 		reveno.config().cpuConsumption(CpuConsumption.HIGH);
 		reveno.config().modelType(modelType);
-		reveno.config().channelOptions(ChannelOptions.UNBUFFERED_IO);
+		reveno.config().journaling().channelOptions(ChannelOptions.UNBUFFERED_IO);
 		
 		reveno.domain().command(CreateNewAccountCommand.class, Long.class, Commands::createAccount);
 		reveno.domain().command(NewOrderCommand.class, Long.class, Commands::newOrder);
@@ -173,7 +177,7 @@ public class RevenoBaseTest {
 		
 		List<NewOrderCommand> commands = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
-			commands.add(new NewOrderCommand((long)(count*Math.random()) + 1, Optional.empty(), "EUR/USD",
+			commands.add(new NewOrderCommand((long)(count*Math.random()) + 1, null, "EUR/USD",
 					134000, (long)(1000*Math.random()), OrderType.MARKET));
 		}
 		sendCommandsBatch(reveno, commands);

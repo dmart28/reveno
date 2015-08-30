@@ -16,20 +16,20 @@
 
 package org.reveno.atp.api;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-
 import org.reveno.atp.api.commands.CommandContext;
+import org.reveno.atp.api.domain.Repository;
 import org.reveno.atp.api.dynamic.AbstractDynamicTransaction;
 import org.reveno.atp.api.dynamic.DirectTransactionBuilder;
-import org.reveno.atp.api.domain.Repository;
 import org.reveno.atp.api.query.ViewsMapper;
 import org.reveno.atp.api.transaction.TransactionContext;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.reveno.atp.core.api.storage.FoldersStorage;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 /**
  * Contains all required operations for managing of domain space of engine.

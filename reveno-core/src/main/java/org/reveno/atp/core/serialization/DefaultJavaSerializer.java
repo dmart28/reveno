@@ -1,11 +1,14 @@
 package org.reveno.atp.core.serialization;
 
 import org.reveno.atp.api.domain.RepositoryData;
+import org.reveno.atp.api.exceptions.BufferOutOfBoundsException;
 import org.reveno.atp.api.exceptions.SerializerException;
 import org.reveno.atp.api.exceptions.SerializerException.Action;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.TransactionCommitInfo.Builder;
 import org.reveno.atp.core.api.channel.Buffer;
+import org.reveno.atp.core.api.channel.RevenoBufferInputStream;
+import org.reveno.atp.core.api.channel.RevenoBufferOutputStream;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.slf4j.Logger;
@@ -36,11 +39,9 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 		buffer.writeLong(info.transactionId());
 		buffer.writeLong(info.time());
 
-		try (ByteArrayOutputStream ba = new ByteArrayOutputStream(); // TODO global
+		try (RevenoBufferOutputStream ba = new RevenoBufferOutputStream(buffer);
 				ObjectOutputStream os = new ObjectOutputStream(ba)) {
 			os.writeObject(info.transactionCommits());
-			buffer.writeInt(ba.size());
-			buffer.writeBytes(ba.toByteArray());
 		} catch (IOException e) {
 			log.error("", e);
 			throw new SerializerException(Action.SERIALIZATION, getClass(), e);
@@ -52,11 +53,12 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 	public TransactionCommitInfo deserialize(Builder builder, Buffer buffer) {
 		long transactionId = buffer.readLong();
 		long time = buffer.readLong();
+		if (transactionId == 0 && time == 0) {
+			throw new BufferOutOfBoundsException();
+		}
 
-		try (ByteArrayInputStream is = new ByteArrayInputStream(
-				buffer.readBytes(buffer.readInt()));
-				ObjectInputStreamEx os = new ObjectInputStreamEx(is,
-						classLoader)) {
+		try (RevenoBufferInputStream is = new RevenoBufferInputStream(buffer);
+			 ObjectInputStreamEx os = new ObjectInputStreamEx(is, classLoader)) {
 			return builder.create().transactionId(transactionId).time(time).transactionCommits((List<Object>)os.readObject());
 		} catch (IOException | ClassNotFoundException e) {
 			log.error("", e);
@@ -66,11 +68,9 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 
 	@Override
 	public void serialize(RepositoryData repository, Buffer buffer) {
-		try (ByteArrayOutputStream ba = new ByteArrayOutputStream(); // TODO global
+		try (RevenoBufferOutputStream ba = new RevenoBufferOutputStream(buffer);
 				ObjectOutputStream os = new ObjectOutputStream(ba)) {
 			os.writeObject(repository);
-			buffer.writeInt(ba.size());
-			buffer.writeBytes(ba.toByteArray());
 		} catch (IOException e) {
 			log.error("", e);
 			throw new SerializerException(Action.SERIALIZATION, getClass(), e);
@@ -79,8 +79,7 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 
 	@Override
 	public RepositoryData deserialize(Buffer buffer) {
-		try (ByteArrayInputStream is = new ByteArrayInputStream(
-				buffer.readBytes(buffer.readInt()));
+		try (RevenoBufferInputStream is = new RevenoBufferInputStream(buffer);
 				ObjectInputStreamEx os = new ObjectInputStreamEx(is,
 						classLoader)) {
 			return (RepositoryData) os.readObject();
@@ -92,11 +91,9 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 
 	@Override
 	public void serializeCommands(List<Object> commands, Buffer buffer) {
-		try (ByteArrayOutputStream ba = new ByteArrayOutputStream(); 
-				ObjectOutputStream os = new ObjectOutputStream(ba)) {
+		try (RevenoBufferOutputStream ba = new RevenoBufferOutputStream(buffer);
+			 ObjectOutputStream os = new ObjectOutputStream(ba)) {
 			os.writeObject(commands);
-			buffer.writeInt(ba.size());
-			buffer.writeBytes(ba.toByteArray());
 		} catch (IOException e) {
 			log.error("", e);
 			throw new SerializerException(Action.SERIALIZATION, getClass(), e);
@@ -106,10 +103,8 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<Object> deserializeCommands(Buffer buffer) {
-		try (ByteArrayInputStream is = new ByteArrayInputStream(
-				buffer.readBytes(buffer.readInt()));
-				ObjectInputStreamEx os = new ObjectInputStreamEx(is,
-						classLoader)) {
+		try (RevenoBufferInputStream is = new RevenoBufferInputStream(buffer);
+			 ObjectInputStreamEx os = new ObjectInputStreamEx(is, classLoader)) {
 			return (List<Object>) os.readObject();
 		} catch (IOException | ClassNotFoundException e) {
 			log.error("", e);

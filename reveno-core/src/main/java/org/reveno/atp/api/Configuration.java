@@ -21,18 +21,15 @@ public interface Configuration {
 	SnapshotConfiguration snapshotting();
 	
 	DisruptorConfiguration disruptor();
+
+	JournalingConfiguration journaling();
+
 	
 	void modelType(ModelType modelType);
 	
 	void mutableModelFailover(MutableModelFailover mutableModelFailover);
 	
 	void cpuConsumption(CpuConsumption cpuConsumption);
-
-    void preallocationSize(long size);
-
-	void volumes(int volumes);
-
-	void channelOptions(ChannelOptions options);
 	
     
 	public static interface SnapshotConfiguration {
@@ -43,6 +40,20 @@ public interface Configuration {
 	
 	public static interface DisruptorConfiguration {
 		void bufferSize(int bufferSize);
+	}
+
+	public static interface JournalingConfiguration {
+
+		void maxObjectSize(int size);
+
+		void preallocationSize(long txSize, long eventsSize);
+
+		void volumes(int volumes);
+
+		void minVolumes(int volumes);
+
+		void channelOptions(ChannelOptions options);
+
 	}
 	
 	public static enum ModelType { MUTABLE, IMMUTABLE }

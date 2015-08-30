@@ -16,11 +16,6 @@
 
 package org.reveno.atp.acceptance.handlers;
 
-import static java.lang.String.format;
-
-import java.util.Optional;
-import java.util.stream.Stream;
-
 import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
 import org.reveno.atp.acceptance.api.commands.NewOrderCommand;
 import org.reveno.atp.acceptance.api.transactions.AcceptOrder;
@@ -31,6 +26,11 @@ import org.reveno.atp.acceptance.model.Account;
 import org.reveno.atp.acceptance.model.Order;
 import org.reveno.atp.acceptance.model.Position;
 import org.reveno.atp.api.commands.CommandContext;
+
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import static java.lang.String.format;
 
 public abstract class Commands {
 
@@ -60,10 +60,10 @@ public abstract class Commands {
 		long orderId = ctx.id(Order.class);
 		Account account = ctx.repository().get(Account.class, cmd.accountId).get();
 		
-		if (cmd.positionId.isPresent()) {
-			long positionId = cmd.positionId.get();
+		if (cmd.positionId != null) {
+			long positionId = cmd.positionId;
 			require(account.positions().positions().containsKey(positionId), format("Can't find position %d in account %d", positionId, account.id()));
-			Position position = ctx.repository().get(Position.class, cmd.positionId.get()).get();
+			Position position = ctx.repository().get(Position.class, cmd.positionId).get();
 			long sum = position.sum() + account.orders().stream().map(oid -> ctx.repository().get(Order.class, oid))
 					.flatMap(Commands::streamopt).filter(o -> o.positionId().isPresent() && o.positionId().get() == positionId)
 					.map(Order::size).reduce(0L, Long::sum);

@@ -16,7 +16,9 @@
 
 package org.reveno.atp.acceptance.api.transactions;
 
-public class Credit {
+import java.io.Serializable;
+
+public class Credit implements Serializable {
 	public final long accountId;
 	public final long amount;
 	public long time;

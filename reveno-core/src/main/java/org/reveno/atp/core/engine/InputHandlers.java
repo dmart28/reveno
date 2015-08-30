@@ -20,7 +20,8 @@ import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.core.api.channel.Buffer;
-import org.reveno.atp.core.channel.ByteBufferWrapper;
+import org.reveno.atp.core.api.channel.Channel;
+import org.reveno.atp.core.channel.ChannelBuffer;
 import org.reveno.atp.core.disruptor.ProcessorContext;
 import org.reveno.atp.core.engine.components.TransactionExecutor;
 import org.reveno.atp.utils.MeasureUtils;
@@ -84,7 +85,7 @@ public class InputHandlers {
 		marshalled.release();
 	}
 	
-	protected final Buffer marshalled = new ByteBufferWrapper(ByteBuffer.allocateDirect(MeasureUtils.mb(1)));
+	protected final Buffer marshalled = new ChannelBuffer(ByteBuffer.allocateDirect(MeasureUtils.mb(1)));
 	protected WorkflowContext services;
 	protected TransactionExecutor txExecutor;
 	protected Supplier<Long> nextTransactionId;
@@ -107,7 +108,8 @@ public class InputHandlers {
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> journaler = (c, eob) -> {
 		interceptors(TransactionStage.JOURNALING, c);
-		
+
+		rollIfRequired();
 		services.transactionJournaler().writeData(b -> {
 			c.commitInfo().transactionId(c.transactionId()).time(c.time()).transactionCommits(c.getTransactions());
 			services.serializer().serialize(c.commitInfo(), b);
@@ -126,6 +128,16 @@ public class InputHandlers {
 		if (!context.isRestore() && services.interceptorCollection().getInterceptors(stage).size() > 0)
 			services.interceptorCollection().getInterceptors(stage).forEach(i -> i.intercept(context.transactionId(),
 					context.time(), services.repository(), stage));
+	}
+
+	protected void rollIfRequired() {
+		if (isRollRequired(services.transactionJournaler().currentChannel())) {
+			services.journalsManager().roll(() -> isRollRequired(services.transactionJournaler().currentChannel()));
+		}
+	}
+
+	protected boolean isRollRequired(Channel ch) {
+		return services.configuration().revenoJournaling().isPreallocated() && ch.size() - ch.position() <= 0;
 	}
 	
 	

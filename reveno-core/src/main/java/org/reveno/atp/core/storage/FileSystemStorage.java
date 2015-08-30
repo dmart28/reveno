@@ -16,16 +16,20 @@
 
 package org.reveno.atp.core.storage;
 
-import org.reveno.atp.api.ChannelOptions;
+import org.reveno.atp.core.RevenoConfiguration.RevenoJournalingConfiguration;
 import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.api.storage.FoldersStorage;
 import org.reveno.atp.core.api.storage.JournalsStorage;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
 import org.reveno.atp.core.channel.FileChannel;
+import org.reveno.atp.utils.UnsafeUtils;
 import org.reveno.atp.utils.VersionedFileUtils.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -34,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.reveno.atp.utils.VersionedFileUtils.*;
 
@@ -42,20 +47,19 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 
 	@Override
 	public Channel channel(String address) {
-		return new FileChannel(new File(baseDir, address), ChannelOptions.BUFFERING_VM);
+		FileChannel fc = new FileChannel(new File(baseDir, address));
+		fc.extendDelta(config.maxObjectSize());
+		fc.channelOptions(config.channelOptions());
+		fc.isPreallocated(config.isPreallocated());
+		return fc.init();
 	}
 
 	@Override
-	public Channel channel(String address, ChannelOptions options) {
-		return new FileChannel(new File(baseDir, address), options);
+	public Channel snapshotChannel(String address) {
+		return new FileChannel(new File(baseDir, address)).init();
 	}
 
-    @Override
-    public Channel channel(String address, ChannelOptions options, long size) {
-        return new FileChannel(new File(baseDir, address), options, size);
-    }
-
-    @Override
+	@Override
 	public SnapshotStore getLastSnapshotStore() {
 		VersionedFile file = lastVersionedFile(baseDir, SNAPSHOT_PREFIX);
 		if (file != null) {
@@ -94,10 +98,20 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 			throw new RuntimeException(String.format("Amount of Transaction files doesn't match to Events files [%s/%s]",
 					txs.size(), evns.size()));
 
-        List<JournalStore> collect = txs.stream().map(tx -> evns.stream()
-                .filter(e -> e.getVersion() == tx.getVersion())
-                .map(e -> store(tx, e)).findFirst().get()).collect(Collectors.toList());
-        return collect.toArray(new JournalStore[collect.size()]);
+		return getJournalStores(txs, evns);
+	}
+
+	@Override
+	public JournalStore[] getVolumes() {
+		List<VersionedFile> txs = listVersioned(baseDir, VOLUME_TRANSACTION_PREFIX);
+		List<VersionedFile> evns = listVersioned(baseDir, VOLUME_EVENTS_PREFIX);
+
+		if (txs.size() != evns.size()) {
+			txs = txs.subList(0, Math.max(Math.min(txs.size(), evns.size()), 0));
+			evns = evns.subList(0, Math.max(Math.min(txs.size(), evns.size()), 0));
+		}
+
+		return getJournalStores(txs, evns);
 	}
 
 	@Override
@@ -111,9 +125,9 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 	}
 
 	@Override
-	public JournalStore nextStore() {
-		VersionedFile txFile = parseVersionedFile(nextVersionFile(baseDir,TRANSACTION_PREFIX));
-		VersionedFile evnFile = parseVersionedFile(nextVersionFile(baseDir,EVENTS_PREFIX));
+	public synchronized JournalStore nextStore() {
+		VersionedFile txFile = parseVersionedFile(nextVersionFile(baseDir, TRANSACTION_PREFIX));
+		VersionedFile evnFile = parseVersionedFile(nextVersionFile(baseDir, EVENTS_PREFIX));
 
 		if (txFile.getVersion() != evnFile.getVersion())
 			throw new RuntimeException(String.format(
@@ -121,6 +135,44 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 					txFile.getVersion(), evnFile.getVersion()));
 
 		return store(txFile, evnFile);
+	}
+
+	@Override
+	public synchronized  JournalStore nextVolume(long txSize, long eventsSize) {
+		VersionedFile txFile = parseVersionedFile(nextVersionFile(baseDir, VOLUME_TRANSACTION_PREFIX));
+		VersionedFile evnFile = parseVersionedFile(nextVersionFile(baseDir, VOLUME_EVENTS_PREFIX));
+
+		if (txFile.getVersion() < evnFile.getVersion()) {
+			IntStream.range(0, (int) Math.abs(txFile.getVersion() - evnFile.getVersion())).forEach(i -> {
+				VersionedFile file = parseVersionedFile(nextVersionFile(baseDir, VOLUME_TRANSACTION_PREFIX));
+				preallocateFiles(new File(baseDir, file.getName()), txSize);
+			});
+			txFile = parseVersionedFile(nextVersionFile(baseDir, VOLUME_TRANSACTION_PREFIX));
+		} else if (txFile.getVersion() > evnFile.getVersion()) {
+			IntStream.range(0, (int) Math.abs(txFile.getVersion() - evnFile.getVersion())).forEach(i -> {
+				VersionedFile file = parseVersionedFile(nextVersionFile(baseDir, VOLUME_EVENTS_PREFIX));
+				preallocateFiles(new File(baseDir, file.getName()), eventsSize);
+			});
+			evnFile = parseVersionedFile(nextVersionFile(baseDir, VOLUME_EVENTS_PREFIX));
+		}
+
+		preallocateFiles(new File(baseDir, txFile.getName()), txSize);
+		LOG.info("Finished preallocating journal [{}]", txFile.getName());
+		preallocateFiles(new File(baseDir, evnFile.getName()), eventsSize);
+		LOG.info("Finished preallocating journal [{}]", evnFile.getName());
+
+		return new JournalStore(txFile.getName(), evnFile.getName(), Long.toString(txFile.getVersion()));
+	}
+
+	@Override
+	public JournalStore convertVolumeToStore(JournalStore volume) {
+		VersionedFile txFile = parseVersionedFile(nextVersionFile(baseDir, TRANSACTION_PREFIX));
+		VersionedFile evnFile = parseVersionedFile(nextVersionFile(baseDir, EVENTS_PREFIX));
+
+		new File(baseDir, volume.getTransactionCommitsAddress()).renameTo(new File(baseDir, txFile.getName()));
+		new File(baseDir, volume.getEventsCommitsAddress()).renameTo(new File(baseDir, evnFile.getName()));
+
+		return new JournalStore(txFile.getName(), evnFile.getName(), Long.toString(txFile.getVersion()));
 	}
 
 	@Override
@@ -159,7 +211,14 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 		new File(baseDir, address).mkdir();
 		return new FolderItem(name, address);
 	}
-	
+
+	protected JournalStore[] getJournalStores(List<VersionedFile> txs, List<VersionedFile> evns) {
+		LOG.debug("evns: " + evns.size() + ", txs: " + txs.size());
+		List<JournalStore> collect = txs.stream().map(tx -> evns.stream()
+				.filter(e -> e.getVersion() == tx.getVersion())
+				.map(e -> store(tx, e)).findFirst().get()).collect(Collectors.toList());
+		return collect.toArray(new JournalStore[collect.size()]);
+	}
 	
 	protected List<Path> listFiles(Path dir) {
 	       List<Path> result = new ArrayList<>();
@@ -197,13 +256,35 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 		return new JournalStore(txFile.getName(), evnFile.getName(), Long.toString(txFile.getVersion()));
 	}
 
-	public FileSystemStorage(File baseDir) {
+	protected void preallocateFiles(File file, long size) {
+		try {
+			RandomAccessFile raf = new RandomAccessFile(file, "rw");
+			LOG.info("Preallocating started.");
+			for (long i = 0; i < size; i += PAGE_SIZE) {
+				raf.write(BLANK_PAGE, 0, PAGE_SIZE);
+			}
+			LOG.info("Preallocating finished.");
+			raf.close();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public FileSystemStorage(File baseDir, RevenoJournalingConfiguration config) {
 		this.baseDir = baseDir;
+		this.config = config;
 	}
 
 	protected final File baseDir;
+	protected final RevenoJournalingConfiguration config;
 	protected static final String TRANSACTION_PREFIX = "tx";
 	protected static final String SNAPSHOT_PREFIX = "snp";
 	protected static final String EVENTS_PREFIX = "evn";
+	protected static final String VOLUME_TRANSACTION_PREFIX = "v_" + TRANSACTION_PREFIX;
+	protected static final String VOLUME_EVENTS_PREFIX = "v_" + EVENTS_PREFIX;
 
+	protected static final int PAGE_SIZE = UnsafeUtils.getUnsafe().pageSize();
+	protected static final byte[] BLANK_PAGE = new byte[PAGE_SIZE];
+
+	protected static final Logger LOG = LoggerFactory.getLogger(FileSystemStorage.class);
 }

@@ -1,5 +1,6 @@
 package org.reveno.atp.core.serialization;
 
+import org.reveno.atp.api.exceptions.BufferOutOfBoundsException;
 import org.reveno.atp.core.api.EventsCommitInfo;
 import org.reveno.atp.core.api.EventsCommitInfo.Builder;
 import org.reveno.atp.core.api.channel.Buffer;
@@ -16,7 +17,11 @@ public class SimpleEventsSerializer implements EventsInfoSerializer {
 
 	@Override
 	public EventsCommitInfo deserialize(Builder builder, Buffer buffer) {
-		return builder.create(buffer.readLong(), buffer.readLong(), buffer.readInt());
+		EventsCommitInfo eci = builder.create(buffer.readLong(), buffer.readLong(), buffer.readInt());
+		if (eci.getTransactionId() == 0 && eci.getTime() == 0) {
+			throw new BufferOutOfBoundsException();
+		}
+		return eci;
 	}
 
 }

@@ -16,16 +16,6 @@
 
 package org.reveno.atp.core.engine.components;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
 import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.RepositorySnapshotter;
 import org.reveno.atp.api.RepositorySnapshotter.SnapshotIdentifier;
@@ -33,7 +23,7 @@ import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.api.transaction.TransactionStage;
-import org.reveno.atp.core.JournalsRoller;
+import org.reveno.atp.core.JournalsManager;
 import org.reveno.atp.core.RevenoConfiguration;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
@@ -43,6 +33,16 @@ import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.core.snapshots.SnapshottersManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class SnapshottingInterceptor implements TransactionInterceptor {
 	
@@ -63,18 +63,19 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 					}
 				}
 			} else if (stage == TransactionStage.JOURNALING) {
-				if (configuration.modelType() == ModelType.MUTABLE && snapshotsMutable.containsKey(transactionId)) {
-					Buffer buffer = snapshotsMutable.get(transactionId);
-					RepositoryData data = serializer.deserialize(buffer);
-					buffer.release();
-					snapshotsMutable.remove(transactionId);
-					
-					asyncSnapshot(data);
-					roller.roll(() -> {});
-				} else if (snapshotsImmutable.containsKey(transactionId)) {
-					asyncSnapshot(snapshotsImmutable.get(transactionId));
-					snapshotsImmutable.remove(transactionId);
-					roller.roll(() -> {});
+				if (snapshotsMutable.containsKey(transactionId) || snapshotsImmutable.containsKey(transactionId)) {
+					if (configuration.modelType() == ModelType.MUTABLE) {
+						Buffer buffer = snapshotsMutable.get(transactionId);
+						RepositoryData data = serializer.deserialize(buffer);
+						buffer.release();
+						snapshotsMutable.remove(transactionId);
+
+						asyncSnapshot(data);
+					} else {
+						asyncSnapshot(snapshotsImmutable.get(transactionId));
+						snapshotsImmutable.remove(transactionId);
+					}
+					journalsManager.roll();
 				}
 			}
 	}
@@ -107,10 +108,10 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 	
 	public SnapshottingInterceptor(RevenoConfiguration configuration,
 			SnapshottersManager snapshotsManager, SnapshotStorage snapshotStorage,
-			JournalsRoller roller, RepositoryDataSerializer serializer) {
+			JournalsManager journalsManager, RepositoryDataSerializer serializer) {
 		this.configuration = configuration;
 		this.snapshotsManager = snapshotsManager;
-		this.roller = roller;
+		this.journalsManager = journalsManager;
 		this.serializer = serializer;
 		this.snapshotStorage = snapshotStorage;
 	}
@@ -122,7 +123,7 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 	protected RevenoConfiguration configuration;
 	protected SnapshottersManager snapshotsManager;
 	protected SnapshotStorage snapshotStorage;
-	protected JournalsRoller roller;
+	protected JournalsManager journalsManager;
 	protected RepositoryDataSerializer serializer;
 	protected final ExecutorService executor = Executors.newSingleThreadExecutor();
 	protected static final Logger log = LoggerFactory.getLogger(SnapshottingInterceptor.class);

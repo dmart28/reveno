@@ -16,16 +16,15 @@
 
 package org.reveno.atp.core;
 
-import java.io.File;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-
+import com.google.common.io.Files;
 import org.junit.Assert;
 import org.junit.Test;
 import org.reveno.atp.api.Reveno;
 import org.reveno.atp.api.commands.Result;
 
-import com.google.common.io.Files;
+import java.io.File;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 public class TestEngineStarts {
 	

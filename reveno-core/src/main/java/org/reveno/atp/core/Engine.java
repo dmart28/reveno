@@ -16,64 +16,34 @@
 
 package org.reveno.atp.core;
 
-import java.io.File;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-
-import org.reveno.atp.api.ClusterManager;
-import org.reveno.atp.api.Configuration;
+import org.reveno.atp.api.*;
 import org.reveno.atp.api.Configuration.CpuConsumption;
-import org.reveno.atp.api.EventsManager;
-import org.reveno.atp.api.RepositorySnapshotter;
-import org.reveno.atp.api.Reveno;
-import org.reveno.atp.api.RevenoManager;
 import org.reveno.atp.api.commands.CommandContext;
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
+import org.reveno.atp.api.domain.RepositoryData;
+import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.dynamic.AbstractDynamicTransaction;
 import org.reveno.atp.api.dynamic.DirectTransactionBuilder;
 import org.reveno.atp.api.dynamic.DynamicCommand;
-import org.reveno.atp.api.domain.RepositoryData;
-import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.query.QueryManager;
 import org.reveno.atp.api.query.ViewsMapper;
 import org.reveno.atp.api.transaction.TransactionContext;
 import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.api.transaction.TransactionStage;
-import org.reveno.atp.core.api.Destroyable;
-import org.reveno.atp.core.api.EventsCommitInfo;
-import org.reveno.atp.core.api.InterceptorCollection;
-import org.reveno.atp.core.api.Journaler;
-import org.reveno.atp.core.api.SystemStateRestorer;
-import org.reveno.atp.core.api.TransactionCommitInfo;
-import org.reveno.atp.core.api.TxRepository;
-import org.reveno.atp.core.api.TxRepositoryFactory;
+import org.reveno.atp.core.api.*;
 import org.reveno.atp.core.api.serialization.EventsInfoSerializer;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.reveno.atp.core.api.storage.FoldersStorage;
 import org.reveno.atp.core.api.storage.JournalsStorage;
-import org.reveno.atp.core.api.storage.JournalsStorage.JournalStore;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
-import org.reveno.atp.core.data.DefaultJournaler;
 import org.reveno.atp.core.disruptor.DisruptorEventPipeProcessor;
 import org.reveno.atp.core.disruptor.DisruptorTransactionPipeProcessor;
 import org.reveno.atp.core.disruptor.ProcessorContext;
 import org.reveno.atp.core.engine.WorkflowEngine;
-import org.reveno.atp.core.engine.components.CommandsManager;
-import org.reveno.atp.core.engine.components.DefaultIdGenerator;
+import org.reveno.atp.core.engine.components.*;
 import org.reveno.atp.core.engine.components.DefaultIdGenerator.NextIdTransaction;
-import org.reveno.atp.core.engine.components.SerializersChain;
-import org.reveno.atp.core.engine.components.SnapshottingInterceptor;
-import org.reveno.atp.core.engine.components.TransactionsManager;
 import org.reveno.atp.core.engine.processor.PipeProcessor;
 import org.reveno.atp.core.engine.processor.TransactionPipeProcessor;
 import org.reveno.atp.core.events.Event;
@@ -95,6 +65,14 @@ import org.reveno.atp.core.views.ViewsProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.*;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+
 public class Engine implements Reveno {
 	
 	public Engine(FoldersStorage foldersStorage, JournalsStorage journalsStorage,
@@ -112,7 +90,7 @@ public class Engine implements Reveno {
 	}
 	
 	public Engine(File baseDir, ClassLoader classLoader) {
-		FileSystemStorage storage = new FileSystemStorage(baseDir);
+		FileSystemStorage storage = new FileSystemStorage(baseDir, config.revenoJournaling());
 		this.classLoader = classLoader;
 		this.foldersStorage = storage;
 		this.journalsStorage = storage;
@@ -142,12 +120,8 @@ public class Engine implements Reveno {
 		
 		init();
 		connectSystemHandlers();
-		
-		JournalStore store = journalsStorage.nextStore();
-		transactionsJournaler.startWriting(journalsStorage.channel(store.getTransactionCommitsAddress(),
-				config.channelOptions(), config.preallocationSize()));
-		eventsJournaler.startWriting(journalsStorage.channel(store.getEventsCommitsAddress(),
-				config.channelOptions(), config.preallocationSize()));
+
+		journalsManager.roll();
 		
 		eventPublisher.getPipe().start();
 		workflowEngine.init();
@@ -172,9 +146,8 @@ public class Engine implements Reveno {
 		interceptors.getInterceptors(TransactionStage.JOURNALING).forEach(TransactionInterceptor::destroy);
 		interceptors.getInterceptors(TransactionStage.REPLICATION).forEach(TransactionInterceptor::destroy);
 		interceptors.getInterceptors(TransactionStage.TRANSACTION).forEach(TransactionInterceptor::destroy);
-		
-		transactionsJournaler.destroy();
-		eventsJournaler.destroy();
+
+		journalsManager.destroy();
 		
 		eventsManager.close();
 		
@@ -336,23 +309,25 @@ public class Engine implements Reveno {
 	}
 	
 	protected void init() {
-		EngineEventsContext eventsContext = new EngineEventsContext().serializer(eventsSerializer)
-				.eventsCommitBuilder(eventBuilder).eventsJournaler(eventsJournaler).manager(eventsManager);
 		repository = factory.create(loadLastSnapshot());
 		viewsProcessor = new ViewsProcessor(viewsManager, viewsStorage);
 		processor = new DisruptorTransactionPipeProcessor(txBuilder, config.cpuConsumption(), config.revenoDisruptor().bufferSize(), executor);
 		eventProcessor = new DisruptorEventPipeProcessor(CpuConsumption.NORMAL, config.revenoDisruptor().bufferSize(), eventExecutor);
-		roller = new JournalsRoller(transactionsJournaler, eventsJournaler, journalsStorage);
+		journalsManager = new JournalsManager(journalsStorage, config.revenoJournaling());
+
+		EngineEventsContext eventsContext = new EngineEventsContext().serializer(eventsSerializer)
+				.eventsCommitBuilder(eventBuilder).eventsJournaler(journalsManager.getEventsJournaler()).manager(eventsManager);
 		eventPublisher = new EventPublisher(eventProcessor, eventsContext);
+
 		EngineWorkflowContext workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
 				.viewsProcessor(viewsProcessor).transactionsManager(transactionsManager).commandsManager(commandsManager)
-				.eventPublisher(eventPublisher).transactionCommitBuilder(txBuilder).transactionJournaler(transactionsJournaler)
-				.idGenerator(idGenerator).roller(roller).snapshotsManager(snapshotsManager).interceptorCollection(interceptors)
+				.eventPublisher(eventPublisher).transactionCommitBuilder(txBuilder).transactionJournaler(journalsManager.getTransactionsJournaler())
+				.idGenerator(idGenerator).journalsManager(journalsManager).snapshotsManager(snapshotsManager).interceptorCollection(interceptors)
 				.configuration(config);
 		workflowEngine = new WorkflowEngine(processor, workflowContext, config.modelType());
 		restorer = new DefaultSystemStateRestorer(journalsStorage, workflowContext, eventsContext, workflowEngine);
 	}
-	
+
 	protected Optional<RepositoryData> loadLastSnapshot() {
 		if (restoreWith != null && restoreWith.hasAny()) {
 			return Optional.of(restoreWith.load());
@@ -366,7 +341,7 @@ public class Engine implements Reveno {
 		domain().transactionAction(NextIdTransaction.class, idGenerator);
 		if (config.revenoSnapshotting().snapshotEvery() != -1) {
 			TransactionInterceptor nTimeSnapshotter = new SnapshottingInterceptor(config, snapshotsManager, snapshotStorage,
-					roller, repositorySerializer);
+					journalsManager, repositorySerializer);
 			interceptors.add(TransactionStage.TRANSACTION, nTimeSnapshotter);
 			interceptors.add(TransactionStage.JOURNALING, nTimeSnapshotter);
 		}
@@ -393,13 +368,11 @@ public class Engine implements Reveno {
 	protected EventPublisher eventPublisher;
 	protected TransactionPipeProcessor<ProcessorContext> processor;
 	protected PipeProcessor<Event> eventProcessor;
-	protected JournalsRoller roller;
+	protected JournalsManager journalsManager;
 	
 	protected RepositorySnapshotter restoreWith;
 	
 	protected RepositoryDataSerializer repositorySerializer = new DefaultJavaSerializer(getClass().getClassLoader());
-	protected Journaler transactionsJournaler = new DefaultJournaler();
-	protected Journaler eventsJournaler = new DefaultJournaler();
 	protected EventsInfoSerializer eventsSerializer = new SimpleEventsSerializer();
 	protected TransactionCommitInfo.Builder txBuilder = new TransactionCommitInfoImpl.PojoBuilder();
 	protected EventsCommitInfo.Builder eventBuilder = new EventsCommitInfoImpl.PojoBuilder();

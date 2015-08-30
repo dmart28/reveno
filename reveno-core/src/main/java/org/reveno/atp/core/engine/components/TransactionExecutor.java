@@ -16,13 +16,6 @@
 
 package org.reveno.atp.core.engine.components;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Consumer;
-
 import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.Configuration.MutableModelFailover;
 import org.reveno.atp.api.commands.CommandContext;
@@ -36,6 +29,9 @@ import org.reveno.atp.core.disruptor.ProcessorContext;
 import org.reveno.atp.core.engine.WorkflowContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.function.Consumer;
 
 public class TransactionExecutor {
 

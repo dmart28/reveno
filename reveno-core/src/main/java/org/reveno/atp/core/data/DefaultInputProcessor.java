@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core.data;
 
+import org.reveno.atp.api.exceptions.BufferOutOfBoundsException;
 import org.reveno.atp.core.api.InputProcessor;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
@@ -37,14 +38,23 @@ public class DefaultInputProcessor implements InputProcessor, Closeable {
 		List<Channel> chs = Arrays.asList(stores()).stream().map((js) -> type == JournalType.EVENTS ?
 				js.getEventsCommitsAddress() : js.getTransactionCommitsAddress())
 				.map(storage::channel).limit(Math.abs(stores().length - 1)).collect(Collectors.toList());
-		ChannelReader<Buffer> bufferReader = new ChannelReader<>(new ChannelDecoder(), chs);
-		bufferReader.iterator().forEachRemaining((list) -> {
-			list.forEach((b) -> {
+		ChannelReader bufferReader = new ChannelReader(chs);
+		bufferReader.iterator().forEachRemaining(b -> {
+			try {
 				while (b.isAvailable()) {
 					consumer.accept(b);
 				}
-				b.release();
-			});
+			}
+			catch (BufferOutOfBoundsException ignored) {
+				log.info("End of volume was reached ({})", b.readerPosition());
+			}
+			catch (Exception e) {
+				log.error(e.getMessage(), e);
+			}
+			finally {
+				if (b != null)
+					b.release();
+			}
 		});
 	}
 	

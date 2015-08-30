@@ -1,10 +1,10 @@
 package org.reveno.atp.metrics.impl;
 
-import java.io.IOException;
-
 import org.reveno.atp.metrics.Sink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 public class GraphiteSink implements Sink {
 

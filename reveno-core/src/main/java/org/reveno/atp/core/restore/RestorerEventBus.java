@@ -89,7 +89,7 @@ public class RestorerEventBus implements RestoreableEventBus {
 			return;
 		}
 		if (event.getTransactionId() <= lastTransactionId && event.getFlag() == 0) {
-			log.warn("Transaction ID < Last Transaction ID - this is abnormal!");
+			log.warn("Transaction ID < Last Transaction ID - this is abnormal [{};{}]!", event.getTransactionId(), lastTransactionId);
 			addMissedEvents(event);
 		} else if (event.getTransactionId() - lastTransactionId > 1) {
 			log.info("Missing transaction events from {} to {}", lastTransactionId + 1, event.getTransactionId() - 1);

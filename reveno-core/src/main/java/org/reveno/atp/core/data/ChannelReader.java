@@ -16,118 +16,65 @@
 
 package org.reveno.atp.core.data;
 
-import org.reveno.atp.core.api.Decoder;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
-import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class ChannelReader<T> implements Iterable<List<T>> {
-	private static final long CHUNK_SIZE = 256 * 1024;
-	private final Decoder<T> decoder;
+public class ChannelReader implements Iterable<Buffer> {
 	private Iterator<Channel> channels;
 
-	public ChannelReader(Decoder<T> decoder, List<Channel> channels) {
+	public ChannelReader(List<Channel> channels) {
 		this.channels = channels.iterator();
-		this.decoder = decoder;
 	}
 
 	@Override
-	public Iterator<List<T>> iterator() {
-		return new Iterator<List<T>>() {
-			private List<T> entries;
-			private long chunkPos = 0;
-			private Buffer prevBuffer, buffer;
+	public Iterator<Buffer> iterator() {
+		return new Iterator<Buffer>() {
+			private Buffer buffer;
 			private Channel channel;
 
 			@Override
 			public boolean hasNext() {
-				if (buffer == null || !buffer.isAvailable()) {
-					buffer = nextBuffer(chunkPos);
+				if (buffer == null) {
+					buffer = nextBuffer();
 					if (buffer == null) {
 						return false;
-					}
-				}
-				// set next MappedByteBuffer chunk
-				chunkPos += buffer.length();
-				T result = null;
-				try {
-					while ((result = decoder.decode(prevBuffer, buffer)) != null) {
-						if (entries == null) {
-							entries = new ArrayList<T>();
-						}
-						entries.add(result);
-					}
-				} catch (Exception e) {
-					buffer.release();
-					log.error("decode", e);
-				}
-				if (prevBuffer != null) {
-					prevBuffer.release();
-				}
-				prevBuffer = buffer;
-				buffer = null;
-				if (!channels.hasNext()) {
-					if (entries != null) {
-						return true;
 					} else {
-						channel.close();
-						if (buffer != null)
-							buffer.release();
-						return false;
+						return true;
 					}
 				} else {
-					if (entries == null)
-						entries = new ArrayList<>();
-					return true;
+					buffer = nextBuffer();
+					return buffer != null;
 				}
 			}
 
-			private Buffer nextBuffer(long position) {
+			private Buffer nextBuffer() {
 				try {
-					if (channel == null || channel.size() == position) {
-						if (channel != null) {
-							channel.close();
-							channel = null;
-						}
-						if (channels.hasNext()) {
-							channel = channels.next();
-							log.info("Processing channel: " + channel);
-							prevBuffer = null;
-							chunkPos = 0;
-							position = 0;
-						} else {
-							return null;
-						}
-					}
-					long chunkSize = CHUNK_SIZE;
-					if (channel.size() - position < chunkSize) {
-						chunkSize = channel.size() - position;
-					}
-					if (chunkSize == 0) {
+					if (channel != null) {
 						channel.close();
 						channel = null;
-						return nextBuffer(0);
 					}
-					Buffer buffer = new NettyBasedBuffer((int) chunkSize, false);
-					channel.read(buffer);
-					return buffer;
+					if (channels.hasNext()) {
+						channel = channels.next();
+						log.info("Processing channel: " + channel);
+					} else {
+						return null;
+					}
+					return channel.read();
 				} catch (Throwable e) {
-					channel.close();
+					if (channel != null)
+						channel.close();
 					throw new RuntimeException(e);
 				}
 			}
 
 			@Override
-			public List<T> next() {
-				List<T> res = entries;
-				entries = null;
-				return res;
+			public Buffer next() {
+				return buffer;
 			}
 
 			@Override
