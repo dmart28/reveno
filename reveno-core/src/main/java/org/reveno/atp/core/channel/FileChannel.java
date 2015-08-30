@@ -132,8 +132,8 @@ public class FileChannel implements Channel {
 				destroyDirectBuffer(buffer);
 				buffer = mmap(size0());
 				revenoBuffer = new ChannelBuffer(buffer,
-						() -> mmap(size0() - lastPos()),
-						() -> mmap(extendDelta));
+						() -> mmap(size0() - mmapPos()),
+						() -> mmap(Math.max(extendDelta, size - mmapPos())));
 			} else {
 				revenoBuffer = new ChannelBuffer(buffer,
 						() -> read0(buffer, Math.abs(buffer.position() - buffer.limit())),
@@ -163,7 +163,7 @@ public class FileChannel implements Channel {
 		return file.getName();
 	}
 
-	protected long lastPos() {
+	protected long mmapPos() {
 		return mmapBufferGeneration + buffer.position();
 	}
 
@@ -191,10 +191,10 @@ public class FileChannel implements Channel {
 			int pos = buffer.position();
 			int offset = revenoBuffer == null || revenoBuffer.sizeMarkPosition() == -1 ? 0 : pos - revenoBuffer.sizeMarkPosition();
 			long from = mmapBufferGeneration + pos - offset;
-			long to = remainSize + offset;
-			buffer = channel().map(java.nio.channels.FileChannel.MapMode.READ_WRITE, from, to);
+			long count = Math.min(remainSize + offset, MAX_VALUE);
+			buffer = channel().map(java.nio.channels.FileChannel.MapMode.READ_WRITE, from, count);
 			if (log.isDebugEnabled()) {
-				log.debug("Switch mmap over (from:{}, to:{})", from, to);
+				log.debug("Switch mmap over (from:{}, to:{})", from, from + count);
 			}
 			buffer.position(offset);
 			mmapBufferGeneration += pos - offset;
@@ -244,7 +244,7 @@ public class FileChannel implements Channel {
 
 	protected long position = 0L;
 	protected long size = 0L;
-	protected int mmapBufferGeneration = 0;
+	protected long mmapBufferGeneration = 0;
 	protected ByteBuffer buffer = ByteBuffer.allocateDirect(MeasureUtils.kb(32));
 	protected ChannelBuffer revenoBuffer;
 
