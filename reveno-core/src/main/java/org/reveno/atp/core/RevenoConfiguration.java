@@ -16,10 +16,10 @@
 
 package org.reveno.atp.core;
 
-import static org.reveno.atp.utils.MeasureUtils.kb;
-
 import org.reveno.atp.api.ChannelOptions;
 import org.reveno.atp.api.Configuration;
+
+import static org.reveno.atp.utils.MeasureUtils.kb;
 
 public class RevenoConfiguration implements Configuration {
 

@@ -16,7 +16,9 @@
 
 package org.reveno.atp.acceptance.api.commands;
 
-public class CreateNewAccountCommand {
+import java.io.Serializable;
+
+public class CreateNewAccountCommand implements Serializable {
 	public final String currency;
 	public final long balance;
 	

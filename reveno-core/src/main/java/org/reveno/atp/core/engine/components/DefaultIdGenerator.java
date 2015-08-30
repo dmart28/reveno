@@ -68,7 +68,7 @@ public class DefaultIdGenerator implements IdGenerator, BiConsumer<DefaultIdGene
 		protected Map<Class<?>, Long> ids = new HashMap<>();
 	}
 	
-	public static class NextIdTransaction {
+	public static class NextIdTransaction implements Serializable {
 		public final Class<?> entityType;
 		public final long id;
 		

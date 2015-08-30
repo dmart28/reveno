@@ -18,12 +18,10 @@ package org.reveno.atp.core.snapshots;
 
 import org.reveno.atp.api.RepositorySnapshotter;
 import org.reveno.atp.api.domain.RepositoryData;
-import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
 import org.reveno.atp.core.api.storage.SnapshotStorage.SnapshotStore;
-import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

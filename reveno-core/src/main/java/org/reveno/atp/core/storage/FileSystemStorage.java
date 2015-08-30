@@ -16,8 +16,6 @@
 
 package org.reveno.atp.core.storage;
 
-import org.reveno.atp.api.ChannelOptions;
-import org.reveno.atp.api.Reveno;
 import org.reveno.atp.core.RevenoConfiguration.RevenoJournalingConfiguration;
 import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.api.storage.FoldersStorage;

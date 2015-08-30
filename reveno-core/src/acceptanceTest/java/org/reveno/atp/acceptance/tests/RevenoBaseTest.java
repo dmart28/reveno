@@ -174,7 +174,7 @@ public class RevenoBaseTest {
 		
 		List<NewOrderCommand> commands = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
-			commands.add(new NewOrderCommand((long)(count*Math.random()) + 1, Optional.empty(), "EUR/USD",
+			commands.add(new NewOrderCommand((long)(count*Math.random()) + 1, null, "EUR/USD",
 					134000, (long)(1000*Math.random()), OrderType.MARKET));
 		}
 		sendCommandsBatch(reveno, commands);

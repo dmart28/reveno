@@ -54,11 +54,11 @@ public class DefaultJournalerTest {
 	public void test() throws Exception {
 		Journaler journaler = new DefaultJournaler();
 		// TODO not accurate that we use FileChannel here, need some mock in future
-		Channel fc = new FileChannel(tempFile1).init();
+		Channel fc = new FileChannel(tempFile1).extendDelta(mb(1)).init();
 		journaler.startWriting(fc);
 		testWithData(journaler, tempFile1);
 		
-		Channel fcRoll = new FileChannel(tempFile2).init();
+		Channel fcRoll = new FileChannel(tempFile2).extendDelta(mb(1)).init();
 		journaler.roll(fcRoll, () -> {});
 		testWithData(journaler, tempFile2);
 		
@@ -78,9 +78,9 @@ public class DefaultJournalerTest {
 		// when we call journaler.roll(..), we must to flush all previous data regardless 'endOfBatch' param
 		Assert.assertEquals(file.length(), 0);
 		journaler.writeData(b -> b.writeBytes(new byte[0]), true);
-		Assert.assertEquals(file.length(), mb(10) + 4);
+		Assert.assertEquals(file.length(), mb(10));
 		journaler.writeData(b -> b.writeBytes(new byte[] { 1, 2, 3 }), true);
-		Assert.assertEquals(file.length(), (mb(10) + 4) + (4 + 3));
+		Assert.assertEquals(file.length(), (mb(10) + 3));
 	}
 	
 }

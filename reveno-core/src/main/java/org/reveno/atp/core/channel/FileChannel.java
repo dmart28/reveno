@@ -51,6 +51,7 @@ public class FileChannel implements Channel {
 	@Override
 	public void close() {
 		try {
+			log.info("Closing channel " + file);
 			if (channel().isOpen() && writer.isInitialized()) {
 				if (channelOptions == ChannelOptions.BUFFERING_MMAP_OS) {
 					((MappedByteBuffer)buffer).force();
@@ -99,16 +100,19 @@ public class FileChannel implements Channel {
 		return channel().isOpen();
 	}
 
-	public void channelOptions(ChannelOptions channelOptions) {
+	public FileChannel channelOptions(ChannelOptions channelOptions) {
 		this.channelOptions = channelOptions;
+		return this;
 	}
 
-	public void isPreallocated(boolean isPreallocated) {
+	public FileChannel isPreallocated(boolean isPreallocated) {
 		this.isPreallocated = isPreallocated;
+		return this;
 	}
 
-	public void extendDelta(int extendDelta) {
+	public FileChannel extendDelta(int extendDelta) {
 		this.extendDelta = extendDelta;
+		return this;
 	}
 	
 	public java.nio.channels.FileChannel channel() {
@@ -184,14 +188,14 @@ public class FileChannel implements Channel {
 	protected MappedByteBuffer mmap(long remainSize) {
 		remainSize = bounded(remainSize);
 		try {
-			if (log.isDebugEnabled()) {
-				log.debug("Switch mmap over (pos:{}, size:{})", position, remainSize);
-			}
 			int pos = buffer.position();
 			int offset = revenoBuffer == null || revenoBuffer.sizeMarkPosition() == -1 ? 0 : pos - revenoBuffer.sizeMarkPosition();
-			buffer = channel().map(
-					java.nio.channels.FileChannel.MapMode.READ_WRITE,
-					mmapBufferGeneration + pos - offset, remainSize + offset);
+			long from = mmapBufferGeneration + pos - offset;
+			long to = remainSize + offset;
+			buffer = channel().map(java.nio.channels.FileChannel.MapMode.READ_WRITE, from, to);
+			if (log.isDebugEnabled()) {
+				log.debug("Switch mmap over (from:{}, to:{})", from, to);
+			}
 			buffer.position(offset);
 			mmapBufferGeneration += pos - offset;
 			return (MappedByteBuffer) buffer;

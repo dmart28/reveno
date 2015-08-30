@@ -17,12 +17,11 @@
 package org.reveno.atp.core.channel;
 
 import org.reveno.atp.core.api.channel.Buffer;
-import org.reveno.atp.utils.MathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.util.function.*;
+import java.util.function.Supplier;
 
 import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
 

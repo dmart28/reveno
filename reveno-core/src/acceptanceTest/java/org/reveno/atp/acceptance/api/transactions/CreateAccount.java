@@ -16,7 +16,9 @@
 
 package org.reveno.atp.acceptance.api.transactions;
 
-public class CreateAccount {
+import java.io.Serializable;
+
+public class CreateAccount implements Serializable {
 	public final long id;
 	public final String currency;
 	

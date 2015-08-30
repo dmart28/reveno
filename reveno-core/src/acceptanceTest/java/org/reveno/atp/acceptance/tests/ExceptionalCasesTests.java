@@ -105,7 +105,7 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		if (accs.size() != 0) {
 			Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class, 1);
 			AccountView acc = accs.iterator().next();
-			long orderId = sendCommandSync(reveno, new NewOrderCommand(acc.accountId, Optional.empty(),
+			long orderId = sendCommandSync(reveno, new NewOrderCommand(acc.accountId, null,
 					"TEST/TEST", 134000, 1000, OrderType.MARKET));
 			acc = reveno.query().find(AccountView.class, 1L).get();
 			Assert.assertTrue(acc.orders().stream().filter(o -> o.id == orderId).findFirst().isPresent());

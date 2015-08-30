@@ -18,18 +18,19 @@ package org.reveno.atp.acceptance.api.commands;
 
 import org.reveno.atp.acceptance.model.Order.OrderType;
 
+import java.io.Serializable;
 import java.util.Optional;
 
-public class NewOrderCommand {
+public class NewOrderCommand implements Serializable {
 
 	public final long accountId;
-	public final Optional<Long> positionId;
+	public final Long positionId;
 	public final String symbol;
 	public final long price;
 	public final long size;
 	public final OrderType orderType;
 	
-	public NewOrderCommand(long accountId, Optional<Long> positionId,
+	public NewOrderCommand(long accountId, Long positionId,
 			String symbol, long price, long size, OrderType orderType) {
 		this.accountId = accountId;
 		this.positionId = positionId;

@@ -19,17 +19,12 @@ package org.reveno.atp.utils;
 import org.reveno.atp.api.exceptions.IllegalFileName;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /*
  * File name pattern:
@@ -65,7 +60,7 @@ public abstract class VersionedFileUtils {
 	}
 	
 	public static Optional<String> lastVersionFile(File baseDir, String prefix) {
-		return listFiles(baseDir, prefix, false).stream().reduce((a,b)->b);
+		return listFiles(baseDir, prefix, false).stream().reduce((a, b) -> b);
 	}
 	
 	public static VersionedFile lastVersionedFile(File baseDir, String prefix) {
@@ -92,36 +87,35 @@ public abstract class VersionedFileUtils {
 	}
 	
 	public static List<String> listFolders(File baseDir, String prefix) {
-		try {
-			return Files.list(baseDir.toPath())
-				.map(Path::toFile)
+		return listFiles(baseDir.getAbsolutePath())
 				.filter(File::isDirectory)
 				.map(File::getName)
 				.filter(fn -> fn.startsWith(prefix))
 				.sorted()
 				.collect(Collectors.toList());
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
 	}
 	
 	public static List<String> listFiles(File baseDir, String prefix, boolean listToday) {
-		try {
-			return Files.list(baseDir.toPath())
-				.map(Path::toFile)
+		return listFiles(baseDir.getAbsolutePath())
 				.filter(File::isFile)
 				.map(File::getName)
 				.filter(fn -> fn.startsWith(prefix + (listToday ? "-" + format().format(new Date()) : "")))
 				.sorted()
 				.collect(Collectors.toList());
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
 	}
 	
 	public static List<VersionedFile> listVersioned(File baseDir, String prefix) {
 		return listFiles(baseDir, prefix, false).stream().map(VersionedFileUtils::parseVersionedFile)
 				.sorted(VersionedFileUtils::versionedSorter).collect(Collectors.toList());
+	}
+
+	protected static Stream<File> listFiles(String directory) {
+		List<File> list = new ArrayList<>();
+		File folder = new File(directory);
+		File[] listOfFiles = folder.listFiles();
+
+		Collections.addAll(list, listOfFiles);
+		return list.stream();
 	}
 
 	protected static int versionedSorter(VersionedFile a, VersionedFile b) {

@@ -100,7 +100,6 @@ public class DefaultJournaler implements Journaler {
 	
 	
 	protected void closeSilently(Channel ch) {
-		log.info("Closing channel.");
 		try {
 			ch.close();
 		} catch (Throwable t) {
