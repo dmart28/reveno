@@ -14,7 +14,6 @@
  *  limitations under the License.
  */
 
-
 package org.reveno.atp.api.query;
 
 import it.unimi.dsi.fastutil.longs.LongCollection;
