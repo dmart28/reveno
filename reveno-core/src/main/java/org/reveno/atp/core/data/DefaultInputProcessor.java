@@ -17,7 +17,6 @@
 package org.reveno.atp.core.data;
 
 import org.reveno.atp.api.exceptions.BufferOutOfBoundsException;
-import org.reveno.atp.core.RevenoConfiguration.RevenoJournalingConfiguration;
 import org.reveno.atp.core.api.InputProcessor;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
@@ -63,9 +62,8 @@ public class DefaultInputProcessor implements InputProcessor, Closeable {
 	public void close() {
 	}
 	
-	public DefaultInputProcessor(JournalsStorage storage, RevenoJournalingConfiguration config) {
+	public DefaultInputProcessor(JournalsStorage storage) {
 		this.storage = storage;
-		this.config = config;
 	}
 	
 	
@@ -75,7 +73,6 @@ public class DefaultInputProcessor implements InputProcessor, Closeable {
 	
 	
 	protected JournalsStorage storage;
-	protected RevenoJournalingConfiguration config;
 	protected static final Logger log = LoggerFactory.getLogger(DefaultInputProcessor.class);
 
 }

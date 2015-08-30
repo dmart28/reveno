@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public class DefaultJournaler implements Journaler {
 
@@ -32,8 +31,7 @@ public class DefaultJournaler implements Journaler {
 	public void writeData(Consumer<Buffer> writer, boolean endOfBatch) {
 		requireWriting();
 
-		Channel ch;
-		ch = channel.get();
+		Channel ch = channel.get();
 		ch.write(writer::accept, endOfBatch);
 
 		if (!oldChannel.compareAndSet(ch, ch)) {

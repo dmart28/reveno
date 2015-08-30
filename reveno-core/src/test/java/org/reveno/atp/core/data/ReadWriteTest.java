@@ -89,7 +89,7 @@ public class ReadWriteTest {
 
 		storage.nextStore();
 		CountDownLatch l = new CountDownLatch(totalCount);
-		InputProcessor processor = new DefaultInputProcessor(storage, new RevenoConfiguration.RevenoJournalingConfiguration());
+		InputProcessor processor = new DefaultInputProcessor(storage);
 		processor.process((b) -> {
 			try {
 				while (b.isAvailable()) {

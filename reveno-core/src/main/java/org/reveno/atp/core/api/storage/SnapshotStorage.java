@@ -16,7 +16,6 @@
 
 package org.reveno.atp.core.api.storage;
 
-import org.reveno.atp.api.ChannelOptions;
 import org.reveno.atp.api.RepositorySnapshotter.SnapshotIdentifier;
 import org.reveno.atp.core.api.channel.Channel;
 

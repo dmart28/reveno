@@ -109,7 +109,6 @@ public class InputHandlers {
 	protected final BiConsumer<ProcessorContext, Boolean> journaler = (c, eob) -> {
 		interceptors(TransactionStage.JOURNALING, c);
 
-		// TODO move rolling here
 		rollIfRequired();
 		services.transactionJournaler().writeData(b -> {
 			c.commitInfo().transactionId(c.transactionId()).time(c.time()).transactionCommits(c.getTransactions());

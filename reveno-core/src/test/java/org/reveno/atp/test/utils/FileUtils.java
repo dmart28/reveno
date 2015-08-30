@@ -17,7 +17,6 @@
 package org.reveno.atp.test.utils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public abstract class FileUtils {

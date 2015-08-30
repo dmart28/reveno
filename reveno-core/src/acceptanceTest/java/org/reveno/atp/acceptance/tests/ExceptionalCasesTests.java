@@ -29,7 +29,6 @@ import org.reveno.atp.acceptance.views.OrderView;
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.util.Collection;
-import java.util.Optional;
 
 public class ExceptionalCasesTests extends RevenoBaseTest {
 

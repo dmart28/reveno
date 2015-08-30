@@ -21,8 +21,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.reveno.atp.api.ChannelOptions;
-import org.reveno.atp.core.RevenoConfiguration;
 import org.reveno.atp.core.api.Journaler;
 import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.channel.FileChannel;

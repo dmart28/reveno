@@ -19,7 +19,6 @@ package org.reveno.atp.acceptance.api.commands;
 import org.reveno.atp.acceptance.model.Order.OrderType;
 
 import java.io.Serializable;
-import java.util.Optional;
 
 public class NewOrderCommand implements Serializable {
 
