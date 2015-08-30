@@ -66,8 +66,6 @@ public class DefaultJournalerTest {
 		fcRoll.close();
 	}
 
-	// TODO other tests
-
 	private void testWithData(Journaler journaler, File file) {
 		for (int i = 0; i < 10; i++) {
 			byte[] data = new byte[mb(1)];

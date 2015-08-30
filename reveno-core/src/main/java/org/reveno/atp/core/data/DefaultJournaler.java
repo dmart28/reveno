@@ -33,14 +33,8 @@ public class DefaultJournaler implements Journaler {
 		requireWriting();
 
 		Channel ch;
-		try {
-			rollIfRequired();
-			ch = channel.get();
-			ch.write(writer::accept, endOfBatch);
-		} catch (IndexOutOfBoundsException | IllegalArgumentException e) {
-			journalsRoller.accept(() -> true);
-			return;
-		}
+		ch = channel.get();
+		ch.write(writer::accept, endOfBatch);
 
 		if (!oldChannel.compareAndSet(ch, ch)) {
 			if (oldChannel.get().isOpen())
@@ -52,16 +46,6 @@ public class DefaultJournaler implements Journaler {
 				rolledHandler = null;
 			}
 		}
-	}
-
-	protected void rollIfRequired() {
-		if (isRollRequired(channel.get())) {
-            journalsRoller.accept(() -> isRollRequired(channel.get()));
-        }
-	}
-
-	private boolean isRollRequired(Channel ch) {
-		return isPreallocated && ch.size() - ch.position() <= 0;
 	}
 
 	@Override
@@ -81,6 +65,11 @@ public class DefaultJournaler implements Journaler {
 		closeSilently(channel.get());
 		if (oldChannel.get().isOpen())
 			closeSilently(oldChannel.get());
+	}
+
+	@Override
+	public Channel currentChannel() {
+		return channel.get();
 	}
 
 	@Override
@@ -112,17 +101,6 @@ public class DefaultJournaler implements Journaler {
 			throw new RuntimeException("Journaler must be in writing mode.");
 	}
 
-	public DefaultJournaler() {
-		this(null, false);
-	}
-
-	public DefaultJournaler(Consumer<Supplier<Boolean>> journalsRoller, boolean isPreallocated) {
-		this.journalsRoller = journalsRoller;
-		this.isPreallocated = isPreallocated;
-	}
-
-	protected Consumer<Supplier<Boolean>> journalsRoller;
-	protected boolean isPreallocated;
 	protected AtomicReference<Channel> channel = new AtomicReference<Channel>();
 	protected AtomicReference<Channel> oldChannel = new AtomicReference<Channel>();
 	protected volatile Runnable rolledHandler;

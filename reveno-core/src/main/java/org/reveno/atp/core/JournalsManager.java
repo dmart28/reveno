@@ -122,8 +122,8 @@ public class JournalsManager implements Destroyable {
 	public JournalsManager(JournalsStorage storage, RevenoJournalingConfiguration configuration) {
 		this.storage = storage;
 		this.configuration = configuration;
-		this.transactionsJournaler = new DefaultJournaler(this::roll, configuration.isPreallocated());
-		this.eventsJournaler = new DefaultJournaler(this::roll, configuration.isPreallocated());
+		this.transactionsJournaler = new DefaultJournaler();
+		this.eventsJournaler = new DefaultJournaler();
 	}
 
 	protected volatile boolean isRolling = false;

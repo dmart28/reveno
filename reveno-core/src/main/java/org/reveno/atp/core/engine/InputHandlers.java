@@ -20,6 +20,7 @@ import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.core.api.channel.Buffer;
+import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.channel.ChannelBuffer;
 import org.reveno.atp.core.disruptor.ProcessorContext;
 import org.reveno.atp.core.engine.components.TransactionExecutor;
@@ -109,6 +110,7 @@ public class InputHandlers {
 		interceptors(TransactionStage.JOURNALING, c);
 
 		// TODO move rolling here
+		rollIfRequired();
 		services.transactionJournaler().writeData(b -> {
 			c.commitInfo().transactionId(c.transactionId()).time(c.time()).transactionCommits(c.getTransactions());
 			services.serializer().serialize(c.commitInfo(), b);
@@ -127,6 +129,16 @@ public class InputHandlers {
 		if (!context.isRestore() && services.interceptorCollection().getInterceptors(stage).size() > 0)
 			services.interceptorCollection().getInterceptors(stage).forEach(i -> i.intercept(context.transactionId(),
 					context.time(), services.repository(), stage));
+	}
+
+	protected void rollIfRequired() {
+		if (isRollRequired(services.transactionJournaler().currentChannel())) {
+			services.journalsManager().roll(() -> isRollRequired(services.transactionJournaler().currentChannel()));
+		}
+	}
+
+	protected boolean isRollRequired(Channel ch) {
+		return services.configuration().revenoJournaling().isPreallocated() && ch.size() - ch.position() <= 0;
 	}
 	
 	
