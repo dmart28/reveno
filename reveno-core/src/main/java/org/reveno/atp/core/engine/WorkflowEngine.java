@@ -67,7 +67,7 @@ public class WorkflowEngine {
 		return ++lastTransactionId;
 	}
 	
-	// All failover stuff regulation goes here in future
+	// TODO All failover stuff regulation goes here for #32251622346055
 	
 	protected volatile long lastTransactionId;
 	protected ModelType modelType;

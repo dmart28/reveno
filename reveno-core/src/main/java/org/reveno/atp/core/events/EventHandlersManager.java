@@ -72,5 +72,5 @@ public class EventHandlersManager implements EventsManager {
 	protected Random rand = new Random();
 	protected Map<Class<?>, Set<BiConsumer<Object, EventMetadata>>> listeners = MapUtils.repositorySet();
 	protected Map<Class<?>, Set<BiConsumer<Object, EventMetadata>>> asyncListeners = MapUtils.repositorySet();
-	protected List<ExecutorService> asyncListenersExecutor = Arrays.asList(Executors.newSingleThreadExecutor());
+	protected List<ExecutorService> asyncListenersExecutor = Collections.singletonList(Executors.newSingleThreadExecutor());
 }

@@ -26,6 +26,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 
 public class EventPublisher {
+
+	public static final int ASYNC_ERROR_FLAG = 0xBABECAFE;
+	public static final int SYNC_FLAG = 0xCAFEBABE;
 	
 	protected EventsContext context;
 
@@ -122,7 +125,4 @@ public class EventPublisher {
 	
 	protected PipeProcessor<Event> pipeProcessor;
 	private static final Logger log = LoggerFactory.getLogger(EventPublisher.class);
-	
-	public static final int ASYNC_ERROR_FLAG = 0xBABECAFE;
-	public static final int SYNC_FLAG = 0xCAFEBABE;
 }

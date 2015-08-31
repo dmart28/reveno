@@ -74,7 +74,7 @@ public class InputHandlers {
 				c.future().complete(new EmptyResult(c.abortIssue()));
 			else {
 				if (c.hasResult())
-					c.future().complete(new Result<Object>(c.commandResult()));
+					c.future().complete(new Result<>(c.commandResult()));
 				else
 					c.future().complete(new EmptyResult());
 			}

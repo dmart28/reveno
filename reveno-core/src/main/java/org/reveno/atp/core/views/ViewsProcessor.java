@@ -33,11 +33,7 @@ public class ViewsProcessor {
 	
 	public void process(Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> marked) {
 		repository.marked(marked);
-		marked.forEach((k, v) -> {
-			v.long2ObjectEntrySet().forEach(e -> {
-				map(k, e.getLongKey(), e.getValue());
-			});
-		});
+		marked.forEach((k, v) -> v.long2ObjectEntrySet().forEach(e -> map(k, e.getLongKey(), e.getValue())));
 	}
 	
 	@SuppressWarnings("unchecked")

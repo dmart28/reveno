@@ -74,6 +74,6 @@ public class DisruptorEventPipeProcessor extends DisruptorPipeProcessor<Event> {
 	protected final CpuConsumption cpuConsumption;
 	protected final int bufferSize;
 	protected final ExecutorService executor;
-	protected static final EventFactory<Event> eventFactory = () -> new Event();
+	protected static final EventFactory<Event> eventFactory = Event::new;
 	
 }
