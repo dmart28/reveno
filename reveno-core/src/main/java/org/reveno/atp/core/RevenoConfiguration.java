@@ -43,29 +43,40 @@ public class RevenoConfiguration implements Configuration {
 	public JournalingConfiguration journaling() {
 		return journaling;
 	}
+
+	@Override
+	public Configuration mutableModel() {
+		this.modelType = ModelType.MUTABLE;
+		return this;
+	}
+
+	@Override
+	public Configuration immutableModel() {
+		this.modelType = ModelType.IMMUTABLE;
+		return this;
+	}
+
+	public ModelType modelType() {
+		return modelType;
+	}
+
 	public RevenoJournalingConfiguration revenoJournaling() {
 		return journaling;
 	}
 
 	@Override
-	public void mutableModelFailover(MutableModelFailover mutableModelFailover) {
+	public Configuration mutableModelFailover(MutableModelFailover mutableModelFailover) {
 		this.mutableModelFailover = mutableModelFailover;
+		return this;
 	}
 	public MutableModelFailover mutableModelFailover() {
 		return mutableModelFailover;
 	}
 
 	@Override
-	public void modelType(ModelType modelType) {
-		this.modelType = modelType;
-	}
-	public ModelType modelType() {
-		return modelType;
-	}
-
-	@Override
-	public void cpuConsumption(CpuConsumption cpuConsumption) {
+	public Configuration cpuConsumption(CpuConsumption cpuConsumption) {
 		this.cpuConsumption = cpuConsumption;
+		return this;
 	}
 
     public CpuConsumption cpuConsumption() {
@@ -83,16 +94,18 @@ public class RevenoConfiguration implements Configuration {
 	public static class RevenoSnapshotConfiguration implements SnapshotConfiguration {
 
 		@Override
-		public void snapshotAtShutdown(boolean takeSnapshot) {
+		public SnapshotConfiguration snapshotAtShutdown(boolean takeSnapshot) {
 			this.snapshotAtShutdown = takeSnapshot;
+			return this;
 		}
 		public boolean snapshotAtShutdown() {
 			return snapshotAtShutdown;
 		}
 
 		@Override
-		public void snapshotEvery(long transactionCount) {
+		public SnapshotConfiguration snapshotEvery(long transactionCount) {
 			this.snapshotEvery = transactionCount;
+			return this;
 		}
 		public long snapshotEvery() {
 			return snapshotEvery;
@@ -106,11 +119,12 @@ public class RevenoConfiguration implements Configuration {
 	public static class RevenoDisruptorConfiguration implements DisruptorConfiguration {
 
 		@Override
-		public void bufferSize(int bufferSize) {
+		public DisruptorConfiguration bufferSize(int bufferSize) {
 			if (Integer.bitCount(bufferSize) != 1) {
 				throw new IllegalArgumentException("Disruptor buffer size must be of power of 2.");
 			}
 			this.bufferSize = bufferSize;
+			return this;
 		}
 		public int bufferSize() {
 			return bufferSize;
@@ -123,19 +137,21 @@ public class RevenoConfiguration implements Configuration {
 	public static class RevenoJournalingConfiguration implements JournalingConfiguration {
 
 		@Override
-		public void maxObjectSize(int size) {
+		public JournalingConfiguration maxObjectSize(int size) {
 			if (maxObjectSize < MIN_MAX_OBJECT_SIZE)
 				throw new IllegalArgumentException(String.format("Max object size can't be less than %s bytes.", MIN_MAX_OBJECT_SIZE));
 			this.maxObjectSize = size;
+			return this;
 		}
 		public int maxObjectSize() {
 			return maxObjectSize;
 		}
 
 		@Override
-		public void preallocationSize(long txSize, long eventsSize) {
+		public JournalingConfiguration preallocationSize(long txSize, long eventsSize) {
 			this.txSize = txSize;
 			this.eventsSize = eventsSize;
+			return this;
 		}
 		public long txSize() {
 			return txSize;
@@ -148,24 +164,27 @@ public class RevenoConfiguration implements Configuration {
 		}
 
 		@Override
-		public void volumes(int volumes) {
+		public JournalingConfiguration volumes(int volumes) {
 			this.volumes = volumes;
+			return this;
 		}
 		public int volumes() {
 			return volumes;
 		}
 
 		@Override
-		public void minVolumes(int volumes) {
+		public JournalingConfiguration minVolumes(int volumes) {
 			this.minVolumes = volumes;
+			return this;
 		}
 		public int minVolumes() {
 			return minVolumes;
 		}
 
 		@Override
-		public void channelOptions(ChannelOptions options) {
+		public JournalingConfiguration channelOptions(ChannelOptions options) {
 			this.channelOptions = options;
+			return this;
 		}
 		public ChannelOptions channelOptions() {
 			return channelOptions;

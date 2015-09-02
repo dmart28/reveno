@@ -4,7 +4,6 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import org.junit.Assert;
 import org.junit.Test;
-import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.dynamic.DynamicCommand;
 import org.reveno.atp.utils.MapUtils;
 
@@ -18,7 +17,7 @@ public class DslViewsTests extends RevenoBaseTest {
 	@Test
 	public void dynamicViewCreationTest() throws Exception {
 		TestRevenoEngine reveno = new TestRevenoEngine(tempDir);
-		reveno.config().modelType(ModelType.MUTABLE);
+		reveno.config().mutableModel();
 		
 		DynamicCommand createPage = reveno.domain().transaction("createPage", (tx, ctx) -> {
 		    ctx.repository().store(tx.id(), new Page(tx.arg()));
@@ -66,7 +65,7 @@ public class DslViewsTests extends RevenoBaseTest {
 	@Test
 	public void onDemandViewTest() {
 		TestRevenoEngine reveno = new TestRevenoEngine(tempDir);
-		reveno.config().modelType(ModelType.MUTABLE);
+		reveno.config().mutableModel();
 		
 		DynamicCommand create = reveno.domain().transaction("create", (tx, ctx) -> {
 			ctx.repository().store(tx.id(Page.class), new Page("test", tx.id(Link.class)));
@@ -105,8 +104,8 @@ public class DslViewsTests extends RevenoBaseTest {
 	
 	public void dslTest(Function<TestRevenoEngine, DynamicCommand> f) throws Exception {
 		TestRevenoEngine reveno = new TestRevenoEngine(tempDir);
-		
-		reveno.config().modelType(ModelType.MUTABLE);
+
+		reveno.config().mutableModel();
 		DynamicCommand createPage = f.apply(reveno);
 		reveno.domain().viewMapper(Page.class, PageView.class, (id,e,r) -> new PageView(id, e.name));
 		
@@ -120,7 +119,7 @@ public class DslViewsTests extends RevenoBaseTest {
 		reveno.shutdown();
 		
 		reveno = new TestRevenoEngine(tempDir);
-		reveno.config().modelType(ModelType.MUTABLE);
+		reveno.config().mutableModel();
 		createPage = f.apply(reveno);
 		reveno.domain().viewMapper(Page.class, PageView.class, (id,e,r) -> new PageView(id, e.name));
 		

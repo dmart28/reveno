@@ -24,35 +24,37 @@ public interface Configuration {
 
 	JournalingConfiguration journaling();
 
-	
-	void modelType(ModelType modelType);
-	
-	void mutableModelFailover(MutableModelFailover mutableModelFailover);
-	
-	void cpuConsumption(CpuConsumption cpuConsumption);
+
+	Configuration mutableModel();
+
+	Configuration immutableModel();
+
+	Configuration mutableModelFailover(MutableModelFailover mutableModelFailover);
+
+	Configuration cpuConsumption(CpuConsumption cpuConsumption);
 	
     
 	public static interface SnapshotConfiguration {
-		void snapshotAtShutdown(boolean takeSnapshot);
-		
-		void snapshotEvery(long transactionCount);
+		SnapshotConfiguration snapshotAtShutdown(boolean takeSnapshot);
+
+		SnapshotConfiguration snapshotEvery(long transactionCount);
 	}
 	
 	public static interface DisruptorConfiguration {
-		void bufferSize(int bufferSize);
+		DisruptorConfiguration bufferSize(int bufferSize);
 	}
 
 	public static interface JournalingConfiguration {
 
-		void maxObjectSize(int size);
+		JournalingConfiguration maxObjectSize(int size);
 
-		void preallocationSize(long txSize, long eventsSize);
+		JournalingConfiguration preallocationSize(long txSize, long eventsSize);
 
-		void volumes(int volumes);
+		JournalingConfiguration volumes(int volumes);
 
-		void minVolumes(int volumes);
+		JournalingConfiguration minVolumes(int volumes);
 
-		void channelOptions(ChannelOptions options);
+		JournalingConfiguration channelOptions(ChannelOptions options);
 
 	}
 	
@@ -61,5 +63,13 @@ public interface Configuration {
 	public static enum MutableModelFailover { SNAPSHOTS, COMPENSATING_ACTIONS}
 	
 	public static enum CpuConsumption { LOW, NORMAL, HIGH, PHASED }
+
+
+	default void modelType(ModelType modelType) {
+		switch (modelType) {
+			case MUTABLE: mutableModel(); break;
+			case IMMUTABLE: immutableModel(); break;
+		}
+	}
 	
 }

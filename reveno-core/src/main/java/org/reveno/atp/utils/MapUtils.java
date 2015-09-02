@@ -34,7 +34,7 @@ public abstract class MapUtils {
 			throw new IllegalArgumentException("Input map should contain even count of arguments.");
 		}
 		
-		Map<String, Object> map = new HashMap<>();
+		Map<String, Object> map = new LinkedHashMap<>();
 		
 		for (int i = 0; i < objs.length; i += 2) {
 			map.put((String) objs[i], objs[i + 1]);

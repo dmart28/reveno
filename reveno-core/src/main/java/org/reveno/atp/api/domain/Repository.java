@@ -64,5 +64,10 @@ public interface Repository {
 	 * @return
 	 */
 	Set<Class<?>> getEntityTypes();
+
+
+	default <T> T forceGet(Class<T> entityType, long id) {
+		return get(entityType, id).get();
+	}
 	
 }

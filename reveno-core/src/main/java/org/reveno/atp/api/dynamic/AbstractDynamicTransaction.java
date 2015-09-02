@@ -37,6 +37,18 @@ public class AbstractDynamicTransaction {
 	public <T> T arg(String name) {
 		return (T) args.get(name);
 	}
+
+	public long longArg(String name) {
+		return (long) args.get(name);
+	}
+
+	public long intArg(String name) {
+		return (int) args.get(name);
+	}
+
+	public boolean bool(String name) {
+		return (boolean) args.get(name);
+	}
 	
 	public long id() {
 		return ids.values().iterator().nextLong();

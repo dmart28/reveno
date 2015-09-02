@@ -27,5 +27,9 @@ public interface TransactionContext {
 	WriteableRepository repository();
 	
 	Map<Object, Object> data();
+
+	default WriteableRepository repo() {
+		return repository();
+	}
 	
 }

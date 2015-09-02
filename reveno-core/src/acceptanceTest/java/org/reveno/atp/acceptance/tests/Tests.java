@@ -342,8 +342,7 @@ public class Tests extends RevenoBaseTest {
 		
 		Repository[] repo = new Repository[1];
 		Consumer<TestRevenoEngine> consumer = r -> {
-			r.config().modelType(ModelType.MUTABLE);
-			r.config().mutableModelFailover(MutableModelFailover.COMPENSATING_ACTIONS);
+			r.config().mutableModel().mutableModelFailover(MutableModelFailover.COMPENSATING_ACTIONS);
 			r.domain().transactionWithCompensatingAction(CreateAccount.class, Transactions::createAccount, RollbackTransactions::rollbackCreateAccount);
 			r.domain().transactionWithCompensatingAction(AcceptOrder.class, Transactions::acceptOrder, RollbackTransactions::rollbackAcceptOrder);
 			r.domain().transactionWithCompensatingAction(Credit.class, Transactions::credit, RollbackTransactions::rollbackCredit);
