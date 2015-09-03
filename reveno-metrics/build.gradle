@@ -1,4 +1,5 @@
 apply plugin: 'osgi'
+apply plugin: 'maven-publish'
 
 dependencies {
   compile project(":reveno-core")
@@ -6,9 +7,9 @@ dependencies {
 
 jar {
   manifest {
-    name = 'org.reveno.reveno-core'
+    name = 'org.reveno.reveno-metrics'
     instruction 'Bundle-Vendor', 'Reveno'
-    instruction 'Bundle-Description', 'Reveno: Event-Sourced transaction processing framework'
+    instruction 'Bundle-Description', 'Reveno Metrics: Collection of metrics tools'
     instruction 'Bundle-DocURL', 'http://reveno.org'
   }
 }
@@ -16,4 +17,23 @@ task fooJar(type: Jar) {
   manifest = osgiManifest {
     instruction 'Bundle-Vendor', 'Reveno'
   }
+}
+
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+						groupId 'org.reveno'
+						artifactId 'reveno-metrics'
+						version "$revenoVersion"
+            from components.java
+
+            artifact sourceJar {
+                classifier "sources"
+            }
+        }
+    }
 }

@@ -5,7 +5,7 @@ allprojects {
 	apply plugin: "maven"
 
 	group = 'org.reveno'
-	version = '0.1.0'
+	version = "$revenoVersion"
 
 	repositories {
 		mavenLocal()
