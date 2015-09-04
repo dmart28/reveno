@@ -42,12 +42,24 @@ public class AbstractDynamicTransaction {
 		return (long) args.get(name);
 	}
 
-	public long intArg(String name) {
+	public long longArg() {
+		return (long) arg();
+	}
+
+	public int intArg(String name) {
 		return (int) args.get(name);
+	}
+
+	public int intArg() {
+		return (int) arg();
 	}
 
 	public boolean bool(String name) {
 		return (boolean) args.get(name);
+	}
+
+	public boolean bool() {
+		return (boolean) arg();
 	}
 	
 	public long id() {
