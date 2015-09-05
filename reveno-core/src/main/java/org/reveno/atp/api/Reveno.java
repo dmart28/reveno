@@ -141,5 +141,9 @@ public interface Reveno {
 	<R> CompletableFuture<Result<? extends R>> execute(DynamicCommand command, Map<String, Object> args);
 	
 	<R> R executeSync(DynamicCommand command, Map<String, Object> args);
+
+	<R> R executeSync(String command, Map<String, Object> args);
+
+	<R> CompletableFuture<Result<? extends R>> execute(String command, Map<String, Object> args);
 	
 }

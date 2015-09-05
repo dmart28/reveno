@@ -294,11 +294,32 @@ public class Engine implements Reveno {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
+	@Override
+	public <R> R executeSync(String command, Map<String, Object> args) {
+		Optional<DynamicCommand> dc = getDynamicCommand(command);
+		return executeSync(dc.get(), args);
+	}
+
+	@Override
+	public <R> CompletableFuture<Result<? extends R>> execute(String command, Map<String, Object> args) {
+		Optional<DynamicCommand> dc = getDynamicCommand(command);
+		return execute(dc.get(), args);
+	}
+
 	public InterceptorCollection interceptors() {
 		return interceptors;
 	}
-	
+
+	protected Optional<DynamicCommand> getDynamicCommand(String command) {
+		Optional<DynamicCommand> dc = DirectTransactionBuilder.loadExistedCommand(command, classLoader);
+		if (!dc.isPresent()) {
+			throw new IllegalArgumentException(String.format("Command %s can't be found! Make sure it was registered" +
+					" by domain().transaction(..).command() call!", command));
+		}
+		return dc;
+	}
+
 	protected void checkIsStarted() {
 		if (!isStarted)
 			throw new IllegalStateException("The Engine must be started first.");

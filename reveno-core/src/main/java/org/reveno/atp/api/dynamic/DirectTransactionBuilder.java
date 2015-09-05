@@ -23,6 +23,8 @@ import org.reveno.atp.api.transaction.TransactionContext;
 import org.reveno.atp.core.engine.components.CommandsManager;
 import org.reveno.atp.core.engine.components.SerializersChain;
 import org.reveno.atp.core.engine.components.TransactionsManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -90,7 +92,7 @@ public class DirectTransactionBuilder {
 	public DynamicCommand command() {
 		init();
 		
-		commandsManager.register((Class<AbstractDynamicCommand>) dynamicCommand, Object.class, (a, b) -> {
+		commandsManager.register(dynamicCommand, Object.class, (a, b) -> {
 			Object result = null;
 			if (commandInterceptor.isPresent()) {
 				result = commandInterceptor.get().apply(a, b);
@@ -118,6 +120,17 @@ public class DirectTransactionBuilder {
 		
 		return new DynamicCommand(dynamicCommand, dynamicTransaction);
 	}
+
+	public static Optional<DynamicCommand> loadExistedCommand(String name, ClassLoader classLoader) {
+		try {
+			Class<? extends AbstractDynamicCommand> c = (Class<? extends AbstractDynamicCommand>) classLoader.loadClass(PACKAGE + COMMAND_NAME_PREFIX + name);
+			Class<? extends AbstractDynamicTransaction> t = (Class<? extends AbstractDynamicTransaction>) classLoader.loadClass(PACKAGE + TRANSACTION_NAME_PREFIX + name);
+			return Optional.of(new DynamicCommand(c, t));
+		} catch (ClassNotFoundException e) {
+			log.error(e.getMessage(), e);
+			return Optional.empty();
+		}
+	}
 	
 	protected String name;
 	protected Set<Class<?>> entityTypes = new HashSet<>();
@@ -132,5 +145,7 @@ public class DirectTransactionBuilder {
 	protected TransactionsManager transactionsManager;
 	protected CommandsManager commandsManager;
 	protected ClassLoader classLoader;
+
+	protected static final Logger log = LoggerFactory.getLogger(DirectTransactionBuilder.class);
 	
 }
