@@ -1,0 +1,9 @@
+subprojects {
+	apply plugin: "java"
+	apply plugin: "idea"
+
+	dependencies {
+		compile project(":reveno-core")
+	}
+}
+

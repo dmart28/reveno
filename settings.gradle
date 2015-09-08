@@ -1,3 +1,4 @@
 include 'reveno-core'
 include 'reveno-cluster'
 include 'reveno-metrics'
+include 'examples:simple-banking-account'

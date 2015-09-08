@@ -271,6 +271,9 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage,
 	}
 
 	public FileSystemStorage(File baseDir, RevenoJournalingConfiguration config) {
+		if (!baseDir.exists()) {
+			baseDir.mkdirs();
+		}
 		this.baseDir = baseDir;
 		this.config = config;
 	}
