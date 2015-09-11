@@ -424,7 +424,7 @@ public class Tests extends RevenoBaseTest {
 		Consumer<TestRevenoEngine> consumer = r -> {
 			r.config().journaling().minVolumes(1);
 			r.config().journaling().volumes(10);
-			r.config().journaling().preallocationSize(txSize, 500_000L);
+			r.config().journaling().volumesSize(txSize, 500_000L);
 			r.config().journaling().channelOptions(channelOptions);
 			if (javaSerializer) {
 				r.domain().serializeWith(Collections.singletonList(new DefaultJavaSerializer()));

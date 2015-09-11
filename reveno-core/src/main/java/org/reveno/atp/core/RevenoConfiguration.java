@@ -148,7 +148,7 @@ public class RevenoConfiguration implements Configuration {
 		}
 
 		@Override
-		public JournalingConfiguration preallocationSize(long txSize, long eventsSize) {
+		public JournalingConfiguration volumesSize(long txSize, long eventsSize) {
 			this.txSize = txSize;
 			this.eventsSize = eventsSize;
 			return this;

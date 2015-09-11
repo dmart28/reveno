@@ -48,7 +48,7 @@ public interface Configuration {
 
 		JournalingConfiguration maxObjectSize(int size);
 
-		JournalingConfiguration preallocationSize(long txSize, long eventsSize);
+		JournalingConfiguration volumesSize(long txSize, long eventsSize);
 
 		JournalingConfiguration volumes(int volumes);
 
