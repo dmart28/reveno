@@ -94,20 +94,20 @@ public class RevenoConfiguration implements Configuration {
 	public static class RevenoSnapshotConfiguration implements SnapshotConfiguration {
 
 		@Override
-		public SnapshotConfiguration snapshotAtShutdown(boolean takeSnapshot) {
+		public SnapshotConfiguration atShutdown(boolean takeSnapshot) {
 			this.snapshotAtShutdown = takeSnapshot;
 			return this;
 		}
-		public boolean snapshotAtShutdown() {
+		public boolean atShutdown() {
 			return snapshotAtShutdown;
 		}
 
 		@Override
-		public SnapshotConfiguration snapshotEvery(long transactionCount) {
+		public SnapshotConfiguration every(long transactionCount) {
 			this.snapshotEvery = transactionCount;
 			return this;
 		}
-		public long snapshotEvery() {
+		public long every() {
 			return snapshotEvery;
 		}
 		

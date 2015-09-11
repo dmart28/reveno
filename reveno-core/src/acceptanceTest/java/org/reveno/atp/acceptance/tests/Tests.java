@@ -214,7 +214,7 @@ public class Tests extends RevenoBaseTest {
 	@Test
 	public void testShutdownSnapshotting() throws Exception {
 		Reveno reveno = createEngine();
-		reveno.config().snapshotting().snapshotAtShutdown(true);
+		reveno.config().snapshotting().atShutdown(true);
 		reveno.startup();
 		
 		generateAndSendCommands(reveno, 10_000);
@@ -252,8 +252,8 @@ public class Tests extends RevenoBaseTest {
 				.andRestoreWithIt();
 		};
 		Reveno reveno = createEngine(consumer);
-		reveno.config().snapshotting().snapshotAtShutdown(false);
-		reveno.config().snapshotting().snapshotEvery(1002);
+		reveno.config().snapshotting().atShutdown(false);
+		reveno.config().snapshotting().every(1002);
 		reveno.startup();
 		
 		generateAndSendCommands(reveno, 10_005);

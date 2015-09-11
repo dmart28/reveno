@@ -35,9 +35,9 @@ public interface Configuration {
 	
     
 	public static interface SnapshotConfiguration {
-		SnapshotConfiguration snapshotAtShutdown(boolean takeSnapshot);
+		SnapshotConfiguration atShutdown(boolean takeSnapshot);
 
-		SnapshotConfiguration snapshotEvery(long transactionCount);
+		SnapshotConfiguration every(long transactionCount);
 	}
 	
 	public static interface DisruptorConfiguration {

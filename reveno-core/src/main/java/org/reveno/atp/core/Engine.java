@@ -153,7 +153,7 @@ public class Engine implements Reveno {
 		
 		snapshotterIntervalExecutor.shutdown();
 		
-		if (config.revenoSnapshotting().snapshotAtShutdown()) {
+		if (config.revenoSnapshotting().atShutdown()) {
 			log.info("Preforming shutdown snapshotting...");
 			snapshotAll();
 		}
@@ -360,7 +360,7 @@ public class Engine implements Reveno {
 	
 	protected void connectSystemHandlers() {
 		domain().transactionAction(NextIdTransaction.class, idGenerator);
-		if (config.revenoSnapshotting().snapshotEvery() != -1) {
+		if (config.revenoSnapshotting().every() != -1) {
 			TransactionInterceptor nTimeSnapshotter = new SnapshottingInterceptor(config, snapshotsManager, snapshotStorage,
 					journalsManager, repositorySerializer);
 			interceptors.add(TransactionStage.TRANSACTION, nTimeSnapshotter);
