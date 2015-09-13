@@ -29,7 +29,7 @@ public interface TransactionPipeProcessor<T extends Destroyable> extends PipePro
 
 	CompletableFuture<EmptyResult> process(List<Object> commands);
 	
-	<R> CompletableFuture<Result<? extends R>> execute(Object command);
+	<R> CompletableFuture<Result<R>> execute(Object command);
 	
 	void executeRestore(RestoreableEventBus eventBus, TransactionCommitInfo transaction);
 	

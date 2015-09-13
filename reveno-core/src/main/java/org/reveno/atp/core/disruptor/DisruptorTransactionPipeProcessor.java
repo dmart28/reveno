@@ -87,7 +87,7 @@ public class DisruptorTransactionPipeProcessor extends DisruptorPipeProcessor<Pr
 	}
 
 	@Override
-	public <R> CompletableFuture<Result<? extends R>> execute(Object command) {
+	public <R> CompletableFuture<Result<R>> execute(Object command) {
 		return process((e,f) -> e.reset().future(f).addCommand(command).time(System.nanoTime()).withResult());
 	}
 	

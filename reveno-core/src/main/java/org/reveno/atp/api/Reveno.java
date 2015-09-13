@@ -126,7 +126,7 @@ public interface Reveno {
 	 * @return Future representing the state of command execution. Can contain some result of an operation, as well as
 	 * indicator of success and optional throwable object in case if failure.
 	 */
-	<R> CompletableFuture<Result<? extends R>> executeCommand(Object command);
+	<R> CompletableFuture<Result<R>> executeCommand(Object command);
 	
 	/**
 	 * Same as {@link #executeCommand(Object)}, but allows to execute a batch of 
@@ -138,12 +138,12 @@ public interface Reveno {
 	 */
 	CompletableFuture<EmptyResult> performCommands(List<Object> commands);
 	
-	<R> CompletableFuture<Result<? extends R>> execute(DynamicCommand command, Map<String, Object> args);
+	<R> CompletableFuture<Result<R>> execute(DynamicCommand command, Map<String, Object> args);
 	
 	<R> R executeSync(DynamicCommand command, Map<String, Object> args);
 
 	<R> R executeSync(String command, Map<String, Object> args);
 
-	<R> CompletableFuture<Result<? extends R>> execute(String command, Map<String, Object> args);
+	<R> CompletableFuture<Result<R>> execute(String command, Map<String, Object> args);
 	
 }

@@ -37,12 +37,12 @@ public class TestEngineStarts {
 		engine.startup();
 		
 		Assert.assertFalse(engine.query().find(LastCalculatedView.class, 1).isPresent());
-		Result<Double> r = (Result<Double>) engine.executeCommand(new SqrtCommand(16)).get();
+		Result<Double> r = engine.<Double>executeCommand(new SqrtCommand(16)).get();
 		Assert.assertTrue(r.isSuccess());
 		Assert.assertEquals(r.getResult(), 4, 0.001);
 		Assert.assertTrue(engine.query().find(LastCalculatedView.class, 1).isPresent());
 		Assert.assertEquals(4, engine.query().find(LastCalculatedView.class, 1).get().sqrt, 0.001);
-		
+
 		engine.shutdown();
 		
 		System.out.println("Restart ...");
