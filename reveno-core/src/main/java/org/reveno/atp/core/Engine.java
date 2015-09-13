@@ -258,7 +258,7 @@ public class Engine implements Reveno {
 	}
 
 	@Override
-	public <R> CompletableFuture<Result<? extends R>> executeCommand(Object command) {
+	public <R> CompletableFuture<Result<R>> executeCommand(Object command) {
 		checkIsStarted();
 		
 		return workflowEngine.getPipe().execute(command);
@@ -272,7 +272,7 @@ public class Engine implements Reveno {
 	}
 	
 	@Override
-	public <R> CompletableFuture<Result<? extends R>> execute(DynamicCommand command, Map<String, Object> args) {
+	public <R> CompletableFuture<Result<R>> execute(DynamicCommand command, Map<String, Object> args) {
 		try {
 			return executeCommand(command.newCommand(args));
 		} catch (InstantiationException | IllegalAccessException e) {
@@ -302,7 +302,7 @@ public class Engine implements Reveno {
 	}
 
 	@Override
-	public <R> CompletableFuture<Result<? extends R>> execute(String command, Map<String, Object> args) {
+	public <R> CompletableFuture<Result<R>> execute(String command, Map<String, Object> args) {
 		Optional<DynamicCommand> dc = getDynamicCommand(command);
 		return execute(dc.get(), args);
 	}
