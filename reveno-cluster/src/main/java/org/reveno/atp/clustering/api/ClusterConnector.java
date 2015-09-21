@@ -18,18 +18,38 @@ package org.reveno.atp.clustering.api;
 
 import org.reveno.atp.clustering.api.message.Message;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public interface ClusterConnector {
 
-	CompletableFuture<Boolean> send(List<NodeAddress> dest, Message message);
-	
-	CompletableFuture<Boolean> send(List<NodeAddress> dest, Message message, Set<Flag> flags);
-	
-	
-	void receive(Consumer<Message> consumer);
-	
+	CompletableFuture<Boolean> send(List<Address> dest, Message message);
+
+	CompletableFuture<Boolean> send(List<Address> dest, Message message, Set<Flag> flags);
+
+
+	<T extends Message> void receive(int type, Consumer<T> consumer);
+
+	<T extends Message> void receive(int type, Function<T, Boolean> filter, Consumer<T> consumer);
+
+	<T extends Message> void unsubscribe(int type, Consumer<T> consumer);
+
+
+	default Set<Flag> rsvp() {
+		HashSet<Flag> flags = new HashSet<>();
+		flags.add(Flag.RSVP);
+		return flags;
+	}
+
+	default Set<Flag> oob() {
+		HashSet<Flag> flags = new HashSet<>();
+		flags.add(Flag.OUT_OF_BOUND);
+		return flags;
+	}
+
 }

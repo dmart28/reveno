@@ -15,15 +15,17 @@
 
 package org.reveno.atp.clustering.api.message;
 
-import org.reveno.atp.clustering.api.NodeAddress;
+import org.reveno.atp.clustering.api.Address;
 
 public abstract class Message {
 
-    private transient NodeAddress address;
-    public NodeAddress address() {
+    public abstract int type();
+
+    private transient Address address;
+    public Address address() {
         return address;
     }
-    public Message address(NodeAddress address) {
+    public Message address(Address address) {
         this.address = address;
         return this;
     }

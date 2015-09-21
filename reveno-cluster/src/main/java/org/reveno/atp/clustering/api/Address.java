@@ -16,24 +16,21 @@
 
 package org.reveno.atp.clustering.api;
 
-public class InetNodeAddress extends NodeAddress {
-	
-	private int port;
-	public int getPort() {
-		return port;
+public class Address {
+
+	private String connectionString;
+	public String getConnectionString() {
+		return connectionString;
 	}
 	
-	private String host;
-	public String getHost() {
-		return host;
+	private IOMode addressType;
+	public IOMode getAddressType() {
+		return addressType;
 	}
 	
-	public InetNodeAddress(String connectionString, NodeAddressType addressType) {
-		super(connectionString, addressType);
-		
-		String[] vals = connectionString.split(":");
-		this.host = vals[0];
-		this.port = Integer.parseInt(vals[1]);
+	public Address(String connectionString, IOMode addressType) {
+		this.connectionString = connectionString;
+		this.addressType = addressType;
 	}
 	
 }

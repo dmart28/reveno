@@ -25,12 +25,12 @@ public class ClusterView {
 		return viewId;
 	}
 	
-	private final List<NodeAddress> members;
-	public List<NodeAddress> members() {
+	private final List<Address> members;
+	public List<Address> members() {
 		return members;
 	}
 	
-	public ClusterView(long viewId, List<NodeAddress> members) {
+	public ClusterView(long viewId, List<Address> members) {
 		this.viewId = viewId;
 		this.members = members;
 	}

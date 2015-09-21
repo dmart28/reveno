@@ -30,10 +30,10 @@ public interface Cluster {
 	
 	boolean isConnected();
 	
-	ClusterConnector pipeline();
+	ClusterConnector gateway();
 	
 	void marshallWith(Class<? extends Message> msgType, Marshaller marshaller);
-	
+
 	void listenEvents(Consumer<ClusterEvent> consumer);
 	
 	ClusterView view();

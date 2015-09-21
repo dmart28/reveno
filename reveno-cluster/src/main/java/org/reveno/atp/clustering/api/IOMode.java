@@ -16,6 +16,10 @@
 
 package org.reveno.atp.clustering.api;
 
-public enum NodeAddressType {
+/**
+ * Used to denote, in which mode failover will happen
+ * on particular node: either sync or async.
+ */
+public enum IOMode {
 	SYNC, ASYNC
 }
