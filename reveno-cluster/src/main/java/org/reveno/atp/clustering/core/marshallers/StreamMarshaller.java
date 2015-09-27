@@ -7,8 +7,8 @@ import org.reveno.atp.core.api.channel.Buffer;
 public class StreamMarshaller implements Marshaller {
 
     @Override
-    public Buffer marshall(Message message) {
-        return null;
+    public void marshall(Buffer buffer, Message message) {
+
     }
 
     @Override

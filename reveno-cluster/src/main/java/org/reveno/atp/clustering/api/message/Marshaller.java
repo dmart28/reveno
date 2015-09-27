@@ -19,7 +19,7 @@ import org.reveno.atp.core.api.channel.Buffer;
 
 public interface Marshaller {
 
-    Buffer marshall(Message message);
+    void marshall(Buffer buffer, Message message);
 
     Message unmarshall(Buffer buffer);
 

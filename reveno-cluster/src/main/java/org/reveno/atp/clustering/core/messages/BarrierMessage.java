@@ -10,7 +10,7 @@ public class BarrierMessage extends Message {
         return TYPE;
     }
 
-    public String id;
+    public final String id;
 
     public BarrierMessage(String id) {
         this.id = id;

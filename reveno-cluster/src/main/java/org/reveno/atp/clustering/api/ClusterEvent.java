@@ -17,7 +17,5 @@
 package org.reveno.atp.clustering.api;
 
 public enum ClusterEvent {
-
 	CONNECTED, DISCONNECTED, MEMBERSHIP_CHANGED, CLOSED
-	
 }

@@ -16,6 +16,7 @@
 
 package org.reveno.atp.clustering.api;
 
+import java.util.Collections;
 import java.util.List;
 
 public class ClusterView {
@@ -27,7 +28,7 @@ public class ClusterView {
 	
 	private final List<Address> members;
 	public List<Address> members() {
-		return members;
+		return Collections.unmodifiableList(members);
 	}
 	
 	public ClusterView(long viewId, List<Address> members) {

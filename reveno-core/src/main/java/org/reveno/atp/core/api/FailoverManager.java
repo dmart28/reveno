@@ -34,7 +34,7 @@ public interface FailoverManager {
 	void addOnUnblocked(Runnable handler);
 	
 	
-	boolean replicate(Buffer buffer);
+	boolean replicate(Consumer<Buffer> bufferWriter);
 	
 	void processPendingMessages();
 }

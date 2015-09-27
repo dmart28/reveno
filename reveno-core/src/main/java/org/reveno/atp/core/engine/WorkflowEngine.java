@@ -58,7 +58,11 @@ public class WorkflowEngine {
 	public TransactionPipeProcessor<ProcessorContext> getPipe() {
 		return inputProcessor;
 	}
-	
+
+	public long getLastTransactionId() {
+		return lastTransactionId;
+	}
+
 	public void setLastTransactionId(long lastTransactionId) {
 		this.lastTransactionId = lastTransactionId;
 	}

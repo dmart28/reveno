@@ -380,6 +380,10 @@ public class Engine implements Reveno {
 		snapshotsManager.getAll().forEach(s -> s.snapshot(repository.getData(), s.prepare()));
 	}
 
+	protected FailoverManager failoverManager() {
+		return new UnclusteredFailoverManager();
+	}
+
 	protected volatile boolean isStarted = false;
 	protected TxRepository repository;
 	protected SerializersChain serializer;
