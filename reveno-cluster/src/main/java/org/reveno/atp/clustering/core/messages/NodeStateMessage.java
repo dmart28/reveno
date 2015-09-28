@@ -2,9 +2,9 @@ package org.reveno.atp.clustering.core.messages;
 
 import org.reveno.atp.clustering.api.message.Message;
 
-public class VoteAck extends Message {
+public class NodeStateMessage extends Message {
 
-    public static final int TYPE = 0xD3;
+    public static final int TYPE = 0xC5;
 
     @Override
     public int type() {
@@ -12,19 +12,21 @@ public class VoteAck extends Message {
     }
 
     public long viewId;
+    public long transactionId;
 
     @Override
     public String toString() {
-        return "VoteAck{" +
+        return "NodeStateMessage{" +
                 "viewId=" + viewId +
+                ", transactionId=" + transactionId +
                 '}';
     }
 
-    public VoteAck(long viewId) {
+    public NodeStateMessage(long viewId, long transactionId) {
         this.viewId = viewId;
+        this.transactionId = transactionId;
     }
 
-    public VoteAck() {
+    public NodeStateMessage() {
     }
-
 }

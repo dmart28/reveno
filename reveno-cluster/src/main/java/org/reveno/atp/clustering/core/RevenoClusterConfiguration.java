@@ -52,6 +52,24 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
     public void priority(int priority) {
         this.priority = priority;
     }
+
+    @Override
+    public void syncMode(SyncMode mode) {
+        this.syncMode = mode;
+    }
+
+    @Override
+    public void syncThreadPoolSize(int threads) {
+        this.syncThreadPoolSize = threads;
+    }
+    public int syncThreadPoolSize() {
+        return syncThreadPoolSize;
+    }
+
+    public SyncMode syncMode() {
+        return syncMode;
+    }
+
     public int priority() {
         return priority;
     }
@@ -62,6 +80,8 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
     protected int syncRetries = 100;
     protected int priority = 1;
     protected String authToken;
+    protected SyncMode syncMode = SyncMode.SNAPSHOT;
+    protected int syncThreadPoolSize = 10;
     protected RevenoTimeoutsConfiguration timeouts = new RevenoTimeoutsConfiguration();
 
     public static class RevenoTimeoutsConfiguration implements TimeoutsConfiguration {

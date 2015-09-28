@@ -4,16 +4,19 @@ import org.reveno.atp.clustering.api.message.Message;
 
 public class BarrierPassed extends Message {
 
-    public static final int TYPE = 0x2;
+    public static final int TYPE = 0xB2;
 
     public int type() {
         return TYPE;
     }
 
-    public final String id;
+    public String id;
 
     public BarrierPassed(String id) {
         this.id = id;
+    }
+
+    public BarrierPassed() {
     }
 
 }

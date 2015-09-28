@@ -5,7 +5,9 @@ import org.reveno.atp.clustering.api.Cluster;
 import org.reveno.atp.clustering.api.ClusterView;
 import org.reveno.atp.clustering.api.message.Message;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
-import org.reveno.atp.clustering.core.api.MasterSlaveElector;
+import org.reveno.atp.clustering.core.api.ClusterExecutor;
+import org.reveno.atp.clustering.core.api.ElectionResult;
+import org.reveno.atp.clustering.core.api.MessagesReceiver;
 import org.reveno.atp.clustering.core.messages.VoteAck;
 import org.reveno.atp.clustering.core.messages.VoteMessage;
 import org.reveno.atp.clustering.util.Utils;
@@ -17,16 +19,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class MessagingMasterSlaveElector implements MasterSlaveElector {
-
-    public MessagingMasterSlaveElector(Cluster cluster, RevenoClusterConfiguration config) {
-        this.cluster = cluster;
-        this.config = config;
-    }
+public class MessagingMasterSlaveElector implements ClusterExecutor<ElectionResult>, MessagesReceiver {
 
     @Override
-    public ElectionResult vote(ClusterView currentView) {
-        LOG.trace("Vote [view: {}]", currentView.viewId());
+    public ElectionResult execute(ClusterView currentView) {
+        LOG.info("Vote [view: {}]", currentView.viewId());
 
         List<VoteMessage> answers = sendVoteNotifications(currentView);
         if (answers.size() == 0 || !allAcked(currentView)) {
@@ -62,7 +59,7 @@ public class MessagingMasterSlaveElector implements MasterSlaveElector {
             LOG.trace("Vote aborted [view: {}]", currentView.viewId());
             return new ElectionResult(false, true);
         } else {
-            return vote(currentView);
+            return execute(currentView);
         }
     }
 
@@ -71,8 +68,7 @@ public class MessagingMasterSlaveElector implements MasterSlaveElector {
         return Utils.waitFor(() -> acks.values().containsAll(view.members()) && acks.entrySet()
                         .stream()
                         .filter(kv -> view.members().contains(kv.getKey()))
-                        .map(Map.Entry::getValue)
-                        .collect(Collectors.groupingBy(o -> o, Collectors.counting())).size() == 1,
+                        .filter(kv -> view.viewId() == kv.getValue()).count() == view.members().size(),
                 config.revenoTimeouts().ackTimeout());
     }
 
@@ -95,6 +91,11 @@ public class MessagingMasterSlaveElector implements MasterSlaveElector {
 
     protected boolean isAllSamePriority(List<VoteMessage> answers) {
         return answers.stream().collect(Collectors.groupingBy(o -> o.priority, Collectors.counting())).size() != answers.size();
+    }
+
+    public MessagingMasterSlaveElector(Cluster cluster, RevenoClusterConfiguration config) {
+        this.cluster = cluster;
+        this.config = config;
     }
 
     protected Cluster cluster;

@@ -39,7 +39,7 @@ public class ClusterEngine extends Engine {
         init();
         connectSystemHandlers();
 
-
+        // TODO don't forget about quorum logic!
     }
 
     @Override

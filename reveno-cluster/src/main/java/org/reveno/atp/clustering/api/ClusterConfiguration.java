@@ -16,6 +16,10 @@ public interface ClusterConfiguration {
 
     void priority(int priority);
 
+    void syncMode(SyncMode mode);
+
+    void syncThreadPoolSize(int threads);
+
 
     interface TimeoutsConfiguration {
         void voteTimeout(long timeout);
@@ -23,6 +27,20 @@ public interface ClusterConfiguration {
         void syncTimeout(long timeout);
 
         void ackTimeout(long timeout);
+    }
+
+    enum SyncMode {
+        SNAPSHOT((byte) 1), JOURNALS((byte) 2);
+
+        protected byte type;
+
+        public byte getType() {
+            return type;
+        }
+
+        SyncMode(byte type) {
+            this.type = type;
+        }
     }
 
 }
