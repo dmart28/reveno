@@ -2,6 +2,8 @@ package org.reveno.atp.clustering.core;
 
 import org.reveno.atp.clustering.api.Address;
 import org.reveno.atp.clustering.api.ClusterConfiguration;
+import org.reveno.atp.clustering.api.InetAddress;
+import org.reveno.atp.clustering.api.SyncMode;
 
 import java.util.Collections;
 import java.util.List;
@@ -11,6 +13,9 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
     @Override
     public void currentNodeAddress(Address nodeAddress) {
         this.nodeAddress = nodeAddress;
+        if (sync.port == 0 && nodeAddress instanceof InetAddress) {
+            sync.port = ((InetAddress) nodeAddress).getPort() + 1;
+        }
     }
     public Address currentNodeAddress() {
         return nodeAddress;
@@ -28,16 +33,17 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
     public TimeoutsConfiguration timeouts() {
         return timeouts;
     }
-    public RevenoTimeoutsConfiguration revenoTimeouts() {
-        return timeouts;
-    }
 
     @Override
-    public void syncRetries(int count) {
-        this.syncRetries = count;
+    public SyncConfiguration sync() {
+        return sync;
     }
-    public int syncRetries() {
-        return syncRetries;
+    public RevenoSyncConfiguration revenoSync() {
+        return sync;
+    }
+
+    public RevenoTimeoutsConfiguration revenoTimeouts() {
+        return timeouts;
     }
 
     @Override
@@ -52,24 +58,6 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
     public void priority(int priority) {
         this.priority = priority;
     }
-
-    @Override
-    public void syncMode(SyncMode mode) {
-        this.syncMode = mode;
-    }
-
-    @Override
-    public void syncThreadPoolSize(int threads) {
-        this.syncThreadPoolSize = threads;
-    }
-    public int syncThreadPoolSize() {
-        return syncThreadPoolSize;
-    }
-
-    public SyncMode syncMode() {
-        return syncMode;
-    }
-
     public int priority() {
         return priority;
     }
@@ -77,12 +65,10 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
 
     protected Address nodeAddress;
     protected List<Address> nodeAddresses;
-    protected int syncRetries = 100;
     protected int priority = 1;
     protected String authToken;
-    protected SyncMode syncMode = SyncMode.SNAPSHOT;
-    protected int syncThreadPoolSize = 10;
     protected RevenoTimeoutsConfiguration timeouts = new RevenoTimeoutsConfiguration();
+    protected RevenoSyncConfiguration sync = new RevenoSyncConfiguration();
 
     public static class RevenoTimeoutsConfiguration implements TimeoutsConfiguration {
         @Override
@@ -112,5 +98,54 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
         protected long voteTimeout = 1000;
         protected long syncTimeout = 1000;
         protected long ackTimeout = 1000;
+    }
+
+    public static class RevenoSyncConfiguration implements SyncConfiguration {
+
+        @Override
+        public void mode(SyncMode mode) {
+            this.mode = mode;
+        }
+        public SyncMode mode() {
+            return mode;
+        }
+
+        @Override
+        public void port(int port) {
+            this.port = port;
+        }
+        public int port() {
+            return port;
+        }
+
+        @Override
+        public void waitAllNodesSync(boolean wait) {
+            this.waitAllNodesSync = wait;
+        }
+        public boolean waitAllNodesSync() {
+            return waitAllNodesSync;
+        }
+
+        @Override
+        public void retries(int count) {
+            this.retries = count;
+        }
+        public int retries() {
+            return retries;
+        }
+
+        @Override
+        public void threadPoolSize(int threads) {
+            this.threadPoolSize = threads;
+        }
+        public int threadPoolSize() {
+            return threadPoolSize;
+        }
+
+        protected int threadPoolSize = 10;
+        protected int retries = 100;
+        protected SyncMode mode = SyncMode.SNAPSHOT;
+        protected int port;
+        protected boolean waitAllNodesSync = false;
     }
 }

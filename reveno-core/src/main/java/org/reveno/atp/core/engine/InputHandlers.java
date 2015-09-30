@@ -109,7 +109,7 @@ public class InputHandlers {
 	protected final BiConsumer<ProcessorContext, Boolean> journaler = (c, eob) -> {
 		interceptors(TransactionStage.JOURNALING, c);
 
-		rollIfRequired();
+		rollIfRequired(c.transactionId());
 		services.transactionJournaler().writeData(b -> {
 			c.commitInfo().transactionId(c.transactionId()).time(c.time()).transactionCommits(c.getTransactions());
 			services.serializer().serialize(c.commitInfo(), b);
@@ -130,9 +130,9 @@ public class InputHandlers {
 					context.time(), services.repository(), stage));
 	}
 
-	protected void rollIfRequired() {
+	protected void rollIfRequired(long transactionId) {
 		if (isRollRequired(services.transactionJournaler().currentChannel())) {
-			services.journalsManager().roll(() -> isRollRequired(services.transactionJournaler().currentChannel()));
+			services.journalsManager().roll(transactionId, () -> isRollRequired(services.transactionJournaler().currentChannel()));
 		}
 	}
 

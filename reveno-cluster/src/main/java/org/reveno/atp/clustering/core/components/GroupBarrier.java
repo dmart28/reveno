@@ -59,7 +59,7 @@ public class GroupBarrier {
         try {
             barrier.awaitNanos(WAIT_TIMEOUT);
         } catch (InterruptedException e) {
-            Exceptions.runtime(e);
+            throw Exceptions.runtime(e);
         }
         if (!isSynced())
             came = Optional.of(false);

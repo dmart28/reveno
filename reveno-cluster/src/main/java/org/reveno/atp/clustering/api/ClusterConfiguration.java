@@ -10,15 +10,11 @@ public interface ClusterConfiguration {
 
     TimeoutsConfiguration timeouts();
 
-    void syncRetries(int count);
+    SyncConfiguration sync();
 
     void authToken(String authToken);
 
     void priority(int priority);
-
-    void syncMode(SyncMode mode);
-
-    void syncThreadPoolSize(int threads);
 
 
     interface TimeoutsConfiguration {
@@ -29,18 +25,16 @@ public interface ClusterConfiguration {
         void ackTimeout(long timeout);
     }
 
-    enum SyncMode {
-        SNAPSHOT((byte) 1), JOURNALS((byte) 2);
+    interface SyncConfiguration {
+        void mode(SyncMode mode);
 
-        protected byte type;
+        void threadPoolSize(int threads);
 
-        public byte getType() {
-            return type;
-        }
+        void retries(int count);
 
-        SyncMode(byte type) {
-            this.type = type;
-        }
+        void port(int port);
+
+        void waitAllNodesSync(boolean wait);
     }
 
 }

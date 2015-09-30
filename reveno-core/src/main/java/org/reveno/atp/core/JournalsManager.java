@@ -31,19 +31,19 @@ import java.util.stream.IntStream;
 
 public class JournalsManager implements Destroyable {
 
-	public void roll() {
-		roll(() -> {}, () -> true);
+	public void roll(long lastTransactionId) {
+		roll(lastTransactionId, () -> {}, () -> true);
 	}
 
-	public void roll(Runnable completed) {
-		roll(completed, () -> true);
+	public void roll(long lastTransactionId, Runnable completed) {
+		roll(lastTransactionId, completed, () -> true);
 	}
 
-	public void roll(Supplier<Boolean> condition) {
-		roll(() -> {}, condition);
+	public void roll(long lastTransactionId, Supplier<Boolean> condition) {
+		roll(lastTransactionId, () -> {}, condition);
 	}
 
-	public synchronized void roll(Runnable completed, Supplier<Boolean> condition) {
+	public synchronized void roll(long lastTransactionId, Runnable completed, Supplier<Boolean> condition) {
 		log.debug("Trying to roll to next store.");
 		isRolling = true;
 
@@ -56,13 +56,13 @@ public class JournalsManager implements Destroyable {
 
 			if (configuration.isPreallocated() && configuration.volumes() > 0 && storage.getVolumes().length == 0) {
 				IntStream.range(0, configuration.volumes()).forEach(i -> allocateNewVolume(true));
-				roll(completed);
+				roll(lastTransactionId, completed);
 				return;
 			} else if (configuration.isPreallocated() && configuration.volumes() > 0) {
 				allocateNewVolumeIfRequired();
-				store = storage.convertVolumeToStore(storage.getVolumes()[0]);
+				store = storage.convertVolumeToStore(storage.getVolumes()[0], lastTransactionId);
 			} else {
-				store = storage.nextStore();
+				store = storage.nextStore(lastTransactionId);
 			}
 			eventsJournaler.roll(storage.channel(store.getEventsCommitsAddress()), () -> {});
 			transactionsJournaler.roll(storage.channel(store.getTransactionCommitsAddress()), completed);

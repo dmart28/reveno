@@ -24,6 +24,7 @@ import org.reveno.atp.core.events.EventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
@@ -89,7 +90,7 @@ public class RestorerEventBus implements RestoreableEventBus {
 			return;
 		}
 		if (event.getTransactionId() <= lastTransactionId && event.getFlag() == 0) {
-			log.warn("Transaction ID < Last Transaction ID - this is abnormal [{};{}]!", event.getTransactionId(), lastTransactionId);
+			log.warn("Transaction ID < Last Transaction ID - this is abnormal [{};{}]", event.getTransactionId(), lastTransactionId);
 			addMissedEvents(event);
 		} else if (event.getTransactionId() - lastTransactionId > 1) {
 			log.info("Missing transaction events from {} to {}", lastTransactionId + 1, event.getTransactionId() - 1);
@@ -108,9 +109,7 @@ public class RestorerEventBus implements RestoreableEventBus {
 			if (!range.higher(event.getTransactionId())) {
 				if (range.contains(event.getTransactionId())) {
 					i.remove();
-					for (LongRange subRange : range.split(event.getTransactionId())) {
-						toAdd.add(subRange);
-					}
+					Collections.addAll(toAdd, range.split(event.getTransactionId()));
 					break;
 				}
 			}
@@ -131,6 +130,6 @@ public class RestorerEventBus implements RestoreableEventBus {
 	protected EventBus underlyingEventBus;
 	protected long currentTransactionId = -1L;
 	protected long lastTransactionId = -1L, maxTransactionId = -1L;
-	protected TreeSet<LongRange> unpublishedEvents = new TreeSet<LongRange>();
+	protected TreeSet<LongRange> unpublishedEvents = new TreeSet<>();
 	protected static final Logger log = LoggerFactory.getLogger(RestorerEventBus.class);
 }

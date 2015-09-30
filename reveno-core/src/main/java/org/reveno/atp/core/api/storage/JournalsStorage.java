@@ -22,6 +22,8 @@ public interface JournalsStorage {
 
 	Channel channel(String address);
 
+	JournalStore[] getAllStores();
+
 	JournalStore[] getLastStores();
 
 	JournalStore[] getVolumes();
@@ -32,11 +34,20 @@ public interface JournalsStorage {
 
 	JournalStore nextStore();
 
+	JournalStore nextStore(long lastTxId);
+
 	JournalStore nextVolume(long txSize, long eventsSize);
 
 	JournalStore convertVolumeToStore(JournalStore volume);
 
-	public static class JournalStore implements Comparable<JournalStore> {
+	JournalStore convertVolumeToStore(JournalStore volume, long lastTxId);
+
+	class JournalStore implements Comparable<JournalStore> {
+
+		private final long lastTransactionId;
+		public long getLastTransactionId() {
+			return lastTransactionId;
+		}
 
 		private final String transactionCommitsAddress;
 		public String getTransactionCommitsAddress() {
@@ -54,10 +65,11 @@ public interface JournalsStorage {
 		}
 
 		public JournalStore(String transactionCommitsAddress,
-				String eventsCommitsAddress, String storeVersion) {
+				String eventsCommitsAddress, String storeVersion, long lastTransactionId) {
 			this.transactionCommitsAddress = transactionCommitsAddress;
 			this.eventsCommitsAddress = eventsCommitsAddress;
 			this.storeVersion = storeVersion;
+			this.lastTransactionId = lastTransactionId;
 		}
 
 		@Override

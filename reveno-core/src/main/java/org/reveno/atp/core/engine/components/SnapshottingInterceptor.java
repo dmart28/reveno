@@ -75,7 +75,7 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 						asyncSnapshot(snapshotsImmutable.get(transactionId));
 						snapshotsImmutable.remove(transactionId);
 					}
-					journalsManager.roll();
+					journalsManager.roll(transactionId);
 				}
 			}
 	}

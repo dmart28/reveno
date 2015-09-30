@@ -120,14 +120,14 @@ public class Engine implements Reveno {
 		
 		init();
 		connectSystemHandlers();
-
-		journalsManager.roll();
 		
 		eventPublisher.getPipe().start();
 		workflowEngine.init();
 		viewsProcessor.process(repository);
 		workflowEngine.setLastTransactionId(restorer.restore(repository).getLastTransactionId());
-		
+
+		journalsManager.roll(workflowEngine.getLastTransactionId());
+
 		workflowEngine.getPipe().sync();
 		eventPublisher.getPipe().sync();
 		
@@ -139,7 +139,7 @@ public class Engine implements Reveno {
 	public void shutdown() {
 		log.info("Shutting down engine.");
 		isStarted = false;
-		
+
 		workflowEngine.shutdown();
 		eventPublisher.getPipe().shutdown();
 		
@@ -148,7 +148,7 @@ public class Engine implements Reveno {
 		interceptors.getInterceptors(TransactionStage.TRANSACTION).forEach(TransactionInterceptor::destroy);
 
 		journalsManager.destroy();
-		
+
 		eventsManager.close();
 		
 		snapshotterIntervalExecutor.shutdown();
@@ -375,7 +375,7 @@ public class Engine implements Reveno {
 		}
 		return null;
 	}
-	
+
 	protected void snapshotAll() {
 		snapshotsManager.getAll().forEach(s -> s.snapshot(repository.getData(), s.prepare()));
 	}
