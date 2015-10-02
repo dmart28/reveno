@@ -22,6 +22,7 @@ import org.reveno.atp.core.api.storage.FoldersStorage;
 import org.reveno.atp.core.api.storage.JournalsStorage;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
 import org.reveno.atp.core.channel.FileChannel;
+import org.reveno.atp.utils.Exceptions;
 import org.reveno.atp.utils.UnsafeUtils;
 import org.reveno.atp.utils.VersionedFileUtils.*;
 import org.slf4j.Logger;
@@ -30,15 +31,14 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.file.DirectoryIteratorException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.reveno.atp.utils.VersionedFileUtils.*;
 
@@ -118,13 +118,22 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 	}
 
 	@Override
-	public void mergeStores() {
-		// TODO implement
+	public void mergeStores(JournalStore[] stores, JournalStore to) {
+		merge(Arrays.stream(stores).map(JournalStore::getEventsCommitsAddress), to.getEventsCommitsAddress());
+		merge(Arrays.stream(stores).map(JournalStore::getTransactionCommitsAddress), to.getTransactionCommitsAddress());
 	}
 
 	@Override
 	public void deleteOldStores() {
 		// TODO implement
+	}
+
+	@Override
+	public JournalStore nextTempStore() {
+		VersionedFile txFile = parseVersionedFile(nextVersionFile(baseDir, "temp" + Math.random() + "_" + TRANSACTION_PREFIX, 0));
+		VersionedFile evnFile = parseVersionedFile(nextVersionFile(baseDir, "temp" + Math.random() + "_" + EVENTS_PREFIX, 0));
+
+		return store(txFile, evnFile);
 	}
 
 	@Override
@@ -229,6 +238,25 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 		return baseDir;
 	}
 
+	protected void merge(Stream<String> fromStream, String to) {
+		try {
+			final java.nio.channels.FileChannel dest = new RandomAccessFile(new File(baseDir, to), "rw").getChannel();
+			final long[] offset = { 0 };
+			fromStream.forEach(f -> { try {
+				java.nio.channels.FileChannel from = new RandomAccessFile(new File(baseDir, f), "rw").getChannel();
+				dest.transferFrom(from, offset[0], from.size());
+				offset[0] += from.size();
+				from.close();
+				new File(baseDir, f).delete();
+			} catch (Throwable e) {
+			    throw Exceptions.runtime(e);
+			}});
+			dest.close();
+		} catch (Throwable e) {
+			throw Exceptions.runtime(e);
+		}
+	}
+
 	protected JournalStore[] getJournalStores(List<VersionedFile> txs, List<VersionedFile> evns) {
 		LOG.debug("evns: " + evns.size() + ", txs: " + txs.size());
 		List<JournalStore> collect = txs.stream().map(tx -> evns.stream()
@@ -272,7 +300,7 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 		}
 		long lastTxId = 0L;
 		if (txFile.getRest().length > 0) {
-			lastTxId = Long.parseLong(txFile.getRest()[1]);
+			lastTxId = Long.parseLong(txFile.getRest()[0]);
 		} else if (txFile.getRest().length != evnFile.getRest().length) {
 			throw new IllegalArgumentException("Transaction and Event file names are not equal!");
 		}
@@ -289,7 +317,7 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 			LOG.info("Preallocating finished.");
 			raf.close();
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw Exceptions.runtime(e);
 		}
 	}
 

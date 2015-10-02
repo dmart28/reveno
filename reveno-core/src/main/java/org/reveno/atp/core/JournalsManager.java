@@ -31,19 +31,36 @@ import java.util.stream.IntStream;
 
 public class JournalsManager implements Destroyable {
 
+	public synchronized JournalStore rollTemp() {
+		isRolling = true;
+		try {
+			JournalStore temp = storage.nextTempStore();
+			eventsJournaler.roll(storage.channel(temp.getEventsCommitsAddress()), () -> {});
+			transactionsJournaler.roll(storage.channel(temp.getTransactionCommitsAddress()), () -> {});
+			return temp;
+		} finally {
+			isRolling = false;
+		}
+	}
+
+	public void rollFrom(JournalStore temp, long transactionId) {
+		roll(transactionId, () -> {}, () -> true, temp);
+	}
+
 	public void roll(long lastTransactionId) {
-		roll(lastTransactionId, () -> {}, () -> true);
+		roll(lastTransactionId, () -> {}, () -> true, null);
 	}
 
 	public void roll(long lastTransactionId, Runnable completed) {
-		roll(lastTransactionId, completed, () -> true);
+		roll(lastTransactionId, completed, () -> true, null);
 	}
 
 	public void roll(long lastTransactionId, Supplier<Boolean> condition) {
-		roll(lastTransactionId, () -> {}, condition);
+		roll(lastTransactionId, () -> {}, condition, null);
 	}
 
-	public synchronized void roll(long lastTransactionId, Runnable completed, Supplier<Boolean> condition) {
+	public synchronized void roll(long lastTransactionId, Runnable completed, Supplier<Boolean> condition,
+								  JournalStore mergeFrom) {
 		log.debug("Trying to roll to next store.");
 		isRolling = true;
 
@@ -63,6 +80,13 @@ public class JournalsManager implements Destroyable {
 				store = storage.convertVolumeToStore(storage.getVolumes()[0], lastTransactionId);
 			} else {
 				store = storage.nextStore(lastTransactionId);
+			}
+
+			if (mergeFrom != null) {
+				eventsJournaler.stopWriting();
+				transactionsJournaler.stopWriting();
+
+				storage.mergeStores(new JournalStore[] { mergeFrom }, store);
 			}
 			eventsJournaler.roll(storage.channel(store.getEventsCommitsAddress()), () -> {});
 			transactionsJournaler.roll(storage.channel(store.getTransactionCommitsAddress()), completed);
@@ -134,5 +158,4 @@ public class JournalsManager implements Destroyable {
 	protected ExecutorService executor = Executors.newSingleThreadExecutor();
 
 	protected static final Logger log = LoggerFactory.getLogger(JournalsManager.class);
-
 }

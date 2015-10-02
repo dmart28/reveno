@@ -146,7 +146,7 @@ public abstract class VersionedFileUtils {
 
 	protected static String[] produceRest(String[] parts) {
 		String[] rest = new String[parts.length - 3];
-		System.arraycopy(parts, 2, rest, 0, parts.length - 3);
+		System.arraycopy(parts, 3, rest, 0, parts.length - 3);
 		return rest;
 	}
 	

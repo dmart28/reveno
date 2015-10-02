@@ -65,6 +65,11 @@ public class FileStorageTransferServer {
         });
     }
 
+    public void shutdown() {
+        mainListener.shutdown();
+        executor.shutdown();
+    }
+
     protected void transfer(SocketChannel conn, String path) {
         try {
             File file = new File(storage.getBaseDir(), path);
@@ -125,11 +130,6 @@ public class FileStorageTransferServer {
             }
         }
         return selected;
-    }
-
-    public void shutdown() {
-        mainListener.shutdown();
-        executor.shutdown();
     }
 
 

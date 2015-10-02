@@ -267,7 +267,7 @@ public class Tests extends RevenoBaseTest {
 		
 		reveno = createEngine(consumer);
 		reveno.startup();
-		
+
 		Assert.assertEquals(10_005, reveno.query().select(AccountView.class).size());
 		Assert.assertEquals(10_005, reveno.query().select(OrderView.class).size());
 		

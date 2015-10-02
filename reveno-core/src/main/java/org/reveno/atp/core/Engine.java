@@ -120,16 +120,18 @@ public class Engine implements Reveno {
 		
 		init();
 		connectSystemHandlers();
-		
+
+		JournalsStorage.JournalStore temp = journalsManager.rollTemp();
+
 		eventPublisher.getPipe().start();
 		workflowEngine.init();
 		viewsProcessor.process(repository);
 		workflowEngine.setLastTransactionId(restorer.restore(repository).getLastTransactionId());
 
-		journalsManager.roll(workflowEngine.getLastTransactionId());
-
 		workflowEngine.getPipe().sync();
 		eventPublisher.getPipe().sync();
+
+		journalsManager.rollFrom(temp, workflowEngine.getLastTransactionId());
 		
 		log.info("Engine is started.");
 		isStarted = true;
@@ -376,6 +378,10 @@ public class Engine implements Reveno {
 		return null;
 	}
 
+	/**
+	 * Since it is very unsecure to obtain Repository data out of transaction workflow,
+	 * this method should be used *only* when engine is stopped.
+	 */
 	protected void snapshotAll() {
 		snapshotsManager.getAll().forEach(s -> s.snapshot(repository.getData(), s.prepare()));
 	}

@@ -25,6 +25,7 @@ import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.core.JournalsManager;
 import org.reveno.atp.core.RevenoConfiguration;
+import org.reveno.atp.core.api.SystemInfo;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
@@ -34,10 +35,7 @@ import org.reveno.atp.core.snapshots.SnapshottersManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -70,9 +68,10 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 						buffer.release();
 						snapshotsMutable.remove(transactionId);
 
-						asyncSnapshot(data);
+						asyncSnapshot(data, transactionId);
 					} else {
-						asyncSnapshot(snapshotsImmutable.get(transactionId));
+						RepositoryData data = snapshotsImmutable.get(transactionId);
+						asyncSnapshot(data, transactionId);
 						snapshotsImmutable.remove(transactionId);
 					}
 					journalsManager.roll(transactionId);
@@ -92,7 +91,8 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 		}
 	}
 
-	private void asyncSnapshot(RepositoryData data) {
+	private void asyncSnapshot(RepositoryData data, long transactionId) {
+		data.data.computeIfAbsent(SystemInfo.class, k -> new HashMap<>()).put(0L, new SystemInfo(transactionId));
 		final Collection<RepositorySnapshotter> snaps = snapshotsManager.getAll();
 		// TODO optimise!
 		final List<SnapshotIdentifier> ids = snaps.stream()
@@ -100,8 +100,8 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 				.collect(Collectors.toList());
 		executor.submit(() -> {
 			int count = 0;
-			for (Iterator<RepositorySnapshotter> i = snaps.iterator(); i.hasNext();) {
-				i.next().snapshot(data, ids.get(count++));
+			for (RepositorySnapshotter snap : snaps) {
+				snap.snapshot(data, ids.get(count++));
 			}
 		});
 	}

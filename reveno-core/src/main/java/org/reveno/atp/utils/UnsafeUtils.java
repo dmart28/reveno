@@ -50,9 +50,11 @@ public abstract class UnsafeUtils {
 
 			cleanerMethod.setAccessible(true);
 			Object cleaner = cleanerMethod.invoke(toBeDestroyed);
-			Method cleanMethod = cleaner.getClass().getMethod("clean");
-			cleanMethod.setAccessible(true);
-			cleanMethod.invoke(cleaner);
+			if (cleaner != null) {
+				Method cleanMethod = cleaner.getClass().getMethod("clean");
+				cleanMethod.setAccessible(true);
+				cleanMethod.invoke(cleaner);
+			}
 		} catch (NoSuchMethodException | SecurityException
 				| IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException e) {
