@@ -115,9 +115,9 @@ public class RevenoBaseTest {
 	protected TestRevenoEngine createEngine(Consumer<TestRevenoEngine> consumer, boolean meter) {
 		TestRevenoEngine reveno = new TestRevenoEngine(tempDir);
 		
-		reveno.config().cpuConsumption(CpuConsumption.HIGH);
+		reveno.config().cpuConsumption(CpuConsumption.LOW);
 		reveno.config().modelType(modelType);
-		reveno.config().journaling().channelOptions(ChannelOptions.UNBUFFERED_IO);
+		reveno.config().journaling().channelOptions(ChannelOptions.BUFFERING_OS);
 		
 		reveno.domain().command(CreateNewAccountCommand.class, Long.class, Commands::createAccount);
 		reveno.domain().command(NewOrderCommand.class, Long.class, Commands::newOrder);
