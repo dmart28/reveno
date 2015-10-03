@@ -32,10 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -119,8 +116,10 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 
 	@Override
 	public void mergeStores(JournalStore[] stores, JournalStore to) {
-		merge(Arrays.stream(stores).map(JournalStore::getEventsCommitsAddress), to.getEventsCommitsAddress());
-		merge(Arrays.stream(stores).map(JournalStore::getTransactionCommitsAddress), to.getTransactionCommitsAddress());
+		merge(Arrays.stream(stores).map(JournalStore::getEventsCommitsAddress).collect(Collectors.toList()),
+				to.getEventsCommitsAddress());
+		merge(Arrays.stream(stores).map(JournalStore::getTransactionCommitsAddress).collect(Collectors.toList()),
+				to.getTransactionCommitsAddress());
 	}
 
 	@Override
@@ -131,8 +130,8 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 
 	@Override
 	public JournalStore nextTempStore() {
-		VersionedFile txFile = parseVersionedFile(nextVersionFile(baseDir, "temp" + Math.random() + "_" + TRANSACTION_PREFIX, 0));
-		VersionedFile evnFile = parseVersionedFile(nextVersionFile(baseDir, "temp" + Math.random() + "_" + EVENTS_PREFIX, 0));
+		VersionedFile txFile = parseVersionedFile(nextVersionFile(baseDir, "tmp_" + TRANSACTION_PREFIX, 0));
+		VersionedFile evnFile = parseVersionedFile(nextVersionFile(baseDir, "tmp_" + EVENTS_PREFIX, 0));
 
 		return store(txFile, evnFile);
 	}
@@ -239,22 +238,28 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 		return baseDir;
 	}
 
-	protected void merge(Stream<String> fromStream, String to) {
-		try {
-			final java.nio.channels.FileChannel dest = new RandomAccessFile(new File(baseDir, to), "rw").getChannel();
-			final long[] offset = { 0 };
-			fromStream.forEach(f -> { try {
-				java.nio.channels.FileChannel from = new RandomAccessFile(new File(baseDir, f), "rw").getChannel();
-				dest.transferFrom(from, offset[0], from.size());
-				offset[0] += from.size();
-				from.close();
-				new File(baseDir, f).delete();
+	protected void merge(List<String> fromStream, String to) {
+		if (fromStream.size() == 1) {
+			new File(baseDir, fromStream.get(0)).renameTo(new File(baseDir, to));
+		} else {
+			try {
+				final java.nio.channels.FileChannel dest = new RandomAccessFile(new File(baseDir, to), "rw").getChannel();
+				final long[] offset = {0};
+				fromStream.forEach(f -> {
+					try {
+						java.nio.channels.FileChannel from = new RandomAccessFile(new File(baseDir, f), "rw").getChannel();
+						dest.transferFrom(from, offset[0], from.size());
+						offset[0] += from.size();
+						from.close();
+						new File(baseDir, f).delete();
+					} catch (Throwable e) {
+						throw Exceptions.runtime(e);
+					}
+				});
+				dest.close();
 			} catch (Throwable e) {
-			    throw Exceptions.runtime(e);
-			}});
-			dest.close();
-		} catch (Throwable e) {
-			throw Exceptions.runtime(e);
+				throw Exceptions.runtime(e);
+			}
 		}
 	}
 

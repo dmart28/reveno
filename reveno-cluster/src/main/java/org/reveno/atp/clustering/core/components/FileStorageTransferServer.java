@@ -37,38 +37,42 @@ public class FileStorageTransferServer {
             }
             LOG.debug("Transfer Server is started on {}", listenAddr);
             while (!Thread.interrupted()) {
-                SocketChannel conn = accept(listener);
-                try {
-                    ByteBuffer buffer = ByteBuffer.allocate(10);
-                    if (waitForData(conn, buffer)) {
-                        buffer.rewind();
-                        SyncMode syncMode = SyncMode.get(buffer.get());
-                        if (syncMode == SyncMode.SNAPSHOT) {
-                            transfer(conn, storage.getLastSnapshotStore().getSnapshotPath());
-                        } else {
-                            byte transferType = buffer.get();
-                            if (transferType != StorageTransferModelSync.TRANSACTIONS
-                                    && transferType != StorageTransferModelSync.EVENTS) {
-                                throw new IllegalArgumentException(String.format("Unknown transfer type %s", transferType));
-                            }
-                            long transactionId = buffer.getLong();
-                            select(transactionId).stream().map(s -> {
-                                if (transferType == StorageTransferModelSync.TRANSACTIONS) return s.getTransactionCommitsAddress();
-                                else return s.getEventsCommitsAddress();
-                            }).forEach(a -> transfer(conn, a));
-                        }
-                    } else {
-                        LOG.debug("Can't receive data from {}", conn.getRemoteAddress());
-                    }
-                } catch (IOException e) {
-                    LOG.error("SYNC: Failed to accept incoming connection", e);
-                    break;
-                } finally {
-                    LOG.info("Closing transfer server connection.");
-                    close(conn);
-                }
+                final SocketChannel conn = accept(listener);
+                executor.execute(() -> sendStoragesToNode(conn));
             }
         });
+    }
+
+    protected void sendStoragesToNode(SocketChannel conn) {
+        try {
+            ByteBuffer buffer = ByteBuffer.allocate(10);
+            if (waitForData(conn, buffer)) {
+                buffer.rewind();
+                SyncMode syncMode = SyncMode.get(buffer.get());
+                if (syncMode == SyncMode.SNAPSHOT) {
+                    transfer(conn, storage.getLastSnapshotStore().getSnapshotPath());
+                } else {
+                    byte transferType = buffer.get();
+                    if (transferType != StorageTransferModelSync.TRANSACTIONS
+                            && transferType != StorageTransferModelSync.EVENTS) {
+                        throw new IllegalArgumentException(String.format("Unknown transfer type %s", transferType));
+                    }
+                    long transactionId = buffer.getLong();
+                    select(transactionId).stream().map(s -> {
+                        if (transferType == StorageTransferModelSync.TRANSACTIONS)
+                            return s.getTransactionCommitsAddress();
+                        else return s.getEventsCommitsAddress();
+                    }).forEach(a -> transfer(conn, a));
+                }
+            } else {
+                LOG.debug("Can't receive data from {}", conn.getRemoteAddress());
+            }
+        } catch (IOException e) {
+            LOG.error("SYNC: Failed to accept incoming connection", e);
+        } finally {
+            LOG.info("Closing transfer server connection.");
+            close(conn);
+        }
     }
 
     public void shutdown() {

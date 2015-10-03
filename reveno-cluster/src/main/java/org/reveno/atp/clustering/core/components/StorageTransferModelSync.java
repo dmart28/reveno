@@ -2,10 +2,8 @@ package org.reveno.atp.clustering.core.components;
 
 import org.reveno.atp.clustering.api.ClusterView;
 import org.reveno.atp.clustering.api.InetAddress;
-import org.reveno.atp.clustering.api.message.Message;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
 import org.reveno.atp.clustering.core.api.ClusterExecutor;
-import org.reveno.atp.clustering.core.api.MessagesReceiver;
 import org.reveno.atp.clustering.core.messages.NodeState;
 import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.api.storage.JournalsStorage;
@@ -21,10 +19,8 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.util.Collections;
-import java.util.Set;
 
-public class StorageTransferModelSync implements ClusterExecutor<Boolean, TransferContext>, MessagesReceiver {
+public class StorageTransferModelSync implements ClusterExecutor<Boolean, TransferContext> {
 
     @Override
     public Boolean execute(ClusterView currentView, TransferContext context) {
@@ -49,7 +45,7 @@ public class StorageTransferModelSync implements ClusterExecutor<Boolean, Transf
             SocketChannel sc = SocketChannel.open();
             if (!sc.connect(sad)) {
                 LOG.error("Can't establish connection to {}", sad);
-                return true;
+                return false;
             }
             sc.configureBlocking(true);
 
@@ -78,15 +74,6 @@ public class StorageTransferModelSync implements ClusterExecutor<Boolean, Transf
             channel.close();
         }
         return true;
-    }
-
-    @Override
-    public <T extends Message> void onMessage(T message) {
-    }
-
-    @Override
-    public Set<Integer> interestedTypes() {
-        return Collections.emptySet();
     }
 
 
