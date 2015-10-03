@@ -1,17 +1,15 @@
 package org.reveno.atp.clustering.core.api;
 
-import org.reveno.atp.clustering.api.Address;
+import org.reveno.atp.clustering.core.messages.NodeState;
 
 import java.util.Optional;
 
 public class ClusterState {
     public final boolean isComplete;
-    public final long lastTransactionId;
-    public final Optional<Address> node;
+    public final Optional<NodeState> latestNode;
 
-    public ClusterState(boolean isComplete, long lastTransactionId, Optional<Address> node) {
+    public ClusterState(boolean isComplete, Optional<NodeState> latestNode) {
         this.isComplete = isComplete;
-        this.lastTransactionId = lastTransactionId;
-        this.node = node;
+        this.latestNode = latestNode;
     }
 }

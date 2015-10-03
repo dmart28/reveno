@@ -29,8 +29,8 @@ public interface JournalsStorage {
 	JournalStore[] getVolumes();
 
 	void mergeStores(JournalStore[] stores, JournalStore to);
-	
-	void deleteOldStores();
+
+	void deleteStore(JournalStore store);
 
 	JournalStore nextTempStore();
 

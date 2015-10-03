@@ -2,7 +2,7 @@ package org.reveno.atp.clustering.core.messages;
 
 import org.reveno.atp.clustering.api.message.Message;
 
-public class NodeStateMessage extends Message {
+public class NodeState extends Message {
 
     public static final int TYPE = 0xC5;
 
@@ -13,20 +13,23 @@ public class NodeStateMessage extends Message {
 
     public long viewId;
     public long transactionId;
+    public int syncPort;
 
     @Override
     public String toString() {
-        return "NodeStateMessage{" +
+        return "NodeState{" +
                 "viewId=" + viewId +
                 ", transactionId=" + transactionId +
+                ", syncPort=" + syncPort +
                 '}';
     }
 
-    public NodeStateMessage(long viewId, long transactionId) {
+    public NodeState(long viewId, long transactionId, int syncPort) {
         this.viewId = viewId;
         this.transactionId = transactionId;
+        this.syncPort = syncPort;
     }
 
-    public NodeStateMessage() {
+    public NodeState() {
     }
 }

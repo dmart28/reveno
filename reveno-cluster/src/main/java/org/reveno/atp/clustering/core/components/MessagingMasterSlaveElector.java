@@ -19,10 +19,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class MessagingMasterSlaveElector implements ClusterExecutor<ElectionResult>, MessagesReceiver {
+public class MessagingMasterSlaveElector implements ClusterExecutor<ElectionResult, Void>, MessagesReceiver {
 
     @Override
-    public ElectionResult execute(ClusterView currentView) {
+    public ElectionResult execute(ClusterView currentView, Void context) {
         LOG.info("Vote [view: {}]", currentView.viewId());
 
         List<VoteMessage> answers = sendVoteNotifications(currentView);

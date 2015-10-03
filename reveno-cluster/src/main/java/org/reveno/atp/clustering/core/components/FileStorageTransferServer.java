@@ -35,9 +35,10 @@ public class FileStorageTransferServer {
                 LOG.error("SYNC: Failed to open server socket.", e);
                 return;
             }
+            LOG.debug("Transfer Server is started on {}", listenAddr);
             while (!Thread.interrupted()) {
+                SocketChannel conn = accept(listener);
                 try {
-                    SocketChannel conn = accept(listener);
                     ByteBuffer buffer = ByteBuffer.allocate(10);
                     if (waitForData(conn, buffer)) {
                         buffer.rewind();
@@ -46,20 +47,25 @@ public class FileStorageTransferServer {
                             transfer(conn, storage.getLastSnapshotStore().getSnapshotPath());
                         } else {
                             byte transferType = buffer.get();
-                            if (transferType != TRANSACTIONS && transferType != EVENTS) {
+                            if (transferType != StorageTransferModelSync.TRANSACTIONS
+                                    && transferType != StorageTransferModelSync.EVENTS) {
                                 throw new IllegalArgumentException(String.format("Unknown transfer type %s", transferType));
                             }
                             long transactionId = buffer.getLong();
                             select(transactionId).stream().map(s -> {
-                                if (transferType == TRANSACTIONS) return s.getTransactionCommitsAddress();
+                                if (transferType == StorageTransferModelSync.TRANSACTIONS) return s.getTransactionCommitsAddress();
                                 else return s.getEventsCommitsAddress();
                             }).forEach(a -> transfer(conn, a));
                         }
+                    } else {
+                        LOG.debug("Can't receive data from {}", conn.getRemoteAddress());
                     }
-                    conn.close();
                 } catch (IOException e) {
                     LOG.error("SYNC: Failed to accept incoming connection", e);
                     break;
+                } finally {
+                    LOG.info("Closing transfer server connection.");
+                    close(conn);
                 }
             }
         });
@@ -73,6 +79,7 @@ public class FileStorageTransferServer {
     protected void transfer(SocketChannel conn, String path) {
         try {
             File file = new File(storage.getBaseDir(), path);
+            LOG.debug("Transfering {} to {}", file, conn.getRemoteAddress());
             FileChannel fc = new FileInputStream(file).getChannel();
             fc.transferTo(0, fc.size(), conn);
             fc.close();
@@ -99,10 +106,22 @@ public class FileStorageTransferServer {
         }
     }
 
-    protected SocketChannel accept(ServerSocketChannel listener) throws IOException {
-        SocketChannel conn = listener.accept();
-        conn.configureBlocking(true);
-        return conn;
+    protected SocketChannel accept(ServerSocketChannel listener) {
+        try {
+            SocketChannel conn = listener.accept();
+            conn.configureBlocking(true);
+            return conn;
+        } catch (Exception e) {
+            throw Exceptions.runtime(e);
+        }
+    }
+
+    protected void close(SocketChannel channel) {
+        try {
+            channel.close();
+        } catch (Exception e) {
+            throw Exceptions.runtime(e);
+        }
     }
 
     protected ServerSocketChannel listen(InetSocketAddress listenAddr) throws IOException {
@@ -116,7 +135,7 @@ public class FileStorageTransferServer {
 
     protected Set<JournalsStorage.JournalStore> select(long transactionId) {
         JournalsStorage.JournalStore[] stores = storage.getAllStores();
-        Set<JournalsStorage.JournalStore> selected = new HashSet<>();
+        Set<JournalsStorage.JournalStore> selected = new LinkedHashSet<>();
         for (int i = 0; i < stores.length; i++) {
             if (stores[i].getLastTransactionId() > transactionId) {
                 if (i - 1 > 0) {
@@ -153,7 +172,5 @@ public class FileStorageTransferServer {
     protected ExecutorService mainListener;
     protected ExecutorService executor;
 
-    protected static final byte TRANSACTIONS = 1;
-    protected static final byte EVENTS = 2;
     protected static final Logger LOG = LoggerFactory.getLogger(FileStorageTransferServer.class);
 }

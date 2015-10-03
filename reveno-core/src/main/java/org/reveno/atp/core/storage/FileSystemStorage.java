@@ -124,8 +124,9 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 	}
 
 	@Override
-	public void deleteOldStores() {
-		// TODO implement
+	public void deleteStore(JournalStore store) {
+		new File(store.getEventsCommitsAddress()).delete();
+		new File(store.getTransactionCommitsAddress()).delete();
 	}
 
 	@Override
