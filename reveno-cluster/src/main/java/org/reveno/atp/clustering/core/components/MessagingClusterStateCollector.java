@@ -63,7 +63,8 @@ public class MessagingClusterStateCollector implements ClusterExecutor<ClusterSt
     }
 
     protected boolean allStatesReceived(ClusterView view) {
-        NodeState message = new NodeState(view.viewId(), transactionId.get(), config.revenoSync().port());
+        NodeState message = new NodeState(view.viewId(), transactionId.get(), config.revenoSync().mode().getType(),
+                config.revenoSync().port());
         cluster.gateway().send(view.members(), message, cluster.gateway().oob());
         return Utils.waitFor(() -> nodesStates.values().containsAll(view.members()) && nodesStates.entrySet()
                         .stream()

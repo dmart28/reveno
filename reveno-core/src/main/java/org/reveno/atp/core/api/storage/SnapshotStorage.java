@@ -26,11 +26,17 @@ public interface SnapshotStorage {
 	SnapshotStore getLastSnapshotStore();
 	
 	SnapshotStore nextSnapshotStore();
+
+	SnapshotStore nextTempSnapshotStore();
+
+	void removeSnapshotStore(SnapshotStore snapshot);
+
+	void move(SnapshotStore from, SnapshotStore to);
 	
 	void removeLastSnapshotStore();
 	
 	
-	public static class SnapshotStore implements SnapshotIdentifier {
+	class SnapshotStore implements SnapshotIdentifier {
 		public static final byte TYPE = 0x1;
 		
 		public byte getType() {

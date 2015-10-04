@@ -2,6 +2,7 @@ package org.reveno.atp.clustering.core.components;
 
 import org.reveno.atp.clustering.api.ClusterView;
 import org.reveno.atp.clustering.api.InetAddress;
+import org.reveno.atp.clustering.api.SyncMode;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
 import org.reveno.atp.clustering.core.api.ClusterExecutor;
 import org.reveno.atp.clustering.core.messages.NodeState;
@@ -9,6 +10,7 @@ import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.api.storage.JournalsStorage;
 
 import org.reveno.atp.clustering.core.components.StorageTransferModelSync.TransferContext;
+import org.reveno.atp.core.api.storage.SnapshotStorage;
 import org.reveno.atp.utils.Exceptions;
 import org.reveno.atp.utils.MeasureUtils;
 import org.slf4j.Logger;
@@ -27,17 +29,33 @@ public class StorageTransferModelSync implements ClusterExecutor<Boolean, Transf
         String host = ((InetAddress) context.latestNode.address()).getHost();
         int port = context.latestNode.syncPort;
         SocketAddress sad = new InetSocketAddress(host, port);
-        JournalsStorage.JournalStore tempStore = storage.nextTempStore();
-        JournalsStorage.JournalStore store = storage.nextStore(context.latestNode.transactionId);
 
-        if (receiveStore(context, sad, TRANSACTIONS, storage.channel(tempStore.getTransactionCommitsAddress())) &&
-                receiveStore(context, sad, EVENTS, storage.channel(tempStore.getEventsCommitsAddress()))) {
-            storage.mergeStores(new JournalsStorage.JournalStore[] { tempStore }, store);
-            return true;
-        } else {
-            storage.deleteStore(tempStore);
-            return false;
+        if (context.latestNode.syncMode == SyncMode.JOURNALS.getType()) {
+            JournalsStorage.JournalStore tempStore = storage.nextTempStore();
+            JournalsStorage.JournalStore store = storage.nextStore(context.latestNode.transactionId);
+
+            if (receiveStore(context, sad, TRANSACTIONS, storage.channel(tempStore.getTransactionCommitsAddress())) &&
+                    receiveStore(context, sad, EVENTS, storage.channel(tempStore.getEventsCommitsAddress()))) {
+                storage.mergeStores(new JournalsStorage.JournalStore[]{tempStore}, store);
+                return true;
+            } else {
+                storage.deleteStore(tempStore);
+                storage.deleteStore(store);
+                return false;
+            }
+        } else if (context.latestNode.syncMode == SyncMode.SNAPSHOT.getType()) {
+            SnapshotStorage.SnapshotStore tempStore = snapshots.nextTempSnapshotStore();
+            SnapshotStorage.SnapshotStore snapshotStore = snapshots.nextSnapshotStore();
+
+            if (receiveStore(context, sad, (byte) 0, snapshots.snapshotChannel(tempStore.getSnapshotPath()))) {
+                snapshots.move(tempStore, snapshotStore);
+                return true;
+            } else {
+                snapshots.removeSnapshotStore(tempStore);
+                snapshots.removeSnapshotStore(snapshotStore);
+            }
         }
+        throw new IllegalArgumentException("Unknown transfer mode.");
     }
 
     protected boolean receiveStore(TransferContext context, SocketAddress sad, byte type, Channel channel) {
@@ -77,13 +95,16 @@ public class StorageTransferModelSync implements ClusterExecutor<Boolean, Transf
     }
 
 
-    public StorageTransferModelSync(RevenoClusterConfiguration config, JournalsStorage storage) {
+    public StorageTransferModelSync(RevenoClusterConfiguration config, JournalsStorage storage,
+                                    SnapshotStorage snapshots) {
         this.config = config;
         this.storage = storage;
+        this.snapshots = snapshots;
     }
 
     protected RevenoClusterConfiguration config;
     protected JournalsStorage storage;
+    protected SnapshotStorage snapshots;
 
     protected static final Logger LOG = LoggerFactory.getLogger(StorageTransferModelSync.class);
     public static final byte TRANSACTIONS = 1;

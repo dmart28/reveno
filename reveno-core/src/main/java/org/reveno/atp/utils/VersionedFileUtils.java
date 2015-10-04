@@ -89,7 +89,6 @@ public abstract class VersionedFileUtils {
 			c.setTime(format().parse(parts[1]));
 			return new VersionedFile(fileName, parts[0], c, Long.parseLong(parts[2]), produceRest(parts));
 		} catch (Throwable t) {
-			System.out.println(parts[1]);
 			throw new IllegalFileName(fileName, t);
 		}
 	}

@@ -48,8 +48,7 @@ public class FileStorageTransferServer {
             ByteBuffer buffer = ByteBuffer.allocate(10);
             if (waitForData(conn, buffer)) {
                 buffer.rewind();
-                SyncMode syncMode = SyncMode.get(buffer.get());
-                if (syncMode == SyncMode.SNAPSHOT) {
+                if (config.revenoSync().mode() == SyncMode.SNAPSHOT) {
                     transfer(conn, storage.getLastSnapshotStore().getSnapshotPath());
                 } else {
                     byte transferType = buffer.get();

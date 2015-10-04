@@ -83,6 +83,27 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 	}
 
 	@Override
+	public SnapshotStore nextTempSnapshotStore() {
+		String nextFile = nextVersionFile(baseDir, "temp_" + SNAPSHOT_PREFIX);
+		try {
+			new File(baseDir, nextFile).createNewFile();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		return new SnapshotStore(nextFile, System.currentTimeMillis());
+	}
+
+	@Override
+	public void removeSnapshotStore(SnapshotStore snapshot) {
+		new File(baseDir, snapshot.getSnapshotPath()).delete();
+	}
+
+	@Override
+	public void move(SnapshotStore from, SnapshotStore to) {
+		new File(baseDir, from.getSnapshotPath()).renameTo(new File(baseDir, to.getSnapshotPath()));
+	}
+
+	@Override
 	public void removeLastSnapshotStore() {
 		Optional<String> fileName = lastVersionFile(baseDir, SNAPSHOT_PREFIX);
 		if (fileName.isPresent())

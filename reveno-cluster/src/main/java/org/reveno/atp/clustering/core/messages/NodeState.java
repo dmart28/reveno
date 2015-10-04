@@ -13,6 +13,7 @@ public class NodeState extends Message {
 
     public long viewId;
     public long transactionId;
+    public byte syncMode;
     public int syncPort;
 
     @Override
@@ -20,13 +21,15 @@ public class NodeState extends Message {
         return "NodeState{" +
                 "viewId=" + viewId +
                 ", transactionId=" + transactionId +
+                ", syncMode=" + syncMode +
                 ", syncPort=" + syncPort +
                 '}';
     }
 
-    public NodeState(long viewId, long transactionId, int syncPort) {
+    public NodeState(long viewId, long transactionId, byte syncMode, int syncPort) {
         this.viewId = viewId;
         this.transactionId = transactionId;
+        this.syncMode = syncMode;
         this.syncPort = syncPort;
     }
 

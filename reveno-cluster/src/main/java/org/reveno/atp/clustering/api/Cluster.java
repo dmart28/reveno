@@ -21,7 +21,6 @@ import org.reveno.atp.clustering.api.message.Message;
 
 import java.util.function.Consumer;
 
-
 public interface Cluster {
 
 	void connect();

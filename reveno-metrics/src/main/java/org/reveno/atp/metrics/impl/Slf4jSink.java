@@ -30,7 +30,7 @@ public class Slf4jSink implements Sink {
 
 	@Override
 	public void send(String name, String value, long timestamp) {
-		System.out.println("[" + new Date(timestamp * 1000) + "] " + name + ": " + value);
+		LOG.info("[" + new Date(timestamp * 1000) + "] " + name + ": " + value);
 	}
 
 	@Override
@@ -43,6 +43,6 @@ public class Slf4jSink implements Sink {
 	}
 
 	
-	protected static Logger log = LoggerFactory.getLogger(Slf4jSink.class);
+	protected static Logger LOG = LoggerFactory.getLogger(Slf4jSink.class);
 	
 }
