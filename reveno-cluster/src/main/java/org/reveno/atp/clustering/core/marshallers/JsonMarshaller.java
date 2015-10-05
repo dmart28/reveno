@@ -4,7 +4,7 @@ import org.reveno.atp.clustering.api.message.Marshaller;
 import org.reveno.atp.clustering.api.message.Message;
 import org.reveno.atp.core.api.channel.Buffer;
 
-public class StreamMarshaller implements Marshaller {
+public class JsonMarshaller implements Marshaller {
 
     @Override
     public void marshall(Buffer buffer, Message message) {

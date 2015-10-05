@@ -53,7 +53,7 @@ public class MessagingClusterStateCollector implements ClusterExecutor<ClusterSt
     }
 
     @Override
-    public <T extends Message> void onMessage(T message) {
+    public void onMessage(Message message) {
         nodesStates.put(message.address(), (NodeState) message);
     }
 

@@ -39,7 +39,7 @@ public class MessagingMasterSlaveElector implements ClusterExecutor<ElectionResu
     }
 
     @Override
-    public <T extends Message> void onMessage(T message) {
+    public void onMessage(Message message) {
         if (message.type() == VoteMessage.TYPE) {
             votes.put(message.address(), (VoteMessage) message);
         } else if (message.type() == VoteAck.TYPE) {

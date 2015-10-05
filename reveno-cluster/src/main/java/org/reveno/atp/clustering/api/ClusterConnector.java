@@ -22,9 +22,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 public interface ClusterConnector {
 
@@ -35,7 +34,7 @@ public interface ClusterConnector {
 
 	<T extends Message> void receive(int type, Consumer<T> consumer);
 
-	<T extends Message> void receive(int type, Function<T, Boolean> filter, Consumer<T> consumer);
+	<T extends Message> void receive(int type, Predicate<T> filter, Consumer<T> consumer);
 
 	<T extends Message> void unsubscribe(int type, Consumer<T> consumer);
 
