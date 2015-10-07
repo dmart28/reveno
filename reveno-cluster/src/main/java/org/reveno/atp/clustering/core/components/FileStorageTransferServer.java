@@ -1,10 +1,15 @@
 package org.reveno.atp.clustering.core.components;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import org.reveno.atp.clustering.api.ClusterView;
 import org.reveno.atp.clustering.api.SyncMode;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
+import org.reveno.atp.clustering.core.api.StorageTransferServer;
 import org.reveno.atp.clustering.util.Utils;
 import org.reveno.atp.commons.NamedThreadFactory;
 import org.reveno.atp.core.api.storage.JournalsStorage;
+import org.reveno.atp.core.api.storage.SnapshotStorage;
 import org.reveno.atp.core.storage.FileSystemStorage;
 import org.reveno.atp.utils.Exceptions;
 import org.slf4j.Logger;
@@ -23,10 +28,11 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class FileStorageTransferServer {
+public class FileStorageTransferServer implements StorageTransferServer {
 
+    @Override
     public void startup() {
-        mainListener.execute(() -> {
+        mainListener.execute(() -> { try {
             InetSocketAddress listenAddr =  new InetSocketAddress(config.revenoSync().port());
             ServerSocketChannel listener;
             try {
@@ -40,16 +46,31 @@ public class FileStorageTransferServer {
                 final SocketChannel conn = accept(listener);
                 executor.execute(() -> sendStoragesToNode(conn));
             }
-        });
+        } catch (Throwable t) {
+            LOG.error("File server executor error.", t);
+        }});
+    }
+
+    @Override
+    public void shutdown() {
+        mainListener.shutdown();
+        executor.shutdown();
+    }
+
+    @Override
+    public void fixJournals(ClusterView view) {
+        journals.put(view.viewId(), storage.getAllStores());
+        snapshots.put(view.viewId(), storage.getLastSnapshotStore());
     }
 
     protected void sendStoragesToNode(SocketChannel conn) {
         try {
-            ByteBuffer buffer = ByteBuffer.allocate(10);
+            ByteBuffer buffer = ByteBuffer.allocate(17);
             if (waitForData(conn, buffer)) {
                 buffer.rewind();
+                long viewId = buffer.getLong();
                 if (config.revenoSync().mode() == SyncMode.SNAPSHOT) {
-                    transfer(conn, storage.getLastSnapshotStore().getSnapshotPath());
+                    transfer(conn, snapshots.get(viewId).getSnapshotPath());
                 } else {
                     byte transferType = buffer.get();
                     if (transferType != StorageTransferModelSync.TRANSACTIONS
@@ -57,7 +78,7 @@ public class FileStorageTransferServer {
                         throw new IllegalArgumentException(String.format("Unknown transfer type %s", transferType));
                     }
                     long transactionId = buffer.getLong();
-                    select(transactionId).stream().map(s -> {
+                    select(transactionId, viewId).stream().map(s -> {
                         if (transferType == StorageTransferModelSync.TRANSACTIONS)
                             return s.getTransactionCommitsAddress();
                         else return s.getEventsCommitsAddress();
@@ -72,11 +93,6 @@ public class FileStorageTransferServer {
             LOG.info("Closing transfer server connection.");
             close(conn);
         }
-    }
-
-    public void shutdown() {
-        mainListener.shutdown();
-        executor.shutdown();
     }
 
     protected void transfer(SocketChannel conn, String path) {
@@ -136,8 +152,8 @@ public class FileStorageTransferServer {
         return listener;
     }
 
-    protected Set<JournalsStorage.JournalStore> select(long transactionId) {
-        JournalsStorage.JournalStore[] stores = storage.getAllStores();
+    protected Set<JournalsStorage.JournalStore> select(long transactionId, long viewId) {
+        JournalsStorage.JournalStore[] stores = journals.get(viewId);
         Set<JournalsStorage.JournalStore> selected = new LinkedHashSet<>();
         for (int i = 0; i < stores.length; i++) {
             if (stores[i].getLastTransactionId() > transactionId) {
@@ -174,6 +190,9 @@ public class FileStorageTransferServer {
     protected FileSystemStorage storage;
     protected ExecutorService mainListener;
     protected ExecutorService executor;
+
+    protected Long2ObjectMap<JournalsStorage.JournalStore[]> journals = new Long2ObjectOpenHashMap<>();
+    protected Long2ObjectMap<SnapshotStorage.SnapshotStore> snapshots = new Long2ObjectOpenHashMap<>();
 
     protected static final Logger LOG = LoggerFactory.getLogger(FileStorageTransferServer.class);
 }

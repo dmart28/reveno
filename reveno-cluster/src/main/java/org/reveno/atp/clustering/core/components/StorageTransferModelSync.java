@@ -25,7 +25,7 @@ import java.nio.channels.SocketChannel;
 public class StorageTransferModelSync implements ClusterExecutor<Boolean, TransferContext> {
 
     @Override
-    public Boolean execute(ClusterView currentView, TransferContext context) {
+    public Boolean execute(ClusterView view, TransferContext context) {
         String host = ((InetAddress) context.latestNode.address()).getHost();
         int port = context.latestNode.syncPort;
         SocketAddress sad = new InetSocketAddress(host, port);
@@ -34,8 +34,8 @@ public class StorageTransferModelSync implements ClusterExecutor<Boolean, Transf
             JournalsStorage.JournalStore tempStore = storage.nextTempStore();
             JournalsStorage.JournalStore store = storage.nextStore(context.latestNode.transactionId);
 
-            if (receiveStore(context, sad, TRANSACTIONS, storage.channel(tempStore.getTransactionCommitsAddress())) &&
-                    receiveStore(context, sad, EVENTS, storage.channel(tempStore.getEventsCommitsAddress()))) {
+            if (receiveStore(view, context, sad, TRANSACTIONS, storage.channel(tempStore.getTransactionCommitsAddress())) &&
+                    receiveStore(view, context, sad, EVENTS, storage.channel(tempStore.getEventsCommitsAddress()))) {
                 storage.mergeStores(new JournalsStorage.JournalStore[]{tempStore}, store);
                 return true;
             } else {
@@ -47,7 +47,7 @@ public class StorageTransferModelSync implements ClusterExecutor<Boolean, Transf
             SnapshotStorage.SnapshotStore tempStore = snapshots.nextTempSnapshotStore();
             SnapshotStorage.SnapshotStore snapshotStore = snapshots.nextSnapshotStore();
 
-            if (receiveStore(context, sad, (byte) 0, snapshots.snapshotChannel(tempStore.getSnapshotPath()))) {
+            if (receiveStore(view, context, sad, (byte) 0, snapshots.snapshotChannel(tempStore.getSnapshotPath()))) {
                 snapshots.move(tempStore, snapshotStore);
                 return true;
             } else {
@@ -58,7 +58,7 @@ public class StorageTransferModelSync implements ClusterExecutor<Boolean, Transf
         throw new IllegalArgumentException("Unknown transfer mode.");
     }
 
-    protected boolean receiveStore(TransferContext context, SocketAddress sad, byte type, Channel channel) {
+    protected boolean receiveStore(ClusterView view, TransferContext context, SocketAddress sad, byte type, Channel channel) {
         try {
             SocketChannel sc = SocketChannel.open();
             if (!sc.connect(sad)) {
@@ -67,8 +67,8 @@ public class StorageTransferModelSync implements ClusterExecutor<Boolean, Transf
             }
             sc.configureBlocking(true);
 
-            ByteBuffer message = ByteBuffer.allocate(10);
-            message.put(config.revenoSync().mode().getType());
+            ByteBuffer message = ByteBuffer.allocate(17);
+            message.putLong(view.viewId());
             message.put(type);
             message.putLong(context.transactionId);
             sc.write(message);

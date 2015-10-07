@@ -5,11 +5,13 @@ import org.reveno.atp.clustering.core.messages.NodeState;
 import java.util.Optional;
 
 public class ClusterState {
-    public final boolean isComplete;
+    public final boolean failed;
+    public final long currentTransactionId;
     public final Optional<NodeState> latestNode;
 
-    public ClusterState(boolean isComplete, Optional<NodeState> latestNode) {
-        this.isComplete = isComplete;
+    public ClusterState(boolean failed, long currentTransactionId, Optional<NodeState> latestNode) {
+        this.failed = failed;
+        this.currentTransactionId = currentTransactionId;
         this.latestNode = latestNode;
     }
 }

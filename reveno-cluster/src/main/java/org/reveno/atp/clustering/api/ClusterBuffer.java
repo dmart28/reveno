@@ -14,6 +14,24 @@ import org.reveno.atp.core.api.channel.Buffer;
  */
 public interface ClusterBuffer extends Buffer {
 
-    void send();
+    void connect();
+
+    void disconnect();
+
+    void messageNotifier(Runnable listener);
+
+    /**
+     * Mode to reject all incoming data.
+     */
+    void lockIncoming();
+
+    void unlockIncoming();
+
+    /**
+     * Clear all unprocessed data.
+     */
+    void erase();
+
+    boolean replicate();
 
 }

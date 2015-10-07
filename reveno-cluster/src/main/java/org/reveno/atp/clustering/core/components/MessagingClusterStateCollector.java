@@ -22,8 +22,9 @@ public class MessagingClusterStateCollector implements ClusterExecutor<ClusterSt
     @Override
     public ClusterState execute(ClusterView view, Void context) {
         LOG.info("Cluster state collection [view: {}, nodes: {}]", view.viewId(), view.members());
+        long currentTransactionId = transactionId.get();
 
-        if (allStatesReceived(view)) {
+        if (allStatesReceived(view, currentTransactionId)) {
             Optional<NodeState> latestTransactionId = nodesStates.values().stream()
                     .filter(m -> view.members().contains(m.address()))
                     .filter(m -> m.viewId == view.viewId())
@@ -32,22 +33,22 @@ public class MessagingClusterStateCollector implements ClusterExecutor<ClusterSt
                 LOG.info("Cluster state collection.");
 
                 NodeState stateMessage = latestTransactionId.get();
-                if (stateMessage.transactionId > transactionId.get()) {
-                    return new ClusterState(true, Optional.of(stateMessage));
+                if (stateMessage.transactionId > currentTransactionId) {
+                    return new ClusterState(false, currentTransactionId, Optional.of(stateMessage));
                 } else {
-                    return new ClusterState(true, Optional.empty());
+                    return new ClusterState(false, currentTransactionId, Optional.empty());
                 }
             } else {
                 LOG.trace("Sync node not found [view: {}; txId: {}; states: {}]", view.viewId(),
-                        transactionId.get(), nodesStates);
-                return new ClusterState(false, Optional.empty());
+                        currentTransactionId, nodesStates);
+                return new ClusterState(true, currentTransactionId, Optional.empty());
             }
         } else {
             LOG.trace("Not all states received [view: {}; states: {}]", view.viewId(), nodesStates);
             if (view.viewId() == cluster.view().viewId()) {
                 return execute(view);
             } else {
-                return new ClusterState(false, Optional.empty());
+                return new ClusterState(true, currentTransactionId, Optional.empty());
             }
         }
     }
@@ -62,8 +63,8 @@ public class MessagingClusterStateCollector implements ClusterExecutor<ClusterSt
         return SUBSCRIPTION;
     }
 
-    protected boolean allStatesReceived(ClusterView view) {
-        NodeState message = new NodeState(view.viewId(), transactionId.get(), config.revenoSync().mode().getType(),
+    protected boolean allStatesReceived(ClusterView view, long currentTransactionId) {
+        NodeState message = new NodeState(view.viewId(), currentTransactionId, config.revenoSync().mode().getType(),
                 config.revenoSync().port());
         cluster.gateway().send(view.members(), message, cluster.gateway().oob());
         return Utils.waitFor(() -> nodesStates.values().containsAll(view.members()) && nodesStates.entrySet()

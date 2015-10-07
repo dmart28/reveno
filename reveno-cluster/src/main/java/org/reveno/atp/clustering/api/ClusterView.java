@@ -18,6 +18,7 @@ package org.reveno.atp.clustering.api;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class ClusterView {
 
@@ -35,5 +36,26 @@ public class ClusterView {
 		this.viewId = viewId;
 		this.members = members;
 	}
-	
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		ClusterView that = (ClusterView) o;
+		return Objects.equals(viewId, that.viewId) &&
+				Objects.equals(members, that.members);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(viewId, members);
+	}
+
+	@Override
+	public String toString() {
+		return "ClusterView{" +
+				"viewId=" + viewId +
+				", members=" + members +
+				'}';
+	}
 }

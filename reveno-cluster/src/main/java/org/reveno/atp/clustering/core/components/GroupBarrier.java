@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class GroupBarrier {
 
-    public boolean waitFor() {
+    public boolean waitOn() {
         boolean result = waitOnGroup();
         cluster.gateway().unsubscribe(BarrierPassed.TYPE, this::tryPassed);
         cluster.gateway().unsubscribe(BarrierMessage.TYPE, this::tryCame);

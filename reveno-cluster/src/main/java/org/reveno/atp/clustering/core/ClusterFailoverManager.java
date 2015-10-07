@@ -8,17 +8,36 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.stream.LongStream;
 
 public class ClusterFailoverManager implements FailoverManager {
 
-    public void newMessage(Buffer message) {
-        if (!isBlocked) {
-            failoverHandler.accept(message);
+    public void newMessage() {
+        if (!isBlocked && failoverHandler != null) {
+            failoverHandler.accept(buffer);
         } else {
-            notYetHandled = message;
             notProcessed.incrementAndGet();
+        }
+    }
+
+    public synchronized void block() {
+        if (!isBlocked) {
+            isBlocked = true;
+            onBlockedListeners.forEach(Runnable::run);
+        } else {
+            throw new IllegalArgumentException("Failover manager is already blocked.");
+        }
+    }
+
+    public synchronized void unblock() {
+        if (isBlocked) {
+            onUnblockedListeners.forEach(Runnable::run);
+            processPendingMessages();
+            isBlocked = false;
+        } else {
+            throw new IllegalArgumentException("Failover manager is not blocked.");
         }
     }
 
@@ -50,10 +69,11 @@ public class ClusterFailoverManager implements FailoverManager {
     @Override
     public boolean replicate(Consumer<Buffer> bufferWriter) {
         try {
-            outBuffer.markSize();
-            bufferWriter.accept(outBuffer);
-            outBuffer.writeSize();
-            return true;
+            buffer.markSize();
+            bufferWriter.accept(buffer);
+            buffer.writeSize();
+
+            return buffer.replicate();
         } catch (Throwable t) {
             return false;
         }
@@ -61,7 +81,10 @@ public class ClusterFailoverManager implements FailoverManager {
 
     @Override
     public void processPendingMessages() {
-
+        long unprocessed;
+        while (!notProcessed.compareAndSet((unprocessed = notProcessed.get()), 0)) {
+        }
+        LongStream.of(unprocessed).forEach(l -> failoverHandler.accept(buffer));
     }
 
     public void setMaster(boolean isMaster) {
@@ -73,18 +96,18 @@ public class ClusterFailoverManager implements FailoverManager {
     }
 
 
-    public ClusterFailoverManager(ClusterBuffer outBuffer) {
-        this.outBuffer = outBuffer;
+    public ClusterFailoverManager(ClusterBuffer buffer) {
+        this.buffer = buffer;
+        buffer.messageNotifier(this::newMessage);
     }
 
-    protected ClusterBuffer outBuffer;
+    protected ClusterBuffer buffer;
     protected List<Runnable> onBlockedListeners = new CopyOnWriteArrayList<>();
     protected List<Runnable> onUnblockedListeners = new CopyOnWriteArrayList<>();
     protected volatile Consumer<Buffer> failoverHandler;
     protected volatile boolean isMaster, isBlocked;
 
-    protected volatile AtomicInteger notProcessed = new AtomicInteger(0);
-    protected volatile Buffer notYetHandled;
+    protected volatile AtomicLong notProcessed = new AtomicLong(0);
 
     protected static final Logger LOG = LoggerFactory.getLogger(ClusterFailoverManager.class);
 }
