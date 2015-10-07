@@ -86,6 +86,9 @@ public class FailoverExecutor {
 
     protected void process() {
         final ClusterView view = cluster.view();
+        if (!isQuorum(view)) {
+            LOG.info("Failover process end: not a quorum [members: {}]", view.members());
+        }
         try {
             if (failoverManager.isMaster()) {
                 failoverManager.block();
@@ -149,6 +152,10 @@ public class FailoverExecutor {
         if (!barrier.waitOn()) {
             throw new FailoverAbortedException(String.format("Timeout wait on barrier [%s] in view [%s].", name, view));
         }
+    }
+
+    protected boolean isQuorum(ClusterView view) {
+        return view.members().size() >= config.clusterNodeAddresses().size() / 2;
     }
 
     public FailoverExecutor(Cluster cluster, ClusterBufferFactory bufferFactory, StorageTransferServer storageServer,
