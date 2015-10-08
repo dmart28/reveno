@@ -5,6 +5,8 @@ dependencies {
   compile project(":reveno-core")
 
   compile "org.jgroups:jgroups:$jgroupsVersion"
+  compile "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
+  compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 }
 
 jar {

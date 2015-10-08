@@ -10,6 +10,8 @@ import java.util.List;
 
 public class RevenoClusterConfiguration implements ClusterConfiguration {
 
+    protected static final int DEFAULT_TIMEOUT = 2000;
+
     @Override
     public void currentNodeAddress(Address nodeAddress) {
         this.nodeAddress = nodeAddress;
@@ -95,9 +97,9 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
             return ackTimeout;
         }
 
-        protected long voteTimeout = 1000;
-        protected long syncTimeout = 1000;
-        protected long ackTimeout = 1000;
+        protected long voteTimeout = DEFAULT_TIMEOUT;
+        protected long syncTimeout = DEFAULT_TIMEOUT;
+        protected long ackTimeout = DEFAULT_TIMEOUT;
     }
 
     public static class RevenoSyncConfiguration implements SyncConfiguration {

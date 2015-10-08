@@ -21,6 +21,10 @@ import org.reveno.atp.core.api.channel.Buffer;
 import java.util.function.Consumer;
 
 public interface FailoverManager {
+
+	default boolean isSingleNode() {
+		return false;
+	}
 	
 	boolean isMaster();
 	

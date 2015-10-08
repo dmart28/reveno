@@ -1,4 +1,4 @@
-package org.reveno.atp.clustering.core.buffer;
+package org.reveno.atp.clustering.core.jgroups;
 
 import org.reveno.atp.core.api.channel.Buffer;
 

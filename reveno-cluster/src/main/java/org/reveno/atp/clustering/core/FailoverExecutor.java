@@ -7,7 +7,6 @@ import org.reveno.atp.clustering.core.api.ClusterExecutor;
 import org.reveno.atp.clustering.core.api.ClusterState;
 import org.reveno.atp.clustering.core.api.ElectionResult;
 import org.reveno.atp.clustering.core.api.MessagesReceiver;
-import org.reveno.atp.clustering.core.buffer.ClusterBufferFactory;
 import org.reveno.atp.clustering.core.components.GroupBarrier;
 import org.reveno.atp.clustering.core.components.StorageTransferModelSync;
 import org.reveno.atp.clustering.core.api.StorageTransferServer;
@@ -28,29 +27,29 @@ public class FailoverExecutor {
         Preconditions.checkNotNull(clusterStateCollector, "ClusterStateCollector must be provided.");
         Preconditions.checkNotNull(modelSynchronizer, "ModelSynchronizer must be provided.");
 
-        if (!cluster.isConnected()) {
-            cluster.connect();
-            buffer.connect();
-        }
         cluster.listenEvents(this::onClusterEvent);
         cluster.marshallWith(Message.class, marshaller);
     }
 
-    public void shutdown() {
-        cluster.disconnect();
-        buffer.disconnect();
-    }
-
     public void leaderElector(ClusterExecutor<ElectionResult, Void> leaderElector) {
         this.leaderElector = leaderElector;
+        if (leaderElector instanceof MessagesReceiver) {
+            subscribe((MessagesReceiver) leaderElector);
+        }
     }
 
     public void clusterStateCollector(ClusterExecutor<ClusterState, Void> clusterStateCollector) {
         this.clusterStateCollector = clusterStateCollector;
+        if (clusterStateCollector instanceof MessagesReceiver) {
+            subscribe((MessagesReceiver) clusterStateCollector);
+        }
     }
 
     public void modelSynchronizer(ClusterExecutor<Boolean, StorageTransferModelSync.TransferContext> modelSynchronizer) {
         this.modelSynchronizer = modelSynchronizer;
+        if (modelSynchronizer instanceof MessagesReceiver) {
+            subscribe((MessagesReceiver) modelSynchronizer);
+        }
     }
 
     public void snapshotMaker(Runnable snapshotMaker) {
@@ -59,6 +58,14 @@ public class FailoverExecutor {
 
     public void replayer(Supplier<Long> replayer) {
         this.replayer = replayer;
+    }
+
+    public void marshaller(Marshaller marshaller) {
+        this.marshaller = marshaller;
+    }
+
+    public void failoverListener(Runnable listener) {
+        this.failoverListener = listener;
     }
 
     public void subscribe(MessagesReceiver... receivers) {
@@ -71,10 +78,6 @@ public class FailoverExecutor {
                 }
             }
         }
-    }
-
-    public void marshaller(Marshaller marshaller) {
-        this.marshaller = marshaller;
     }
 
 
@@ -128,7 +131,7 @@ public class FailoverExecutor {
 
             waitOnBarrier(view, "replay");
 
-            failoverManager.isMaster = election.isMaster;
+            failoverManager.setMaster(election.isMaster);
             if (failoverManager.isBlocked()) {
                 failoverManager.unblock();
             }
@@ -141,7 +144,7 @@ public class FailoverExecutor {
             buffer.lockIncoming();
             buffer.erase();
             replayer.get();
-            failoverManager.isMaster = false;
+            failoverManager.setMaster(false);
 
             onClusterEvent(ClusterEvent.MEMBERSHIP_CHANGED);
         }
@@ -158,14 +161,14 @@ public class FailoverExecutor {
         return view.members().size() >= config.clusterNodeAddresses().size() / 2;
     }
 
-    public FailoverExecutor(Cluster cluster, ClusterBufferFactory bufferFactory, StorageTransferServer storageServer,
+    public FailoverExecutor(Cluster cluster, ClusterFailoverManager failoverManager, StorageTransferServer storageServer,
                             RevenoClusterConfiguration config) {
         this.cluster = cluster;
         this.storageServer = storageServer;
         this.config = config;
 
-        this.buffer = bufferFactory.createBuffer();
-        this.failoverManager = new ClusterFailoverManager(buffer);
+        this.buffer = failoverManager.buffer();
+        this.failoverManager = failoverManager;
     }
 
     protected Cluster cluster;
@@ -178,6 +181,7 @@ public class FailoverExecutor {
     protected ClusterExecutor<ElectionResult, Void> leaderElector;
     protected ClusterExecutor<ClusterState, Void> clusterStateCollector;
     protected ClusterExecutor<Boolean, StorageTransferModelSync.TransferContext> modelSynchronizer;
+    protected Runnable failoverListener;
 
     protected Marshaller marshaller = new JsonMarshaller();
     protected ExecutorService electorExecutor = Executors.newSingleThreadExecutor();

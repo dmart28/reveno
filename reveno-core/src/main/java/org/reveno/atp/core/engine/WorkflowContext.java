@@ -28,34 +28,36 @@ import org.reveno.atp.core.views.ViewsProcessor;
 
 public interface WorkflowContext {
 	
-	public RevenoConfiguration configuration();
+	RevenoConfiguration configuration();
+	
+
+	FailoverManager failoverManager();
+
+	IdGenerator idGenerator();
+	
+	SerializersChain serializer();
+	
+	TxRepository repository();
+	
+	ViewsProcessor viewsProcessor();
+	
+	TransactionsManager transactionsManager();
+	
+	CommandsManager commandsManager();
+	
+	InterceptorCollection interceptorCollection();
 	
 	
-	public IdGenerator idGenerator();
-	
-	public SerializersChain serializer();
-	
-	public TxRepository repository();
-	
-	public ViewsProcessor viewsProcessor();
-	
-	public TransactionsManager transactionsManager();
-	
-	public CommandsManager commandsManager();
-	
-	public InterceptorCollection interceptorCollection();
+	EventPublisher eventPublisher();
 	
 	
-	public EventPublisher eventPublisher();
+	TransactionCommitInfo.Builder transactionCommitBuilder();
+	
+	Journaler transactionJournaler();
+	
+	JournalsManager journalsManager();
 	
 	
-	public TransactionCommitInfo.Builder transactionCommitBuilder();
-	
-	public Journaler transactionJournaler();
-	
-	public JournalsManager journalsManager();
-	
-	
-	public SnapshottersManager snapshotsManager();
+	SnapshottersManager snapshotsManager();
 	
 }

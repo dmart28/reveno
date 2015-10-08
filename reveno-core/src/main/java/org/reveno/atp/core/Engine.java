@@ -342,11 +342,11 @@ public class Engine implements Reveno {
 				.eventsCommitBuilder(eventBuilder).eventsJournaler(journalsManager.getEventsJournaler()).manager(eventsManager);
 		eventPublisher = new EventPublisher(eventProcessor, eventsContext);
 
-		EngineWorkflowContext workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
+		workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
 				.viewsProcessor(viewsProcessor).transactionsManager(transactionsManager).commandsManager(commandsManager)
 				.eventPublisher(eventPublisher).transactionCommitBuilder(txBuilder).transactionJournaler(journalsManager.getTransactionsJournaler())
 				.idGenerator(idGenerator).journalsManager(journalsManager).snapshotsManager(snapshotsManager).interceptorCollection(interceptors)
-				.configuration(config);
+				.configuration(config).failoverManager(failoverManager());
 		workflowEngine = new WorkflowEngine(processor, workflowContext, config.modelType());
 		restorer = new DefaultSystemStateRestorer(journalsStorage, workflowContext, eventsContext, workflowEngine);
 	}
@@ -400,7 +400,8 @@ public class Engine implements Reveno {
 	protected TransactionPipeProcessor<ProcessorContext> processor;
 	protected PipeProcessor<Event> eventProcessor;
 	protected JournalsManager journalsManager;
-	
+	protected EngineWorkflowContext workflowContext;
+
 	protected RepositorySnapshotter restoreWith;
 	
 	protected RepositoryDataSerializer repositorySerializer = new DefaultJavaSerializer(getClass().getClassLoader());

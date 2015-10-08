@@ -35,6 +35,10 @@ public class ViewsProcessor {
 		repository.marked(marked);
 		marked.forEach((k, v) -> v.long2ObjectEntrySet().forEach(e -> map(k, e.getLongKey(), e.getValue())));
 	}
+
+	public void erase() {
+		storage.clearAll();
+	}
 	
 	@SuppressWarnings("unchecked")
 	protected void map(Class<?> entityType, long id, Object entity) {

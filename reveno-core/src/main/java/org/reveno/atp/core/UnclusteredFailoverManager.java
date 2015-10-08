@@ -6,6 +6,12 @@ import org.reveno.atp.core.api.channel.Buffer;
 import java.util.function.Consumer;
 
 public class UnclusteredFailoverManager implements FailoverManager {
+
+    @Override
+    public boolean isSingleNode() {
+        return true;
+    }
+
     @Override
     public boolean isMaster() {
         return true;

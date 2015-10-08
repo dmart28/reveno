@@ -93,11 +93,7 @@ public class InputHandlers {
 	protected final BiConsumer<ProcessorContext, Boolean> replicator = (c, eob) -> {
 		interceptors(TransactionStage.REPLICATION, c);
 		
-		if (eob) {
-			marshalled.clear();
-		} else {
-			services.serializer().serializeCommands(c.getCommands(), marshalled);
-		}
+		services.failoverManager().replicate(b -> services.serializer().serializeCommands(c.getCommands(), b));
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> transactionExecutor = (c, eob) -> {
 		if (!c.isRestore())
@@ -119,7 +115,7 @@ public class InputHandlers {
 		services.viewsProcessor().process(c.getMarkedRecords());
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> eventsPublisher = (c, eob) -> {
-		if (c.getEvents().size() > 0) 
+		if (c.getEvents().size() > 0 && !c.isReplicated())
 			services.eventPublisher().publishEvents(c.isRestore(), c.transactionId(), c.eventMetadata(), c.getEvents().toArray());
 	};
 	

@@ -14,6 +14,10 @@ import java.util.stream.LongStream;
 
 public class ClusterFailoverManager implements FailoverManager {
 
+    public ClusterBuffer buffer() {
+        return buffer;
+    }
+
     public void newMessage() {
         if (!isBlocked && failoverHandler != null) {
             failoverHandler.accept(buffer);
@@ -89,10 +93,6 @@ public class ClusterFailoverManager implements FailoverManager {
 
     public void setMaster(boolean isMaster) {
         this.isMaster = isMaster;
-    }
-
-    public void setBlocked(boolean isBlocked) {
-        this.isBlocked = isBlocked;
     }
 
 
