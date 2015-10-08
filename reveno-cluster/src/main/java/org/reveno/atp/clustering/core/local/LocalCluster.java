@@ -12,8 +12,6 @@ import java.util.function.Predicate;
 
 public class LocalCluster implements Cluster {
 
-
-
     @Override
     public void connect() {
 
@@ -35,7 +33,7 @@ public class LocalCluster implements Cluster {
     }
 
     @Override
-    public void marshallWith(Class<? extends Message> msgType, Marshaller marshaller) {
+    public void marshallWith(Marshaller marshaller) {
 
     }
 

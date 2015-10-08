@@ -31,7 +31,7 @@ public interface Cluster {
 	
 	ClusterConnector gateway();
 	
-	void marshallWith(Class<? extends Message> msgType, Marshaller marshaller);
+	void marshallWith(Marshaller marshaller);
 
 	void listenEvents(Consumer<ClusterEvent> consumer);
 	

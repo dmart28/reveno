@@ -12,6 +12,41 @@ import java.nio.ByteBuffer;
 public class JGroupsBuffer implements ClusterBuffer {
 
     @Override
+    public void connect() {
+
+    }
+
+    @Override
+    public void disconnect() {
+
+    }
+
+    @Override
+    public void messageNotifier(Runnable listener) {
+
+    }
+
+    @Override
+    public void lockIncoming() {
+
+    }
+
+    @Override
+    public void unlockIncoming() {
+
+    }
+
+    @Override
+    public void erase() {
+
+    }
+
+    @Override
+    public boolean replicate() {
+        return false;
+    }
+
+    @Override
     public int readerPosition() {
         return 0;
     }
@@ -179,40 +214,5 @@ public class JGroupsBuffer implements ClusterBuffer {
     @Override
     public void writeSize() {
 
-    }
-
-    @Override
-    public void connect() {
-
-    }
-
-    @Override
-    public void disconnect() {
-
-    }
-
-    @Override
-    public void messageNotifier(Runnable listener) {
-
-    }
-
-    @Override
-    public void lockIncoming() {
-
-    }
-
-    @Override
-    public void unlockIncoming() {
-
-    }
-
-    @Override
-    public void erase() {
-
-    }
-
-    @Override
-    public boolean replicate() {
-        return false;
     }
 }

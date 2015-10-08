@@ -28,7 +28,7 @@ public class FailoverExecutor {
         Preconditions.checkNotNull(modelSynchronizer, "ModelSynchronizer must be provided.");
 
         cluster.listenEvents(this::onClusterEvent);
-        cluster.marshallWith(Message.class, marshaller);
+        cluster.marshallWith(marshaller);
     }
 
     public void leaderElector(ClusterExecutor<ElectionResult, Void> leaderElector) {
