@@ -108,8 +108,6 @@ public class ClusterEngine extends Engine {
         } catch (InterruptedException e) {
             throw Exceptions.runtime(e);
         }
-
-
     }
 
     @Override
