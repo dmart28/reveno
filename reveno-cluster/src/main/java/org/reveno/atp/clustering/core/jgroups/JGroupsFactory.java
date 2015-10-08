@@ -9,11 +9,17 @@ public class JGroupsFactory implements ClusterFactory {
 
     @Override
     public Cluster createCluster(RevenoClusterConfiguration config) {
-        return null;
+        return new JGroupsCluster(config, configFilePath);
     }
 
     @Override
     public ClusterBuffer createBuffer(RevenoClusterConfiguration config) {
         return null;
     }
+
+    public JGroupsFactory(String configFilePath) {
+        this.configFilePath = configFilePath;
+    }
+
+    protected String configFilePath;
 }

@@ -51,4 +51,9 @@ public class InetAddress extends Address {
 	public int hashCode() {
 		return Objects.hash(port, host);
 	}
+
+	@Override
+	public String toString() {
+		return host + ":" + port;
+	}
 }
