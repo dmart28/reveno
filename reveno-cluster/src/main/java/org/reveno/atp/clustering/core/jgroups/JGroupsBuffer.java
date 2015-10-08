@@ -1,10 +1,15 @@
 package org.reveno.atp.clustering.core.jgroups;
 
+import org.reveno.atp.clustering.api.ClusterBuffer;
 import org.reveno.atp.core.api.channel.Buffer;
 
 import java.nio.ByteBuffer;
 
-public class JGroupsBuffer implements Buffer {
+/**
+ * JGroups implementation of {@link ClusterBuffer}. It is intended to be used mainly
+ * for test and debug purposes, as it's not very efficient approach in low-latency world.
+ */
+public class JGroupsBuffer implements ClusterBuffer {
 
     @Override
     public int readerPosition() {
@@ -174,5 +179,40 @@ public class JGroupsBuffer implements Buffer {
     @Override
     public void writeSize() {
 
+    }
+
+    @Override
+    public void connect() {
+
+    }
+
+    @Override
+    public void disconnect() {
+
+    }
+
+    @Override
+    public void messageNotifier(Runnable listener) {
+
+    }
+
+    @Override
+    public void lockIncoming() {
+
+    }
+
+    @Override
+    public void unlockIncoming() {
+
+    }
+
+    @Override
+    public void erase() {
+
+    }
+
+    @Override
+    public boolean replicate() {
+        return false;
     }
 }
