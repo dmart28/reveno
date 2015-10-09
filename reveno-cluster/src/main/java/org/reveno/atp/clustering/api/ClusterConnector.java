@@ -27,9 +27,9 @@ import java.util.function.Predicate;
 
 public interface ClusterConnector {
 
-	CompletableFuture<Boolean> send(List<Address> dest, Message message);
+	void send(List<Address> dest, Message message);
 
-	CompletableFuture<Boolean> send(List<Address> dest, Message message, Set<Flag> flags);
+	void send(List<Address> dest, Message message, Set<Flag> flags);
 
 
 	<T extends Message> void receive(int type, Consumer<T> consumer);

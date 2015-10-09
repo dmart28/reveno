@@ -4,10 +4,12 @@ import org.reveno.atp.clustering.api.Cluster;
 import org.reveno.atp.clustering.api.ClusterBuffer;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
 
-public interface ClusterFactory {
+public interface ClusterProvider {
 
-    Cluster createCluster(RevenoClusterConfiguration config);
+    void initialize(RevenoClusterConfiguration config);
 
-    ClusterBuffer createBuffer(RevenoClusterConfiguration config);
+    Cluster retrieveCluster();
+
+    ClusterBuffer retrieveBuffer();
 
 }

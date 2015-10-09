@@ -55,7 +55,7 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 	public void start() {
 		if (isStarted) throw new IllegalStateException("The Pipe Processor is alredy started.");
 		
-		disruptor = new Disruptor<T>(eventFactory(), bufferSize(), executor(),
+		disruptor = new Disruptor(eventFactory(), bufferSize(), executor(),
 				singleProducer() ? ProducerType.SINGLE : ProducerType.MULTI,
 				createWaitStrategy());
 

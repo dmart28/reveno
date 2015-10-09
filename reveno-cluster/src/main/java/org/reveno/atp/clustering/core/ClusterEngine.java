@@ -8,12 +8,12 @@ import org.reveno.atp.clustering.core.api.ClusterExecutor;
 import org.reveno.atp.clustering.core.api.ClusterState;
 import org.reveno.atp.clustering.core.api.ElectionResult;
 import org.reveno.atp.clustering.core.api.StorageTransferServer;
-import org.reveno.atp.clustering.core.buffer.ClusterFactory;
+import org.reveno.atp.clustering.core.buffer.ClusterProvider;
 import org.reveno.atp.clustering.core.components.FileStorageTransferServer;
 import org.reveno.atp.clustering.core.components.MessagingClusterStateCollector;
 import org.reveno.atp.clustering.core.components.MessagingMasterSlaveElector;
 import org.reveno.atp.clustering.core.components.StorageTransferModelSync;
-import org.reveno.atp.clustering.core.jgroups.JGroupsFactory;
+import org.reveno.atp.clustering.core.jgroups.JGroupsProvider;
 import org.reveno.atp.clustering.core.marshallers.JsonMarshaller;
 import org.reveno.atp.core.Engine;
 import org.reveno.atp.core.api.FailoverManager;
@@ -40,9 +40,9 @@ public class ClusterEngine extends Engine {
         super(baseDir, classLoader);
     }
 
-    public ClusterEngine(File baseDir, ClassLoader classLoader, ClusterFactory factory) {
+    public ClusterEngine(File baseDir, ClassLoader classLoader, ClusterProvider factory) {
         super(baseDir, classLoader);
-        this.clusterFactory = factory;
+        this.clusterProvider = factory;
     }
 
     public ClusterEngine(File baseDir) {
@@ -53,19 +53,19 @@ public class ClusterEngine extends Engine {
         super(baseDir);
     }
 
-    public ClusterEngine(String baseDir, ClusterFactory factory) {
+    public ClusterEngine(String baseDir, ClusterProvider factory) {
         super(baseDir);
-        this.clusterFactory = factory;
+        this.clusterProvider = factory;
     }
 
     public ClusterEngine(FoldersStorage foldersStorage, JournalsStorage journalsStorage, SnapshotStorage snapshotStorage,
-                         ClassLoader classLoader, ClusterFactory factory) {
+                         ClassLoader classLoader, ClusterProvider factory) {
         super(foldersStorage, journalsStorage, snapshotStorage, classLoader);
-        this.clusterFactory = factory;
+        this.clusterProvider = factory;
     }
 
     public ClusterEngine(FoldersStorage foldersStorage, JournalsStorage journalsStorage, SnapshotStorage snapshotStorage,
-                         ClassLoader classLoader, ClusterFactory factory, StorageTransferServer server) {
+                         ClassLoader classLoader, ClusterProvider factory, StorageTransferServer server) {
         this(foldersStorage, journalsStorage, snapshotStorage, classLoader, factory);
         this.storageTransferServer = server;
     }
@@ -78,8 +78,9 @@ public class ClusterEngine extends Engine {
     @Override
     public void startup() {
         final CountDownLatch failoverWaiter = new CountDownLatch(1);
-        this.buffer = clusterFactory.createBuffer(configuration);
-        this.cluster = clusterFactory.createCluster(configuration);
+        clusterProvider.initialize(configuration);
+        this.buffer = clusterProvider.retrieveBuffer();
+        this.cluster = clusterProvider.retrieveCluster();
         this.failoverManager = new ClusterFailoverManager(buffer);
 
         if (storageTransferServer == null) {
@@ -150,7 +151,7 @@ public class ClusterEngine extends Engine {
     }
 
     protected RevenoClusterConfiguration configuration = new RevenoClusterConfiguration();
-    protected ClusterFactory clusterFactory = new JGroupsFactory();
+    protected ClusterProvider clusterProvider = new JGroupsProvider("classpath:/tcp.xml");
 
     protected StorageTransferServer storageTransferServer;
     protected ClusterBuffer buffer;
