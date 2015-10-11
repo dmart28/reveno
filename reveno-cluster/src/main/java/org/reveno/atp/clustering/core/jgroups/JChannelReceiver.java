@@ -3,6 +3,9 @@ package org.reveno.atp.clustering.core.jgroups;
 import org.jgroups.Message;
 import org.jgroups.ReceiverAdapter;
 import org.jgroups.View;
+import org.reveno.atp.utils.Exceptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -20,7 +23,12 @@ public class JChannelReceiver extends ReceiverAdapter {
 
     @Override
     public void receive(Message msg) {
-        receivers.forEach(r -> r.accept(msg));
+        try {
+            receivers.forEach(r -> r.accept(msg));
+        } catch (Throwable t) {
+            LOG.error(t.getMessage(), t);
+            throw Exceptions.runtime(t);
+        }
     }
 
     @Override
@@ -30,4 +38,5 @@ public class JChannelReceiver extends ReceiverAdapter {
 
     protected List<Consumer<Message>> receivers = new LinkedList<>();
     protected List<Consumer<View>> viewAcceptors = new LinkedList<>();
+    protected static final Logger LOG = LoggerFactory.getLogger(JChannelReceiver.class);
 }

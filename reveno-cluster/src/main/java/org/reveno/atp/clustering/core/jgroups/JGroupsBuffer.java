@@ -5,6 +5,7 @@ import org.jgroups.Header;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
 import org.jgroups.conf.ClassConfigurator;
+import org.jgroups.protocols.RSVP;
 import org.reveno.atp.clustering.api.ClusterBuffer;
 import org.reveno.atp.clustering.api.IOMode;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
@@ -95,6 +96,9 @@ public class JGroupsBuffer implements ClusterBuffer {
                         // ignore as it's async
                     }
                 } else {
+                    if (channel.getProtocolStack().findProtocol(RSVP.class) != null) {
+                        msg.setFlag(org.jgroups.Message.Flag.RSVP);
+                    }
                     try {
                         channel.send(msg);
                     } catch (Exception e) {

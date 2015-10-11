@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jgroups.*;
 import org.jgroups.conf.ClassConfigurator;
+import org.jgroups.protocols.RSVP;
 import org.reveno.atp.clustering.api.*;
 import org.reveno.atp.clustering.api.Address;
 import org.reveno.atp.clustering.api.message.Marshaller;
@@ -122,8 +123,11 @@ public class JGroupsCluster implements Cluster {
                         org.jgroups.Message msg = new org.jgroups.Message(a, null, data);
                         if (flags.contains(Flag.OUT_OF_BOUND))
                             msg.setFlag(org.jgroups.Message.Flag.OOB);
-                        if (!flags.contains(Flag.RSVP))
+                        if (!flags.contains(Flag.RSVP)) {
                             msg.setFlag(org.jgroups.Message.Flag.NO_RELIABILITY);
+                        } else if (channel.getProtocolStack().findProtocol(RSVP.class) != null) {
+                            msg.setFlag(org.jgroups.Message.Flag.RSVP);
+                        }
                         msg.setTransientFlag(org.jgroups.Message.TransientFlag.DONT_LOOPBACK);
                         msg.putHeader(ClusterMessageHeader.ID, new ClusterMessageHeader());
 
