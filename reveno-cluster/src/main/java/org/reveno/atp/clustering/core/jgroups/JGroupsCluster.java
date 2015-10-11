@@ -19,9 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.File;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -31,6 +29,7 @@ public class JGroupsCluster implements Cluster {
 
     @Override
     public void connect() {
+        if (isConnected) return;
         if (ClassConfigurator.get(ClusterMessageHeader.ID) == null)
             ClassConfigurator.add(ClusterMessageHeader.ID, ClusterMessageHeader.class);
 
@@ -70,6 +69,8 @@ public class JGroupsCluster implements Cluster {
             channel.connect(JGroupsProvider.CLUSTER_NAME);
         } catch (Exception e) {
             throw Exceptions.runtime(e);
+        } finally {
+            isConnected = true;
         }
     }
 
@@ -167,6 +168,7 @@ public class JGroupsCluster implements Cluster {
     }
 
     protected volatile ClusterView currentView = DEFAULT_VIEW;
+    protected volatile boolean isConnected = false;
 
     protected RevenoClusterConfiguration config;
     protected Consumer<ClusterEvent> clusterEventsListener = (e) -> {};

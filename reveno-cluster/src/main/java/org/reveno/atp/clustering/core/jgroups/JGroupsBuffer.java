@@ -30,6 +30,7 @@ public class JGroupsBuffer implements ClusterBuffer {
 
     @Override
     public void connect() {
+        if (isConnected) return;
         if (ClassConfigurator.get(ClusterBufferHeader.ID) == null)
             ClassConfigurator.add(ClusterBufferHeader.ID, ClusterBufferHeader.class);
 
@@ -52,6 +53,8 @@ public class JGroupsBuffer implements ClusterBuffer {
             });
         } catch (Exception e) {
             throw Exceptions.runtime(e);
+        } finally {
+            isConnected = true;
         }
     }
 
@@ -295,6 +298,7 @@ public class JGroupsBuffer implements ClusterBuffer {
     protected JChannel channel;
     protected RevenoClusterConfiguration config;
 
+    protected volatile boolean isConnected = false;
     protected volatile boolean isLocked = false;
     protected volatile List<AddressPair> addresses = new ArrayList<>();
     protected Runnable messageListener = () -> {};
