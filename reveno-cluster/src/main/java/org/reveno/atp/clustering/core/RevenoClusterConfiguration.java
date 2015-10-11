@@ -148,6 +148,6 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
         protected int retries = 100;
         protected SyncMode mode = SyncMode.SNAPSHOT;
         protected int port;
-        protected boolean waitAllNodesSync = false;
+        protected boolean waitAllNodesSync = true;
     }
 }
