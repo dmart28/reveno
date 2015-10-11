@@ -11,7 +11,6 @@
     <TCP bind_addr="${jgroups.tcp.bind_addr}"
 		 bind_port="${jgroups.tcp.bind_port}"
 		 port_range="0"
-         loopback="false"
          recv_buf_size="${tcp.recv_buf_size:5M}"
          send_buf_size="${tcp.send_buf_size:5M}"
          max_bundle_size="1M"
@@ -40,8 +39,7 @@
          oob_thread_pool.queue_enabled="true"
          oob_thread_pool.queue_max_size="1000000"
          oob_thread_pool.rejection_policy="Run"/>
-    <TCPPING timeout="1000"
-             initial_hosts="${jgroups.tcpping.initial_hosts}" port_range="0" num_initial_members="0" />
+    <TCPPING timeout="1000" initial_hosts="${jgroups.tcpping.initial_hosts}" port_range="0" />
     <MERGE3  min_interval="1000"
              max_interval="3000"/>
     <FD_SOCK/>
@@ -50,7 +48,7 @@
     <BARRIER />
     <pbcast.NAKACK2 use_mcast_xmit="false"
                    discard_delivered_msgs="true"/>
-    <UNICAST3 ack_threshold="1" />
+    <UNICAST3 ack_threshold="1"/>
     <SCOPE />
     <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
                    max_bytes="4M"/>
@@ -60,8 +58,4 @@
          min_threshold="0.4"/>
     <FRAG2 frag_size="60K"  />
     <pbcast.STATE_TRANSFER/>
-    <RSVP timeout="${jgroups.rsvp.timeout:2000}"
-    	ack_on_delivery="true"
-    	resend_interval="100"
-    	throw_exception_on_timeout="true"/>
 </config>

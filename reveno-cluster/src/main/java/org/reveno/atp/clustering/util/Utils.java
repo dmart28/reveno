@@ -1,5 +1,9 @@
 package org.reveno.atp.clustering.util;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Supplier;
 
@@ -14,6 +18,29 @@ public abstract class Utils {
             if (result) break;
 
             LockSupport.parkNanos(1);
+        }
+        return result;
+    }
+
+    public static int[] getFreePorts(int portNumber) throws IOException {
+        int[] result = new int[portNumber];
+        List<ServerSocket> servers = new ArrayList<ServerSocket>(portNumber);
+        ServerSocket tempServer = null;
+
+        for (int i=0; i<portNumber; i++) {
+            try {
+                tempServer = new ServerSocket(0);
+                servers.add(tempServer);
+                result[i] = tempServer.getLocalPort() + Math.max(5, (int)(Math.random() * 100));
+            } finally {
+                for (ServerSocket server : servers) {
+                    try {
+                        server.close();
+                    } catch (IOException e) {
+                        // Continue closing servers.
+                    }
+                }
+            }
         }
         return result;
     }

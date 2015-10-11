@@ -13,6 +13,8 @@ import org.reveno.atp.clustering.core.marshallers.JsonMarshaller;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.utils.Exceptions;
 import org.reveno.atp.utils.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -41,8 +43,11 @@ public class JGroupsCluster implements Cluster {
                 receivers(message.type()).forEach(c -> c.accept(message));
             }});
             ((JChannelReceiver) channel.getReceiver()).addViewAcceptor(view -> {
+                LOG.info("New view: {}, size: {}", view, view.getMembers().size());
                 currentView = new ClusterView(view.getViewId().getId(), view.getMembers().stream()
-                        .map(a -> JChannelHelper.physicalAddress(channel, config, a)).collect(Collectors.toList()));
+                        .map(a -> JChannelHelper.physicalAddress(channel, config, a)).filter(Objects::nonNull)
+                        .collect(Collectors.toList()));
+                LOG.info("New view: {}", currentView);
                 clusterEventsListener.accept(ClusterEvent.MEMBERSHIP_CHANGED);
             });
             channel.addChannelListener(new ChannelListener() {
@@ -61,6 +66,7 @@ public class JGroupsCluster implements Cluster {
                     clusterEventsListener.accept(ClusterEvent.CLOSED);
                 }
             });
+            channel.connect(JGroupsProvider.CLUSTER_NAME);
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }
@@ -116,8 +122,10 @@ public class JGroupsCluster implements Cluster {
                         org.jgroups.Message msg = new org.jgroups.Message(a, null, data);
                         if (flags.contains(Flag.OUT_OF_BOUND))
                             msg.setFlag(org.jgroups.Message.Flag.OOB);
-                        if (flags.contains(Flag.RSVP))
-                            msg.setFlag(org.jgroups.Message.Flag.RSVP);
+                        if (!flags.contains(Flag.RSVP))
+                            msg.setFlag(org.jgroups.Message.Flag.NO_RELIABILITY);
+                        msg.setTransientFlag(org.jgroups.Message.TransientFlag.DONT_LOOPBACK);
+                        msg.putHeader(ClusterMessageHeader.ID, new ClusterMessageHeader());
 
                         try {
                             channel.send(msg);
@@ -164,7 +172,9 @@ public class JGroupsCluster implements Cluster {
 
     protected JChannel channel;
 
-    protected static class ClusterMessageHeader extends Header {
+    protected static final Logger LOG = LoggerFactory.getLogger(JGroupsCluster.class);
+
+    public static class ClusterMessageHeader extends Header {
         public static final short ID = 0x1abc;
 
         @Override

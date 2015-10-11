@@ -8,6 +8,7 @@ import org.reveno.atp.clustering.api.InetAddress;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
 
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public abstract class JChannelHelper {
@@ -20,7 +21,7 @@ public abstract class JChannelHelper {
                 );
         String[] parts = physicalAddress.toString().split(":");
         return config.clusterNodeAddresses().stream().map(a -> (InetAddress) a).filter(a -> a.getHost()
-                .equals(parts[0]) && a.getPort() == Integer.parseInt(parts[1])).findFirst().get();
+                .equals(parts[0]) && a.getPort() == Integer.parseInt(parts[1])).findFirst().orElse(null);
     }
 
     public static List<Address> physicalAddresses(JChannel channel, List<InetAddress> addresses) {

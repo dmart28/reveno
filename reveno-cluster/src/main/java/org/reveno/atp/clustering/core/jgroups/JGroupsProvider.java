@@ -31,8 +31,11 @@ public class JGroupsProvider implements ClusterProvider {
                 channel = new JChannel(new File(configFilePath));
             }
             channel.setReceiver(new JChannelReceiver());
+            jcluster = new JGroupsCluster(config, channel);
+            jbuffer = new JGroupsBuffer(config, channel);
 
-            channel.connect(CLUSTER_NAME);
+            jcluster.connect();
+            jbuffer.connect();
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }
@@ -42,13 +45,13 @@ public class JGroupsProvider implements ClusterProvider {
     @Override
     public Cluster retrieveCluster() {
         checkInitialized();
-        return new JGroupsCluster(config, channel);
+        return jcluster;
     }
 
     @Override
     public ClusterBuffer retrieveBuffer() {
         checkInitialized();
-        return new JGroupsBuffer(config, channel);
+        return jbuffer;
     }
 
     protected String makeInitialHostsString(List<Address> addresses) {
@@ -71,5 +74,7 @@ public class JGroupsProvider implements ClusterProvider {
     protected RevenoClusterConfiguration config;
     protected JChannel channel;
     protected String configFilePath;
+    protected JGroupsCluster jcluster;
+    protected JGroupsBuffer jbuffer;
     protected boolean isInitialized = false;
 }

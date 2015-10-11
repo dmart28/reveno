@@ -1,9 +1,12 @@
 package org.reveno.atp.clustering.core.jgroups;
 
+import org.jgroups.Address;
 import org.jgroups.Header;
 import org.jgroups.JChannel;
+import org.jgroups.Message;
 import org.jgroups.conf.ClassConfigurator;
 import org.reveno.atp.clustering.api.ClusterBuffer;
+import org.reveno.atp.clustering.api.IOMode;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
@@ -12,8 +15,11 @@ import org.reveno.atp.utils.Exceptions;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * JGroups implementation of {@link ClusterBuffer}. It is intended to be used mainly
@@ -34,6 +40,15 @@ public class JGroupsBuffer implements ClusterBuffer {
                     receiveBuffer.clear();
                 }
             }});
+            ((JChannelReceiver) channel.getReceiver()).addViewAcceptor(view -> {
+                addresses = view.getMembers().stream()
+                        .filter(a -> JChannelHelper.physicalAddress(channel, config, a) != null)
+                        .map(a -> new AddressPair(a,  JChannelHelper.physicalAddress(channel, config, a).getAddressType()))
+                        .sorted((a, b) -> {
+                            if (a.mode == IOMode.ASYNC) return 1; else return -1;
+                        })
+                        .collect(Collectors.toList());
+            });
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }
@@ -66,7 +81,33 @@ public class JGroupsBuffer implements ClusterBuffer {
 
     @Override
     public boolean replicate() {
-        return false;
+        byte[] data = sendBuffer.readBytes(sendBuffer.length());
+        try {
+            addresses.forEach(p -> {
+                org.jgroups.Message msg = new org.jgroups.Message(p.address, null, data);
+                msg.setTransientFlag(Message.TransientFlag.DONT_LOOPBACK);
+                msg.getHeaders().put(ClusterBufferHeader.ID, new ClusterBufferHeader());
+                if (p.mode == IOMode.ASYNC) {
+                    msg.setFlag(Message.Flag.NO_RELIABILITY);
+                    try {
+                        channel.send(msg);
+                    } catch (Exception e) {
+                        // ignore as it's async
+                    }
+                } else {
+                    try {
+                        channel.send(msg);
+                    } catch (Exception e) {
+                        throw Exceptions.runtime(e);
+                    }
+                }
+            });
+        } catch (Exception e) {
+            return false;
+        } finally {
+            sendBuffer.clear();
+        }
+        return true;
     }
 
     @Override
@@ -251,6 +292,7 @@ public class JGroupsBuffer implements ClusterBuffer {
     protected RevenoClusterConfiguration config;
 
     protected volatile boolean isLocked = false;
+    protected volatile List<AddressPair> addresses = new ArrayList<>();
     protected Runnable messageListener = () -> {};
     protected Buffer sendBuffer = new NettyBasedBuffer();
     protected Buffer receiveBuffer = new NettyBasedBuffer();
@@ -270,6 +312,16 @@ public class JGroupsBuffer implements ClusterBuffer {
 
         @Override
         public void readFrom(DataInput in) throws Exception {
+        }
+    }
+
+    protected static class AddressPair {
+        public final Address address;
+        public final IOMode mode;
+
+        public AddressPair(Address address, IOMode mode) {
+            this.address = address;
+            this.mode = mode;
         }
     }
 }

@@ -18,6 +18,7 @@ package org.reveno.atp.core.engine;
 
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
+import org.reveno.atp.api.exceptions.ReplicationFailedException;
 import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
@@ -93,7 +94,8 @@ public class InputHandlers {
 	protected final BiConsumer<ProcessorContext, Boolean> replicator = (c, eob) -> {
 		interceptors(TransactionStage.REPLICATION, c);
 		
-		services.failoverManager().replicate(b -> services.serializer().serializeCommands(c.getCommands(), b));
+		if (!services.failoverManager().replicate(b -> services.serializer().serializeCommands(c.getCommands(), b)))
+			c.abort(new ReplicationFailedException());
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> transactionExecutor = (c, eob) -> {
 		if (!c.isRestore())
