@@ -91,6 +91,7 @@ public class FailoverExecutor {
         final ClusterView view = cluster.view();
         if (!isQuorum(view)) {
             LOG.info("Failover process end: not a quorum [members: {}]", view.members());
+            return;
         }
         try {
             if (failoverManager.isMaster()) {
@@ -135,6 +136,9 @@ public class FailoverExecutor {
             if (failoverManager.isBlocked()) {
                 failoverManager.unblock();
             }
+            if (failoverListener != null) {
+                failoverListener.run();
+            }
         } catch (Throwable t) {
             LOG.info("Leadership election is failed for view: {}", view);
 
@@ -146,6 +150,10 @@ public class FailoverExecutor {
             replayer.get();
             failoverManager.setMaster(false);
 
+            try {
+                Thread.sleep(config.revenoTimeouts().ackTimeout());
+            } catch (InterruptedException e) {
+            }
             onClusterEvent(ClusterEvent.MEMBERSHIP_CHANGED);
         }
     }
