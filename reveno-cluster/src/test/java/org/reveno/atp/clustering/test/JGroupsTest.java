@@ -48,14 +48,14 @@ public class JGroupsTest {
 
         cluster1.gateway().send(cluster1.view().members(), new TestMessage("Hello!"));
 
-        Assert.assertTrue(Utils.waitFor(() -> count.get() == 2, 2000));
+        Assert.assertTrue(Utils.waitFor(() -> count.get() == 2, TEST_TIMEOUT));
         count.set(0);
 
         cluster2.disconnect();
 
         cluster1.gateway().send(cluster1.view().members(), new TestMessage("World!"));
 
-        Assert.assertTrue(Utils.waitFor(() -> count.get() == 1, 2000));
+        Assert.assertTrue(Utils.waitFor(() -> count.get() == 1, TEST_TIMEOUT));
 
         cluster1.disconnect();
         cluster3.disconnect();
@@ -77,10 +77,10 @@ public class JGroupsTest {
         ProtostuffSerializer serializer = new ProtostuffSerializer();
         serializer.registerTransactionType(TestMessage.class);
 
-        CountDownLatch latch = new CountDownLatch(2);
+        AtomicInteger count = new AtomicInteger(2);
         final Consumer<ClusterBuffer> clusterBufferConsumer = b -> {
             serializer.deserializeObject(b);
-            latch.countDown();
+            count.decrementAndGet();
         };
         buffer2.messageNotifier(clusterBufferConsumer);
         buffer3.messageNotifier(clusterBufferConsumer);
@@ -88,7 +88,24 @@ public class JGroupsTest {
         serializer.serializeObject(buffer1, message);
         buffer1.replicate();
 
-        latch.await(2000, TimeUnit.MILLISECONDS);
+        Assert.assertTrue(Utils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));
+
+        count.set(1);
+        buffer2.lockIncoming();
+        serializer.serializeObject(buffer1, message);
+        buffer1.replicate();
+
+        Assert.assertTrue(Utils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));
+        Assert.assertFalse(Utils.waitFor(() -> count.get() < 0, TEST_SHORT_TIMEOUT));
+
+        count.set(2);
+        buffer2.unlockIncoming();
+        serializer.serializeObject(buffer1, message);
+        buffer1.replicate();
+
+        Assert.assertTrue(Utils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));
+        Assert.assertFalse(Utils.waitFor(() -> count.get() < 0, TEST_SHORT_TIMEOUT));
+
         buffer1.disconnect(); buffer2.disconnect(); buffer3.disconnect();
     }
 
@@ -132,5 +149,7 @@ public class JGroupsTest {
         }
     }
 
+    protected static final int TEST_TIMEOUT = 5000;
+    protected static final int TEST_SHORT_TIMEOUT = TEST_TIMEOUT / 10;
     protected static final Logger LOG = LoggerFactory.getLogger(JGroupsTest.class);
 }
