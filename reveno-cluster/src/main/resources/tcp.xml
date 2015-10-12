@@ -48,7 +48,7 @@
     <BARRIER />
     <pbcast.NAKACK2 use_mcast_xmit="false"
                    discard_delivered_msgs="true"/>
-    <UNICAST3 ack_threshold="1"/>
+    <UNICAST2 />
     <SCOPE />
     <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
                    max_bytes="4M"/>
@@ -58,4 +58,5 @@
          min_threshold="0.4"/>
     <FRAG2 frag_size="60K"  />
     <pbcast.STATE_TRANSFER/>
+    <RSVP ack_on_delivery="false" throw_exception_on_timeout="true" timeout="${jgroups.rsvp.timeout}"/>
 </config>

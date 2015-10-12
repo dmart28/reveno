@@ -16,6 +16,9 @@
 
 package org.reveno.atp.clustering.api;
 
+import org.reveno.atp.utils.Exceptions;
+
+import java.net.UnknownHostException;
 import java.util.Objects;
 
 public class InetAddress extends Address {
@@ -29,6 +32,11 @@ public class InetAddress extends Address {
 	public String getHost() {
 		return host;
 	}
+
+	private java.net.InetAddress inetAddress;
+	public java.net.InetAddress getInetAddress() {
+		return inetAddress;
+	}
 	
 	public InetAddress(String connectionString, IOMode addressType) {
 		super(connectionString, addressType);
@@ -36,6 +44,11 @@ public class InetAddress extends Address {
 		String[] vals = connectionString.split(":");
 		this.host = vals[0];
 		this.port = Integer.parseInt(vals[1]);
+		try {
+			this.inetAddress = java.net.InetAddress.getByName(host);
+		} catch (UnknownHostException e) {
+			throw Exceptions.runtime(e);
+		}
 	}
 
 	@Override

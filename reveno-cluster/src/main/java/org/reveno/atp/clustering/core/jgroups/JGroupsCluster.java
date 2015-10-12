@@ -11,6 +11,7 @@ import org.reveno.atp.clustering.api.message.Marshaller;
 import org.reveno.atp.clustering.api.message.Message;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
 import org.reveno.atp.clustering.core.marshallers.JsonMarshaller;
+import org.reveno.atp.clustering.util.Tuple;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.utils.Exceptions;
 import org.reveno.atp.utils.Preconditions;
@@ -44,9 +45,12 @@ public class JGroupsCluster implements Cluster {
             }});
             ((JChannelReceiver) channel.getReceiver()).addViewAcceptor(view -> {
                 LOG.info("New view: {}, size: {}", view, view.getMembers().size());
-                currentView = new ClusterView(view.getViewId().getId(), view.getMembers().stream()
-                        .map(a -> JChannelHelper.physicalAddress(channel, config, a)).filter(Objects::nonNull)
-                        .collect(Collectors.toList()));
+                List<Address> members = view.getMembers().stream()
+                        .map(a -> new Tuple<>(a, JChannelHelper.physicalAddress(channel, config, a)))
+                        .filter(t -> t.getVal2() != null)
+                        .peek(t -> addressMap.put(t.getVal2(), t.getVal1()))
+                        .map(Tuple::getVal2).collect(Collectors.toList());
+                currentView = new ClusterView(view.getViewId().getId(), members);
                 LOG.info("New view: {}", currentView);
                 clusterEventsListener.accept(ClusterEvent.MEMBERSHIP_CHANGED);
             });
@@ -119,25 +123,24 @@ public class JGroupsCluster implements Cluster {
             marshaller.marshall(buffer, message);
             final byte[] data = buffer.readBytes(buffer.length());
 
-            JChannelHelper.physicalAddresses(channel, dest.stream().map(a -> (InetAddress) a).collect(Collectors.toList()))
-                    .forEach(a -> {
-                        org.jgroups.Message msg = new org.jgroups.Message(a, null, data);
-                        if (flags.contains(Flag.OUT_OF_BOUND))
-                            msg.setFlag(org.jgroups.Message.Flag.OOB);
-                        if (!flags.contains(Flag.RSVP)) {
-                            msg.setFlag(org.jgroups.Message.Flag.NO_RELIABILITY);
-                        } else if (channel.getProtocolStack().findProtocol(RSVP.class) != null) {
-                            msg.setFlag(org.jgroups.Message.Flag.RSVP);
-                        }
-                        msg.setTransientFlag(org.jgroups.Message.TransientFlag.DONT_LOOPBACK);
-                        msg.putHeader(ClusterMessageHeader.ID, new ClusterMessageHeader());
+            dest.stream().filter(d -> addressMap.containsKey(d)).map(d -> addressMap.get(d)).forEach(a -> {
+                org.jgroups.Message msg = new org.jgroups.Message(a, null, data);
+                if (flags.contains(Flag.OUT_OF_BOUND))
+                    msg.setFlag(org.jgroups.Message.Flag.OOB);
+                if (!flags.contains(Flag.RSVP)) {
+                    msg.setFlag(org.jgroups.Message.Flag.NO_RELIABILITY);
+                } else if (channel.getProtocolStack().findProtocol(RSVP.class) != null) {
+                    msg.setFlag(org.jgroups.Message.Flag.RSVP);
+                }
+                msg.setTransientFlag(org.jgroups.Message.TransientFlag.DONT_LOOPBACK);
+                msg.putHeader(ClusterMessageHeader.ID, new ClusterMessageHeader());
 
-                        try {
-                            channel.send(msg);
-                        } catch (Exception e) {
-                            throw Exceptions.runtime(e);
-                        }
-                    });
+                try {
+                    channel.send(msg);
+                } catch (Exception e) {
+                    throw Exceptions.runtime(e);
+                }
+            });
         }
 
         @Override
@@ -175,6 +178,7 @@ public class JGroupsCluster implements Cluster {
     protected JGroupsConnector connector = new JGroupsConnector();
     protected Marshaller marshaller = new JsonMarshaller();
     protected Int2ObjectMap<List<Consumer<Message>>> receivers = new Int2ObjectOpenHashMap<>();
+    protected Map<InetAddress, org.jgroups.Address> addressMap = new HashMap<>();
 
     protected JChannel channel;
 

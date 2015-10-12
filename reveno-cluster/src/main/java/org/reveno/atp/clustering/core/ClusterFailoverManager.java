@@ -18,7 +18,7 @@ public class ClusterFailoverManager implements FailoverManager {
         return buffer;
     }
 
-    public void newMessage() {
+    public void newMessage(Buffer buffer) {
         if (!isBlocked && failoverHandler != null) {
             failoverHandler.accept(buffer);
         } else {
@@ -73,9 +73,8 @@ public class ClusterFailoverManager implements FailoverManager {
     @Override
     public boolean replicate(Consumer<Buffer> bufferWriter) {
         try {
-            buffer.markSize();
+            buffer.prepare();
             bufferWriter.accept(buffer);
-            buffer.writeSize();
 
             return buffer.replicate();
         } catch (Throwable t) {

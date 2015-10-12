@@ -3,16 +3,21 @@ package org.reveno.atp.clustering.test;
 import org.junit.Assert;
 import org.junit.Test;
 import org.reveno.atp.clustering.api.Cluster;
+import org.reveno.atp.clustering.api.ClusterBuffer;
 import org.reveno.atp.clustering.api.IOMode;
 import org.reveno.atp.clustering.api.InetAddress;
 import org.reveno.atp.clustering.api.message.Message;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
 import org.reveno.atp.clustering.core.jgroups.JGroupsProvider;
 import org.reveno.atp.clustering.util.Utils;
+import org.reveno.atp.core.serialization.ProtostuffSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -22,7 +27,7 @@ public class JGroupsTest {
     public void clusterBasicSetupTest() throws Exception {
         int[] ports = Utils.getFreePorts(3);
 
-        JGroupsProvider provider1 = jgroupsProvider(ports[0], new int[]{ports[1], ports[2]});
+        JGroupsProvider provider1 = jgroupsProvider(ports[0], new int[] {ports[1], ports[2]});
         JGroupsProvider provider2 = jgroupsProvider(ports[1], new int[] {ports[0], ports[2]});
         JGroupsProvider provider3 = jgroupsProvider(ports[2], new int[] {ports[0], ports[1]});
 
@@ -43,14 +48,48 @@ public class JGroupsTest {
 
         cluster1.gateway().send(cluster1.view().members(), new TestMessage("Hello!"));
 
-        Assert.assertTrue(Utils.waitFor(() -> count.get() == 2, 500));
+        Assert.assertTrue(Utils.waitFor(() -> count.get() == 2, 2000));
         count.set(0);
 
         cluster2.disconnect();
 
         cluster1.gateway().send(cluster1.view().members(), new TestMessage("World!"));
 
-        Assert.assertTrue(Utils.waitFor(() -> count.get() == 1, 500));
+        Assert.assertTrue(Utils.waitFor(() -> count.get() == 1, 2000));
+
+        cluster1.disconnect();
+        cluster3.disconnect();
+    }
+
+    @Test
+    public void jgroupsBufferTest() throws Exception {
+        int[] ports = Utils.getFreePorts(3);
+
+        JGroupsProvider provider1 = jgroupsProvider(ports[0], new int[]{ports[1], ports[2]});
+        JGroupsProvider provider2 = jgroupsProvider(ports[1], new int[]{ports[0], ports[2]});
+        JGroupsProvider provider3 = jgroupsProvider(ports[2], new int[]{ports[0], ports[1]});
+
+        ClusterBuffer buffer1 = provider1.retrieveBuffer();
+        ClusterBuffer buffer2 = provider2.retrieveBuffer();
+        ClusterBuffer buffer3 = provider3.retrieveBuffer();
+
+        TestMessage message = new TestMessage("Hello world!");
+        ProtostuffSerializer serializer = new ProtostuffSerializer();
+        serializer.registerTransactionType(TestMessage.class);
+
+        CountDownLatch latch = new CountDownLatch(2);
+        final Consumer<ClusterBuffer> clusterBufferConsumer = b -> {
+            serializer.deserializeObject(b);
+            latch.countDown();
+        };
+        buffer2.messageNotifier(clusterBufferConsumer);
+        buffer3.messageNotifier(clusterBufferConsumer);
+
+        serializer.serializeObject(buffer1, message);
+        buffer1.replicate();
+
+        latch.await(2000, TimeUnit.MILLISECONDS);
+        buffer1.disconnect(); buffer2.disconnect(); buffer3.disconnect();
     }
 
     protected static JGroupsProvider jgroupsProvider(int port, int[] nodes) {

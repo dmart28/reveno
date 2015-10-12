@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -38,7 +39,7 @@ public class JGroupsBuffer implements ClusterBuffer {
             ((JChannelReceiver) channel.getReceiver()).addReceiver(msg -> { if (msg.getHeader(ClusterBufferHeader.ID) != null) {
                 if (!isLocked) {
                     receiveBuffer.writeBytes(msg.getBuffer());
-                    messageListener.run();
+                    messageListener.accept(JGroupsBuffer.this);
                     receiveBuffer.clear();
                 }
             }});
@@ -64,7 +65,7 @@ public class JGroupsBuffer implements ClusterBuffer {
     }
 
     @Override
-    public void messageNotifier(Runnable listener) {
+    public void messageNotifier(Consumer<ClusterBuffer> listener) {
         this.messageListener = listener;
     }
 
@@ -84,13 +85,17 @@ public class JGroupsBuffer implements ClusterBuffer {
     }
 
     @Override
+    public void prepare() {
+    }
+
+    @Override
     public boolean replicate() {
         byte[] data = sendBuffer.readBytes(sendBuffer.length());
         try {
             addresses.forEach(p -> {
                 org.jgroups.Message msg = new org.jgroups.Message(p.address, null, data);
                 msg.setTransientFlag(Message.TransientFlag.DONT_LOOPBACK);
-                msg.getHeaders().put(ClusterBufferHeader.ID, new ClusterBufferHeader());
+                msg.putHeader(ClusterBufferHeader.ID, new ClusterBufferHeader());
                 if (p.mode == IOMode.ASYNC) {
                     msg.setFlag(Message.Flag.NO_RELIABILITY);
                     try {
@@ -301,7 +306,7 @@ public class JGroupsBuffer implements ClusterBuffer {
     protected volatile boolean isConnected = false;
     protected volatile boolean isLocked = false;
     protected volatile List<AddressPair> addresses = new ArrayList<>();
-    protected Runnable messageListener = () -> {};
+    protected Consumer<ClusterBuffer> messageListener = (b) -> {};
     protected Buffer sendBuffer = new NettyBasedBuffer();
     protected Buffer receiveBuffer = new NettyBasedBuffer();
     protected Queue<Integer> sizeMarks = new LinkedTransferQueue<>();
@@ -324,10 +329,10 @@ public class JGroupsBuffer implements ClusterBuffer {
     }
 
     protected static class AddressPair {
-        public final Address address;
+        public final org.jgroups.Address address;
         public final IOMode mode;
 
-        public AddressPair(Address address, IOMode mode) {
+        public AddressPair(org.jgroups.Address address, IOMode mode) {
             this.address = address;
             this.mode = mode;
         }
