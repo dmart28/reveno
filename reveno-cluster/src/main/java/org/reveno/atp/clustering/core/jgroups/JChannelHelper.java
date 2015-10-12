@@ -1,16 +1,12 @@
 package org.reveno.atp.clustering.core.jgroups;
 
-import org.jgroups.Address;
 import org.jgroups.Event;
 import org.jgroups.JChannel;
 import org.jgroups.PhysicalAddress;
 import org.reveno.atp.clustering.api.InetAddress;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
-import org.reveno.atp.clustering.util.Tuple;
 
 import java.net.UnknownHostException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public abstract class JChannelHelper {
 
