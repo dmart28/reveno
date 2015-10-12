@@ -9,6 +9,7 @@ import org.jgroups.protocols.RSVP;
 import org.reveno.atp.clustering.api.ClusterBuffer;
 import org.reveno.atp.clustering.api.IOMode;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
+import org.reveno.atp.clustering.util.Tuple;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.utils.Exceptions;
@@ -45,8 +46,9 @@ public class JGroupsBuffer implements ClusterBuffer {
             }});
             ((JChannelReceiver) channel.getReceiver()).addViewAcceptor(view -> {
                 addresses = view.getMembers().stream()
-                        .filter(a -> JChannelHelper.physicalAddress(channel, config, a) != null)
-                        .map(a -> new AddressPair(a,  JChannelHelper.physicalAddress(channel, config, a).getAddressType()))
+                        .map(a -> new Tuple<>(a, JChannelHelper.physicalAddress(channel, config, a)))
+                        .filter(t -> t.getVal2() != null)
+                        .map(t -> new AddressPair(t.getVal1(), t.getVal2().getAddressType()))
                         .sorted((a, b) -> {
                             if (a.mode == IOMode.ASYNC) return 1; else return -1;
                         })
