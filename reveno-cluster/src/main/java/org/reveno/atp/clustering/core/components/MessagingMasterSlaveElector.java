@@ -96,7 +96,8 @@ public class MessagingMasterSlaveElector implements ClusterExecutor<ElectionResu
     }
 
     protected boolean isAllSamePriority(List<VoteMessage> answers) {
-        return answers.stream().collect(Collectors.groupingBy(o -> o.priority, Collectors.counting())).size() == 1;
+        Map<Integer, Long> collect = answers.stream().collect(Collectors.groupingBy(o -> o.priority, Collectors.counting()));
+        return collect.size() == 1 && collect.keySet().iterator().next() == config.priority();
     }
 
     public MessagingMasterSlaveElector(Cluster cluster, RevenoClusterConfiguration config) {

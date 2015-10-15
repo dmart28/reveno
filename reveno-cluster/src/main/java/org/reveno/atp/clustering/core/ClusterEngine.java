@@ -91,7 +91,7 @@ public class ClusterEngine extends Engine {
 
         storageTransferServer.startup();
 
-        failoverExecutor = new FailoverExecutor(cluster, failoverManager, storageTransferServer, configuration);
+        failoverExecutor = new FailoverExecutor(cluster, journalsManager, failoverManager, storageTransferServer, configuration);
         failoverExecutor.snapshotMaker(this::snapshotAll);
         failoverExecutor.replayer(this::replay);
         failoverExecutor.leaderElector(leadershipExecutor());
@@ -124,7 +124,7 @@ public class ClusterEngine extends Engine {
     }
 
     @Override
-    protected FailoverManager failoverManager() {
+    public FailoverManager failoverManager() {
         return failoverManager;
     }
 

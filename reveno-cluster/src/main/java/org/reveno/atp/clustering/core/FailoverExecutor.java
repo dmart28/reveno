@@ -2,7 +2,6 @@ package org.reveno.atp.clustering.core;
 
 import org.reveno.atp.clustering.api.*;
 import org.reveno.atp.clustering.api.message.Marshaller;
-import org.reveno.atp.clustering.api.message.Message;
 import org.reveno.atp.clustering.core.api.ClusterExecutor;
 import org.reveno.atp.clustering.core.api.ClusterState;
 import org.reveno.atp.clustering.core.api.ElectionResult;
@@ -12,12 +11,14 @@ import org.reveno.atp.clustering.core.components.StorageTransferModelSync;
 import org.reveno.atp.clustering.core.api.StorageTransferServer;
 import org.reveno.atp.clustering.core.marshallers.JsonMarshaller;
 import org.reveno.atp.clustering.exceptions.FailoverAbortedException;
+import org.reveno.atp.core.JournalsManager;
 import org.reveno.atp.utils.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class FailoverExecutor {
@@ -64,6 +65,10 @@ public class FailoverExecutor {
         this.replayer = replayer;
     }
 
+    public void lastTransactionId(Supplier<Long> lastTransactionId) {
+        this.lastTransactionId = lastTransactionId;
+    }
+
     public void marshaller(Marshaller marshaller) {
         this.marshaller = marshaller;
     }
@@ -108,6 +113,7 @@ public class FailoverExecutor {
             if (config.revenoSync().mode() == SyncMode.SNAPSHOT) {
                 snapshotMaker.run();
             }
+            journalsManager.roll(lastTransactionId.get());
 
             ElectionResult election = leaderElector.execute(view);
             if (election.failed) {
@@ -121,7 +127,7 @@ public class FailoverExecutor {
             }
 
             waitOnBarrier(view, "cluster_state");
-            
+
             if (election.isMaster && !state.latestNode.isPresent() && !config.revenoSync().waitAllNodesSync()) {
                 failoverManager.unblock();
             }
@@ -169,6 +175,7 @@ public class FailoverExecutor {
     }
 
     protected void waitOnBarrier(ClusterView view, String name) {
+        LOG.debug("Wait on barrier [{}]", name);
         final GroupBarrier barrier = new GroupBarrier(cluster, view, name);
         if (!barrier.waitOn()) {
             throw new FailoverAbortedException(String.format("Timeout wait on barrier [%s] in view [%s].", name, view));
@@ -181,11 +188,12 @@ public class FailoverExecutor {
         return view.members().size() != 0 && view.members().size() >= config.clusterNodeAddresses().size() / 2;
     }
 
-    public FailoverExecutor(Cluster cluster, ClusterFailoverManager failoverManager, StorageTransferServer storageServer,
-                            RevenoClusterConfiguration config) {
+    public FailoverExecutor(Cluster cluster, JournalsManager journalsManager, ClusterFailoverManager failoverManager,
+                            StorageTransferServer storageServer, RevenoClusterConfiguration config) {
         this.cluster = cluster;
         this.storageServer = storageServer;
         this.config = config;
+        this.journalsManager = journalsManager;
 
         this.buffer = failoverManager.buffer();
         this.failoverManager = failoverManager;
@@ -194,10 +202,12 @@ public class FailoverExecutor {
     protected Cluster cluster;
     protected ClusterBuffer buffer;
     protected RevenoClusterConfiguration config;
+    protected JournalsManager journalsManager;
     protected ClusterFailoverManager failoverManager;
     protected StorageTransferServer storageServer;
     protected Runnable snapshotMaker = () -> {};
     protected Supplier<Long> replayer = () -> 0L;
+    protected Supplier<Long> lastTransactionId = () -> 0L;
     protected ClusterExecutor<ElectionResult, Void> leaderElector;
     protected ClusterExecutor<ClusterState, Void> clusterStateCollector;
     protected ClusterExecutor<Boolean, StorageTransferModelSync.TransferContext> modelSynchronizer;

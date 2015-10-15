@@ -43,6 +43,7 @@ import org.reveno.atp.acceptance.model.mutable.MutableOrder;
 import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
 import org.reveno.atp.api.ChannelOptions;
+import org.reveno.atp.api.Configuration;
 import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.Reveno;
@@ -50,6 +51,7 @@ import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.api.transaction.TransactionStage;
+import org.reveno.atp.core.Engine;
 import org.reveno.atp.test.utils.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,11 +116,30 @@ public class RevenoBaseTest {
 
 	protected TestRevenoEngine createEngine(Consumer<TestRevenoEngine> consumer, boolean meter) {
 		TestRevenoEngine reveno = new TestRevenoEngine(tempDir);
-		
+
+		configure(reveno);
+		txPerSecondMeter(reveno);
+		consumer.accept(reveno);
+		setModelType();
+
+		return reveno;
+	}
+
+	protected void setModelType() {
+		if (modelType == ModelType.IMMUTABLE) {
+			Transactions.accountFactory = ImmutableAccount.FACTORY;
+			Transactions.orderFactory = ImmutableOrder.FACTORY;
+		} else {
+			Transactions.accountFactory = MutableAccount.FACTORY;
+			Transactions.orderFactory = MutableOrder.FACTORY;
+		}
+	}
+
+	protected <T extends Engine> T configure(T reveno) {
 		reveno.config().cpuConsumption(CpuConsumption.LOW);
 		reveno.config().modelType(modelType);
 		reveno.config().journaling().channelOptions(ChannelOptions.BUFFERING_OS);
-		
+
 		reveno.domain().command(CreateNewAccountCommand.class, Long.class, Commands::createAccount);
 		reveno.domain().command(NewOrderCommand.class, Long.class, Commands::newOrder);
 		reveno.domain().command(Credit.class, Commands::credit);
@@ -127,7 +148,7 @@ public class RevenoBaseTest {
 		reveno.domain().transactionAction(AcceptOrder.class, Transactions::acceptOrder);
 		reveno.domain().transactionAction(Credit.class, Transactions::credit);
 		reveno.domain().transactionAction(Debit.class, Transactions::debit);
-		
+
 		reveno.domain().viewMapper(Account.class, AccountView.class, (id,e,r) -> {
 			return new AccountView(id, e.currency(), e.balance(), e.orders(), reveno.query());
 		});
@@ -135,36 +156,24 @@ public class RevenoBaseTest {
 			return new OrderView(id, e.accountId(), e.size(), e.price(), e.time(), e.positionId(),
 					e.symbol(), e.orderStatus(), e.orderType(), reveno.query());
 		});
-		
-		// disabled for now as more rubbish than worth
-		txPerSecondMeter(reveno);
-		
-		consumer.accept(reveno);
-		
-		if (modelType == ModelType.IMMUTABLE) {
-			Transactions.accountFactory = ImmutableAccount.FACTORY;
-			Transactions.orderFactory = ImmutableOrder.FACTORY;
-		} else {
-			Transactions.accountFactory = MutableAccount.FACTORY;
-			Transactions.orderFactory = MutableOrder.FACTORY;
-		}
-		
 		return reveno;
 	}
 
 	protected void txPerSecondMeter(TestRevenoEngine reveno) {
 		reveno.interceptors().add(TransactionStage.TRANSACTION, new TransactionInterceptor() {
 			protected long start = -1L;
+
 			@Override
 			public void intercept(long transactionId, long time, WriteableRepository repository,
-					TransactionStage stage) {
+								  TransactionStage stage) {
 				if (start == -1 || transactionId == 1) start = System.currentTimeMillis();
 				if (transactionId % 10_000_000 == 0) {
 					log.info(String.format("%s tx per second!", (
-							Math.round((double)10_000_000 * 1000) / (System.currentTimeMillis() - start))));
+							Math.round((double) 10_000_000 * 1000) / (System.currentTimeMillis() - start))));
 					start = System.currentTimeMillis();
 				}
 			}
+
 			@Override
 			public void destroy() {
 			}
@@ -186,7 +195,7 @@ public class RevenoBaseTest {
 	protected File findFirstFile(String prefix) {
 		return tempDir.listFiles((dir, name) -> name.startsWith(prefix))[0];
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	protected <T> T sendCommandSync(Reveno reveno, Object command) throws InterruptedException, ExecutionException {
 		Result<T> result = (Result<T>) reveno.executeCommand(command).get();
