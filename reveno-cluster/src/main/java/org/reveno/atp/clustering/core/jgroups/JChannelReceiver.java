@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 public class JChannelReceiver extends ReceiverAdapter {
@@ -36,7 +37,7 @@ public class JChannelReceiver extends ReceiverAdapter {
         viewAcceptors.forEach(a -> a.accept(view));
     }
 
-    protected List<Consumer<Message>> receivers = new LinkedList<>();
-    protected List<Consumer<View>> viewAcceptors = new LinkedList<>();
+    protected List<Consumer<Message>> receivers = new CopyOnWriteArrayList<>();
+    protected List<Consumer<View>> viewAcceptors = new CopyOnWriteArrayList<>();
     protected static final Logger LOG = LoggerFactory.getLogger(JChannelReceiver.class);
 }

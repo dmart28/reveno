@@ -14,6 +14,8 @@ import org.reveno.atp.clustering.api.IOMode;
 import org.reveno.atp.clustering.api.InetAddress;
 import org.reveno.atp.clustering.core.ClusterEngine;
 import org.reveno.atp.clustering.core.jgroups.JGroupsProvider;
+import org.reveno.atp.clustering.test.common.ClusterEngineWrapper;
+import org.reveno.atp.clustering.test.common.ClusterTestUtils;
 import org.reveno.atp.clustering.util.Tuple;
 import org.reveno.atp.clustering.util.Utils;
 import org.reveno.atp.core.Engine;
@@ -21,39 +23,20 @@ import org.reveno.atp.test.utils.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.function.Supplier;
+import java.io.IOException;
+import java.util.List;
 
 public class ClusterTests extends RevenoBaseTest {
 
     @Test
     public void basicTestJGroups() throws Exception {
         setModelType();
-        basicTest(() -> {
-            File tempDir = Files.createTempDir();
-            LOG.info(tempDir.getAbsolutePath());
-            return new Tuple<>(tempDir,
-                    configure(new ClusterEngine(tempDir, getClass().getClassLoader(),
-                            new JGroupsProvider("classpath:/tcp.xml"))));
-        });
+        basicTest(ClusterTestUtils.createClusterEngines(2, this::configure, new JGroupsProvider("classpath:/tcp.xml")));
     }
 
-    protected void basicTest(Supplier<Tuple<File, ClusterEngine>> tuple) throws Exception {
-        Tuple<File, ClusterEngine> tuple1 = tuple.get();
-        ClusterEngine engine1 = tuple1.getVal2();
-        Tuple<File, ClusterEngine> tuple2 = tuple.get();
-        ClusterEngine engine2 = tuple2.getVal2();
-
-        int[] ports = Utils.getFreePorts(2);
-        Address address1 = new InetAddress("127.0.0.1:" + ports[0], IOMode.SYNC);
-        Address address2 = new InetAddress("127.0.0.1:" + ports[1], IOMode.SYNC);
-        engine1.clusterConfiguration().currentNodeAddress(address1);
-        engine1.clusterConfiguration().clusterNodeAddresses(Collections.singletonList(address2));
-        engine2.clusterConfiguration().currentNodeAddress(address2);
-        engine2.clusterConfiguration().clusterNodeAddresses(Collections.singletonList(address1));
-        engine1.clusterConfiguration().priority(2);
-        engine2.clusterConfiguration().priority(1);
+    protected void basicTest(List<ClusterEngineWrapper> engines) throws Exception {
+        ClusterEngineWrapper engine1 = engines.get(0);
+        ClusterEngineWrapper engine2 = engines.get(1);
 
         engine1.startup();
         engine2.startup();
@@ -68,7 +51,7 @@ public class ClusterTests extends RevenoBaseTest {
         engine1.shutdown();
         engine2.shutdown();
 
-        Engine replayEngine = configure(new Engine(tuple2.getVal1()));
+        Engine replayEngine = configure(new Engine(engine2.getBaseDir()));
         replayEngine.startup();
 
         Assert.assertTrue(replayEngine.query().find(AccountView.class, accountId).isPresent());
@@ -77,8 +60,16 @@ public class ClusterTests extends RevenoBaseTest {
 
         replayEngine.shutdown();
 
-        FileUtils.delete(tuple1.getVal1());
-        FileUtils.delete(tuple2.getVal1());
+        clearResources(engines);
+    }
+
+    protected void clearResources(List<ClusterEngineWrapper> engines) {
+        engines.forEach(e -> {
+            try {
+                FileUtils.delete(e.getBaseDir());
+            } catch (IOException ignored) {
+            }
+        });
     }
 
     protected static final Logger LOG = LoggerFactory.getLogger(ClusterTests.class);
