@@ -31,6 +31,10 @@ public class FailoverExecutor {
         cluster.marshallWith(marshaller);
     }
 
+    public void startElectionProcess() {
+        onClusterEvent(ClusterEvent.MEMBERSHIP_CHANGED);
+    }
+
     public void leaderElector(ClusterExecutor<ElectionResult, Void> leaderElector) {
         this.leaderElector = leaderElector;
         if (leaderElector instanceof MessagesReceiver) {
@@ -91,6 +95,7 @@ public class FailoverExecutor {
         final ClusterView view = cluster.view();
         if (!isQuorum(view)) {
             LOG.info("Failover process end: not a quorum [members: {}]", view.members());
+            notifyListener();
             return;
         }
         try {
@@ -116,6 +121,7 @@ public class FailoverExecutor {
             }
 
             waitOnBarrier(view, "cluster_state");
+            
             if (election.isMaster && !state.latestNode.isPresent() && !config.revenoSync().waitAllNodesSync()) {
                 failoverManager.unblock();
             }
@@ -136,9 +142,7 @@ public class FailoverExecutor {
             if (failoverManager.isBlocked()) {
                 failoverManager.unblock();
             }
-            if (failoverListener != null) {
-                failoverListener.run();
-            }
+            notifyListener();
         } catch (Throwable t) {
             LOG.info("Leadership election is failed for view: {}", view);
 
@@ -152,9 +156,15 @@ public class FailoverExecutor {
 
             try {
                 Thread.sleep(config.revenoTimeouts().ackTimeout());
-            } catch (InterruptedException e) {
+            } catch (InterruptedException ignored) {
             }
             onClusterEvent(ClusterEvent.MEMBERSHIP_CHANGED);
+        }
+    }
+
+    private void notifyListener() {
+        if (failoverListener != null) {
+            failoverListener.run();
         }
     }
 
@@ -162,11 +172,13 @@ public class FailoverExecutor {
         final GroupBarrier barrier = new GroupBarrier(cluster, view, name);
         if (!barrier.waitOn()) {
             throw new FailoverAbortedException(String.format("Timeout wait on barrier [%s] in view [%s].", name, view));
+        } else {
+            LOG.debug("Reached barrier [{}]", name);
         }
     }
 
     protected boolean isQuorum(ClusterView view) {
-        return view.members().size() >= config.clusterNodeAddresses().size() / 2;
+        return view.members().size() != 0 && view.members().size() >= config.clusterNodeAddresses().size() / 2;
     }
 
     public FailoverExecutor(Cluster cluster, ClusterFailoverManager failoverManager, StorageTransferServer storageServer,

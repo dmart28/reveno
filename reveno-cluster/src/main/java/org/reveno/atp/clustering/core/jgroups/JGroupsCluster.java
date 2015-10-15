@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -40,6 +41,7 @@ public class JGroupsCluster implements Cluster {
                 buffer.writeBytes(msg.getBuffer());
                 Message message = marshaller.unmarshall(buffer);
                 message.address(JChannelHelper.physicalAddress(channel, config, msg.getSrc()));
+                //LOG.info(config.currentNodeAddress() + " : " + message.toString());
 
                 receivers(message.type()).forEach(c -> c.accept(message));
             }});
@@ -162,7 +164,7 @@ public class JGroupsCluster implements Cluster {
     }
 
     protected List<Consumer<Message>> receivers(int type) {
-        return receivers.computeIfAbsent(type, a -> new ArrayList<>());
+        return receivers.computeIfAbsent(type, a -> new CopyOnWriteArrayList<>());
     }
 
     public JGroupsCluster(RevenoClusterConfiguration config, JChannel channel) {

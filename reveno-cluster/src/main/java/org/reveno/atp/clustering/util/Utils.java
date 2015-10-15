@@ -31,7 +31,7 @@ public abstract class Utils {
             try {
                 tempServer = new ServerSocket(0);
                 servers.add(tempServer);
-                result[i] = tempServer.getLocalPort() + Math.max(5, (int)(Math.random() * 100));
+                result[i] = tempServer.getLocalPort() + Math.min(Math.max(5, (int)(Math.random() * 100)), 65_535);
             } finally {
                 for (ServerSocket server : servers) {
                     try {

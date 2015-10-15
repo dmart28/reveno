@@ -92,7 +92,6 @@ public class ClusterEngine extends Engine {
         storageTransferServer.startup();
 
         failoverExecutor = new FailoverExecutor(cluster, failoverManager, storageTransferServer, configuration);
-        failoverExecutor.init();
         failoverExecutor.snapshotMaker(this::snapshotAll);
         failoverExecutor.replayer(this::replay);
         failoverExecutor.leaderElector(leadershipExecutor());
@@ -101,8 +100,12 @@ public class ClusterEngine extends Engine {
         failoverExecutor.marshaller(marshaller());
         failoverExecutor.failoverListener(failoverWaiter::countDown);
 
+        failoverExecutor.init();
+
         cluster.connect();
         buffer.connect();
+
+        failoverExecutor.startElectionProcess();
 
         try {
             failoverWaiter.await();

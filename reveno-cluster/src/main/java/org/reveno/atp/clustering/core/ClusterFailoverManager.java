@@ -87,7 +87,9 @@ public class ClusterFailoverManager implements FailoverManager {
         long unprocessed;
         while (!notProcessed.compareAndSet((unprocessed = notProcessed.get()), 0)) {
         }
-        LongStream.of(unprocessed).forEach(l -> failoverHandler.accept(buffer));
+        if (unprocessed > 0) {
+            LongStream.of(unprocessed).forEach(l -> failoverHandler.accept(buffer));
+        }
     }
 
     public void setMaster(boolean isMaster) {

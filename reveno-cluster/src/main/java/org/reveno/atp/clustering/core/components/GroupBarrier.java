@@ -44,7 +44,7 @@ public class GroupBarrier {
                 while (!passed.isPresent() && isSynced()) {
                     ackPassed();
                     passed = waitFor(passedBarrier, passed);
-                    if (!came.isPresent() && allPassed())
+                    if (!passed.isPresent() && allPassed())
                         passed = Optional.of(true);
                 }
                 return passed.isPresent() && passed.get();
@@ -90,11 +90,11 @@ public class GroupBarrier {
     }
 
     protected boolean allCame() {
-        return came.equals(view.members());
+        return came.containsAll(view.members());
     }
 
     protected boolean allPassed() {
-        return passed.equals(view.members());
+        return passed.containsAll(view.members());
     }
 
     protected void ackAll() {

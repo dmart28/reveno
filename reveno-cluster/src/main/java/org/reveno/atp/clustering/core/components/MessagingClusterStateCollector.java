@@ -67,7 +67,7 @@ public class MessagingClusterStateCollector implements ClusterExecutor<ClusterSt
         NodeState message = new NodeState(view.viewId(), currentTransactionId, config.revenoSync().mode().getType(),
                 config.revenoSync().port());
         cluster.gateway().send(view.members(), message, cluster.gateway().oob());
-        return Utils.waitFor(() -> nodesStates.values().containsAll(view.members()) && nodesStates.entrySet()
+        return Utils.waitFor(() -> nodesStates.keySet().containsAll(view.members()) && nodesStates.entrySet()
                         .stream()
                         .filter(kv -> view.members().contains(kv.getKey()))
                         .filter(kv -> kv.getValue().viewId == view.viewId()).count() == view.members().size(),
