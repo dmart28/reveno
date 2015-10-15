@@ -1,4 +1,5 @@
 include 'reveno-core'
 include 'reveno-cluster'
 include 'reveno-metrics'
+include 'reveno-test-model'
 include 'examples:simple-banking-account'

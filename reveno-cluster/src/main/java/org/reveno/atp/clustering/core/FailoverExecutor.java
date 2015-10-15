@@ -97,6 +97,7 @@ public class FailoverExecutor {
     }
 
     protected void process() {
+        LOG.info("Cluster merge process started.");
         final ClusterView view = cluster.view();
         if (!isQuorum(view)) {
             LOG.info("Failover process end: not a quorum [members: {}]", view.members());

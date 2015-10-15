@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
 import org.reveno.atp.acceptance.tests.RevenoBaseTest;
 import org.reveno.atp.acceptance.views.AccountView;
+import org.reveno.atp.acceptance.views.OrderView;
 import org.reveno.atp.clustering.api.Address;
 import org.reveno.atp.clustering.api.IOMode;
 import org.reveno.atp.clustering.api.InetAddress;
@@ -61,6 +62,7 @@ public class ClusterTests extends RevenoBaseTest {
         long accountId = sendCommandSync(engine1, new CreateNewAccountCommand("USD", 1000_000L));
 
         Assert.assertTrue(Utils.waitFor(() -> engine2.query().find(AccountView.class, accountId).isPresent(), sec(30)));
+        generateAndSendCommands(engine1, 10_000);
 
         LOG.info("Shutting down ...");
         engine1.shutdown();
@@ -70,6 +72,8 @@ public class ClusterTests extends RevenoBaseTest {
         replayEngine.startup();
 
         Assert.assertTrue(replayEngine.query().find(AccountView.class, accountId).isPresent());
+        Assert.assertEquals(10_001, replayEngine.query().select(AccountView.class).size());
+        Assert.assertEquals(10_000, replayEngine.query().select(OrderView.class).size());
 
         replayEngine.shutdown();
 

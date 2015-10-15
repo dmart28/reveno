@@ -7,6 +7,13 @@ dependencies {
   compile "org.jgroups:jgroups:$jgroupsVersion"
   compile "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+
+  testCompile project(":reveno-test-model")
+}
+
+test {
+  maxParallelForks = 1
+  forkEvery = 1
 }
 
 jar {

@@ -67,8 +67,12 @@ dependencies {
 	compile "net.bytebuddy:byte-buddy:$byteBuddyVersion"
 
 	testCompile "org.axonframework:axon-core:2.4.2"
+	testCompile project(":reveno-test-model")
 
+	acceptanceTestCompile project(":reveno-test-model")
 	acceptanceTestCompile "com.google.guava:guava:$guavaVersion"
 	acceptanceTestCompile "junit:junit:$junitVersion"
 	acceptanceTestCompile "org.easymock:easymock:$easymockVersion"
+
+	perfTestCompile project(":reveno-test-model")
 }

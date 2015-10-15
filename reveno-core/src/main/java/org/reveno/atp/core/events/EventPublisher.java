@@ -61,13 +61,17 @@ public class EventPublisher {
 					.transactionId(transactionId).events(events));
 		}
 	}
+
+	public void replicateEvents(long transactionId) {
+		this.pipeProcessor.process((e,f) -> e.reset().transactionId(transactionId).replicate());
+	}
 	
 	public void commitAsyncError(boolean isReplay, long transactionId) {
 		this.pipeProcessor.process((e,f) -> e.reset().flag(ASYNC_ERROR_FLAG).replay(isReplay).transactionId(transactionId));
 	}
 	
 	protected void publish(Event event, boolean endOfBatch) {
-		ex(event, event.getFlag() == 0, endOfBatch, publisher);
+		ex(event, event.getFlag() == 0 && !event.isReplicated(), endOfBatch, publisher);
 	}
 	
 	protected void journal(Event event, boolean endOfBatch) {

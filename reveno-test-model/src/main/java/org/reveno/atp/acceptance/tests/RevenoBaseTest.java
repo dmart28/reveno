@@ -43,7 +43,6 @@ import org.reveno.atp.acceptance.model.mutable.MutableOrder;
 import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
 import org.reveno.atp.api.ChannelOptions;
-import org.reveno.atp.api.Configuration;
 import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.Reveno;

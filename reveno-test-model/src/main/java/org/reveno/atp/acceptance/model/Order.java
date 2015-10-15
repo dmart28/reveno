@@ -51,7 +51,7 @@ public interface Order extends Changeable {
 	
 	public interface OrderFactory {
 		Order create(long id, long accId, Optional<Long> positionId, String symbol,
-				long price, long size, long time, OrderStatus status, OrderType type);
+					 long price, long size, long time, OrderStatus status, OrderType type);
 	}
 	
 }

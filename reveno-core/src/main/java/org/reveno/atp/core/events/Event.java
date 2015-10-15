@@ -39,6 +39,15 @@ public class Event implements Destroyable {
 		this.isReplay = isReplay;
 		return this;
 	}
+
+	private boolean isReplicated;
+	public boolean isReplicated() {
+		return isReplicated;
+	}
+	public Event replicate() {
+		this.isReplicated = true;
+		return this;
+	}
 	
 	private int flag;
 	public int getFlag() {
@@ -88,6 +97,7 @@ public class Event implements Destroyable {
 	public Event reset() {
 		isAborted = false;
 		isReplay = false;
+		isReplicated = false;
 		flag = 0;
 		transactionId = 0L;
 		syncFuture = null;

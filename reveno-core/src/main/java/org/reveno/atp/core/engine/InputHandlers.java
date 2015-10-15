@@ -117,8 +117,13 @@ public class InputHandlers {
 		services.viewsProcessor().process(c.getMarkedRecords());
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> eventsPublisher = (c, eob) -> {
-		if (c.getEvents().size() > 0 && !c.isReplicated())
-			services.eventPublisher().publishEvents(c.isRestore(), c.transactionId(), c.eventMetadata(), c.getEvents().toArray());
+		if (c.isReplicated()) {
+			services.eventPublisher().replicateEvents(c.transactionId());
+		} else {
+			if (c.getEvents().size() > 0)
+				services.eventPublisher().publishEvents(c.isRestore(), c.transactionId(),
+						c.eventMetadata(), c.getEvents().toArray());
+		}
 	};
 	
 

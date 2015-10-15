@@ -26,6 +26,7 @@ allprojects {
 	test {
 		minHeapSize = "512m"
 		maxParallelForks = forks
+		forkEvery = 1
 		systemProperty 'protostuff.runtime.collection_schema_on_repeated_fields', 'true'
 
 		testLogging {
