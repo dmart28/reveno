@@ -9,6 +9,7 @@ import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
 import org.reveno.atp.acceptance.tests.RevenoBaseTest;
 import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
+import org.reveno.atp.clustering.api.SyncMode;
 import org.reveno.atp.clustering.core.buffer.ClusterProvider;
 import org.reveno.atp.clustering.core.jgroups.JGroupsProvider;
 import org.reveno.atp.clustering.test.common.ClusterEngineWrapper;
@@ -31,6 +32,16 @@ public class ClusterTests extends RevenoBaseTest {
         setModelType();
         Supplier<ClusterProvider> provider = () -> new JGroupsProvider("classpath:/tcp.xml");
         basicTest(() -> ClusterTestUtils.createClusterEngines(2, this::configure, provider), provider);
+    }
+
+    @Test
+    public void journalsReplicationTestJGroups() throws Exception {
+        setModelType();
+        Supplier<ClusterProvider> provider = () -> new JGroupsProvider("classpath:/tcp.xml");
+        basicTest(() -> ClusterTestUtils.createClusterEngines(2, e -> {
+            this.configure(e);
+            e.clusterConfiguration().sync().mode(SyncMode.JOURNALS);
+        }, provider), provider);
     }
 
     protected void basicTest(Supplier<List<ClusterEngineWrapper>> enginesFactory, Supplier<ClusterProvider> provider) throws Exception {
@@ -70,6 +81,9 @@ public class ClusterTests extends RevenoBaseTest {
 
         engine3.startup();
         engine4.startup();
+
+        Assert.assertEquals(10_001, engine4.query().select(AccountView.class).size());
+        Assert.assertEquals(10_000, engine4.query().select(OrderView.class).size());
 
         LOG.info("3-4 Shutting down ...");
         engine3.shutdown();
