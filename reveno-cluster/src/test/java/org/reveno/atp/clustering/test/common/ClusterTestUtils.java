@@ -6,36 +6,37 @@ import org.reveno.atp.clustering.api.IOMode;
 import org.reveno.atp.clustering.api.InetAddress;
 import org.reveno.atp.clustering.api.SyncMode;
 import org.reveno.atp.clustering.core.buffer.ClusterProvider;
-import org.reveno.atp.clustering.core.jgroups.JGroupsProvider;
 import org.reveno.atp.clustering.util.Utils;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class ClusterTestUtils {
 
-    public static List<ClusterEngineWrapper> createClusterEngines(int count, ClusterProvider provider) throws Exception {
-        return createClusterEngines(count, Files.createTempDir(), e -> {}, provider);
+    public static List<ClusterEngineWrapper> createClusterEngines(int count, Supplier<ClusterProvider> provider) {
+        return createClusterEngines(count, randomFiles(count), e -> {}, provider);
     }
 
-    public static List<ClusterEngineWrapper> createClusterEngines(int count, File dir, ClusterProvider provider) throws Exception {
+    public static List<ClusterEngineWrapper> createClusterEngines(int count, List<File> dir, Supplier<ClusterProvider> provider) {
         return createClusterEngines(count, dir, e -> {}, provider);
     }
 
     public static List<ClusterEngineWrapper> createClusterEngines(int count, Consumer<ClusterEngineWrapper> forEach,
-                                                                  ClusterProvider provider) throws Exception {
-        return createClusterEngines(count, Files.createTempDir(), forEach, provider);
+                                                                  Supplier<ClusterProvider> provider) {
+        return createClusterEngines(count, randomFiles(count), forEach, provider);
     }
 
-    public static List<ClusterEngineWrapper> createClusterEngines(int count, File dir,
-                                                           Consumer<ClusterEngineWrapper> forEach, ClusterProvider provider) throws Exception {
+    public static List<ClusterEngineWrapper> createClusterEngines(int count, List<File> dir,
+                                                           Consumer<ClusterEngineWrapper> forEach, Supplier<ClusterProvider> provider) {
         List<ClusterEngineWrapper> result = new ArrayList<>();
         int[] ports = Utils.getFreePorts(count * 2);
         for (int i = 0, p = 0; i < count; i++, p += 2) {
-            ClusterEngineWrapper engine = new ClusterEngineWrapper(dir, ClusterTestUtils.class.getClassLoader(), provider);
+            ClusterEngineWrapper engine = new ClusterEngineWrapper(dir.get(i), ClusterTestUtils.class.getClassLoader(), provider.get());
             engine.setSequence(i);
             Address address = new InetAddress("127.0.0.1:" + ports[p], IOMode.SYNC);
             engine.clusterConfiguration().currentNodeAddress(address);
@@ -56,6 +57,10 @@ public abstract class ClusterTestUtils {
             engine.clusterConfiguration().clusterNodeAddresses(nodes);
         }
         return result;
+    }
+
+    public static List<File> randomFiles(int count) {
+        return Stream.generate(Files::createTempDir).limit(count).collect(Collectors.toList());
     }
 
 }

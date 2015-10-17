@@ -110,10 +110,10 @@ public class FailoverExecutor {
             }
             waitOnBarrier(view, "start");
             buffer.unlockIncoming();
-            storageServer.fixJournals(view);
             if (config.revenoSync().mode() == SyncMode.SNAPSHOT) {
                 snapshotMaker.run();
             }
+            storageServer.fixJournals(view);
             journalsManager.roll(lastTransactionId.get());
 
             ElectionResult election = leaderElector.execute(view);

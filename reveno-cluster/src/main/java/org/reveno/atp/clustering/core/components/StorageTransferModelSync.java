@@ -62,7 +62,7 @@ public class StorageTransferModelSync implements ClusterExecutor<Boolean, Transf
         try {
             SocketChannel sc = SocketChannel.open();
             if (!sc.connect(sad)) {
-                LOG.error("Can't establish connection to {}", sad);
+                LOG.error("STF: can't establish connection to {}", sad);
                 return false;
             }
             sc.configureBlocking(true);
@@ -71,24 +71,29 @@ public class StorageTransferModelSync implements ClusterExecutor<Boolean, Transf
             message.putLong(view.viewId());
             message.put(type);
             message.putLong(context.transactionId);
+            message.flip();
             sc.write(message);
+            LOG.debug("STF: sent message to StorageTransfer server.");
 
             ByteBuffer data = ByteBuffer.allocate(MeasureUtils.kb(64));
             int nread = 0;
             while (nread != -1)  {
                 try {
                     nread = sc.read(data);
+                    data.flip();
+                    LOG.debug("STF: received next {} bytes from {}", data.limit(), sad);
                     channel.write(b -> b.writeFromBuffer(data), true);
                 } catch (IOException e) {
                     LOG.error(e.getMessage(), e);
                     throw Exceptions.runtime(e);
                 }
-                data.rewind();
+                data.clear();
             }
         } catch (Throwable t) {
             LOG.error("Can't sync with remote node " + sad, t);
             return false;
         } finally {
+            LOG.debug("STF: received latest store from StoreServer.");
             channel.close();
         }
         return true;

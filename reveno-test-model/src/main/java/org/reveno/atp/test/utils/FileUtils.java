@@ -22,11 +22,15 @@ import java.io.IOException;
 public abstract class FileUtils {
 
 	public static void delete(File f) throws IOException {
+		clearFolder(f);
+		f.delete();
+	}
+
+	public static void clearFolder(File f) throws IOException {
 		if (f.isDirectory()) {
 			for (File c : f.listFiles())
 				delete(c);
 		}
-		f.delete();
 	}
-	
+
 }

@@ -1,5 +1,7 @@
 package org.reveno.atp.clustering.util;
 
+import org.reveno.atp.utils.Exceptions;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
@@ -22,27 +24,31 @@ public abstract class Utils {
         return result;
     }
 
-    public static int[] getFreePorts(int portNumber) throws IOException {
-        int[] result = new int[portNumber];
-        List<ServerSocket> servers = new ArrayList<ServerSocket>(portNumber);
-        ServerSocket tempServer = null;
+    public static int[] getFreePorts(int portNumber) {
+        try {
+            int[] result = new int[portNumber];
+            List<ServerSocket> servers = new ArrayList<>(portNumber);
+            ServerSocket tempServer = null;
 
-        for (int i=0; i<portNumber; i++) {
-            try {
-                tempServer = new ServerSocket(0);
-                servers.add(tempServer);
-                result[i] = tempServer.getLocalPort() + Math.min(Math.max(5, (int)(Math.random() * 100)), 65_535);
-            } finally {
-                for (ServerSocket server : servers) {
-                    try {
-                        server.close();
-                    } catch (IOException e) {
-                        // Continue closing servers.
+            for (int i = 0; i < portNumber; i++) {
+                try {
+                    tempServer = new ServerSocket(0);
+                    servers.add(tempServer);
+                    result[i] = tempServer.getLocalPort() + Math.min(Math.max(5, (int) (Math.random() * 100)), 65_535);
+                } finally {
+                    for (ServerSocket server : servers) {
+                        try {
+                            server.close();
+                        } catch (IOException e) {
+                            // Continue closing servers.
+                        }
                     }
                 }
             }
+            return result;
+        } catch (Throwable t) {
+            throw Exceptions.runtime(t);
         }
-        return result;
     }
 
 }

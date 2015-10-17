@@ -32,11 +32,6 @@ public class InetAddress extends Address {
 	public String getHost() {
 		return host;
 	}
-
-	private java.net.InetAddress inetAddress;
-	public java.net.InetAddress getInetAddress() {
-		return inetAddress;
-	}
 	
 	public InetAddress(String connectionString, IOMode addressType) {
 		super(connectionString, addressType);
@@ -45,7 +40,8 @@ public class InetAddress extends Address {
 		this.host = vals[0];
 		this.port = Integer.parseInt(vals[1]);
 		try {
-			this.inetAddress = java.net.InetAddress.getByName(host);
+			java.net.InetAddress inetAddress = java.net.InetAddress.getByName(host);
+			this.host = inetAddress.getHostAddress();
 		} catch (UnknownHostException e) {
 			throw Exceptions.runtime(e);
 		}

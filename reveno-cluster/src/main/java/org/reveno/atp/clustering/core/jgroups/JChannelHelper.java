@@ -13,10 +13,13 @@ public abstract class JChannelHelper {
     public static InetAddress physicalAddress(JChannel channel, RevenoClusterConfiguration config,
                                           org.jgroups.Address address) {
         PhysicalAddress physicalAddress;
+        long count = 0;
         while ((physicalAddress = (PhysicalAddress)
                 channel.down(
                         new Event(Event.GET_PHYSICAL_ADDRESS, address)
-                )) == null) {}
+                )) == null) {
+            if (count++ > 1000) return null;
+        }
 
         String[] parts = physicalAddress.toString().split(":");
         java.net.InetAddress inet;
@@ -25,7 +28,7 @@ public abstract class JChannelHelper {
         } catch (UnknownHostException e) {
             return null;
         }
-        return config.clusterNodeAddresses().stream().map(a -> (InetAddress) a).filter(a -> a.getInetAddress().equals(inet)
+        return config.clusterNodeAddresses().stream().map(a -> (InetAddress) a).filter(a -> a.getHost().equals(inet.getHostAddress())
                 && a.getPort() == Integer.parseInt(parts[1])).findFirst().orElse(null);
     }
 }

@@ -34,25 +34,30 @@ public class FileStorageTransferServer implements StorageTransferServer {
     public void startup() {
         mainListener.execute(() -> { try {
             InetSocketAddress listenAddr =  new InetSocketAddress(config.revenoSync().port());
-            ServerSocketChannel listener;
             try {
                 listener = listen(listenAddr);
             } catch (IOException e) {
-                LOG.error("SYNC: Failed to open server socket.", e);
+                LOG.error("FSTF: failed to open server socket.", e);
                 return;
             }
-            LOG.debug("Transfer Server is started on {}", listenAddr);
+            LOG.debug("FSTF: transfer Server is started on {}", listenAddr);
             while (!Thread.interrupted()) {
                 final SocketChannel conn = accept(listener);
                 executor.execute(() -> sendStoragesToNode(conn));
             }
         } catch (Throwable t) {
-            LOG.error("File server executor error.", t);
+            LOG.error("FSTF: file server executor error.", t);
         }});
     }
 
     @Override
     public void shutdown() {
+        try {
+            if (listener != null)
+                listener.close();
+        } catch (IOException e) {
+            LOG.error("FSTF: can't close file storage transfer server.", e);
+        }
         mainListener.shutdown();
         executor.shutdown();
     }
@@ -85,7 +90,7 @@ public class FileStorageTransferServer implements StorageTransferServer {
                     }).forEach(a -> transfer(conn, a));
                 }
             } else {
-                LOG.debug("Can't receive data from {}", conn.getRemoteAddress());
+                LOG.error("Can't receive data from {}", conn.getRemoteAddress());
             }
         } catch (IOException e) {
             LOG.error("SYNC: Failed to accept incoming connection", e);
@@ -98,7 +103,7 @@ public class FileStorageTransferServer implements StorageTransferServer {
     protected void transfer(SocketChannel conn, String path) {
         try {
             File file = new File(storage.getBaseDir(), path);
-            LOG.debug("Transfering {} to {}", file, conn.getRemoteAddress());
+            LOG.debug("FSTF: transfering {} to {}", file, conn.getRemoteAddress());
             FileChannel fc = new FileInputStream(file).getChannel();
             fc.transferTo(0, fc.size(), conn);
             fc.close();
@@ -113,7 +118,7 @@ public class FileStorageTransferServer implements StorageTransferServer {
             int read = readSilent(conn, buffer);
             if (read != -1)
                 bytesread[0] += read;
-            return bytesread[0] == 10;
+            return bytesread[0] == 17;
         }, config.revenoTimeouts().syncTimeout());
     }
 
@@ -190,6 +195,7 @@ public class FileStorageTransferServer implements StorageTransferServer {
     protected FileSystemStorage storage;
     protected ExecutorService mainListener;
     protected ExecutorService executor;
+    protected ServerSocketChannel listener;
 
     protected Long2ObjectMap<JournalsStorage.JournalStore[]> journals = new Long2ObjectOpenHashMap<>();
     protected Long2ObjectMap<SnapshotStorage.SnapshotStore> snapshots = new Long2ObjectOpenHashMap<>();
