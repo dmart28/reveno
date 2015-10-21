@@ -72,7 +72,12 @@ public class JGroupsTest {
         ClusterBuffer buffer2 = provider2.retrieveBuffer();
         ClusterBuffer buffer3 = provider3.retrieveBuffer();
 
-        buffer1.connect(); buffer2.connect(); buffer3.connect();
+        provider1.retrieveCluster().connect();
+        buffer1.connect();
+        provider2.retrieveCluster().connect();
+        buffer2.connect();
+        provider3.retrieveCluster().connect();
+        buffer3.connect();
 
         TestMessage message = new TestMessage("Hello world!");
         ProtostuffSerializer serializer = new ProtostuffSerializer();

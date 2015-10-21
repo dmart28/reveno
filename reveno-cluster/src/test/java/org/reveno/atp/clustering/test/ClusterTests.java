@@ -73,7 +73,7 @@ public class ClusterTests extends RevenoBaseTest {
 
         FileUtils.clearFolder(engine2.getBaseDir());
 
-        LOG.info(Strings.repeat("-", 50));
+        LOG.info(Strings.repeat("-", 500));
         LOG.info("Starting cluster again, but with empty folder of node 2");
         engines = ClusterTestUtils.createClusterEngines(2, Arrays.asList(engine1.getBaseDir(), engine2.getBaseDir()), this::configure, provider);
         final ClusterEngineWrapper engine3 = engines.get(0);

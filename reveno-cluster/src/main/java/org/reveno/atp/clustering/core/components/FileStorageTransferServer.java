@@ -45,6 +45,7 @@ public class FileStorageTransferServer implements StorageTransferServer {
                 final SocketChannel conn = accept(listener);
                 executor.execute(() -> sendStoragesToNode(conn));
             }
+            LOG.debug("FSTF: transfer Server stopped on {}", listenAddr);
         } catch (Throwable t) {
             LOG.error("FSTF: file server executor error.", t);
         }});
@@ -93,9 +94,9 @@ public class FileStorageTransferServer implements StorageTransferServer {
                 LOG.error("Can't receive data from {}", conn.getRemoteAddress());
             }
         } catch (IOException e) {
-            LOG.error("SYNC: Failed to accept incoming connection", e);
+            LOG.error("FSTF: Failed to accept incoming connection", e);
         } finally {
-            LOG.info("Closing transfer server connection.");
+            LOG.info("FSTF: Closing transfer server connection.");
             close(conn);
         }
     }
@@ -118,6 +119,7 @@ public class FileStorageTransferServer implements StorageTransferServer {
             int read = readSilent(conn, buffer);
             if (read != -1)
                 bytesread[0] += read;
+            LOG.debug("FSTF: received next {} bytes from {}", read, conn);
             return bytesread[0] == 17;
         }, config.revenoTimeouts().syncTimeout());
     }

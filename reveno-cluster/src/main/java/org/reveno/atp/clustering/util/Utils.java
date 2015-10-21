@@ -28,20 +28,18 @@ public abstract class Utils {
         try {
             int[] result = new int[portNumber];
             List<ServerSocket> servers = new ArrayList<>(portNumber);
-            ServerSocket tempServer = null;
-
-            for (int i = 0; i < portNumber; i++) {
-                try {
-                    tempServer = new ServerSocket(0);
+            try {
+                for (int i = 0; i < portNumber; i++) {
+                    ServerSocket tempServer = new ServerSocket(0);
                     servers.add(tempServer);
-                    result[i] = tempServer.getLocalPort() + Math.min(Math.max(5, (int) (Math.random() * 100)), 65_535);
-                } finally {
-                    for (ServerSocket server : servers) {
-                        try {
-                            server.close();
-                        } catch (IOException e) {
-                            // Continue closing servers.
-                        }
+                    result[i] = tempServer.getLocalPort();
+                }
+            } finally {
+                for (ServerSocket server : servers) {
+                    try {
+                        server.close();
+                    } catch (IOException e) {
+                        // Continue closing servers.
                     }
                 }
             }

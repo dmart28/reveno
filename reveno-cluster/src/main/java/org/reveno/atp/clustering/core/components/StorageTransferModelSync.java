@@ -72,8 +72,8 @@ public class StorageTransferModelSync implements ClusterExecutor<Boolean, Transf
             message.put(type);
             message.putLong(context.transactionId);
             message.flip();
-            sc.write(message);
-            LOG.debug("STF SYNC: sent message to StorageTransfer server {}", sc);
+            int size = sc.write(message);
+            LOG.debug("STF SYNC: sent {} to StorageTransfer server {}", size, sc);
 
             ByteBuffer data = ByteBuffer.allocate(MeasureUtils.kb(64));
             int nread = 0;
