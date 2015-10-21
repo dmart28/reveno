@@ -134,6 +134,7 @@ public class FileStorageTransferServer implements StorageTransferServer {
         try {
             SocketChannel conn = listener.accept();
             conn.configureBlocking(true);
+            LOG.info("FSTF: Accepted new connection: {}", conn);
             return conn;
         } catch (Exception e) {
             throw Exceptions.runtime(e);
