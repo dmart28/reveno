@@ -53,7 +53,7 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 			if (stage == TransactionStage.TRANSACTION) {
 				if (counter++ % configuration.revenoSnapshotting().every() == 0) {
 					if (configuration.modelType() == ModelType.MUTABLE) {
-						NettyBasedBuffer buffer = new NettyBasedBuffer();
+						NettyBasedBuffer buffer = new NettyBasedBuffer(false);
 						serializer.serialize(repository.getData(), buffer);
 						snapshotsMutable.put(transactionId, buffer);
 					} else {

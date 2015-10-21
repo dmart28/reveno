@@ -122,7 +122,7 @@ public class JGroupsCluster implements Cluster {
 
         @Override
         public void send(List<Address> dest, Message message, Set<Flag> flags) {
-            NettyBasedBuffer buffer = new NettyBasedBuffer();
+            NettyBasedBuffer buffer = new NettyBasedBuffer(false);
             marshaller.marshall(buffer, message);
             final byte[] data = buffer.readBytes(buffer.length());
 
@@ -174,12 +174,12 @@ public class JGroupsCluster implements Cluster {
     }
 
     protected volatile ClusterView currentView = DEFAULT_VIEW;
+    protected volatile Marshaller marshaller = new JsonMarshaller();
     protected volatile boolean isConnected = false;
 
     protected RevenoClusterConfiguration config;
     protected Consumer<ClusterEvent> clusterEventsListener = (e) -> {};
     protected JGroupsConnector connector = new JGroupsConnector();
-    protected Marshaller marshaller = new JsonMarshaller();
     protected Int2ObjectMap<List<Consumer<Message>>> receivers = new Int2ObjectOpenHashMap<>();
     protected Map<InetAddress, org.jgroups.Address> addressMap = new HashMap<>();
 

@@ -14,7 +14,7 @@ import org.reveno.atp.clustering.core.components.MessagingClusterStateCollector;
 import org.reveno.atp.clustering.core.components.MessagingMasterSlaveElector;
 import org.reveno.atp.clustering.core.components.StorageTransferModelSync;
 import org.reveno.atp.clustering.core.jgroups.JGroupsProvider;
-import org.reveno.atp.clustering.core.marshallers.JsonMarshaller;
+import org.reveno.atp.clustering.core.marshallers.NativeMarshaller;
 import org.reveno.atp.core.Engine;
 import org.reveno.atp.core.api.FailoverManager;
 import org.reveno.atp.core.api.storage.FoldersStorage;
@@ -116,6 +116,8 @@ public class ClusterEngine extends Engine {
 
     @Override
     public void shutdown() {
+        isStarted = false;
+        failoverExecutor.stop();
         storageTransferServer.shutdown();
         buffer.disconnect();
         cluster.disconnect();
@@ -141,7 +143,7 @@ public class ClusterEngine extends Engine {
     }
 
     protected Marshaller marshaller() {
-        return new JsonMarshaller();
+        return new NativeMarshaller();
     }
 
     protected long replay() {

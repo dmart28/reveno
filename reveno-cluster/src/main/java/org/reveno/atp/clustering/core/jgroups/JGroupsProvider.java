@@ -33,9 +33,6 @@ public class JGroupsProvider implements ClusterProvider {
             channel.setReceiver(new JChannelReceiver());
             jcluster = new JGroupsCluster(config, channel);
             jbuffer = new JGroupsBuffer(config, channel);
-
-            jcluster.connect();
-            jbuffer.connect();
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }

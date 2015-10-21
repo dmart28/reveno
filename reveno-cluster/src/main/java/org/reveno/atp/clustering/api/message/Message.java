@@ -16,8 +16,13 @@
 package org.reveno.atp.clustering.api.message;
 
 import org.reveno.atp.clustering.api.Address;
+import org.reveno.atp.core.api.channel.Buffer;
 
 public abstract class Message {
+
+    public abstract void write(Buffer buffer);
+
+    public abstract void read(Buffer buffer);
 
     public abstract int type();
 

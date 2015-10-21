@@ -10,6 +10,7 @@ import org.reveno.atp.clustering.api.message.Message;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
 import org.reveno.atp.clustering.core.jgroups.JGroupsProvider;
 import org.reveno.atp.clustering.util.Utils;
+import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.serialization.ProtostuffSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,6 +72,8 @@ public class JGroupsTest {
         ClusterBuffer buffer2 = provider2.retrieveBuffer();
         ClusterBuffer buffer3 = provider3.retrieveBuffer();
 
+        buffer1.connect(); buffer2.connect(); buffer3.connect();
+
         TestMessage message = new TestMessage("Hello world!");
         ProtostuffSerializer serializer = new ProtostuffSerializer();
         serializer.registerTransactionType(TestMessage.class);
@@ -123,6 +126,14 @@ public class JGroupsTest {
 
     protected static class TestMessage extends Message {
         public static final int TYPE = 0x0123456;
+
+        @Override
+        public void write(Buffer buffer) {
+        }
+
+        @Override
+        public void read(Buffer buffer) {
+        }
 
         @Override
         public int type() {

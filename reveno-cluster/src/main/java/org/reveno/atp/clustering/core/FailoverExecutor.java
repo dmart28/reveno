@@ -12,12 +12,14 @@ import org.reveno.atp.clustering.core.api.StorageTransferServer;
 import org.reveno.atp.clustering.core.marshallers.JsonMarshaller;
 import org.reveno.atp.clustering.exceptions.FailoverAbortedException;
 import org.reveno.atp.core.JournalsManager;
+import org.reveno.atp.utils.Exceptions;
 import org.reveno.atp.utils.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -30,6 +32,16 @@ public class FailoverExecutor {
 
         cluster.listenEvents(this::onClusterEvent);
         cluster.marshallWith(marshaller);
+    }
+
+    public void stop() {
+        isStopped = true;
+        electorExecutor.shutdown();
+        try {
+            electorExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            LOG.error(e.getMessage(), e);
+        }
     }
 
     public void startElectionProcess() {
@@ -151,21 +163,25 @@ public class FailoverExecutor {
             }
             notifyListener();
         } catch (Throwable t) {
-            LOG.info("Leadership election is failed for view: {}", view);
+            LOG.error("Leadership election is failed for view: {}", view);
 
             if (failoverManager.isMaster() && !failoverManager.isBlocked()) {
                 failoverManager.block();
             }
             buffer.lockIncoming();
             buffer.erase();
-            replayer.get();
+            if (!isStopped) {
+                replayer.get();
+            }
             failoverManager.setMaster(false);
 
             try {
                 Thread.sleep(config.revenoTimeouts().ackTimeout());
             } catch (InterruptedException ignored) {
             }
-            onClusterEvent(ClusterEvent.MEMBERSHIP_CHANGED);
+            if (!isStopped) {
+                onClusterEvent(ClusterEvent.MEMBERSHIP_CHANGED);
+            }
         }
     }
 
@@ -200,6 +216,8 @@ public class FailoverExecutor {
         this.failoverManager = failoverManager;
     }
 
+    protected volatile boolean isStopped = false;
+
     protected Cluster cluster;
     protected ClusterBuffer buffer;
     protected RevenoClusterConfiguration config;
@@ -214,7 +232,7 @@ public class FailoverExecutor {
     protected ClusterExecutor<Boolean, StorageTransferModelSync.TransferContext> modelSynchronizer;
     protected Runnable failoverListener;
 
-    protected Marshaller marshaller = new JsonMarshaller();
+    protected Marshaller marshaller;
     protected ExecutorService electorExecutor = Executors.newSingleThreadExecutor();
 
     protected static final Logger LOG = LoggerFactory.getLogger(FailoverExecutor.class);
