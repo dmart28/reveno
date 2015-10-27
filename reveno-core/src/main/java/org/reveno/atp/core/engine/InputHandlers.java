@@ -49,7 +49,7 @@ public class InputHandlers {
 	}
 	
 	public void replication(ProcessorContext c, boolean endOfBatch) {
-		ex(c, !c.isRestore(), endOfBatch, replicator);
+		ex(c, !c.isRestore() && !c.isReplicated(), endOfBatch, replicator);
 	}
 	
 	public void transactionExecution(ProcessorContext c, boolean endOfBatch) {

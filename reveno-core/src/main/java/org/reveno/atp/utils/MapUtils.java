@@ -56,31 +56,31 @@ public abstract class MapUtils {
 	}
 
 	public static <T> ConcurrentMapOfMap<Class<?>, Long, T> concurrentRepositoryMap() {
-		return new ConcurrentMapOfMap<Class<?>, Long, T>();
+		return new ConcurrentMapOfMap<>();
 	}
 	
 	public static <T> ConcurrentMapOfMap<Class<?>, Long, T> concurrentRepositoryMap(int capacity, float loadFactor) {
-		return new ConcurrentMapOfMap<Class<?>, Long, T>(capacity, loadFactor);
+		return new ConcurrentMapOfMap<>(capacity, loadFactor);
 	}
 	
 	public static <T> MapOfMap<Class<?>, Long, T> repositoryMap() {
-		return new MapOfMap<Class<?>, Long, T>();
+		return new MapOfMap<>();
 	}
 	
 	public static <T> MapOfList<Class<?>, T> repositoryList() {
-		return new MapOfList<Class<?>, T>();
+		return new MapOfList<>();
 	}
 	
 	public static <T> MapOfSet<Class<?>, T> repositorySet() {
-		return new MapOfSet<Class<?>, T>();
+		return new MapOfSet<>();
 	}
 	
 	public static SimpleMap<Class<?>, LongOpenHashSet> fastSetRepo() {
-		return new SimpleMap<Class<?>, LongOpenHashSet>(() -> new LongOpenHashSet());
+		return new SimpleMap<>(LongOpenHashSet::new);
 	}
 	
 	public static <T> MapOfSet<Class<?>, Long> repositoryLinkedSet() {
-		return new MapOfSet<Class<?>, Long>(() -> new LongLinkedOpenHashSet(), new LinkedHashMap<>());
+		return new MapOfSet<>(LongLinkedOpenHashSet::new, new LinkedHashMap<>());
 	}
 	
 	public static class SimpleMap<K, V> extends HashMap<K, V> implements Map<K, V> {
@@ -141,10 +141,7 @@ public abstract class MapUtils {
 		}
 		
 		public Map<U, M> safeGet(T key) {
-			Map<U, M> result = super.get(key);
-			if (result == null)
-				this.put(key, (result = new ConcurrentHashMap<>()));
-			return result;
+			return super.computeIfAbsent(key, k -> new ConcurrentHashMap<>());
 		}
 	}
 	
@@ -181,7 +178,7 @@ public abstract class MapUtils {
 		}
 		
 		public MapOfSet() {
-			this.setCreator = () -> new HashSet<U>();
+			this.setCreator = HashSet::new;
 			this.underlying = new HashMap<>();
 		}
 		
