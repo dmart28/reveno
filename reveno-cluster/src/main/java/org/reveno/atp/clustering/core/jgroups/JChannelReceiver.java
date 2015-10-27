@@ -28,13 +28,16 @@ public class JChannelReceiver extends ReceiverAdapter {
             receivers.forEach(r -> r.accept(msg));
         } catch (Throwable t) {
             LOG.error(t.getMessage(), t);
-            throw Exceptions.runtime(t);
         }
     }
 
     @Override
     public void viewAccepted(View view) {
-        viewAcceptors.forEach(a -> a.accept(view));
+        try {
+            viewAcceptors.forEach(a -> a.accept(view));
+        } catch (Throwable t) {
+            LOG.error(t.getMessage(), t);
+        }
     }
 
     protected List<Consumer<Message>> receivers = new CopyOnWriteArrayList<>();

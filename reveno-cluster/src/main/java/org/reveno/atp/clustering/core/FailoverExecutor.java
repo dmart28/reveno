@@ -11,6 +11,7 @@ import org.reveno.atp.clustering.core.components.StorageTransferModelSync;
 import org.reveno.atp.clustering.core.api.StorageTransferServer;
 import org.reveno.atp.clustering.core.marshallers.JsonMarshaller;
 import org.reveno.atp.clustering.exceptions.FailoverAbortedException;
+import org.reveno.atp.commons.NamedThreadFactory;
 import org.reveno.atp.core.JournalsManager;
 import org.reveno.atp.utils.Exceptions;
 import org.reveno.atp.utils.Preconditions;
@@ -214,6 +215,8 @@ public class FailoverExecutor {
 
         this.buffer = failoverManager.buffer();
         this.failoverManager = failoverManager;
+
+        this.electorExecutor = Executors.newSingleThreadExecutor(new NamedThreadFactory("fe-" + config.currentNodeAddress()));
     }
 
     protected volatile boolean isStopped = false;
@@ -233,7 +236,7 @@ public class FailoverExecutor {
     protected Runnable failoverListener;
 
     protected Marshaller marshaller;
-    protected ExecutorService electorExecutor = Executors.newSingleThreadExecutor();
+    protected final ExecutorService electorExecutor;
 
     protected static final Logger LOG = LoggerFactory.getLogger(FailoverExecutor.class);
 }

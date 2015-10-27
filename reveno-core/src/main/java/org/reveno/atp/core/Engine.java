@@ -31,6 +31,7 @@ import org.reveno.atp.api.query.ViewsMapper;
 import org.reveno.atp.api.transaction.TransactionContext;
 import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.api.transaction.TransactionStage;
+import org.reveno.atp.commons.NamedThreadFactory;
 import org.reveno.atp.core.api.*;
 import org.reveno.atp.core.api.serialization.EventsInfoSerializer;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
@@ -424,8 +425,8 @@ public class Engine implements Reveno {
 	protected SnapshotStorage snapshotStorage;
 	protected SnapshottersManager snapshotsManager;
 	
-	protected final ExecutorService executor = Executors.newFixedThreadPool(7);
-	protected final ExecutorService eventExecutor = Executors.newFixedThreadPool(3);
+	protected final ExecutorService executor = Executors.newFixedThreadPool(7, new NamedThreadFactory("tx"));
+	protected final ExecutorService eventExecutor = Executors.newFixedThreadPool(3, new NamedThreadFactory("evn"));
 	protected final ScheduledExecutorService snapshotterIntervalExecutor = Executors.newSingleThreadScheduledExecutor();
 	protected static final Logger log = LoggerFactory.getLogger(Engine.class);
 	

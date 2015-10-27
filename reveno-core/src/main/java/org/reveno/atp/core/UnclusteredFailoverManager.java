@@ -40,6 +40,11 @@ public class UnclusteredFailoverManager implements FailoverManager {
     }
 
     @Override
+    public long unprocessedCount() {
+        return 0;
+    }
+
+    @Override
     public void processPendingMessages() {
     }
 }

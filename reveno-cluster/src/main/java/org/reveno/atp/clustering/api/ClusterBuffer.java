@@ -2,7 +2,7 @@ package org.reveno.atp.clustering.api;
 
 import org.reveno.atp.core.api.channel.Buffer;
 
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Buffer is used as replication mechanism only, so it can be anything,
@@ -19,7 +19,7 @@ public interface ClusterBuffer extends Buffer {
 
     void disconnect();
 
-    void messageNotifier(Consumer<ClusterBuffer> listener);
+    void messageNotifier(Function<ClusterBuffer, Boolean> listener);
 
     /**
      * Mode to reject all incoming data.

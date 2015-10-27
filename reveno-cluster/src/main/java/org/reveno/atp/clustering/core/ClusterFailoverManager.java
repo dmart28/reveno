@@ -18,11 +18,13 @@ public class ClusterFailoverManager implements FailoverManager {
         return buffer;
     }
 
-    public void newMessage(Buffer buffer) {
-        if (!isBlocked && failoverHandler != null) {
+    public boolean newMessage(Buffer buffer) {
+        if (!isBlocked && failoverHandler != null && unprocessedCount() == 0) {
             failoverHandler.accept(buffer);
+            return true;
         } else {
             notProcessed.incrementAndGet();
+            return false;
         }
     }
 
@@ -83,6 +85,11 @@ public class ClusterFailoverManager implements FailoverManager {
     }
 
     @Override
+    public long unprocessedCount() {
+        return notProcessed.get();
+    }
+
+    @Override
     public void processPendingMessages() {
         long unprocessed;
         while (!notProcessed.compareAndSet((unprocessed = notProcessed.get()), 0)) {
@@ -108,7 +115,7 @@ public class ClusterFailoverManager implements FailoverManager {
     protected volatile Consumer<Buffer> failoverHandler;
     protected volatile boolean isMaster, isBlocked;
 
-    protected volatile AtomicLong notProcessed = new AtomicLong(0);
+    protected AtomicLong notProcessed = new AtomicLong(0);
 
     protected static final Logger LOG = LoggerFactory.getLogger(ClusterFailoverManager.class);
 }

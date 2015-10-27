@@ -1,6 +1,5 @@
 package org.reveno.atp.clustering.core.jgroups;
 
-import org.jgroups.Address;
 import org.jgroups.Header;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
@@ -13,6 +12,8 @@ import org.reveno.atp.clustering.util.Tuple;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.utils.Exceptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -21,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.*;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -38,21 +39,25 @@ public class JGroupsBuffer implements ClusterBuffer {
 
         try {
             ((JChannelReceiver) channel.getReceiver()).addReceiver(msg -> { if (msg.getHeader(ClusterBufferHeader.ID) != null) {
+                LOG.info(msg + ":" + isLocked);
                 if (!isLocked) {
                     receiveBuffer.writeBytes(msg.getBuffer());
-                    messageListener.accept(JGroupsBuffer.this);
-                    receiveBuffer.clear();
+                    if (messageListener.apply(JGroupsBuffer.this)) {
+                        receiveBuffer.clear();
+                    }
                 }
             }});
             ((JChannelReceiver) channel.getReceiver()).addViewAcceptor(view -> {
                 addresses = view.getMembers().stream()
                         .map(a -> new Tuple<>(a, JChannelHelper.physicalAddress(channel, config, a)))
                         .filter(t -> t.getVal2() != null)
+                        .filter(t -> config.clusterNodeAddresses().contains(t.getVal2()))
                         .map(t -> new AddressPair(t.getVal1(), t.getVal2().getAddressType()))
                         .sorted((a, b) -> {
                             if (a.mode == IOMode.ASYNC) return 1; else return -1;
                         })
                         .collect(Collectors.toList());
+                LOG.info("JGroups Buffer members: {}", addresses.size());
             });
         } catch (Exception e) {
             throw Exceptions.runtime(e);
@@ -67,7 +72,7 @@ public class JGroupsBuffer implements ClusterBuffer {
     }
 
     @Override
-    public void messageNotifier(Consumer<ClusterBuffer> listener) {
+    public void messageNotifier(Function<ClusterBuffer, Boolean> listener) {
         this.messageListener = listener;
     }
 
@@ -308,10 +313,12 @@ public class JGroupsBuffer implements ClusterBuffer {
     protected volatile boolean isConnected = false;
     protected volatile boolean isLocked = false;
     protected volatile List<AddressPair> addresses = new ArrayList<>();
-    protected Consumer<ClusterBuffer> messageListener = (b) -> {};
+    protected Function<ClusterBuffer, Boolean> messageListener = b -> true;
     protected Buffer sendBuffer = new NettyBasedBuffer();
     protected Buffer receiveBuffer = new NettyBasedBuffer();
     protected Queue<Integer> sizeMarks = new LinkedTransferQueue<>();
+
+    protected Logger LOG = LoggerFactory.getLogger(JGroupsBuffer.class);
 
     public static class ClusterBufferHeader extends Header {
         public static final short ID = 0xaac;

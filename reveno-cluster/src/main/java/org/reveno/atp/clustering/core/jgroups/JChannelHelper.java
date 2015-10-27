@@ -5,10 +5,14 @@ import org.jgroups.JChannel;
 import org.jgroups.PhysicalAddress;
 import org.reveno.atp.clustering.api.InetAddress;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
 
 public abstract class JChannelHelper {
+
+    protected static final Logger LOG = LoggerFactory.getLogger(JChannelHelper.class);
 
     public static InetAddress physicalAddress(JChannel channel, RevenoClusterConfiguration config,
                                           org.jgroups.Address address) {
@@ -18,7 +22,9 @@ public abstract class JChannelHelper {
                 channel.down(
                         new Event(Event.GET_PHYSICAL_ADDRESS, address)
                 )) == null) {
-            if (count++ > 1000) return null;
+            if (count++ % 1000 == 0) {
+                LOG.error("Still can't retrieve physical address of node");
+            }
         }
 
         String[] parts = physicalAddress.toString().split(":");

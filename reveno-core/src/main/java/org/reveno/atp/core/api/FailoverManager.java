@@ -39,6 +39,8 @@ public interface FailoverManager {
 	
 	
 	boolean replicate(Consumer<Buffer> bufferWriter);
-	
+
+	long unprocessedCount();
+
 	void processPendingMessages();
 }
