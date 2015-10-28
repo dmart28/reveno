@@ -7,29 +7,37 @@ import org.reveno.atp.clustering.api.ClusterBuffer;
 import org.reveno.atp.clustering.api.InetAddress;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
 import org.reveno.atp.clustering.core.buffer.ClusterProvider;
+import org.reveno.atp.clustering.util.ResourceLoader;
 import org.reveno.atp.utils.Exceptions;
+import org.w3c.dom.Element;
 
 import java.io.File;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 
 public class JGroupsProvider implements ClusterProvider {
     protected static final String CLUSTER_NAME = "rvno_jg";
 
     public void initialize(RevenoClusterConfiguration config) {
         this.config = config;
-        System.setProperty("jgroups.tcp.bind_addr", ((InetAddress) config.currentNodeAddress()).getHost());
-        System.setProperty("jgroups.tcp.bind_port", Integer.toString(((InetAddress) config.currentNodeAddress()).getPort()));
-        System.setProperty("jgroups.tcpping.initial_hosts", makeInitialHostsString(config.clusterNodeAddresses()));
-        System.setProperty("jgroups.rsvp.timeout", Long.toString(config.revenoTimeouts().ackTimeout()));
-        System.setProperty("jgroups.auth.token", Optional.ofNullable(config.authToken()).orElse(""));
+        Properties props = new Properties();
+        props.put("jgroups.tcp.bind_addr", ((InetAddress) config.currentNodeAddress()).getHost());
+        props.put("jgroups.tcp.bind_port", Integer.toString(((InetAddress) config.currentNodeAddress()).getPort()));
+        props.put("jgroups.tcpping.initial_hosts", makeInitialHostsString(config.clusterNodeAddresses()));
+        props.put("jgroups.rsvp.timeout", Long.toString(config.revenoTimeouts().ackTimeout()));
+        props.put("jgroups.auth.token", Optional.ofNullable(config.authToken()).orElse(""));
 
         try {
+            String protocol;
             if (configFilePath.startsWith("classpath:/")) {
-                channel = new JChannel(getClass().getClassLoader().getResourceAsStream(configFilePath.replace("classpath:/", "")));
+                protocol = ResourceLoader.loadResource(getClass().getClassLoader()
+                                .getResourceAsStream(configFilePath.replace("classpath:/", "")), props);
             } else {
-                channel = new JChannel(new File(configFilePath));
+                protocol = ResourceLoader.loadResource(new File(configFilePath), props);
             }
+            Element xml = ResourceLoader.loadXMLFromString(protocol).getDocumentElement();
+            channel = new JChannel(xml);
             channel.setReceiver(new JChannelReceiver());
             jcluster = new JGroupsCluster(config, channel);
             jbuffer = new JGroupsBuffer(config, channel);

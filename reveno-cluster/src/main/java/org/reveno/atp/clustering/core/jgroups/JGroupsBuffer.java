@@ -3,6 +3,7 @@ package org.reveno.atp.clustering.core.jgroups;
 import org.jgroups.Header;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
+import org.jgroups.View;
 import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.protocols.RSVP;
 import org.reveno.atp.clustering.api.ClusterBuffer;
@@ -46,18 +47,7 @@ public class JGroupsBuffer implements ClusterBuffer {
                     }
                 }
             }});
-            ((JChannelReceiver) channel.getReceiver()).addViewAcceptor(view -> {
-                addresses = view.getMembers().stream()
-                        .map(a -> new Tuple<>(a, JChannelHelper.physicalAddress(channel, config, a)))
-                        .filter(t -> t.getVal2() != null)
-                        .filter(t -> config.clusterNodeAddresses().contains(t.getVal2()))
-                        .map(t -> new AddressPair(t.getVal1(), t.getVal2().getAddressType()))
-                        .sorted((a, b) -> {
-                            if (a.mode == IOMode.ASYNC) return 1; else return -1;
-                        })
-                        .collect(Collectors.toList());
-                LOG.info("JGroups Buffer members: {}", addresses.size());
-            });
+            ((JChannelReceiver) channel.getReceiver()).addViewAcceptor(this::rebuildAddresses);
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         } finally {
@@ -96,8 +86,12 @@ public class JGroupsBuffer implements ClusterBuffer {
 
     @Override
     public boolean replicate() {
+        if (lastView == null || !channel.getView().equals(lastView)) {
+            rebuildAddresses(channel.getView());
+        }
         byte[] data = sendBuffer.readBytes(sendBuffer.length());
         try {
+            LOG.info("replicating to {}", addresses);
             addresses.forEach(p -> {
                 org.jgroups.Message msg = new org.jgroups.Message(p.address, null, data);
                 msg.setTransientFlag(Message.TransientFlag.DONT_LOOPBACK);
@@ -301,6 +295,20 @@ public class JGroupsBuffer implements ClusterBuffer {
         sendBuffer.setWriterPosition(pos);
     }
 
+    protected void rebuildAddresses(View view) {
+        addresses = view.getMembers().stream()
+                .map(a -> new Tuple<>(a, JChannelHelper.physicalAddress(channel, config, a)))
+                .filter(t -> t.getVal2() != null)
+                .filter(t -> config.clusterNodeAddresses().contains(t.getVal2()))
+                .map(t -> new AddressPair(t.getVal1(), t.getVal2().getAddressType()))
+                .sorted((a, b) -> {
+                    if (a.mode == IOMode.ASYNC) return 1; else return -1;
+                })
+                .collect(Collectors.toList());
+        lastView = view;
+        LOG.info("JGroups Buffer members: {}", addresses.size());
+    }
+
     public JGroupsBuffer(RevenoClusterConfiguration config, JChannel channel) {
         this.channel = channel;
         this.config = config;
@@ -312,6 +320,7 @@ public class JGroupsBuffer implements ClusterBuffer {
     protected volatile boolean isConnected = false;
     protected volatile boolean isLocked = false;
     protected volatile List<AddressPair> addresses = new ArrayList<>();
+    protected volatile View lastView = null;
     protected Function<ClusterBuffer, Boolean> messageListener = b -> true;
     protected Buffer sendBuffer = new NettyBasedBuffer();
     protected Buffer receiveBuffer = new NettyBasedBuffer();

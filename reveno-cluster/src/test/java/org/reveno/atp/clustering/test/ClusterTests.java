@@ -23,6 +23,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 public class ClusterTests extends RevenoBaseTest {
@@ -42,6 +44,31 @@ public class ClusterTests extends RevenoBaseTest {
             this.configure(e);
             e.clusterConfiguration().sync().mode(SyncMode.JOURNALS);
         }, provider), provider);
+    }
+
+    @Test
+    public void simultanousStartupTestJGroups() throws Exception {
+        setModelType();
+        Supplier<ClusterProvider> provider = () -> new JGroupsProvider("classpath:/tcp.xml");
+        simultanousStartupTest(() -> ClusterTestUtils.createClusterEngines(2, this::configure, provider));
+    }
+
+    protected void simultanousStartupTest(Supplier<List<ClusterEngineWrapper>> enginesFactory) throws Exception {
+        List<ClusterEngineWrapper> engines = enginesFactory.get();
+        final ClusterEngineWrapper engine1 = engines.get(0);
+        final ClusterEngineWrapper engine2 = engines.get(1);
+        final ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        executor.execute(engine1::startup);
+        executor.execute(engine2::startup);
+
+        Assert.assertTrue(Utils.waitFor(() -> engine1.failoverManager() != null &&
+                engine1.failoverManager().isMaster(), sec(30)));
+        long accountId = sendCommandSync(engine1, new CreateNewAccountCommand("USD", 1000_000L));
+
+        Assert.assertTrue(Utils.waitFor(() -> engine2.query().find(AccountView.class, accountId).isPresent(), sec(30)));
+
+        executor.shutdownNow();
     }
 
     protected void basicTest(Supplier<List<ClusterEngineWrapper>> enginesFactory, Supplier<ClusterProvider> provider) throws Exception {

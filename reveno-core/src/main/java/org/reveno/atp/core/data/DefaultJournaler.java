@@ -48,7 +48,7 @@ public class DefaultJournaler implements Journaler {
 
 	@Override
 	public void startWriting(Channel ch) {
-		log.info("Started writing to " + ch);
+		log.info("Started writing to {}", ch);
 		
 		channel.set(ch);
 		oldChannel.set(ch);
@@ -57,7 +57,7 @@ public class DefaultJournaler implements Journaler {
 
 	@Override
 	public void stopWriting() {
-		log.info("Stopped writing to " + channel.get());
+		log.info("Stopped writing to {}", channel.get());
 		
 		isWriting = false;
 		closeSilently(channel.get());
@@ -72,6 +72,7 @@ public class DefaultJournaler implements Journaler {
 
 	@Override
 	public void roll(Channel ch, Runnable rolled) {
+		log.info("Rolling to {}", ch);
 		if (!isWriting) {
 			startWriting(ch);
 		}
