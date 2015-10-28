@@ -39,7 +39,6 @@ public class JGroupsBuffer implements ClusterBuffer {
 
         try {
             ((JChannelReceiver) channel.getReceiver()).addReceiver(msg -> { if (msg.getHeader(ClusterBufferHeader.ID) != null) {
-                LOG.info(msg + ":" + isLocked);
                 if (!isLocked) {
                     receiveBuffer.writeBytes(msg.getBuffer());
                     if (messageListener.apply(JGroupsBuffer.this)) {

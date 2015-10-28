@@ -19,7 +19,10 @@ public class ClusterFailoverManager implements FailoverManager {
     }
 
     public boolean newMessage(Buffer buffer) {
-        if (!isBlocked && failoverHandler != null && unprocessedCount() == 0) {
+        if (!isBlocked && failoverHandler != null) {
+            if (unprocessedCount() != 0) {
+                processPendingMessages();
+            }
             failoverHandler.accept(buffer);
             return true;
         } else {
@@ -90,7 +93,7 @@ public class ClusterFailoverManager implements FailoverManager {
     }
 
     @Override
-    public void processPendingMessages() {
+    public synchronized void processPendingMessages() {
         long unprocessed;
         while (!notProcessed.compareAndSet((unprocessed = notProcessed.get()), 0)) {
         }

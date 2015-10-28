@@ -118,71 +118,102 @@ public class FailoverExecutor {
             return;
         }
         try {
-            if (failoverManager.isMaster()) {
-                failoverManager.block();
-            }
+            long t1 = System.currentTimeMillis();
+            blockIfMaster();
             waitOnBarrier(view, "start");
-            buffer.unlockIncoming();
-            if (config.revenoSync().mode() == SyncMode.SNAPSHOT) {
-                snapshotMaker.run();
-            }
-            storageServer.fixJournals(view);
-            journalsManager.roll(lastTransactionId.get());
-
-            ElectionResult election = leaderElector.execute(view);
-            if (election.failed) {
-                throw new FailoverAbortedException("Unable to complete voting, restarting.");
-            }
+            rollAndFixJournals(view);
+            ElectionResult election = leadershipElection(view);
             waitOnBarrier(view, "election");
-
-            ClusterState state = clusterStateCollector.execute(view);
-            if (state.failed) {
-                throw new FailoverAbortedException("Unable to gather cluster state, restarting.");
-            }
-
+            ClusterState state = clusterStateCollection(view);
             waitOnBarrier(view, "cluster_state");
-
-            if (election.isMaster && !state.latestNode.isPresent() && !config.revenoSync().waitAllNodesSync()) {
-                failoverManager.unblock();
-            }
-            if (state.latestNode.isPresent()) {
-                modelSynchronizer.execute(view, new StorageTransferModelSync.TransferContext(state.currentTransactionId,
-                        state.latestNode.get()));
-            }
-
+            unblockMasterOrSynchronizeSlave(view, election, state);
             waitOnBarrier(view, "sync");
-
-            if (state.latestNode.isPresent()) {
-                replayer.get();
-            }
-
+            replay(state);
             waitOnBarrier(view, "replay");
+            unblock();
+            waitOnBarrier(view, "unblock");
+            makeMasterIfElected(election);
 
-            failoverManager.setMaster(election.isMaster);
-            if (failoverManager.isBlocked()) {
-                failoverManager.unblock();
-            }
+            LOG.info("Election Process Time: {} ms", System.currentTimeMillis() - t1);
             notifyListener();
         } catch (Throwable t) {
             LOG.error("Leadership election is failed for view: {}", view);
 
-            if (failoverManager.isMaster() && !failoverManager.isBlocked()) {
-                failoverManager.block();
-            }
-            buffer.lockIncoming();
+            blockAndLock();
             buffer.erase();
             if (!isStopped) {
                 replayer.get();
             }
             failoverManager.setMaster(false);
 
-            try {
-                Thread.sleep(config.revenoTimeouts().ackTimeout());
-            } catch (InterruptedException ignored) {
-            }
+            await();
             if (!isStopped) {
                 onClusterEvent(ClusterEvent.MEMBERSHIP_CHANGED);
             }
+        }
+    }
+
+    private void makeMasterIfElected(ElectionResult election) {
+        failoverManager.setMaster(election.isMaster);
+    }
+
+    protected void blockAndLock() {
+        if (failoverManager.isMaster() && !failoverManager.isBlocked()) {
+            failoverManager.block();
+        }
+        buffer.lockIncoming();
+    }
+
+    protected void unblock() {
+        if (failoverManager.isBlocked()) {
+            failoverManager.unblock();
+        }
+    }
+
+    protected void replay(ClusterState state) {
+        if (state.latestNode.isPresent()) {
+            replayer.get();
+        }
+    }
+
+    protected void unblockMasterOrSynchronizeSlave(ClusterView view, ElectionResult election, ClusterState state) {
+        if (election.isMaster && !state.latestNode.isPresent() && !config.revenoSync().waitAllNodesSync()) {
+            failoverManager.unblock();
+        }
+        if (state.latestNode.isPresent()) {
+            modelSynchronizer.execute(view, new StorageTransferModelSync.TransferContext(state.currentTransactionId,
+                    state.latestNode.get()));
+        }
+    }
+
+    protected ClusterState clusterStateCollection(ClusterView view) {
+        ClusterState state = clusterStateCollector.execute(view);
+        if (state.failed) {
+            throw new FailoverAbortedException("Unable to gather cluster state, restarting.");
+        }
+        return state;
+    }
+
+    protected ElectionResult leadershipElection(ClusterView view) {
+        ElectionResult election = leaderElector.execute(view);
+        if (election.failed) {
+            throw new FailoverAbortedException("Unable to complete voting, restarting.");
+        }
+        return election;
+    }
+
+    protected void rollAndFixJournals(ClusterView view) {
+        buffer.unlockIncoming();
+        if (config.revenoSync().mode() == SyncMode.SNAPSHOT) {
+            snapshotMaker.run();
+        }
+        storageServer.fixJournals(view);
+        journalsManager.roll(lastTransactionId.get());
+    }
+
+    protected void blockIfMaster() {
+        if (failoverManager.isMaster()) {
+            failoverManager.block();
         }
     }
 
@@ -204,6 +235,13 @@ public class FailoverExecutor {
 
     protected boolean isQuorum(ClusterView view) {
         return view.members().size() != 0 && view.members().size() >= config.clusterNodeAddresses().size() / 2;
+    }
+
+    protected void await() {
+        try {
+            Thread.sleep(config.revenoTimeouts().ackTimeout());
+        } catch (InterruptedException ignored) {
+        }
     }
 
     public FailoverExecutor(Cluster cluster, JournalsManager journalsManager, ClusterFailoverManager failoverManager,
