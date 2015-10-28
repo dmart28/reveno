@@ -27,7 +27,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class JGroupsCluster implements Cluster {
-    protected static final ClusterView DEFAULT_VIEW = new ClusterView(0, Collections.emptyList());
 
     @Override
     public void connect() {
@@ -173,7 +172,7 @@ public class JGroupsCluster implements Cluster {
         this.channel = channel;
     }
 
-    protected volatile ClusterView currentView = DEFAULT_VIEW;
+    protected volatile ClusterView currentView = ClusterView.EMPTY_VIEW;
     protected volatile Marshaller marshaller = new JsonMarshaller();
     protected volatile boolean isConnected = false;
 

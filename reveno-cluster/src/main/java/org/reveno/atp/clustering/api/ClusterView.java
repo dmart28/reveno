@@ -22,6 +22,8 @@ import java.util.Objects;
 
 public class ClusterView {
 
+	public static final ClusterView EMPTY_VIEW = new ClusterView(0, Collections.emptyList());
+
 	private final long viewId;
 	public long viewId() {
 		return viewId;

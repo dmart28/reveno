@@ -112,6 +112,11 @@ public class FailoverExecutor {
     protected void process() {
         LOG.info("Cluster merge process started.");
         final ClusterView view = cluster.view();
+        if (lastView.equals(view)) {
+            LOG.info("Cluster is already up-to-date.");
+            notifyListener();
+            return;
+        }
         if (!isQuorum(view)) {
             LOG.info("Failover process end: not a quorum [members: {}]", view.members());
             notifyListener();
@@ -136,6 +141,7 @@ public class FailoverExecutor {
 
             LOG.info("Election Process Time: {} ms", System.currentTimeMillis() - t1);
             notifyListener();
+            lastView = view;
         } catch (Throwable t) {
             LOG.error("Leadership election is failed for view: {}", view);
 
@@ -258,6 +264,7 @@ public class FailoverExecutor {
     }
 
     protected volatile boolean isStopped = false;
+    protected volatile ClusterView lastView = ClusterView.EMPTY_VIEW;
 
     protected Cluster cluster;
     protected ClusterBuffer buffer;
