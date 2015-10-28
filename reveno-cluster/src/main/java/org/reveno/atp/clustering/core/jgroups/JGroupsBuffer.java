@@ -91,7 +91,6 @@ public class JGroupsBuffer implements ClusterBuffer {
         }
         byte[] data = sendBuffer.readBytes(sendBuffer.length());
         try {
-            LOG.info("replicating to {}", addresses);
             addresses.forEach(p -> {
                 org.jgroups.Message msg = new org.jgroups.Message(p.address, null, data);
                 msg.setTransientFlag(Message.TransientFlag.DONT_LOOPBACK);
