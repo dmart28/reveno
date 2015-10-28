@@ -44,15 +44,16 @@ public abstract class MapUtils {
 	}
 	
 	public static SimpleMap<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> linkedFastRepo() {
-		return new SimpleMap<>((Supplier & Serializable)Long2ObjectLinkedOpenHashMap::new);
+		return new SimpleMap<Class<?>, Long2ObjectLinkedOpenHashMap<Object>>((Supplier & Serializable)Long2ObjectLinkedOpenHashMap::new);
 	}
 	
 	public static SimpleMap<Class<?>, Long2ObjectOpenHashMap<Object>> fastRepo() {
-		return new SimpleMap<>((Supplier & Serializable)Long2ObjectOpenHashMap::new);
+		return new SimpleMap<Class<?>, Long2ObjectOpenHashMap<Object>>((Supplier & Serializable)Long2ObjectOpenHashMap::new);
 	}
 	
 	public static SimpleMap<Class<?>, Long2ObjectOpenHashMap<Object>> fastRepo(int capacity, float loadFactor) {
-		return new SimpleMap<>(capacity, loadFactor, (Supplier & Serializable)() -> new Long2ObjectOpenHashMap<>(capacity, loadFactor));
+		return new SimpleMap<Class<?>, Long2ObjectOpenHashMap<Object>>(capacity, loadFactor,
+				(Supplier & Serializable)() -> new Long2ObjectOpenHashMap<>(capacity, loadFactor));
 	}
 
 	public static <T> ConcurrentMapOfMap<Class<?>, Long, T> concurrentRepositoryMap() {
