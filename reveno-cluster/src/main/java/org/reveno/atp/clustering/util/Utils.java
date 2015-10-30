@@ -2,7 +2,7 @@ package org.reveno.atp.clustering.util;
 
 import org.reveno.atp.utils.Exceptions;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +46,16 @@ public abstract class Utils {
             return result;
         } catch (Throwable t) {
             throw Exceptions.runtime(t);
+        }
+    }
+
+    public static boolean isNullOrEmpty(String str) {
+        return str == null || str.trim().equals("");
+    }
+
+    public static void write(String str, File file) throws FileNotFoundException {
+        try (PrintStream out = new PrintStream(new FileOutputStream(file))) {
+            out.print(str);
         }
     }
 

@@ -1,0 +1,43 @@
+# optimized for low latency. Will consume 2 cores per process caused by spin locks.
+# Gains like half to a third lower latency compared to lock based configuraton.
+# Gain depends on OS and hardware (e.g. 54 micros RTT => 20 micros RTT, 35 micros RTT => 12 micros RTT)
+ClusterConf {
+
+    transports: {
+        {
+            name:      default
+
+            dgramsize: 1500
+            interfaceAddr:  ${fastcast.interface:en0}
+            multicastAddr:  ${fastcast.mcast.addr:229.9.9.10}
+            port:      ${fastcast.mcast.port:45556}
+
+            autoFlushMS:     1
+            # comment these 2 lines for lock based mode (also below (**) 2 lines)
+            spinLoopMicros: 3_000_000
+            idleParkMicros:  300
+        }
+
+    }
+
+    topics: {
+       {
+            id: 1
+            name: rvntopic
+
+            pub: {
+                numPacketHistory: 500_000
+                pps: 3_000_000
+                ppsWindow: 100
+                heartbeatInterval: 500
+            }
+
+            sub: {
+                receiveBufferPackets: 500_000
+                # senderHBTimeout: 5000
+                senderHBTimeout: 500000 # avoid crashes during debug
+            }
+        }
+    }
+
+}

@@ -8,6 +8,8 @@ dependencies {
   compile "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 
+  compile "de.ruedigermoeller:fast-cast:$fastcastVersion"
+
   testCompile project(":reveno-test-model")
 }
 

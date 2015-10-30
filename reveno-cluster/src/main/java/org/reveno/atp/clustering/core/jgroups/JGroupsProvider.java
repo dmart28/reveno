@@ -39,6 +39,7 @@ public class JGroupsProvider implements ClusterProvider {
             Element xml = ResourceLoader.loadXMLFromString(protocol).getDocumentElement();
             channel = new JChannel(xml);
             channel.setReceiver(new JChannelReceiver());
+            channel.setDiscardOwnMessages(true);
             jcluster = new JGroupsCluster(config, channel);
             jbuffer = new JGroupsBuffer(config, channel);
         } catch (Exception e) {
