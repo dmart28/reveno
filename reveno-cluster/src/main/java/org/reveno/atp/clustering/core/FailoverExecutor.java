@@ -126,17 +126,39 @@ public class FailoverExecutor {
             long t1 = System.currentTimeMillis();
             blockIfMaster();
             waitOnBarrier(view, "start");
+
+            buffer.lockIncoming();
+            waitOnBarrier(view, "lock-buffer");
+
             rollAndFixJournals(view);
             ElectionResult election = leadershipElection(view);
             waitOnBarrier(view, "election");
+
             ClusterState state = clusterStateCollection(view);
-            waitOnBarrier(view, "cluster_state");
+            waitOnBarrier(view, "cluster-state");
+
+            buffer.unlockIncoming();
+            waitOnBarrier(view, "unlock-buffer");
+
             unblockMasterOrSynchronizeSlave(view, election, state);
             waitOnBarrier(view, "sync");
+
+            blockIfMaster();
+            waitOnBarrier(view, "block-if-master");
+
+            // TODO probably better to replay if anything was received during sync stage
             replay(state);
             waitOnBarrier(view, "replay");
-            unblock();
-            waitOnBarrier(view, "unblock");
+
+            if (!election.isMaster) {
+                unblock();
+            }
+            waitOnBarrier(view, "unblock-slaves");
+
+            if (election.isMaster) {
+                unblock();
+            }
+            waitOnBarrier(view, "unblock-master");
             makeMasterIfElected(election);
 
             LOG.info("Election Process Time: {} ms", System.currentTimeMillis() - t1);
@@ -184,6 +206,7 @@ public class FailoverExecutor {
 
     protected void unblockMasterOrSynchronizeSlave(ClusterView view, ElectionResult election, ClusterState state) {
         if (election.isMaster && !state.latestNode.isPresent() && !config.revenoSync().waitAllNodesSync()) {
+            failoverManager.setMaster(true);
             failoverManager.unblock();
         }
         if (state.latestNode.isPresent()) {
@@ -209,7 +232,7 @@ public class FailoverExecutor {
     }
 
     protected void rollAndFixJournals(ClusterView view) {
-        buffer.unlockIncoming();
+        buffer.erase();
         if (config.revenoSync().mode() == SyncMode.SNAPSHOT) {
             snapshotMaker.run();
         }

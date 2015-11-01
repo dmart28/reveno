@@ -197,12 +197,10 @@ public class NettyBasedBuffer implements Buffer {
 
 	@Override
 	public void limitNext(int count) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void resetNextLimit() {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

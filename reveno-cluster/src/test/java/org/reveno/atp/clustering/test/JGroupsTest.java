@@ -15,7 +15,9 @@ import org.reveno.atp.core.serialization.ProtostuffSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -84,13 +86,11 @@ public class JGroupsTest {
         serializer.registerTransactionType(TestMessage.class);
 
         AtomicInteger count = new AtomicInteger(2);
-        final Function<ClusterBuffer, Boolean> clusterBufferConsumer = b -> {
-            serializer.deserializeObject(b);
+        final Consumer<List<Object>> clusterBufferConsumer = b -> {
             count.decrementAndGet();
-            return true;
         };
-        buffer2.messageNotifier(clusterBufferConsumer);
-        buffer3.messageNotifier(clusterBufferConsumer);
+        buffer2.messageNotifier(serializer, clusterBufferConsumer);
+        buffer3.messageNotifier(serializer, clusterBufferConsumer);
 
         serializer.serializeObject(buffer1, message);
         buffer1.replicate();

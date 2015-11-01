@@ -81,7 +81,7 @@ public class ClusterEngine extends Engine {
         clusterProvider.initialize(configuration);
         this.buffer = clusterProvider.retrieveBuffer();
         this.cluster = clusterProvider.retrieveCluster();
-        this.failoverManager = new ClusterFailoverManager(buffer);
+        this.failoverManager = new ClusterFailoverManager(this.serializer, buffer);
 
         if (storageTransferServer == null) {
             this.storageTransferServer = new FileStorageTransferServer(configuration, (FileSystemStorage) journalsStorage);

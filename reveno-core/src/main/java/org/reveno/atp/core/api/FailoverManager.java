@@ -18,6 +18,7 @@ package org.reveno.atp.core.api;
 
 import org.reveno.atp.core.api.channel.Buffer;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 public interface FailoverManager {
@@ -29,9 +30,9 @@ public interface FailoverManager {
 	boolean isMaster();
 	
 	boolean isBlocked();
-	
-	
-	void onReplicationMessage(Consumer<Buffer> failoverHandler);
+
+
+	void onReplicationMessage(Consumer<List<Object>> failoverHandler);
 	
 	void addOnBlocked(Runnable handler);
 	

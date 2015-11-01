@@ -3,6 +3,7 @@ package org.reveno.atp.core;
 import org.reveno.atp.core.api.FailoverManager;
 import org.reveno.atp.core.api.channel.Buffer;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 public class UnclusteredFailoverManager implements FailoverManager {
@@ -23,7 +24,7 @@ public class UnclusteredFailoverManager implements FailoverManager {
     }
 
     @Override
-    public void onReplicationMessage(Consumer<Buffer> failoverHandler) {
+    public void onReplicationMessage(Consumer<List<Object>> failoverHandler) {
     }
 
     @Override

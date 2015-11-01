@@ -73,9 +73,7 @@ public class WorkflowEngine {
 		context.failoverManager().addOnUnblocked(() -> {
 			context.journalsManager().roll(getLastTransactionId());
 		});
-		context.failoverManager().onReplicationMessage(b -> {
-			inputProcessor.executeFailover(context.serializer().deserializeCommands(b));
-		});
+		context.failoverManager().onReplicationMessage(inputProcessor::executeFailover);
 
 		started = true;
 	}

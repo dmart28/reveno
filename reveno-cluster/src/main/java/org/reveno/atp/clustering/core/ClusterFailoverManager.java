@@ -3,6 +3,7 @@ package org.reveno.atp.clustering.core;
 import org.reveno.atp.clustering.api.ClusterBuffer;
 import org.reveno.atp.core.api.FailoverManager;
 import org.reveno.atp.core.api.channel.Buffer;
+import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,15 +19,24 @@ public class ClusterFailoverManager implements FailoverManager {
         return buffer;
     }
 
-    public boolean newMessage(Buffer buffer) {
+    /**
+     * Must always be called by single thread only.
+     * @param cmds
+     * @return
+     */
+    public boolean newMessage(List<Object> cmds) {
         if (!isBlocked && failoverHandler != null) {
             if (unprocessedCount() != 0) {
                 processPendingMessages();
             }
-            failoverHandler.accept(buffer);
+            failoverHandler.accept(cmds);
             return true;
         } else {
-            notProcessed.incrementAndGet();
+            // have to use lock here since "unblock" and "newMessage" are handled
+            // by independed threads which possible might introduce concurrency here
+            synchronized (this) {
+                notProcessedTransactions.add(cmds);
+            }
             return false;
         }
     }
@@ -43,8 +53,8 @@ public class ClusterFailoverManager implements FailoverManager {
     public synchronized void unblock() {
         if (isBlocked) {
             onUnblockedListeners.forEach(Runnable::run);
-            processPendingMessages();
             isBlocked = false;
+            processPendingMessages();
         } else {
             throw new IllegalArgumentException("Failover manager is not blocked.");
         }
@@ -61,7 +71,7 @@ public class ClusterFailoverManager implements FailoverManager {
     }
 
     @Override
-    public void onReplicationMessage(Consumer<Buffer> failoverHandler) {
+    public void onReplicationMessage(Consumer<List<Object>> failoverHandler) {
         this.failoverHandler = failoverHandler;
     }
 
@@ -89,16 +99,14 @@ public class ClusterFailoverManager implements FailoverManager {
 
     @Override
     public long unprocessedCount() {
-        return notProcessed.get();
+        return notProcessedTransactions.size();
     }
 
     @Override
     public synchronized void processPendingMessages() {
-        long unprocessed;
-        while (!notProcessed.compareAndSet((unprocessed = notProcessed.get()), 0)) {
-        }
-        if (unprocessed > 0) {
-            LongStream.of(unprocessed).forEach(l -> failoverHandler.accept(buffer));
+        if (notProcessedTransactions.size() > 0) {
+            notProcessedTransactions.forEach(failoverHandler::accept);
+            notProcessedTransactions.clear();
         }
     }
 
@@ -107,18 +115,18 @@ public class ClusterFailoverManager implements FailoverManager {
     }
 
 
-    public ClusterFailoverManager(ClusterBuffer buffer) {
+    public ClusterFailoverManager(TransactionInfoSerializer serializer, ClusterBuffer buffer) {
         this.buffer = buffer;
-        buffer.messageNotifier(this::newMessage);
+        buffer.messageNotifier(serializer, this::newMessage);
     }
 
     protected ClusterBuffer buffer;
     protected List<Runnable> onBlockedListeners = new CopyOnWriteArrayList<>();
     protected List<Runnable> onUnblockedListeners = new CopyOnWriteArrayList<>();
-    protected volatile Consumer<Buffer> failoverHandler;
+    protected volatile Consumer<List<Object>>  failoverHandler;
     protected volatile boolean isMaster, isBlocked;
 
-    protected AtomicLong notProcessed = new AtomicLong(0);
+    protected List<List<Object>> notProcessedTransactions = new CopyOnWriteArrayList<>();
 
     protected static final Logger LOG = LoggerFactory.getLogger(ClusterFailoverManager.class);
 }

@@ -1,8 +1,12 @@
 package org.reveno.atp.clustering.api;
 
 import org.reveno.atp.core.api.channel.Buffer;
+import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Buffer is used as replication mechanism only, so it can be anything,
@@ -19,7 +23,7 @@ public interface ClusterBuffer extends Buffer {
 
     void disconnect();
 
-    void messageNotifier(Function<ClusterBuffer, Boolean> listener);
+    void messageNotifier(TransactionInfoSerializer serializer, Consumer<List<Object>> listener);
 
     /**
      * Mode to reject all incoming data.

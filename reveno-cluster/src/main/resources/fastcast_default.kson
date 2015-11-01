@@ -14,8 +14,8 @@ ClusterConf {
 
             autoFlushMS:     1
             # comment these 2 lines for lock based mode (also below (**) 2 lines)
-            spinLoopMicros: 3_000_000
-            idleParkMicros:  300
+            spinLoopMicros: 1_000_000
+            idleParkMicros:  100
         }
 
     }
@@ -26,14 +26,14 @@ ClusterConf {
             name: rvntopic
 
             pub: {
-                numPacketHistory: 500_000
+                numPacketHistory: 5_000_000
                 pps: 3_000_000
-                ppsWindow: 100
+                ppsWindow: 10
                 heartbeatInterval: 500
             }
 
             sub: {
-                receiveBufferPackets: 500_000
+                receiveBufferPackets: 50_000_000
                 # senderHBTimeout: 5000
                 senderHBTimeout: 500000 # avoid crashes during debug
             }

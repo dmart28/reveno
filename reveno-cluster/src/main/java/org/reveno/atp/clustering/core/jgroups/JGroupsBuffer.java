@@ -9,8 +9,10 @@ import org.jgroups.protocols.RSVP;
 import org.reveno.atp.clustering.api.ClusterBuffer;
 import org.reveno.atp.clustering.api.IOMode;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
+import org.reveno.atp.clustering.core.components.AbstractClusterBuffer;
 import org.reveno.atp.clustering.util.Tuple;
 import org.reveno.atp.core.api.channel.Buffer;
+import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.utils.Exceptions;
 import org.slf4j.Logger;
@@ -23,14 +25,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
  * JGroups implementation of {@link ClusterBuffer}. It is intended to be used mainly
  * for test and debug purposes, as it's not very efficient approach in low-latency world.
  */
-public class JGroupsBuffer implements ClusterBuffer {
+public class JGroupsBuffer extends AbstractClusterBuffer implements ClusterBuffer {
 
     @Override
     public void connect() {
@@ -42,9 +46,8 @@ public class JGroupsBuffer implements ClusterBuffer {
             ((JChannelReceiver) channel.getReceiver()).addReceiver(msg -> { if (msg.getHeader(ClusterBufferHeader.ID) != null) {
                 if (!isLocked) {
                     receiveBuffer.writeBytes(msg.getBuffer());
-                    if (messageListener.apply(JGroupsBuffer.this)) {
-                        receiveBuffer.clear();
-                    }
+                    messageListener.accept(serializer.deserializeCommands(receiveBuffer));
+                    receiveBuffer.clear();
                 }
             }});
             ((JChannelReceiver) channel.getReceiver()).addViewAcceptor(this::rebuildAddresses);
@@ -61,7 +64,8 @@ public class JGroupsBuffer implements ClusterBuffer {
     }
 
     @Override
-    public void messageNotifier(Function<ClusterBuffer, Boolean> listener) {
+    public void messageNotifier(TransactionInfoSerializer serializer, Consumer<List<Object>> listener) {
+        this.serializer = serializer;
         this.messageListener = listener;
     }
 
@@ -77,7 +81,6 @@ public class JGroupsBuffer implements ClusterBuffer {
 
     @Override
     public void erase() {
-        receiveBuffer.clear();
     }
 
     @Override
@@ -121,179 +124,6 @@ public class JGroupsBuffer implements ClusterBuffer {
         return true;
     }
 
-    @Override
-    public int readerPosition() {
-        return receiveBuffer.readerPosition();
-    }
-
-    @Override
-    public int writerPosition() {
-        return sendBuffer.writerPosition();
-    }
-
-    @Override
-    public int limit() {
-        return receiveBuffer.limit();
-    }
-
-    @Override
-    public long capacity() {
-        return sendBuffer.capacity();
-    }
-
-    @Override
-    public int length() {
-        return sendBuffer.length();
-    }
-
-    @Override
-    public int remaining() {
-        return receiveBuffer.remaining();
-    }
-
-    @Override
-    public void clear() {
-    }
-
-    @Override
-    public void release() {
-    }
-
-    @Override
-    public boolean isAvailable() {
-        return receiveBuffer.isAvailable();
-    }
-
-    @Override
-    public void setReaderPosition(int position) {
-        receiveBuffer.setReaderPosition(position);
-    }
-
-    @Override
-    public void setWriterPosition(int position) {
-        sendBuffer.setWriterPosition(position);
-    }
-
-    @Override
-    public void writeByte(byte b) {
-        sendBuffer.writeByte(b);
-    }
-
-    @Override
-    public void writeBytes(byte[] bytes) {
-        sendBuffer.writeBytes(bytes);
-    }
-
-    @Override
-    public void writeBytes(byte[] buffer, int offset, int count) {
-        sendBuffer.writeBytes(buffer, offset, count);
-    }
-
-    @Override
-    public void writeLong(long value) {
-        sendBuffer.writeLong(value);
-    }
-
-    @Override
-    public void writeInt(int value) {
-        sendBuffer.writeInt(value);
-    }
-
-    @Override
-    public void writeShort(short s) {
-        sendBuffer.writeShort(s);
-    }
-
-    @Override
-    public void writeFromBuffer(ByteBuffer buffer) {
-        sendBuffer.writeFromBuffer(buffer);
-    }
-
-    @Override
-    public ByteBuffer writeToBuffer() {
-        return null;
-    }
-
-    @Override
-    public byte readByte() {
-        return receiveBuffer.readByte();
-    }
-
-    @Override
-    public byte[] readBytes(int length) {
-        return receiveBuffer.readBytes(length);
-    }
-
-    @Override
-    public void readBytes(byte[] data, int offset, int length) {
-        receiveBuffer.readBytes(data, offset, length);
-    }
-
-    @Override
-    public long readLong() {
-        return receiveBuffer.readLong();
-    }
-
-    @Override
-    public int readInt() {
-        return receiveBuffer.readInt();
-    }
-
-    @Override
-    public short readShort() {
-        return receiveBuffer.readShort();
-    }
-
-    @Override
-    public void markReader() {
-        receiveBuffer.markReader();
-    }
-
-    @Override
-    public void markWriter() {
-        sendBuffer.markWriter();
-    }
-
-    @Override
-    public void resetReader() {
-        receiveBuffer.markReader();
-    }
-
-    @Override
-    public void resetWriter() {
-        sendBuffer.resetWriter();
-    }
-
-    @Override
-    public void limitNext(int count) {
-    }
-
-    @Override
-    public void resetNextLimit() {
-    }
-
-    /**
-     * Might be called with N depth
-     */
-    @Override
-    public void markSize() {
-        sizeMarks.add(sendBuffer.writerPosition());
-        sendBuffer.writeInt(0);
-    }
-
-    @Override
-    public int sizeMarkPosition() {
-        return sizeMarks.peek();
-    }
-
-    @Override
-    public void writeSize() {
-        int pos = sendBuffer.writerPosition();
-        sendBuffer.setWriterPosition(sizeMarks.poll());
-        sendBuffer.writeInt(pos - sendBuffer.writerPosition() - 4);
-        sendBuffer.setWriterPosition(pos);
-    }
-
     protected void rebuildAddresses(View view) {
         addresses = view.getMembers().stream()
                 .map(a -> new Tuple<>(a, JChannelHelper.physicalAddress(channel, config, a)))
@@ -315,15 +145,14 @@ public class JGroupsBuffer implements ClusterBuffer {
 
     protected JChannel channel;
     protected RevenoClusterConfiguration config;
+    protected TransactionInfoSerializer serializer;
 
     protected volatile boolean isConnected = false;
     protected volatile boolean isLocked = false;
     protected volatile List<AddressPair> addresses = new ArrayList<>();
     protected volatile View lastView = null;
-    protected Function<ClusterBuffer, Boolean> messageListener = b -> true;
-    protected Buffer sendBuffer = new NettyBasedBuffer();
+    protected Consumer<List<Object>> messageListener = l -> {};
     protected Buffer receiveBuffer = new NettyBasedBuffer();
-    protected Queue<Integer> sizeMarks = new LinkedTransferQueue<>();
 
     protected Logger LOG = LoggerFactory.getLogger(JGroupsBuffer.class);
 

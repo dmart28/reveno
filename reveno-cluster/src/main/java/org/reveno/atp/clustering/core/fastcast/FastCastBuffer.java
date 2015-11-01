@@ -1,15 +1,25 @@
 package org.reveno.atp.clustering.core.fastcast;
 
+import org.nustaq.fastcast.api.FCPublisher;
+import org.nustaq.fastcast.api.FCSubscriber;
 import org.nustaq.fastcast.api.FastCast;
+import org.nustaq.offheap.bytez.Bytez;
 import org.reveno.atp.clustering.api.ClusterBuffer;
+import org.reveno.atp.clustering.core.components.AbstractClusterBuffer;
 import org.reveno.atp.clustering.util.ResourceLoader;
 import org.reveno.atp.clustering.util.Utils;
+import org.reveno.atp.core.api.channel.Buffer;
+import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
+import org.reveno.atp.core.channel.NettyBasedBuffer;
 
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Properties;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * fast-cast {@link ClusterBuffer} implementation, which is based on reliable
@@ -17,216 +27,77 @@ import java.util.function.Function;
  * on top of fast-cast, so {@link org.reveno.atp.clustering.core.jgroups.JGroupsCluster} or another
  * implementation must be used.
  */
-public class FastCastBuffer implements ClusterBuffer {
+public class FastCastBuffer extends AbstractClusterBuffer implements ClusterBuffer {
 
     @Override
     public void connect() {
+        fastCast.onTransport(config.transportName()).subscribe(config.topicName(), new FCSubscriber() {
+            @Override
+            public void messageReceived(String sender, long sequence, Bytez b, long off, int len) {
+                if (!locked) {
+                    bytezBuffer.setBytez(b, off, len);
+                    listener.accept(serializer.deserializeCommands(bytezBuffer));
+                }
+            }
 
+            @Override
+            public boolean dropped() {
+                return true;
+            }
+
+            @Override
+            public void senderTerminated(String senderNodeId) {
+            }
+
+            @Override
+            public void senderBootstrapped(String receivesFrom, long seqNo) {
+            }
+        });
     }
 
     @Override
     public void disconnect() {
-
+        fastCast.getTransport(config.transportName()).close();
     }
 
     @Override
-    public void messageNotifier(Function<ClusterBuffer, Boolean> listener) {
-
+    public void messageNotifier(TransactionInfoSerializer serializer, Consumer<List<Object>> listener) {
+        this.serializer = serializer;
+        this.listener = listener;
     }
 
     @Override
     public void lockIncoming() {
-
+        locked = true;
     }
 
     @Override
     public void unlockIncoming() {
-
+        locked = false;
     }
 
     @Override
     public void erase() {
-
     }
 
     @Override
     public void prepare() {
-
     }
 
     @Override
     public boolean replicate() {
-        return false;
+        try {
+            byteSource.setBuffer(sendBuffer);
+            return publisher().offer(null, byteSource, 0, sendBuffer.limit(), true);
+        } finally {
+            sendBuffer.clear();
+        }
     }
 
-    @Override
-    public int readerPosition() {
-        return 0;
-    }
-
-    @Override
-    public int writerPosition() {
-        return 0;
-    }
-
-    @Override
-    public int limit() {
-        return 0;
-    }
-
-    @Override
-    public long capacity() {
-        return 0;
-    }
-
-    @Override
-    public int length() {
-        return 0;
-    }
-
-    @Override
-    public int remaining() {
-        return 0;
-    }
-
-    @Override
-    public void clear() {
-
-    }
-
-    @Override
-    public void release() {
-
-    }
-
-    @Override
-    public boolean isAvailable() {
-        return false;
-    }
-
-    @Override
-    public void setReaderPosition(int position) {
-
-    }
-
-    @Override
-    public void setWriterPosition(int position) {
-
-    }
-
-    @Override
-    public void writeByte(byte b) {
-
-    }
-
-    @Override
-    public void writeBytes(byte[] bytes) {
-
-    }
-
-    @Override
-    public void writeBytes(byte[] buffer, int offset, int count) {
-
-    }
-
-    @Override
-    public void writeLong(long value) {
-
-    }
-
-    @Override
-    public void writeInt(int value) {
-
-    }
-
-    @Override
-    public void writeShort(short s) {
-
-    }
-
-    @Override
-    public void writeFromBuffer(ByteBuffer buffer) {
-
-    }
-
-    @Override
-    public ByteBuffer writeToBuffer() {
-        return null;
-    }
-
-    @Override
-    public byte readByte() {
-        return 0;
-    }
-
-    @Override
-    public byte[] readBytes(int length) {
-        return new byte[0];
-    }
-
-    @Override
-    public void readBytes(byte[] data, int offset, int length) {
-
-    }
-
-    @Override
-    public long readLong() {
-        return 0;
-    }
-
-    @Override
-    public int readInt() {
-        return 0;
-    }
-
-    @Override
-    public short readShort() {
-        return 0;
-    }
-
-    @Override
-    public void markReader() {
-
-    }
-
-    @Override
-    public void markWriter() {
-
-    }
-
-    @Override
-    public void resetReader() {
-
-    }
-
-    @Override
-    public void resetWriter() {
-
-    }
-
-    @Override
-    public void limitNext(int count) {
-
-    }
-
-    @Override
-    public void resetNextLimit() {
-
-    }
-
-    @Override
-    public void markSize() {
-
-    }
-
-    @Override
-    public int sizeMarkPosition() {
-        return 0;
-    }
-
-    @Override
-    public void writeSize() {
-
+    protected FCPublisher publisher() {
+        if (publisher == null)
+            publisher = fastCast.onTransport(config.transportName()).publish(config.topicName());
+        return publisher;
     }
 
     public FastCastBuffer(FastCastConfiguration config) throws Exception {
@@ -252,8 +123,18 @@ public class FastCastBuffer implements ClusterBuffer {
             fastCast.loadConfig(configFile.getAbsolutePath());
             configFile.delete();
         }
-
+        this.config = config;
     }
 
     protected FastCast fastCast;
+    protected FastCastConfiguration config;
+    protected TransactionInfoSerializer serializer;
+    protected Consumer<List<Object>> listener;
+
+    protected FCPublisher publisher;
+
+    protected BytezBufferWrapper bytezBuffer = new BytezBufferWrapper();
+    protected ByteSourceBuffer byteSource = new ByteSourceBuffer();
+
+    protected volatile boolean locked = false;
 }
