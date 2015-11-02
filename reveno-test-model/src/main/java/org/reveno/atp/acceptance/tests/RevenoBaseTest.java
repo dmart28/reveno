@@ -48,6 +48,7 @@ import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.Reveno;
 import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.api.domain.WriteableRepository;
+import org.reveno.atp.api.exceptions.FailoverRulesException;
 import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.core.Engine;
@@ -64,6 +65,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 
 @RunWith(Parameterized.class)
@@ -176,8 +178,13 @@ public class RevenoBaseTest {
 			}
 		});
 	}
-	
+
 	protected void generateAndSendCommands(Reveno reveno, int count)
+			throws InterruptedException, ExecutionException {
+		generateAndSendCommands(reveno, count, i -> {});
+	}
+
+	protected void generateAndSendCommands(Reveno reveno, int count, Consumer<Integer> c)
 			throws InterruptedException, ExecutionException {
 		sendCommandsBatch(reveno, new CreateNewAccountCommand("USD", 1000_000L), count);
 		
@@ -186,7 +193,7 @@ public class RevenoBaseTest {
 			commands.add(new NewOrderCommand((long)(count*Math.random()) + 1, null, "EUR/USD",
 					134000, (long)(1000*Math.random()), OrderType.MARKET));
 		}
-		sendCommandsBatch(reveno, commands);
+		sendCommandsBatch(reveno, commands, c);
 	}
 	
 	protected File findFirstFile(String prefix) {
@@ -203,16 +210,39 @@ public class RevenoBaseTest {
 	
 	protected void sendCommandsBatch(Reveno reveno, Object command, int n) throws InterruptedException, ExecutionException {
 		for (int i = 0; i < n - 1; i++) {
-			reveno.executeCommand(command);
+			try {
+				reveno.executeCommand(command);
+			} catch (FailoverRulesException e) {
+				log.info("Skipping to send command {}, message: {}", i, e.getMessage());
+				LockSupport.parkNanos(100);
+			}
 		}
-		sendCommandSync(reveno, command);
+		try {
+			sendCommandSync(reveno, command);
+		} catch (FailoverRulesException e) {
+			log.info("Skipping to send command {}, message: {}", n, e.getMessage());
+		}
 	}
-	
-	protected void sendCommandsBatch(Reveno reveno, List<? extends Object> commands) throws InterruptedException, ExecutionException {
+
+	protected void sendCommandsBatch(Reveno reveno, List<?> commands) throws InterruptedException, ExecutionException {
+		sendCommandsBatch(reveno, commands, i -> {});
+	}
+
+	protected void sendCommandsBatch(Reveno reveno, List<?> commands, Consumer<Integer> c) throws InterruptedException, ExecutionException {
 		for (int i = 0; i < commands.size() - 1; i++) {
-			reveno.executeCommand(commands.get(i));
+			c.accept(i);
+			try {
+				reveno.executeCommand(commands.get(i));
+			} catch (FailoverRulesException e) {
+				log.info("Skipping to send command {}, message: {}", i, e.getMessage());
+				LockSupport.parkNanos(100);
+			}
 		}
-		sendCommandSync(reveno, commands.get(commands.size() - 1));
+		try {
+			sendCommandSync(reveno, commands.get(commands.size() - 1));
+		} catch (FailoverRulesException e) {
+			log.info("Skipping to send command {}, message: {}", commands.size(), e.getMessage());
+		}
 	}
 	
 	protected <T> Waiter listenFor(Reveno reveno, Class<T> event) {

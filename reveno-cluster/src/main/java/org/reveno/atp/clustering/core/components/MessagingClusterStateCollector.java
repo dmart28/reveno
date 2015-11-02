@@ -34,6 +34,7 @@ public class MessagingClusterStateCollector implements ClusterExecutor<ClusterSt
 
                 NodeState stateMessage = latestTransactionId.get();
                 if (stateMessage.transactionId > currentTransactionId) {
+                    LOG.trace("Need to sync - my txId: {}, latest: {}", currentTransactionId, stateMessage.transactionId);
                     return new ClusterState(false, currentTransactionId, Optional.of(stateMessage));
                 } else {
                     return new ClusterState(false, currentTransactionId, Optional.empty());

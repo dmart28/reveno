@@ -143,10 +143,12 @@ public class FailoverExecutor {
             unblockMasterOrSynchronizeSlave(view, election, state);
             waitOnBarrier(view, "sync");
 
-            blockIfMaster();
+            // block master only if it was unblocked because of
+            // option waitAllNodesSync switched off
+            blockIfMaster(() -> !config.revenoSync().waitAllNodesSync());
             waitOnBarrier(view, "block-if-master");
 
-            // TODO probably better to replay if anything was received during sync stage
+            // TODO probably better to replay only if anything was received during sync stage
             replay(state);
             waitOnBarrier(view, "replay");
 
@@ -165,7 +167,7 @@ public class FailoverExecutor {
             notifyListener();
             lastView = view;
         } catch (Throwable t) {
-            LOG.error("Leadership election is failed for view: {}", view);
+            LOG.error("Leadership election is failed for view: {}, {}", view, t.getMessage());
 
             blockAndLock();
             buffer.erase();
@@ -241,7 +243,11 @@ public class FailoverExecutor {
     }
 
     protected void blockIfMaster() {
-        if (failoverManager.isMaster()) {
+        blockIfMaster(() -> true);
+    }
+
+    protected void blockIfMaster(Supplier<Boolean> condition) {
+        if (failoverManager.isMaster() && condition.get()) {
             failoverManager.block();
         }
     }

@@ -10,6 +10,7 @@ import org.reveno.atp.acceptance.tests.RevenoBaseTest;
 import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
 import org.reveno.atp.clustering.api.SyncMode;
+import org.reveno.atp.clustering.core.ClusterEngine;
 import org.reveno.atp.clustering.core.buffer.ClusterProvider;
 import org.reveno.atp.clustering.core.jgroups.JGroupsProvider;
 import org.reveno.atp.clustering.test.common.ClusterEngineWrapper;
@@ -53,6 +54,73 @@ public class ClusterTests extends RevenoBaseTest {
         simultanousStartupTest(() -> ClusterTestUtils.createClusterEngines(2, this::configure, provider));
     }
 
+    @Test
+    public void complicatedSimultanousStartupTestJGroups() throws Exception {
+        setModelType();
+        Supplier<ClusterProvider> provider = () -> new JGroupsProvider("classpath:/tcp.xml");
+        complicatedSimultanousStartupTest(() -> ClusterTestUtils.createClusterEngines(2, this::configure, provider));
+    }
+
+    @Test
+    public void oneNodeFailInMiddleTestJGroups() throws Exception {
+        setModelType();
+        Supplier<ClusterProvider> provider = () -> new JGroupsProvider("classpath:/tcp.xml");
+        oneNodeFailInMiddleTest(() -> ClusterTestUtils.createClusterEngines(3, this::configure, provider));
+    }
+
+    protected void oneNodeFailInMiddleTest(Supplier<List<ClusterEngineWrapper>> enginesFactory) throws Exception {
+        List<ClusterEngineWrapper> engines = enginesFactory.get();
+        final ClusterEngineWrapper engine1 = engines.get(0);
+        final ClusterEngineWrapper engine2 = engines.get(1);
+        final ClusterEngineWrapper engine3 = engines.get(2);
+
+        final ExecutorService executor = Executors.newFixedThreadPool(3);
+        executor.execute(engine1::startup);
+        executor.execute(engine2::startup);
+        executor.execute(engine3::startup);
+
+        Assert.assertTrue(Utils.waitFor(() -> engine1.failoverManager() != null &&
+                engine1.failoverManager().isMaster(), sec(30)));
+        long accountId = sendCommandSync(engine1, new CreateNewAccountCommand("USD", 1000_000L));
+
+        Assert.assertTrue(Utils.waitFor(() -> engine2.query().find(AccountView.class, accountId).isPresent(), sec(30)));
+        Assert.assertTrue(Utils.waitFor(() -> engine3.query().find(AccountView.class, accountId).isPresent(), sec(30)));
+
+        generateAndSendCommands(engine1, 10_000, i -> {
+            if (i == 6000) {
+                engine2.shutdown();
+            }
+        });
+
+        LOG.info("GFD: {}", engine1.query().select(OrderView.class).size());
+
+        // TODO hangs because we await on elector executor forever
+        engine1.shutdown();
+        engine3.shutdown();
+        executor.shutdown();
+    }
+
+    protected void complicatedSimultanousStartupTest(Supplier<List<ClusterEngineWrapper>> enginesFactory) throws Exception {
+        List<ClusterEngineWrapper> engines = enginesFactory.get();
+        final ClusterEngineWrapper engine1 = engines.get(0);
+        final ClusterEngineWrapper engine2 = engines.get(1);
+        final ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        executor.execute(engine1::startup);
+        executor.execute(engine2::startup);
+
+        Assert.assertTrue(Utils.waitFor(() -> engine1.failoverManager() != null &&
+                engine1.failoverManager().isMaster(), sec(30)));
+
+        generateAndSendCommands(engine1, 10_000);
+
+        Assert.assertTrue(Utils.waitFor(() -> engine2.query().select(AccountView.class).size() == 10_000, sec(30)));
+        Assert.assertTrue(Utils.waitFor(() -> engine2.query().select(OrderView.class).size() == 10_000, sec(30)));
+
+        shutdownAll(engines);
+        executor.shutdownNow();
+    }
+
     protected void simultanousStartupTest(Supplier<List<ClusterEngineWrapper>> enginesFactory) throws Exception {
         List<ClusterEngineWrapper> engines = enginesFactory.get();
         final ClusterEngineWrapper engine1 = engines.get(0);
@@ -68,6 +136,7 @@ public class ClusterTests extends RevenoBaseTest {
 
         Assert.assertTrue(Utils.waitFor(() -> engine2.query().find(AccountView.class, accountId).isPresent(), sec(30)));
 
+        shutdownAll(engines);
         executor.shutdownNow();
     }
 
@@ -117,6 +186,10 @@ public class ClusterTests extends RevenoBaseTest {
         engine4.shutdown();
 
         clearResources(engines);
+    }
+
+    protected void shutdownAll(List<ClusterEngineWrapper> engines) {
+        engines.forEach(ClusterEngineWrapper::shutdown);
     }
 
     protected void clearResources(List<ClusterEngineWrapper> engines) {
