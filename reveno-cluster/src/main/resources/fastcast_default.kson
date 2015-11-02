@@ -1,6 +1,3 @@
-# optimized for low latency. Will consume 2 cores per process caused by spin locks.
-# Gains like half to a third lower latency compared to lock based configuraton.
-# Gain depends on OS and hardware (e.g. 54 micros RTT => 20 micros RTT, 35 micros RTT => 12 micros RTT)
 ClusterConf {
 
     transports: {
@@ -26,14 +23,13 @@ ClusterConf {
             name: rvntopic
 
             pub: {
-                numPacketHistory: 5_000_000
+                numPacketHistory: 100_000
                 pps: 3_000_000
                 ppsWindow: 10
                 heartbeatInterval: 500
             }
-
             sub: {
-                receiveBufferPackets: 50_000_000
+                receiveBufferPackets: 100_000
                 # senderHBTimeout: 5000
                 senderHBTimeout: 500000 # avoid crashes during debug
             }

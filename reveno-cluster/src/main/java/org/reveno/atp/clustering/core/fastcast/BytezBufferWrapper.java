@@ -1,6 +1,7 @@
 package org.reveno.atp.clustering.core.fastcast;
 
 import org.nustaq.offheap.bytez.Bytez;
+import org.reveno.atp.clustering.util.Bits;
 import org.reveno.atp.core.api.channel.Buffer;
 
 import java.nio.ByteBuffer;
@@ -9,7 +10,7 @@ public class BytezBufferWrapper implements Buffer {
 
     @Override
     public int readerPosition() {
-        return position;
+        return pos;
     }
 
     @Override
@@ -34,7 +35,7 @@ public class BytezBufferWrapper implements Buffer {
 
     @Override
     public int remaining() {
-        return length - position;
+        return length - pos;
     }
 
     @Override
@@ -52,7 +53,7 @@ public class BytezBufferWrapper implements Buffer {
 
     @Override
     public void setReaderPosition(int position) {
-        this.position = position;
+        this.pos = position;
     }
 
     @Override
@@ -97,14 +98,14 @@ public class BytezBufferWrapper implements Buffer {
 
     @Override
     public ByteBuffer writeToBuffer() {
-        byte[] bytes = readBytes(length - position);
+        byte[] bytes = readBytes(length - pos);
         return ByteBuffer.wrap(bytes);
     }
 
     @Override
     public byte readByte() {
-        byte b = bytez.get(off + position);
-        position++;
+        byte b = bytez.get(off + pos);
+        pos++;
         return b;
     }
 
@@ -117,28 +118,31 @@ public class BytezBufferWrapper implements Buffer {
 
     @Override
     public void readBytes(byte[] data, int offset, int length) {
-        bytez.getArr(off + position, data, offset, length);
-        position += length;
+        bytez.getArr(off + pos, data, offset, length);
+        pos += length;
     }
 
     @Override
     public long readLong() {
-        long l = bytez.getLong(off + position);
-        position += 8;
+        long l = Bits.readLong(bytez.get(off + pos), bytez.get(off + pos + 1),
+                bytez.get(off + pos + 2), bytez.get(off + pos + 3), bytez.get(off + pos + 4),
+                bytez.get(off + pos + 5), bytez.get(off + pos + 6), bytez.get(off + pos + 7));
+        pos += 8;
         return l;
     }
 
     @Override
     public int readInt() {
-        int i = bytez.getInt(off + position);
-        position += 4;
+        int i = Bits.readInt(bytez.get(off + pos), bytez.get(off + pos + 1),
+                bytez.get(off + pos + 2), bytez.get(off + pos + 3));
+        pos += 4;
         return i;
     }
 
     @Override
     public short readShort() {
-        short s = bytez.getShort(off + position);
-        position += 2;
+        short s = Bits.readShort(bytez.get(off + pos), bytez.get(off + pos + 1));
+        pos += 2;
         return s;
     }
 
@@ -191,12 +195,12 @@ public class BytezBufferWrapper implements Buffer {
         this.bytez = bytez;
         this.off = off;
         this.length = len;
-        this.position = 0;
+        this.pos = 0;
     }
 
     protected Bytez bytez;
     protected long off;
     protected int length;
 
-    protected int position;
+    protected int pos;
 }

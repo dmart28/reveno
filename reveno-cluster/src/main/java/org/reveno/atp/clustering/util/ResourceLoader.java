@@ -42,7 +42,7 @@ public abstract class ResourceLoader {
                 String value = match.group("ctn");
                 String[] split = value.split(":");
                 if (properties.containsKey(split[0])) {
-                    String prop = properties.getProperty(value);
+                    String prop = properties.getProperty(split[0]);
                     match.appendReplacement(sb, prop);
                 } else if (split.length > 1) {
                     match.appendReplacement(sb, split[1]);

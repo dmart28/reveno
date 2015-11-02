@@ -11,6 +11,8 @@ import org.reveno.atp.clustering.util.Utils;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -31,12 +33,16 @@ public class FastCastBuffer extends AbstractClusterBuffer implements ClusterBuff
 
     @Override
     public void connect() {
-        fastCast.onTransport(config.transportName()).subscribe(config.topicName(), new FCSubscriber() {
+        fastCast.onTransport(config.transportName()).subscribe(fastCast.getSubscriberConf(config.topicName()), new FCSubscriber() {
             @Override
             public void messageReceived(String sender, long sequence, Bytez b, long off, int len) {
-                if (!locked) {
-                    bytezBuffer.setBytez(b, off, len);
-                    listener.accept(serializer.deserializeCommands(bytezBuffer));
+                try {
+                    if (!locked) {
+                        bytezBuffer.setBytez(b, off, len);
+                        listener.accept(serializer.deserializeCommands(bytezBuffer));
+                    }
+                } catch (Throwable t) {
+                    LOG.error("messageReceived", t);
                 }
             }
 
@@ -53,6 +59,7 @@ public class FastCastBuffer extends AbstractClusterBuffer implements ClusterBuff
             public void senderBootstrapped(String receivesFrom, long seqNo) {
             }
         });
+        publisher = fastCast.onTransport(config.transportName()).publish(fastCast.getPublisherConf(config.topicName()));
     }
 
     @Override
@@ -95,13 +102,11 @@ public class FastCastBuffer extends AbstractClusterBuffer implements ClusterBuff
     }
 
     protected FCPublisher publisher() {
-        if (publisher == null)
-            publisher = fastCast.onTransport(config.transportName()).publish(config.topicName());
         return publisher;
     }
 
     public FastCastBuffer(FastCastConfiguration config) throws Exception {
-        fastCast = FastCast.getFastCast();
+        fastCast = new FastCast();
         fastCast.setNodeId(config.nodeId());
         if (config.configFile().isPresent()) {
             fastCast.loadConfig(config.configFile().get().getAbsolutePath());
@@ -111,7 +116,7 @@ public class FastCastBuffer extends AbstractClusterBuffer implements ClusterBuff
                 props.put("fastcast.mcast.addr", config.mcastHost());
             }
             if (config.mcastPort() != 0) {
-                props.put("fastcast.mcast.port", config.mcastPort());
+                props.put("fastcast.mcast.port", String.valueOf(config.mcastPort()));
             }
             if (!Utils.isNullOrEmpty(config.networkInterface())) {
                 props.put("fastcast.interface", config.networkInterface());
@@ -135,6 +140,8 @@ public class FastCastBuffer extends AbstractClusterBuffer implements ClusterBuff
 
     protected BytezBufferWrapper bytezBuffer = new BytezBufferWrapper();
     protected ByteSourceBuffer byteSource = new ByteSourceBuffer();
+
+    protected static final Logger LOG = LoggerFactory.getLogger(FastCastBuffer.class);
 
     protected volatile boolean locked = false;
 }
