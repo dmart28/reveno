@@ -1,5 +1,7 @@
 package org.reveno.atp.clustering.util;
 
+import java.util.zip.CRC32;
+
 public abstract class Bits {
 
     public static short readShort(byte b1, byte b2) {
@@ -18,6 +20,21 @@ public abstract class Bits {
         return ((((long) b1) << 56) | (((long) b2 & 0xff) << 48) | (((long) b3 & 0xff) << 40)
                 | (((long) b4 & 0xff) << 32) | (((long) b5 & 0xff) << 24) | (((long) b6 & 0xff) << 16)
                 | (((long) b7 & 0xff) << 8) | (((long) b8 & 0xff)));
+    }
+
+    public static byte[] intToBytes(int l) {
+        byte[] result = new byte[4];
+        for (int i = 3; i >= 0; i--) {
+            result[i] = (byte)(l & 0xFF);
+            l >>= 4;
+        }
+        return result;
+    }
+
+    public static long crc32(byte[] value) {
+        CRC32 crc = new CRC32();
+        crc.update(value);
+        return crc.getValue();
     }
 
 }

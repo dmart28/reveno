@@ -97,6 +97,7 @@ public class ClusterEngine extends Engine {
         failoverExecutor.leaderElector(leadershipExecutor());
         failoverExecutor.clusterStateCollector(clusterStateCollector());
         failoverExecutor.modelSynchronizer(transferModelSync());
+        failoverExecutor.lastTransactionId(workflowEngine::getLastTransactionId);
         failoverExecutor.marshaller(marshaller());
         failoverExecutor.failoverListener(failoverWaiter::countDown);
 

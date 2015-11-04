@@ -7,6 +7,8 @@ import org.jgroups.View;
 import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.protocols.RSVP;
 import org.reveno.atp.clustering.api.ClusterBuffer;
+import org.reveno.atp.clustering.api.ClusterEvent;
+import org.reveno.atp.clustering.api.ClusterView;
 import org.reveno.atp.clustering.api.IOMode;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
 import org.reveno.atp.clustering.core.components.AbstractClusterBuffer;
@@ -23,6 +25,7 @@ import java.io.DataOutput;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -64,9 +67,20 @@ public class JGroupsBuffer extends AbstractClusterBuffer implements ClusterBuffe
     }
 
     @Override
+    public void onView(ClusterView view) {
+    }
+
+    @Override
     public void messageNotifier(TransactionInfoSerializer serializer, Consumer<List<Object>> listener) {
         this.serializer = serializer;
         this.messageListener = listener;
+    }
+
+    @Override
+    public void failoverNotifier(Consumer<ClusterEvent> listener) {
+        // ignore since we don't catch failover exceptions here
+        // but rather in JGroupsCluster (JGroupsBuffer is not supposed to be used
+        // without it for now)
     }
 
     @Override
@@ -95,6 +109,9 @@ public class JGroupsBuffer extends AbstractClusterBuffer implements ClusterBuffe
         byte[] data = sendBuffer.readBytes(sendBuffer.length());
         try {
             addresses.forEach(p -> {
+                if (restrictOn != null && p.mode != restrictOn) {
+                    return;
+                }
                 org.jgroups.Message msg = new org.jgroups.Message(p.address, null, data);
                 msg.setTransientFlag(Message.TransientFlag.DONT_LOOPBACK);
                 msg.putHeader(ClusterBufferHeader.ID, new ClusterBufferHeader());
@@ -117,6 +134,7 @@ public class JGroupsBuffer extends AbstractClusterBuffer implements ClusterBuffe
                 }
             });
         } catch (Exception e) {
+            // TODO send as metric
             return false;
         } finally {
             sendBuffer.clear();
@@ -139,13 +157,19 @@ public class JGroupsBuffer extends AbstractClusterBuffer implements ClusterBuffe
     }
 
     public JGroupsBuffer(RevenoClusterConfiguration config, JChannel channel) {
+        this(config, channel, Optional.empty());
+    }
+
+    public JGroupsBuffer(RevenoClusterConfiguration config, JChannel channel, Optional<IOMode> restrictOn) {
         this.channel = channel;
         this.config = config;
+        this.restrictOn = restrictOn.orElse(null);
     }
 
     protected JChannel channel;
     protected RevenoClusterConfiguration config;
     protected TransactionInfoSerializer serializer;
+    protected IOMode restrictOn = null;
 
     protected volatile boolean isConnected = false;
     protected volatile boolean isLocked = false;

@@ -1,19 +1,29 @@
 package org.reveno.atp.clustering.core.fastcast;
 
-import org.nustaq.fastcast.util.FCUtils;
+import org.reveno.atp.clustering.api.Address;
 
 import java.io.File;
+import java.util.List;
 import java.util.Optional;
 
 public class FastCastConfiguration {
 
-    protected String nodeId = FCUtils.createNodeId("");
-    public FastCastConfiguration nodeId(String nodeId) {
-        this.nodeId = nodeId;
+    protected Address currentNode;
+    public Address getCurrentNode() {
+        return currentNode;
+    }
+    public FastCastConfiguration setCurrentNode(Address currentNode) {
+        this.currentNode = currentNode;
         return this;
     }
-    public String nodeId() {
-        return nodeId;
+
+    protected List<Address> nodeAddresses;
+    public List<Address> getNodeAddresses() {
+        return nodeAddresses;
+    }
+    public FastCastConfiguration setNodeAddresses(List<Address> nodeAddresses) {
+        this.nodeAddresses = nodeAddresses;
+        return this;
     }
 
     protected String topicName = "rvntopic";

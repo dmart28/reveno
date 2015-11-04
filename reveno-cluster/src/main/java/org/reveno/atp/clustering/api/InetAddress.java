@@ -16,13 +16,15 @@
 
 package org.reveno.atp.clustering.api;
 
+import org.reveno.atp.clustering.util.Bits;
 import org.reveno.atp.utils.Exceptions;
 
 import java.net.UnknownHostException;
+import java.util.Base64;
 import java.util.Objects;
 
 public class InetAddress extends Address {
-	
+
 	private int port;
 	public int getPort() {
 		return port;
@@ -32,16 +34,21 @@ public class InetAddress extends Address {
 	public String getHost() {
 		return host;
 	}
-	
-	public InetAddress(String connectionString, IOMode addressType) {
-		super(connectionString, addressType);
+
+	public InetAddress(String inetAddress, IOMode addressType) {
+		this(inetAddress, Base64.getEncoder().encodeToString(Bits.intToBytes(
+				(int) Bits.crc32(inetAddress.getBytes()))), addressType);
+	}
+
+	public InetAddress(String inetAddress, String nodeId, IOMode addressType) {
+		super(inetAddress, addressType, nodeId);
 		
-		String[] vals = connectionString.split(":");
+		String[] vals = inetAddress.split(":");
 		this.host = vals[0];
 		this.port = Integer.parseInt(vals[1]);
 		try {
-			java.net.InetAddress inetAddress = java.net.InetAddress.getByName(host);
-			this.host = inetAddress.getHostAddress();
+			java.net.InetAddress addr = java.net.InetAddress.getByName(host);
+			this.host = addr.getHostAddress();
 		} catch (UnknownHostException e) {
 			throw Exceptions.runtime(e);
 		}

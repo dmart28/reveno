@@ -9,11 +9,10 @@ import org.reveno.atp.clustering.core.api.MessagesReceiver;
 import org.reveno.atp.clustering.core.components.GroupBarrier;
 import org.reveno.atp.clustering.core.components.StorageTransferModelSync;
 import org.reveno.atp.clustering.core.api.StorageTransferServer;
-import org.reveno.atp.clustering.core.marshallers.JsonMarshaller;
+import org.reveno.atp.clustering.core.messages.ForceElectionProcess;
 import org.reveno.atp.clustering.exceptions.FailoverAbortedException;
 import org.reveno.atp.commons.NamedThreadFactory;
 import org.reveno.atp.core.JournalsManager;
-import org.reveno.atp.utils.Exceptions;
 import org.reveno.atp.utils.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class FailoverExecutor {
@@ -33,6 +31,11 @@ public class FailoverExecutor {
 
         cluster.listenEvents(this::onClusterEvent);
         cluster.marshallWith(marshaller);
+        cluster.gateway().receive(ForceElectionProcess.TYPE, f -> electorExecutor.submit(() -> process(true)));
+        buffer.failoverNotifier(e -> {
+            cluster.gateway().send(lastView.members(), new ForceElectionProcess(), cluster.gateway().oob());
+            electorExecutor.submit(() -> process(true));
+        });
     }
 
     public void stop() {
@@ -105,21 +108,28 @@ public class FailoverExecutor {
 
     protected void onClusterEvent(ClusterEvent event) {
         if (event == ClusterEvent.MEMBERSHIP_CHANGED) {
-            electorExecutor.submit(this::process);
+            buffer.onView(cluster.view());
+            electorExecutor.submit(() -> process(false));
         }
     }
 
-    protected void process() {
-        LOG.info("Cluster merge process started.");
-        final ClusterView view = cluster.view();
-        if (lastView.equals(view)) {
-            LOG.info("Cluster is already up-to-date.");
-            notifyListener();
-            return;
-        }
-        if (!isQuorum(view)) {
-            LOG.info("Failover process end: not a quorum [members: {}]", view.members());
-            notifyListener();
+    protected void process(boolean force) {
+        LOG.info("Cluster merge process started (forced: {})", force);
+        ClusterView view;
+        try {
+            view = cluster.view();
+            if (!force && lastView.equals(view)) {
+                LOG.info("Cluster is already up-to-date.");
+                notifyListener();
+                return;
+            }
+            if (!isQuorum(view)) {
+                LOG.info("Failover process end: not a quorum [members: {}]", view.members());
+                notifyListener();
+                return;
+            }
+        } catch (Throwable t) {
+            LOG.error("Unexpected process error.", t);
             return;
         }
         try {
@@ -183,7 +193,7 @@ public class FailoverExecutor {
         }
     }
 
-    private void makeMasterIfElected(ElectionResult election) {
+    protected void makeMasterIfElected(ElectionResult election) {
         failoverManager.setMaster(election.isMaster);
     }
 

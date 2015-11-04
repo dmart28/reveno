@@ -23,7 +23,11 @@ public interface ClusterBuffer extends Buffer {
 
     void disconnect();
 
+    void onView(ClusterView view);
+
     void messageNotifier(TransactionInfoSerializer serializer, Consumer<List<Object>> listener);
+
+    void failoverNotifier(Consumer<ClusterEvent> listener);
 
     /**
      * Mode to reject all incoming data.

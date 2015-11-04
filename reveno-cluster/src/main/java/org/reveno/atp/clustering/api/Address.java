@@ -27,10 +27,16 @@ public class Address {
 	public IOMode getAddressType() {
 		return addressType;
 	}
-	
-	public Address(String connectionString, IOMode addressType) {
+
+	private String nodeId;
+	public String getNodeId() {
+		return nodeId;
+	}
+
+	public Address(String connectionString, IOMode addressType, String nodeId) {
 		this.connectionString = connectionString;
 		this.addressType = addressType;
+		this.nodeId = nodeId;
 	}
 	
 }
