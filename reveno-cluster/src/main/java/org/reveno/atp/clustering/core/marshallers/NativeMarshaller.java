@@ -15,6 +15,7 @@ public class NativeMarshaller implements Marshaller {
     static {
         messages.put(BarrierMessage.TYPE, BarrierMessage.class);
         messages.put(BarrierPassed.TYPE, BarrierPassed.class);
+        messages.put(ForceElectionProcess.TYPE, ForceElectionProcess.class);
         messages.put(NodeState.TYPE, NodeState.class);
         messages.put(VoteAck.TYPE, VoteAck.class);
         messages.put(VoteMessage.TYPE, VoteMessage.class);
