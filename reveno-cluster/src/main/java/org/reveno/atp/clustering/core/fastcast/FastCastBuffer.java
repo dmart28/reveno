@@ -3,6 +3,7 @@ package org.reveno.atp.clustering.core.fastcast;
 import org.nustaq.fastcast.api.FCPublisher;
 import org.nustaq.fastcast.api.FCSubscriber;
 import org.nustaq.fastcast.api.FastCast;
+import org.nustaq.fastcast.config.*;
 import org.nustaq.offheap.bytez.Bytez;
 import org.reveno.atp.clustering.api.*;
 import org.reveno.atp.clustering.core.components.AbstractClusterBuffer;
@@ -16,10 +17,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -61,15 +65,19 @@ public class FastCastBuffer extends AbstractClusterBuffer implements ClusterBuff
             @Override
             public void senderTerminated(String senderNodeId) {
                 LOG.info("FCST {}: member [{}] leaves.", config.getCurrentNode().getNodeId(), senderNodeId);
-                senders.remove(senderNodeId);
-                recalculateEligability();
+                synchronized (FastCastBuffer.this) {
+                    senders.remove(senderNodeId);
+                    recalculateEligability(false);
+                }
             }
 
             @Override
             public void senderBootstrapped(String receivesFrom, long seqNo) {
                 LOG.info("FCST {}: new member [{}] joins.", config.getCurrentNode().getNodeId(), receivesFrom);
-                senders.add(receivesFrom);
-                recalculateEligability();
+                synchronized (FastCastBuffer.this) {
+                    senders.add(receivesFrom);
+                    recalculateEligability(false);
+                }
             }
         });
         publisher = fastCast.onTransport(config.transportName()).publish(fastCast.getPublisherConf(config.topicName()));
@@ -83,7 +91,7 @@ public class FastCastBuffer extends AbstractClusterBuffer implements ClusterBuff
     @Override
     public void onView(ClusterView view) {
         this.view = view;
-        recalculateEligability();
+        recalculateEligability(true);
     }
 
     @Override
@@ -125,7 +133,8 @@ public class FastCastBuffer extends AbstractClusterBuffer implements ClusterBuff
             byteSource.setBuffer(sendBuffer);
             int i = 0;
             while (!publisher().offer(null, byteSource, 0, sendBuffer.limit(), true)) {
-                if (i++ > 1000) return false;
+                LockSupport.parkNanos(1);
+                if (i++ > 20) return false;
             }
             return true;
         } finally {
@@ -137,43 +146,59 @@ public class FastCastBuffer extends AbstractClusterBuffer implements ClusterBuff
         return publisher;
     }
 
-    protected void recalculateEligability() {
+    protected synchronized void recalculateEligability(boolean newView) {
         if (view == null) {
             isEligableToSend = false;
             return;
         }
-        List<Address> actualAddresses = config.getNodeAddresses().stream()
-                .filter(addressInConfig -> view.members().contains(addressInConfig))
+        List<String> viewNodes = view.members().stream().map(Address::getNodeId).collect(Collectors.toList());
+        List<Address> viewAddresses = config.getNodeAddresses().stream()
+                .filter(addressInConfig -> viewNodes.contains(addressInConfig.getNodeId()))
                 .collect(Collectors.toList());
-        senders.addAll(actualAddresses.stream().map(Address::getNodeId).collect(Collectors.toList()));
-        isEligableToSend = actualAddresses.size() == senders.size() &&
-                actualAddresses.stream().map(Address::getNodeId).allMatch(senders::contains);
+        if (newView) {
+            senders.clear();
+            senders.addAll(viewAddresses.stream().map(Address::getNodeId).collect(Collectors.toList()));
+        }
+        isEligableToSend = viewAddresses.size() == senders.size() &&
+                viewAddresses.stream().map(Address::getNodeId).allMatch(senders::contains);
     }
 
     public FastCastBuffer(FastCastConfiguration config) {
         try {
             fastCast = new FastCastEx();
             fastCast.setNodeId(config.getCurrentNode().getNodeId());
-            if (config.configFile().isPresent()) {
-                fastCast.loadConfig(config.configFile().get().getAbsolutePath());
-            } else {
-                Properties props = new Properties();
-                if (!Utils.isNullOrEmpty(config.mcastHost())) {
-                    props.put("fastcast.mcast.addr", config.mcastHost());
-                }
-                if (config.mcastPort() != 0) {
-                    props.put("fastcast.mcast.port", String.valueOf(config.mcastPort()));
-                }
-                if (!Utils.isNullOrEmpty(config.networkInterface())) {
-                    props.put("fastcast.interface", config.networkInterface());
-                }
-                String configStr = ResourceLoader.loadResource(
-                        getClass().getClassLoader().getResourceAsStream("fastcast_default.kson"), props);
-                File configFile = Files.createTempFile("cfg", ".kson").toFile();
-                Utils.write(configStr, configFile);
-                fastCast.loadConfig(configFile.getAbsolutePath());
-                configFile.delete();
-            }
+
+            PhysicalTransportConf transportConf = new PhysicalTransportConf();
+            transportConf.setDgramsize(config.datagramSize());
+            transportConf.ttl(config.socketConfiguration().ttl());
+            transportConf.socketReceiveBufferSize(config.socketConfiguration().socketReceiveBufferSize());
+            transportConf.socketSendBufferSize(config.socketConfiguration().socketSendBufferSize());
+            transportConf.port(config.mcastPort());
+            transportConf.mulitcastAdr(config.mcastHost());
+            transportConf.interfaceAdr(config.networkInterface());
+            transportConf.idleParkMicros(config.threadParkMicros());
+            transportConf.setName(config.transportName());
+            transportConf.spinLoopMicros(config.spinLoopMicros());
+
+            PublisherConf publisherConf = new PublisherConf(1);
+            publisherConf.heartbeatInterval(30);
+            publisherConf.numPacketHistory(config.retransmissionPacketHistory());
+            publisherConf.pps(config.packetsPerSecond());
+
+            SubscriberConf subscriberConf = new SubscriberConf(1);
+            subscriberConf.receiveBufferPackets(10_000);
+
+            TopicConf topicConf = new TopicConf().id(1);
+            topicConf.name(config.topicName());
+            topicConf.publisher(publisherConf);
+            topicConf.subscriber(subscriberConf);
+
+            ClusterConf clusterConf = new ClusterConf();
+            clusterConf.transports(transportConf).topics(topicConf);
+
+            fastCast.setConfig(clusterConf);
+            //fastCast.addTransportsFrom(clusterConf);
+
             this.config = config;
         } catch (Throwable t) {
             throw Exceptions.runtime(t);

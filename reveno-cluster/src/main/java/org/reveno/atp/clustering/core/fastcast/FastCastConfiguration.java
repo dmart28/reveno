@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public class FastCastConfiguration {
 
-    protected Address currentNode;
+    private Address currentNode;
     public Address getCurrentNode() {
         return currentNode;
     }
@@ -17,7 +17,7 @@ public class FastCastConfiguration {
         return this;
     }
 
-    protected List<Address> nodeAddresses;
+    private List<Address> nodeAddresses;
     public List<Address> getNodeAddresses() {
         return nodeAddresses;
     }
@@ -26,7 +26,7 @@ public class FastCastConfiguration {
         return this;
     }
 
-    protected String topicName = "rvntopic";
+    private String topicName = "rvntopic";
     public FastCastConfiguration topicName(String topicName) {
         this.topicName = topicName;
         return this;
@@ -35,7 +35,7 @@ public class FastCastConfiguration {
         return topicName;
     }
 
-    protected String transportName = "default";
+    private String transportName = "default";
     public FastCastConfiguration transportName(String transportName) {
         this.transportName = transportName;
         return this;
@@ -44,7 +44,7 @@ public class FastCastConfiguration {
         return transportName;
     }
 
-    protected String networkInterface;
+    private String networkInterface;
     public FastCastConfiguration networkInterface(String networkInterface) {
         this.networkInterface = networkInterface;
         return this;
@@ -53,7 +53,7 @@ public class FastCastConfiguration {
         return networkInterface;
     }
 
-    protected String mcastHost;
+    private String mcastHost;
     public FastCastConfiguration mcastHost(String mcastHost) {
         this.mcastHost = mcastHost;
         return this;
@@ -62,7 +62,7 @@ public class FastCastConfiguration {
         return mcastHost;
     }
 
-    protected int mcastPort;
+    private int mcastPort;
     public FastCastConfiguration mcastPort(int mcastPort) {
         this.mcastPort = mcastPort;
         return this;
@@ -71,13 +71,88 @@ public class FastCastConfiguration {
         return mcastPort;
     }
 
-    protected File configFile;
+    private int datagramSize = 4000;
+    public int datagramSize() {
+        return datagramSize;
+    }
+    public FastCastConfiguration datagramSize(int datagramSize) {
+        this.datagramSize = datagramSize;
+        return this;
+    }
+
+    private int spinLoopMicros = 0;
+    public int spinLoopMicros() {
+        return spinLoopMicros;
+    }
+    public FastCastConfiguration spinLoopMicros(int spinLoopMicros) {
+        this.spinLoopMicros = spinLoopMicros;
+        return this;
+    }
+
+    private int threadParkMicros = 100;
+    public int threadParkMicros() {
+        return threadParkMicros;
+    }
+    public FastCastConfiguration threadParkMicros(int threadParkMicros) {
+        this.threadParkMicros = threadParkMicros;
+        return this;
+    }
+
+    private int packetsPerSecond = 30_000;
+    public int packetsPerSecond() {
+        return packetsPerSecond;
+    }
+    protected FastCastConfiguration packetsPerSecond(int packetsPerSecond) {
+        this.packetsPerSecond = packetsPerSecond;
+        return this;
+    }
+
+    private int retransmissionPacketHistory = 100_000;
+    public int retransmissionPacketHistory() {
+        return retransmissionPacketHistory;
+    }
+    public void retransmissionPacketHistory(int retransmissionPacketHistory) {
+        this.retransmissionPacketHistory = retransmissionPacketHistory;
+    }
+
+    private SocketConfiguration socketConfiguration = new SocketConfiguration();
+    public SocketConfiguration socketConfiguration() {
+        return socketConfiguration;
+    }
+
+    private File configFile;
     public FastCastConfiguration configFile(File configFile) {
         this.configFile = configFile;
         return this;
     }
     public Optional<File> configFile() {
         return Optional.ofNullable(configFile);
+    }
+
+    public static class SocketConfiguration {
+        private int ttl = 8;
+        public int ttl() {
+            return ttl;
+        }
+        public void ttl(int ttl) {
+            this.ttl = ttl;
+        }
+
+        private int socketReceiveBufferSize = 512_000;
+        public int socketReceiveBufferSize() {
+            return socketReceiveBufferSize;
+        }
+        public void socketReceiveBufferSize(int socketReceiveBufferSize) {
+            this.socketReceiveBufferSize = socketReceiveBufferSize;
+        }
+
+        private int socketSendBufferSize = 128_000;
+        public int socketSendBufferSize() {
+            return socketSendBufferSize;
+        }
+        public void socketSendBufferSize(int socketSendBufferSize) {
+            this.socketSendBufferSize = socketSendBufferSize;
+        }
     }
 
 }

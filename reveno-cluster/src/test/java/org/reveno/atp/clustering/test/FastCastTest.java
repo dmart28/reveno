@@ -53,8 +53,10 @@ public class FastCastTest {
 
     protected FastCastConfiguration basicConfig(int port) {
         FastCastConfiguration config = new FastCastConfiguration();
-        config.networkInterface("lo0");
+        config.networkInterface("127.0.0.1");
         config.mcastPort(port);
+        config.retransmissionPacketHistory(10_000);
+        config.mcastHost("229.9.9.10");
         return config;
     }
 

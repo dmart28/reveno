@@ -16,6 +16,8 @@
 
 package org.reveno.atp.clustering.api;
 
+import java.util.Objects;
+
 public class Address {
 
 	private String connectionString;
@@ -38,5 +40,19 @@ public class Address {
 		this.addressType = addressType;
 		this.nodeId = nodeId;
 	}
-	
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Address address = (Address) o;
+		return Objects.equals(connectionString, address.connectionString) &&
+				Objects.equals(addressType, address.addressType) &&
+				Objects.equals(nodeId, address.nodeId);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(connectionString, addressType, nodeId);
+	}
 }
