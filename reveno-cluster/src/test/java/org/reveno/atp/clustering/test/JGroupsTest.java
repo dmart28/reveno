@@ -8,7 +8,7 @@ import org.reveno.atp.clustering.api.IOMode;
 import org.reveno.atp.clustering.api.InetAddress;
 import org.reveno.atp.clustering.api.message.Message;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
-import org.reveno.atp.clustering.core.jgroups.JGroupsProvider;
+import org.reveno.atp.clustering.core.providers.UnicastAllProvider;
 import org.reveno.atp.clustering.util.Utils;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.serialization.ProtostuffSerializer;
@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -28,9 +27,9 @@ public class JGroupsTest {
     public void clusterBasicSetupTest() throws Exception {
         int[] ports = Utils.getFreePorts(3);
 
-        JGroupsProvider provider1 = jgroupsProvider(ports[0], new int[] {ports[1], ports[2]});
-        JGroupsProvider provider2 = jgroupsProvider(ports[1], new int[] {ports[0], ports[2]});
-        JGroupsProvider provider3 = jgroupsProvider(ports[2], new int[] {ports[0], ports[1]});
+        UnicastAllProvider provider1 = jgroupsProvider(ports[0], new int[] {ports[1], ports[2]});
+        UnicastAllProvider provider2 = jgroupsProvider(ports[1], new int[] {ports[0], ports[2]});
+        UnicastAllProvider provider3 = jgroupsProvider(ports[2], new int[] {ports[0], ports[1]});
 
         Cluster cluster1 = provider1.retrieveCluster();
         Cluster cluster2 = provider2.retrieveCluster();
@@ -66,9 +65,9 @@ public class JGroupsTest {
     public void jgroupsBufferTest() throws Exception {
         int[] ports = Utils.getFreePorts(3);
 
-        JGroupsProvider provider1 = jgroupsProvider(ports[0], new int[]{ports[1], ports[2]});
-        JGroupsProvider provider2 = jgroupsProvider(ports[1], new int[]{ports[0], ports[2]});
-        JGroupsProvider provider3 = jgroupsProvider(ports[2], new int[]{ports[0], ports[1]});
+        UnicastAllProvider provider1 = jgroupsProvider(ports[0], new int[]{ports[1], ports[2]});
+        UnicastAllProvider provider2 = jgroupsProvider(ports[1], new int[]{ports[0], ports[2]});
+        UnicastAllProvider provider3 = jgroupsProvider(ports[2], new int[]{ports[0], ports[1]});
 
         ClusterBuffer buffer1 = provider1.retrieveBuffer();
         ClusterBuffer buffer2 = provider2.retrieveBuffer();
@@ -116,18 +115,18 @@ public class JGroupsTest {
         buffer1.disconnect(); buffer2.disconnect(); buffer3.disconnect();
     }
 
-    protected static JGroupsProvider jgroupsProvider(int port, int[] nodes) {
+    protected static UnicastAllProvider jgroupsProvider(int port, int[] nodes) {
         RevenoClusterConfiguration config = new RevenoClusterConfiguration();
         config.clusterNodeAddresses(IntStream.of(nodes).mapToObj(JGroupsTest::inet).collect(Collectors.toList()));
         config.currentNodeAddress(inet(port));
 
-        JGroupsProvider provider = new JGroupsProvider("classpath:/tcp.xml");
+        UnicastAllProvider provider = new UnicastAllProvider("classpath:/tcp.xml");
         provider.initialize(config);
         return provider;
     }
 
     protected static InetAddress inet(int port) {
-        return new InetAddress("127.0.0.1:" + port, IOMode.SYNC);
+        return new InetAddress("127.0.0.1:" + port, IOMode.ASYNC);
     }
 
     protected static class TestMessage extends Message {

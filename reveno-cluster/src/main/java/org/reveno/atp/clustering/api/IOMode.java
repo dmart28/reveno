@@ -18,8 +18,8 @@ package org.reveno.atp.clustering.api;
 
 /**
  * Used to denote, in which mode failover will happen
- * on particular node: either sync or async.
+ * on particular node: either sync, async or unreliable async - no nak, rsvp etc.
  */
 public enum IOMode {
-	SYNC, ASYNC
+	ASYNC, ASYNC_UNRELIABLE
 }

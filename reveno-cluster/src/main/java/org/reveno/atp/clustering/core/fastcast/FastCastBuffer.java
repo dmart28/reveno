@@ -4,6 +4,7 @@ import org.nustaq.fastcast.api.FCPublisher;
 import org.nustaq.fastcast.api.FCSubscriber;
 import org.nustaq.fastcast.api.FastCast;
 import org.nustaq.fastcast.config.*;
+import org.nustaq.fastcast.impl.PacketSendBuffer;
 import org.nustaq.offheap.bytez.Bytez;
 import org.reveno.atp.clustering.api.*;
 import org.reveno.atp.clustering.core.components.AbstractClusterBuffer;
@@ -20,6 +21,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -85,7 +87,12 @@ public class FastCastBuffer extends AbstractClusterBuffer implements ClusterBuff
 
     @Override
     public void disconnect() {
+        publisher.flush();
+        fastCast.getTransportDriver(config.transportName()).terminate();
         fastCast.getTransport(config.transportName()).close();
+        if (publisher instanceof PacketSendBuffer) {
+            ((PacketSendBuffer)publisher).free();
+        }
     }
 
     @Override

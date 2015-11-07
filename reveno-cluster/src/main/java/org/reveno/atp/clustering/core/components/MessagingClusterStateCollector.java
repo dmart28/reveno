@@ -65,14 +65,14 @@ public class MessagingClusterStateCollector implements ClusterExecutor<ClusterSt
     }
 
     protected boolean allStatesReceived(ClusterView view, long currentTransactionId) {
-        NodeState message = new NodeState(view.viewId(), currentTransactionId, config.revenoSync().mode().getType(),
-                config.revenoSync().port());
+        NodeState message = new NodeState(view.viewId(), currentTransactionId, config.revenoDataSync().mode().getType(),
+                config.revenoDataSync().port());
         cluster.gateway().send(view.members(), message, cluster.gateway().oob());
         return Utils.waitFor(() -> nodesStates.keySet().containsAll(view.members()) && nodesStates.entrySet()
                         .stream()
                         .filter(kv -> view.members().contains(kv.getKey()))
                         .filter(kv -> kv.getValue().viewId == view.viewId()).count() == view.members().size(),
-                config.revenoTimeouts().ackTimeout());
+                config.revenoElectionTimeouts().ackTimeout());
     }
 
     public MessagingClusterStateCollector(Cluster cluster, Supplier<Long> transactionId, RevenoClusterConfiguration config) {

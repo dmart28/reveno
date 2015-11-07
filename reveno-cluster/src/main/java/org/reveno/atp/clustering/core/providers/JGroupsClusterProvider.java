@@ -1,4 +1,4 @@
-package org.reveno.atp.clustering.core.jgroups;
+package org.reveno.atp.clustering.core.providers;
 
 import org.jgroups.JChannel;
 import org.reveno.atp.clustering.api.Address;
@@ -7,6 +7,8 @@ import org.reveno.atp.clustering.api.ClusterBuffer;
 import org.reveno.atp.clustering.api.InetAddress;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
 import org.reveno.atp.clustering.core.buffer.ClusterProvider;
+import org.reveno.atp.clustering.core.jgroups.JChannelReceiver;
+import org.reveno.atp.clustering.core.jgroups.JGroupsCluster;
 import org.reveno.atp.clustering.util.ResourceLoader;
 import org.reveno.atp.utils.Exceptions;
 import org.w3c.dom.Element;
@@ -16,32 +18,37 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
-public class JGroupsProvider implements ClusterProvider {
-    protected static final String CLUSTER_NAME = "rvno_jg";
+public abstract class JGroupsClusterProvider implements ClusterProvider {
+    public static final String CLUSTER_NAME = "rvno_jg";
 
+    abstract ClusterBuffer createBuffer();
+
+    abstract void setProperties(Properties properties);
+
+    @Override
     public void initialize(RevenoClusterConfiguration config) {
         this.config = config;
         Properties props = new Properties();
         props.put("jgroups.tcp.bind_addr", ((InetAddress) config.currentNodeAddress()).getHost());
         props.put("jgroups.tcp.bind_port", Integer.toString(((InetAddress) config.currentNodeAddress()).getPort()));
         props.put("jgroups.tcpping.initial_hosts", makeInitialHostsString(config.clusterNodeAddresses()));
-        props.put("jgroups.rsvp.timeout", Long.toString(config.revenoTimeouts().ackTimeout()));
         props.put("jgroups.auth.token", Optional.ofNullable(config.authToken()).orElse(""));
+        setProperties(props);
 
         try {
             String protocol;
-            if (configFilePath.startsWith("classpath:/")) {
+            if (jGroupsConfigFile.startsWith("classpath:/")) {
                 protocol = ResourceLoader.loadResource(getClass().getClassLoader()
-                                .getResourceAsStream(configFilePath.replace("classpath:/", "")), props);
+                        .getResourceAsStream(jGroupsConfigFile.replace("classpath:/", "")), props);
             } else {
-                protocol = ResourceLoader.loadResource(new File(configFilePath), props);
+                protocol = ResourceLoader.loadResource(new File(jGroupsConfigFile), props);
             }
             Element xml = ResourceLoader.loadXMLFromString(protocol).getDocumentElement();
             channel = new JChannel(xml);
             channel.setReceiver(new JChannelReceiver());
             channel.setDiscardOwnMessages(true);
-            jcluster = new JGroupsCluster(config, channel);
-            jbuffer = new JGroupsBuffer(config, channel);
+            cluster = new JGroupsCluster(config, channel);
+            buffer = createBuffer();
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }
@@ -51,13 +58,13 @@ public class JGroupsProvider implements ClusterProvider {
     @Override
     public Cluster retrieveCluster() {
         checkInitialized();
-        return jcluster;
+        return cluster;
     }
 
     @Override
     public ClusterBuffer retrieveBuffer() {
         checkInitialized();
-        return jbuffer;
+        return buffer;
     }
 
     protected String makeInitialHostsString(List<Address> addresses) {
@@ -70,17 +77,13 @@ public class JGroupsProvider implements ClusterProvider {
 
     protected void checkInitialized() {
         if (!isInitialized)
-            throw new IllegalStateException("JGroups provider must be initialized first.");
+            throw new IllegalStateException("Provider must be initialized first.");
     }
 
-    public JGroupsProvider(String configFilePath) {
-        this.configFilePath = configFilePath;
-    }
-
+    protected String jGroupsConfigFile;
     protected RevenoClusterConfiguration config;
+    protected JGroupsCluster cluster;
+    protected ClusterBuffer buffer;
     protected JChannel channel;
-    protected String configFilePath;
-    protected JGroupsCluster jcluster;
-    protected JGroupsBuffer jbuffer;
     protected boolean isInitialized = false;
 }

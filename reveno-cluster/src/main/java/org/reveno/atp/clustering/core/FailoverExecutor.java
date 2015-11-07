@@ -155,7 +155,7 @@ public class FailoverExecutor {
 
             // block master only if it was unblocked because of
             // option waitAllNodesSync switched off
-            blockIfMaster(() -> !config.revenoSync().waitAllNodesSync());
+            blockIfMaster(() -> !config.revenoDataSync().waitAllNodesSync());
             waitOnBarrier(view, "block-if-master");
 
             // TODO probably better to replay only if anything was received during sync stage
@@ -217,7 +217,7 @@ public class FailoverExecutor {
     }
 
     protected void unblockMasterOrSynchronizeSlave(ClusterView view, ElectionResult election, ClusterState state) {
-        if (election.isMaster && !state.latestNode.isPresent() && !config.revenoSync().waitAllNodesSync()) {
+        if (election.isMaster && !state.latestNode.isPresent() && !config.revenoDataSync().waitAllNodesSync()) {
             failoverManager.setMaster(true);
             failoverManager.unblock();
         }
@@ -245,7 +245,7 @@ public class FailoverExecutor {
 
     protected void rollAndFixJournals(ClusterView view) {
         buffer.erase();
-        if (config.revenoSync().mode() == SyncMode.SNAPSHOT) {
+        if (config.revenoDataSync().mode() == SyncMode.SNAPSHOT) {
             snapshotMaker.run();
         }
         storageServer.fixJournals(view);
@@ -284,7 +284,7 @@ public class FailoverExecutor {
 
     protected void await() {
         try {
-            Thread.sleep(config.revenoTimeouts().ackTimeout());
+            Thread.sleep(config.revenoElectionTimeouts().ackTimeout());
         } catch (InterruptedException ignored) {
         }
     }

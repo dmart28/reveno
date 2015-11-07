@@ -32,7 +32,7 @@ public class MessagingMasterSlaveElector implements ClusterExecutor<ElectionResu
         if (answers.size() == 0 || !allAcked(currentView)) {
             return revote(currentView);
         } else {
-            boolean leader = answers.stream().allMatch(a -> config.priority() > a.priority);
+            boolean leader = answers.stream().allMatch(a -> config.priorityInCluster() > a.priority);
             if (!leader && isAllSamePriority(answers)) {
                 leader = answers.stream().allMatch(a -> seed > a.seed);
             }
@@ -73,11 +73,11 @@ public class MessagingMasterSlaveElector implements ClusterExecutor<ElectionResu
                         .stream()
                         .filter(kv -> view.members().contains(kv.getKey()))
                         .filter(kv -> view.viewId() == kv.getValue()).count() == view.members().size(),
-                config.revenoTimeouts().ackTimeout());
+                config.revenoElectionTimeouts().ackTimeout());
     }
 
     protected List<VoteMessage> sendVoteNotifications(ClusterView view) {
-        VoteMessage message = new VoteMessage(view.viewId(), config.priority(), seed);
+        VoteMessage message = new VoteMessage(view.viewId(), config.priorityInCluster(), seed);
         cluster.gateway().send(view.members(), message, cluster.gateway().oob());
 
         return waitForAnswers(view);
@@ -88,7 +88,7 @@ public class MessagingMasterSlaveElector implements ClusterExecutor<ElectionResu
         Predicate<VoteMessage> diffSeed = m -> m.seed != seed;
         if (!Utils.waitFor(() ->
                 votes.values().stream().filter(inView).filter(diffSeed).count() == view.members().size(),
-                config.revenoTimeouts().voteTimeout())) {
+                config.revenoElectionTimeouts().voteTimeout())) {
             return Collections.emptyList();
         }
 
@@ -97,7 +97,7 @@ public class MessagingMasterSlaveElector implements ClusterExecutor<ElectionResu
 
     protected boolean isAllSamePriority(List<VoteMessage> answers) {
         Map<Integer, Long> collect = answers.stream().collect(Collectors.groupingBy(o -> o.priority, Collectors.counting()));
-        return collect.size() == 1 && collect.keySet().iterator().next() == config.priority();
+        return collect.size() == 1 && collect.keySet().iterator().next() == config.priorityInCluster();
     }
 
     public MessagingMasterSlaveElector(Cluster cluster, RevenoClusterConfiguration config) {

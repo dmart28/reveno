@@ -10,9 +10,9 @@ import org.reveno.atp.acceptance.tests.RevenoBaseTest;
 import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
 import org.reveno.atp.clustering.api.SyncMode;
-import org.reveno.atp.clustering.core.ClusterEngine;
 import org.reveno.atp.clustering.core.buffer.ClusterProvider;
-import org.reveno.atp.clustering.core.jgroups.JGroupsProvider;
+import org.reveno.atp.clustering.core.providers.MulticastAllProvider;
+import org.reveno.atp.clustering.core.providers.UnicastAllProvider;
 import org.reveno.atp.clustering.test.common.ClusterEngineWrapper;
 import org.reveno.atp.clustering.test.common.ClusterTestUtils;
 import org.reveno.atp.clustering.util.Utils;
@@ -26,45 +26,57 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class ClusterTests extends RevenoBaseTest {
 
     @Test
+    public void basicTestMulticast() throws Exception {
+        setModelType();
+        Consumer<ClusterEngineWrapper> forEach = e -> {
+            this.configure(e);
+            e.clusterConfiguration().multicast().host("229.9.9.10");
+            e.clusterConfiguration().multicast().port(47365);
+        };
+        basicTest(() -> ClusterTestUtils.createClusterEngines(2, forEach, MulticastAllProvider::new), forEach,
+                MulticastAllProvider::new);
+    }
+
+    @Test
     public void basicTestJGroups() throws Exception {
         setModelType();
-        Supplier<ClusterProvider> provider = () -> new JGroupsProvider("classpath:/tcp.xml");
-        basicTest(() -> ClusterTestUtils.createClusterEngines(2, this::configure, provider), provider);
+        basicTest(() -> ClusterTestUtils.createClusterEngines(2, this::configure, UnicastAllProvider::new),
+                this::configure, UnicastAllProvider::new);
     }
 
     @Test
     public void journalsReplicationTestJGroups() throws Exception {
         setModelType();
-        Supplier<ClusterProvider> provider = () -> new JGroupsProvider("classpath:/tcp.xml");
-        basicTest(() -> ClusterTestUtils.createClusterEngines(2, e -> {
+        Consumer<ClusterEngineWrapper> forEach = e -> {
             this.configure(e);
-            e.clusterConfiguration().sync().mode(SyncMode.JOURNALS);
-        }, provider), provider);
+            e.clusterConfiguration().dataSync().mode(SyncMode.JOURNALS);
+        };
+        basicTest(() -> ClusterTestUtils.createClusterEngines(2, forEach, UnicastAllProvider::new),
+                forEach, UnicastAllProvider::new);
     }
 
     @Test
     public void simultanousStartupTestJGroups() throws Exception {
         setModelType();
-        Supplier<ClusterProvider> provider = () -> new JGroupsProvider("classpath:/tcp.xml");
-        simultanousStartupTest(() -> ClusterTestUtils.createClusterEngines(2, this::configure, provider));
+        simultanousStartupTest(() -> ClusterTestUtils.createClusterEngines(2, this::configure, UnicastAllProvider::new));
     }
 
     @Test
     public void complicatedSimultanousStartupTestJGroups() throws Exception {
         setModelType();
-        Supplier<ClusterProvider> provider = () -> new JGroupsProvider("classpath:/tcp.xml");
-        complicatedSimultanousStartupTest(() -> ClusterTestUtils.createClusterEngines(2, this::configure, provider));
+        complicatedSimultanousStartupTest(() -> ClusterTestUtils.createClusterEngines(2, this::configure, UnicastAllProvider::new));
     }
 
     @Test
     public void oneNodeFailInMiddleTestJGroups() throws Exception {
         setModelType();
-        Supplier<ClusterProvider> provider = () -> new JGroupsProvider("classpath:/tcp.xml");
+        Supplier<ClusterProvider> provider = () -> new UnicastAllProvider("classpath:/tcp.xml");
         oneNodeFailInMiddleTest(() -> ClusterTestUtils.createClusterEngines(3, this::configure, provider));
     }
 
@@ -140,7 +152,8 @@ public class ClusterTests extends RevenoBaseTest {
         executor.shutdownNow();
     }
 
-    protected void basicTest(Supplier<List<ClusterEngineWrapper>> enginesFactory, Supplier<ClusterProvider> provider) throws Exception {
+    protected void basicTest(Supplier<List<ClusterEngineWrapper>> enginesFactory, Consumer<ClusterEngineWrapper> forEach,
+                             Supplier<ClusterProvider> provider) throws Exception {
         List<ClusterEngineWrapper> engines = enginesFactory.get();
         final ClusterEngineWrapper engine1 = engines.get(0);
         final ClusterEngineWrapper engine2 = engines.get(1);
@@ -155,6 +168,7 @@ public class ClusterTests extends RevenoBaseTest {
         generateAndSendCommands(engine1, 10_000);
 
         LOG.info("1-2 Shutting down ...");
+        Assert.assertTrue(Utils.waitFor(() -> engine2.query().select(OrderView.class).size() == 10_000, sec(30)));
         engine1.shutdown();
         engine2.shutdown();
 
@@ -171,7 +185,7 @@ public class ClusterTests extends RevenoBaseTest {
 
         LOG.info(Strings.repeat("-", 500));
         LOG.info("Starting cluster again, but with empty folder of node 2");
-        engines = ClusterTestUtils.createClusterEngines(2, Arrays.asList(engine1.getBaseDir(), engine2.getBaseDir()), this::configure, provider);
+        engines = ClusterTestUtils.createClusterEngines(2, Arrays.asList(engine1.getBaseDir(), engine2.getBaseDir()), forEach, provider);
         final ClusterEngineWrapper engine3 = engines.get(0);
         final ClusterEngineWrapper engine4 = engines.get(1);
 

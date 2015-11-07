@@ -115,23 +115,14 @@ public class JGroupsBuffer extends AbstractClusterBuffer implements ClusterBuffe
                 org.jgroups.Message msg = new org.jgroups.Message(p.address, null, data);
                 msg.setTransientFlag(Message.TransientFlag.DONT_LOOPBACK);
                 msg.putHeader(ClusterBufferHeader.ID, new ClusterBufferHeader());
-                if (p.mode == IOMode.ASYNC) {
+                if (p.mode == IOMode.ASYNC_UNRELIABLE)
                     msg.setFlag(Message.Flag.NO_RELIABILITY);
-                    try {
-                        channel.send(msg);
-                    } catch (Exception e) {
-                        // ignore as it's async
-                    }
-                } else {
-                    if (channel.getProtocolStack().findProtocol(RSVP.class) != null) {
-                        msg.setFlag(org.jgroups.Message.Flag.RSVP);
-                    }
-                    try {
-                        channel.send(msg);
-                    } catch (Exception e) {
-                        throw Exceptions.runtime(e);
-                    }
+                try {
+                    channel.send(msg);
+                } catch (Exception e) {
+                    LOG.error("replicate", e);
                 }
+
             });
         } catch (Exception e) {
             // TODO send as metric
@@ -149,7 +140,7 @@ public class JGroupsBuffer extends AbstractClusterBuffer implements ClusterBuffe
                 .filter(t -> config.clusterNodeAddresses().contains(t.getVal2()))
                 .map(t -> new AddressPair(t.getVal1(), t.getVal2().getAddressType()))
                 .sorted((a, b) -> {
-                    if (a.mode == IOMode.ASYNC) return 1; else return -1;
+                    if (a.mode == IOMode.ASYNC || a.mode == IOMode.ASYNC_UNRELIABLE) return 1; else return -1;
                 })
                 .collect(Collectors.toList());
         lastView = view;

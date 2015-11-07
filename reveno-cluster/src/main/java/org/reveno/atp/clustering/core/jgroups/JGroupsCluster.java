@@ -11,6 +11,7 @@ import org.reveno.atp.clustering.api.message.Marshaller;
 import org.reveno.atp.clustering.api.message.Message;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
 import org.reveno.atp.clustering.core.marshallers.JsonMarshaller;
+import org.reveno.atp.clustering.core.providers.UnicastAllProvider;
 import org.reveno.atp.clustering.util.Tuple;
 import org.reveno.atp.core.channel.NettyBasedBuffer;
 import org.reveno.atp.utils.Exceptions;
@@ -72,7 +73,7 @@ public class JGroupsCluster implements Cluster {
                     clusterEventsListener.accept(ClusterEvent.CLOSED);
                 }
             });
-            channel.connect(JGroupsProvider.CLUSTER_NAME);
+            channel.connect(UnicastAllProvider.CLUSTER_NAME);
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         } finally {

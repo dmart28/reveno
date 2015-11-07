@@ -33,7 +33,7 @@ public class FileStorageTransferServer implements StorageTransferServer {
     @Override
     public void startup() {
         mainListener.execute(() -> { try {
-            InetSocketAddress listenAddr =  new InetSocketAddress(config.revenoSync().port());
+            InetSocketAddress listenAddr =  new InetSocketAddress(config.revenoDataSync().port());
             try {
                 listener = listen(listenAddr);
             } catch (IOException e) {
@@ -75,7 +75,7 @@ public class FileStorageTransferServer implements StorageTransferServer {
             if (waitForData(conn, buffer)) {
                 buffer.rewind();
                 long viewId = buffer.getLong();
-                if (config.revenoSync().mode() == SyncMode.SNAPSHOT) {
+                if (config.revenoDataSync().mode() == SyncMode.SNAPSHOT) {
                     transfer(conn, snapshots.get(viewId).getSnapshotPath());
                 } else {
                     byte transferType = buffer.get();
@@ -121,7 +121,7 @@ public class FileStorageTransferServer implements StorageTransferServer {
                 bytesread[0] += read;
             LOG.debug("FSTF: received next {} bytes from {}", read, conn);
             return bytesread[0] == 17;
-        }, config.revenoTimeouts().syncTimeout());
+        }, config.revenoElectionTimeouts().syncTimeout());
     }
 
     protected int readSilent(SocketChannel conn, ByteBuffer buffer) {
@@ -190,7 +190,7 @@ public class FileStorageTransferServer implements StorageTransferServer {
     public FileStorageTransferServer(RevenoClusterConfiguration config, FileSystemStorage storage) {
         this.config = config;
         this.storage = storage;
-        this.executor = Executors.newFixedThreadPool(config.revenoSync().threadPoolSize(), new NamedThreadFactory("stf"));
+        this.executor = Executors.newFixedThreadPool(config.revenoDataSync().threadPoolSize(), new NamedThreadFactory("stf"));
         this.mainListener = Executors.newSingleThreadExecutor(new NamedThreadFactory("stf-main"));
     }
 

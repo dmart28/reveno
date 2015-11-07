@@ -20,15 +20,15 @@ public class FastCastTest {
     public void test() throws Exception {
         int[] ports = Utils.getFreePorts(1);
         FastCastConfiguration config1 = basicConfig(ports[0]);
-        config1.setCurrentNode(new Address("", IOMode.SYNC, "ab12"));
-        config1.setNodeAddresses(Collections.singletonList(new Address("", IOMode.SYNC, "ab34")));
+        config1.setCurrentNode(new Address("", IOMode.ASYNC, "ab12"));
+        config1.setNodeAddresses(Collections.singletonList(new Address("", IOMode.ASYNC, "ab34")));
 
         FastCastBuffer buffer1 = new FastCastBuffer(config1);
         buffer1.connect();
 
         FastCastConfiguration config2 = basicConfig(ports[0]);
-        config2.setCurrentNode(new Address("", IOMode.SYNC, "ab34"));
-        config2.setNodeAddresses(Collections.singletonList(new Address("", IOMode.SYNC, "ab12")));
+        config2.setCurrentNode(new Address("", IOMode.ASYNC, "ab34"));
+        config2.setNodeAddresses(Collections.singletonList(new Address("", IOMode.ASYNC, "ab12")));
 
         FastCastBuffer buffer2 = new FastCastBuffer(config2);
         CountDownLatch latch = new CountDownLatch(1);

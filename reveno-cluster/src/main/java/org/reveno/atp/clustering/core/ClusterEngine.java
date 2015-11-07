@@ -13,7 +13,8 @@ import org.reveno.atp.clustering.core.components.FileStorageTransferServer;
 import org.reveno.atp.clustering.core.components.MessagingClusterStateCollector;
 import org.reveno.atp.clustering.core.components.MessagingMasterSlaveElector;
 import org.reveno.atp.clustering.core.components.StorageTransferModelSync;
-import org.reveno.atp.clustering.core.jgroups.JGroupsProvider;
+import org.reveno.atp.clustering.core.providers.MulticastAllProvider;
+import org.reveno.atp.clustering.core.providers.UnicastAllProvider;
 import org.reveno.atp.clustering.core.marshallers.NativeMarshaller;
 import org.reveno.atp.core.Engine;
 import org.reveno.atp.core.api.FailoverManager;
@@ -40,9 +41,9 @@ public class ClusterEngine extends Engine {
         super(baseDir, classLoader);
     }
 
-    public ClusterEngine(File baseDir, ClassLoader classLoader, ClusterProvider factory) {
+    public ClusterEngine(File baseDir, ClassLoader classLoader, ClusterProvider clusterProvider) {
         super(baseDir, classLoader);
-        this.clusterProvider = factory;
+        this.clusterProvider = clusterProvider;
     }
 
     public ClusterEngine(File baseDir) {
@@ -53,20 +54,20 @@ public class ClusterEngine extends Engine {
         super(baseDir);
     }
 
-    public ClusterEngine(String baseDir, ClusterProvider factory) {
+    public ClusterEngine(String baseDir, ClusterProvider clusterProvider) {
         super(baseDir);
-        this.clusterProvider = factory;
+        this.clusterProvider = clusterProvider;
     }
 
     public ClusterEngine(FoldersStorage foldersStorage, JournalsStorage journalsStorage, SnapshotStorage snapshotStorage,
-                         ClassLoader classLoader, ClusterProvider factory) {
+                         ClassLoader classLoader, ClusterProvider clusterProvider) {
         super(foldersStorage, journalsStorage, snapshotStorage, classLoader);
-        this.clusterProvider = factory;
+        this.clusterProvider = clusterProvider;
     }
 
     public ClusterEngine(FoldersStorage foldersStorage, JournalsStorage journalsStorage, SnapshotStorage snapshotStorage,
-                         ClassLoader classLoader, ClusterProvider factory, StorageTransferServer server) {
-        this(foldersStorage, journalsStorage, snapshotStorage, classLoader, factory);
+                         ClassLoader classLoader, ClusterProvider clusterProvider, StorageTransferServer server) {
+        this(foldersStorage, journalsStorage, snapshotStorage, classLoader, clusterProvider);
         this.storageTransferServer = server;
     }
 
@@ -77,6 +78,13 @@ public class ClusterEngine extends Engine {
 
     @Override
     public void startup() {
+        if (clusterProvider == null) {
+            switch (configuration.commandsXmitTransport()) {
+                case UNICAST: clusterProvider = new UnicastAllProvider(); break;
+                case MULTICAST: clusterProvider = new MulticastAllProvider(); break;
+            }
+        }
+
         final CountDownLatch failoverWaiter = new CountDownLatch(1);
         clusterProvider.initialize(configuration);
         this.buffer = clusterProvider.retrieveBuffer();
@@ -157,7 +165,7 @@ public class ClusterEngine extends Engine {
     }
 
     protected RevenoClusterConfiguration configuration = new RevenoClusterConfiguration();
-    protected ClusterProvider clusterProvider = new JGroupsProvider("classpath:/tcp.xml");
+    protected ClusterProvider clusterProvider;
 
     protected StorageTransferServer storageTransferServer;
     protected ClusterBuffer buffer;

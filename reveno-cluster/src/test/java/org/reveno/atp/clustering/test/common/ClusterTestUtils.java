@@ -38,11 +38,11 @@ public abstract class ClusterTestUtils {
         for (int i = 0, p = 0; i < count; i++, p += 2) {
             ClusterEngineWrapper engine = new ClusterEngineWrapper(dir.get(i), ClusterTestUtils.class.getClassLoader(), provider.get());
             engine.setSequence(i);
-            Address address = new InetAddress("127.0.0.1:" + ports[p], IOMode.SYNC);
+            Address address = new InetAddress("127.0.0.1:" + ports[p], IOMode.ASYNC);
             engine.clusterConfiguration().currentNodeAddress(address);
-            engine.clusterConfiguration().priority(count - i);
-            engine.clusterConfiguration().sync().port(ports[p + 1]);
-            engine.clusterConfiguration().sync().mode(SyncMode.SNAPSHOT);
+            engine.clusterConfiguration().priorityInCluster(count - i);
+            engine.clusterConfiguration().dataSync().port(ports[p + 1]);
+            engine.clusterConfiguration().dataSync().mode(SyncMode.SNAPSHOT);
 
             forEach.accept(engine);
 

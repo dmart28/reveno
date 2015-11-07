@@ -102,7 +102,7 @@ public class FastCastConfiguration {
     public int packetsPerSecond() {
         return packetsPerSecond;
     }
-    protected FastCastConfiguration packetsPerSecond(int packetsPerSecond) {
+    public FastCastConfiguration packetsPerSecond(int packetsPerSecond) {
         this.packetsPerSecond = packetsPerSecond;
         return this;
     }
@@ -118,15 +118,6 @@ public class FastCastConfiguration {
     private SocketConfiguration socketConfiguration = new SocketConfiguration();
     public SocketConfiguration socketConfiguration() {
         return socketConfiguration;
-    }
-
-    private File configFile;
-    public FastCastConfiguration configFile(File configFile) {
-        this.configFile = configFile;
-        return this;
-    }
-    public Optional<File> configFile() {
-        return Optional.ofNullable(configFile);
     }
 
     public static class SocketConfiguration {
