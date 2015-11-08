@@ -15,6 +15,7 @@ dependencies {
 
 test {
   maxParallelForks = 1
+  maxHeapSize = "768m"
   forkEvery = 1
 }
 
