@@ -111,8 +111,8 @@ public class ClusterEngine extends Engine {
 
         failoverExecutor.init();
 
-        cluster.connect();
         buffer.connect();
+        cluster.connect();
 
         failoverExecutor.startElectionProcess();
 

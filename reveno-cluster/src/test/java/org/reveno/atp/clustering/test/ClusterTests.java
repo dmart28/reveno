@@ -69,16 +69,51 @@ public class ClusterTests extends RevenoBaseTest {
     }
 
     @Test
+    public void simultanousStartupTestFastCast() throws Exception {
+        setModelType();
+        Consumer<ClusterEngineWrapper> forEach = e -> {
+            this.configure(e);
+            e.clusterConfiguration().multicast().host("229.9.9.10");
+            e.clusterConfiguration().multicast().port(47366);
+            e.clusterConfiguration().multicast().sendRetries(100_000);
+        };
+        simultanousStartupTest(() -> ClusterTestUtils.createClusterEngines(2, forEach, MulticastAllProvider::new));
+    }
+
+    @Test
     public void complicatedSimultanousStartupTestJGroups() throws Exception {
         setModelType();
         complicatedSimultanousStartupTest(() -> ClusterTestUtils.createClusterEngines(2, this::configure, UnicastAllProvider::new));
     }
 
     @Test
+    public void complicatedSimultanousStartupTestFastCast() throws Exception {
+        setModelType();
+        Consumer<ClusterEngineWrapper> forEach = e -> {
+            this.configure(e);
+            e.clusterConfiguration().multicast().host("229.9.9.10");
+            e.clusterConfiguration().multicast().port(47367);
+            e.clusterConfiguration().multicast().sendRetries(100_000);
+        };
+        complicatedSimultanousStartupTest(() -> ClusterTestUtils.createClusterEngines(2, forEach, MulticastAllProvider::new));
+    }
+
+    @Test
     public void oneNodeFailInMiddleTestJGroups() throws Exception {
         setModelType();
-        Supplier<ClusterProvider> provider = () -> new UnicastAllProvider("classpath:/tcp.xml");
-        oneNodeFailInMiddleTest(() -> ClusterTestUtils.createClusterEngines(3, this::configure, provider));
+        oneNodeFailInMiddleTest(() -> ClusterTestUtils.createClusterEngines(3, this::configure, UnicastAllProvider::new));
+    }
+
+    @Test
+    public void oneNodeFailInMiddleTestFastCast() throws Exception {
+        setModelType();
+        Consumer<ClusterEngineWrapper> forEach = e -> {
+            this.configure(e);
+            e.clusterConfiguration().multicast().host("229.9.9.10");
+            e.clusterConfiguration().multicast().port(47368);
+            e.clusterConfiguration().multicast().sendRetries(100_000);
+        };
+        oneNodeFailInMiddleTest(() -> ClusterTestUtils.createClusterEngines(3, forEach, MulticastAllProvider::new));
     }
 
     protected void oneNodeFailInMiddleTest(Supplier<List<ClusterEngineWrapper>> enginesFactory) throws Exception {
@@ -99,15 +134,14 @@ public class ClusterTests extends RevenoBaseTest {
         Assert.assertTrue(Utils.waitFor(() -> engine2.query().find(AccountView.class, accountId).isPresent(), sec(30)));
         Assert.assertTrue(Utils.waitFor(() -> engine3.query().find(AccountView.class, accountId).isPresent(), sec(30)));
 
-        generateAndSendCommands(engine1, 10_000, i -> {
+        int failed = generateAndSendCommands(engine1, 10_000, i -> {
             if (i == 6000) {
                 engine2.shutdown();
             }
         });
 
-        LOG.info("GFD: {}", engine1.query().select(OrderView.class).size());
+        Assert.assertEquals(10_000 - failed, engine1.query().select(OrderView.class).size());
 
-        // TODO hangs because we await on elector executor forever
         engine1.shutdown();
         engine3.shutdown();
         executor.shutdown();

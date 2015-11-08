@@ -32,8 +32,10 @@ public class JGroupsCluster implements Cluster {
     @Override
     public void connect() {
         if (isConnected) return;
-        if (ClassConfigurator.get(ClusterMessageHeader.ID) == null)
-            ClassConfigurator.add(ClusterMessageHeader.ID, ClusterMessageHeader.class);
+        synchronized (ClassConfigurator.class) {
+            if (ClassConfigurator.get(ClusterMessageHeader.ID) == null)
+                ClassConfigurator.add(ClusterMessageHeader.ID, ClusterMessageHeader.class);
+        }
 
         try {
             ((JChannelReceiver) channel.getReceiver()).addReceiver(msg -> { if (msg.getHeader(ClusterMessageHeader.ID) != null) {

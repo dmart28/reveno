@@ -143,7 +143,12 @@ public class FastCastBuffer extends AbstractClusterBuffer implements ClusterBuff
             }
 
             byteSource.setBuffer(sendBuffer);
-            boolean res = publisher().offer(null, byteSource, 0, sendBuffer.limit(), config.alwaysFlush());
+            boolean res = false;
+            int count = 0;
+            while (!res && count < config.sendRetries()) {
+                res = publisher().offer(null, byteSource, 0, sendBuffer.limit(), config.alwaysFlush());
+                count++;
+            }
             if (LOG.isDebugEnabled() && !res) {
                 LOG.warn("FCST: Can't send to FC!");
             }

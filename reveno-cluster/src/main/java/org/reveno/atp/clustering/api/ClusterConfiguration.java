@@ -67,6 +67,8 @@ public interface ClusterConfiguration {
         void preferBatchingToLatency(boolean batching);
 
         void ttl(int ttl);
+
+        void sendRetries(int retries);
     }
 
     interface UnicastConfiguration {

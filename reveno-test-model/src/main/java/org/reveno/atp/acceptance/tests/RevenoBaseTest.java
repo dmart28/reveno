@@ -179,12 +179,12 @@ public class RevenoBaseTest {
 		});
 	}
 
-	protected void generateAndSendCommands(Reveno reveno, int count)
+	protected int generateAndSendCommands(Reveno reveno, int count)
 			throws InterruptedException, ExecutionException {
-		generateAndSendCommands(reveno, count, i -> {});
+		return generateAndSendCommands(reveno, count, i -> {});
 	}
 
-	protected void generateAndSendCommands(Reveno reveno, int count, Consumer<Integer> c)
+	protected int generateAndSendCommands(Reveno reveno, int count, Consumer<Integer> c)
 			throws InterruptedException, ExecutionException {
 		sendCommandsBatch(reveno, new CreateNewAccountCommand("USD", 1000_000L), count);
 		
@@ -193,7 +193,7 @@ public class RevenoBaseTest {
 			commands.add(new NewOrderCommand((long)(count*Math.random()) + 1, null, "EUR/USD",
 					134000, (long)(1000*Math.random()), OrderType.MARKET));
 		}
-		sendCommandsBatch(reveno, commands, c);
+		return sendCommandsBatch(reveno, commands, c);
 	}
 	
 	protected File findFirstFile(String prefix) {
@@ -208,11 +208,13 @@ public class RevenoBaseTest {
 		return result.getResult();
 	}
 	
-	protected void sendCommandsBatch(Reveno reveno, Object command, int n) throws InterruptedException, ExecutionException {
+	protected int sendCommandsBatch(Reveno reveno, Object command, int n) throws InterruptedException, ExecutionException {
+		int failedToSend = 0;
 		for (int i = 0; i < n - 1; i++) {
 			try {
 				reveno.executeCommand(command);
 			} catch (FailoverRulesException e) {
+				failedToSend++;
 				log.info("Skipping to send command {}, message: {}", i, e.getMessage());
 				LockSupport.parkNanos(100);
 			}
@@ -220,20 +222,24 @@ public class RevenoBaseTest {
 		try {
 			sendCommandSync(reveno, command);
 		} catch (FailoverRulesException e) {
+			failedToSend++;
 			log.info("Skipping to send command {}, message: {}", n, e.getMessage());
 		}
+		return failedToSend;
 	}
 
 	protected void sendCommandsBatch(Reveno reveno, List<?> commands) throws InterruptedException, ExecutionException {
 		sendCommandsBatch(reveno, commands, i -> {});
 	}
 
-	protected void sendCommandsBatch(Reveno reveno, List<?> commands, Consumer<Integer> c) throws InterruptedException, ExecutionException {
+	protected int sendCommandsBatch(Reveno reveno, List<?> commands, Consumer<Integer> c) throws InterruptedException, ExecutionException {
+		int failedToSend = 0;
 		for (int i = 0; i < commands.size() - 1; i++) {
 			c.accept(i);
 			try {
 				reveno.executeCommand(commands.get(i));
 			} catch (FailoverRulesException e) {
+				failedToSend++;
 				log.info("Skipping to send command {}, message: {}", i, e.getMessage());
 				LockSupport.parkNanos(100);
 			}
@@ -241,8 +247,10 @@ public class RevenoBaseTest {
 		try {
 			sendCommandSync(reveno, commands.get(commands.size() - 1));
 		} catch (FailoverRulesException e) {
+			failedToSend++;
 			log.info("Skipping to send command {}, message: {}", commands.size(), e.getMessage());
 		}
+		return failedToSend;
 	}
 	
 	protected <T> Waiter listenFor(Reveno reveno, Class<T> event) {

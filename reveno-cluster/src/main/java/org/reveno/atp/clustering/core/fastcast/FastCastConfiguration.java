@@ -123,6 +123,14 @@ public class FastCastConfiguration {
         this.alwaysFlush = alwaysFlush;
     }
 
+    private int sendRetries = 15;
+    public int sendRetries() {
+        return sendRetries;
+    }
+    public void sendRetries(int sendRetries) {
+        this.sendRetries = sendRetries;
+    }
+
     private SocketConfiguration socketConfiguration = new SocketConfiguration();
     public SocketConfiguration socketConfiguration() {
         return socketConfiguration;

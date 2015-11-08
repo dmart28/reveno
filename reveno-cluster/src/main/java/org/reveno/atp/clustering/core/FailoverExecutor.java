@@ -171,11 +171,11 @@ public class FailoverExecutor {
                 unblock();
             }
             waitOnBarrier(view, "unblock-master");
+            lastView = view;
             makeMasterIfElected(election);
 
             LOG.info("Election Process Time: {} ms", System.currentTimeMillis() - t1);
             notifyListener();
-            lastView = view;
         } catch (Throwable t) {
             LOG.error("Leadership election is failed for view: {}, {}", view, t.getMessage());
 

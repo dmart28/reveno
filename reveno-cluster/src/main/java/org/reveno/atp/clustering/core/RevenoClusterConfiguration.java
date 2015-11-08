@@ -275,6 +275,14 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
             return ttl;
         }
 
+        @Override
+        public void sendRetries(int retries) {
+            this.sendRetries = retries;
+        }
+        public int sendRetries() {
+            return sendRetries;
+        }
+
         protected String host;
         protected int port;
         protected String netInterface = "127.0.0.1";
@@ -287,6 +295,7 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
         protected int datagramSize = 1000;
         protected int ttl = 8;
         protected boolean preferBatchingToLatency = false;
+        protected int sendRetries = 15;
     }
 
     public static class RevenoUnicastConfiguration implements UnicastConfiguration {

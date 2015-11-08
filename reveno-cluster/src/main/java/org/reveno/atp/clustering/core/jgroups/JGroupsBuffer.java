@@ -42,8 +42,10 @@ public class JGroupsBuffer extends AbstractClusterBuffer implements ClusterBuffe
     @Override
     public void connect() {
         if (isConnected) return;
-        if (ClassConfigurator.get(ClusterBufferHeader.ID) == null)
-            ClassConfigurator.add(ClusterBufferHeader.ID, ClusterBufferHeader.class);
+        synchronized (ClassConfigurator.class) {
+            if (ClassConfigurator.get(ClusterBufferHeader.ID) == null)
+                ClassConfigurator.add(ClusterBufferHeader.ID, ClusterBufferHeader.class);
+        }
 
         try {
             ((JChannelReceiver) channel.getReceiver()).addReceiver(msg -> { if (msg.getHeader(ClusterBufferHeader.ID) != null) {
