@@ -127,6 +127,8 @@ public class ClusterTests extends RevenoBaseTest {
         executor.execute(engine2::startup);
         executor.execute(engine3::startup);
 
+        waitInCluster(engine1, engine2, engine3);
+
         Assert.assertTrue(Utils.waitFor(() -> engine1.failoverManager() != null &&
                 engine1.failoverManager().isMaster(), sec(30)));
         long accountId = sendCommandSync(engine1, new CreateNewAccountCommand("USD", 1000_000L));
@@ -145,6 +147,12 @@ public class ClusterTests extends RevenoBaseTest {
         engine1.shutdown();
         engine3.shutdown();
         executor.shutdown();
+    }
+
+    protected void waitInCluster(ClusterEngineWrapper... engines) {
+        for (ClusterEngineWrapper engine : engines) {
+            Assert.assertTrue(Utils.waitFor(() -> engine.failoverManager() != null && engine.isInCluster(), sec(30)));
+        }
     }
 
     protected void complicatedSimultanousStartupTest(Supplier<List<ClusterEngineWrapper>> enginesFactory) throws Exception {
