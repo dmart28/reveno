@@ -90,14 +90,14 @@ public class FastCastBuffer extends AbstractClusterBuffer implements ClusterBuff
         publisher.flush();
         // to make sure it's really flushed ...
         try {
-            Thread.sleep(1000);
+            Thread.sleep(2000);
         } catch (InterruptedException ignored) {
         }
         fastCast.getTransportDriver(config.transportName()).terminate();
         fastCast.getTransport(config.transportName()).close();
-        //if (publisher instanceof PacketSendBuffer) {
-        //    ((PacketSendBuffer)publisher).free();
-        //}
+        if (publisher instanceof PacketSendBuffer) {
+            ((PacketSendBuffer)publisher).free();
+        }
     }
 
     @Override
