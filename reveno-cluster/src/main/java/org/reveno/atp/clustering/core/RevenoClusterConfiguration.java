@@ -288,10 +288,10 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
         protected String netInterface = "127.0.0.1";
         protected int receiveBufferSize = 3 * 1024 * 1024;
         protected int sendBufferSize = 1024 * 1024;
-        protected int packetsPerSecond = 100_000;
+        protected int packetsPerSecond = 5_000;
         protected int spinLoopMicros = 0;
         protected int threadParkMicros = 20;
-        protected int retransmitPacketsHistory = 100_000;
+        protected int retransmitPacketsHistory = 80_000;
         protected int datagramSize = 1000;
         protected int ttl = 8;
         protected boolean preferBatchingToLatency = false;
@@ -382,13 +382,13 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
 
         protected int receiveBufferSize = 5 * 1024 * 1024;
         protected int sendBufferSize = 1024 * 1024;
-        protected int pingTimeoutMls = 500;
+        protected int pingTimeoutMls = 5000;
         protected int maxReceiveThreads = 1;
         protected int minReceiveThreads = 1;
         protected int receiveQueueMaxSize = 0;
         protected int maxReadBatchMessages = 10;
-        protected int retransmitIntervalMillis = 100;
-        protected int maxRetransmitTimeMillis = 150;
+        protected int retransmitIntervalMillis = 1000;
+        protected int maxRetransmitTimeMillis = 1500;
         protected int maxStableAttempts = 3;
     }
 }

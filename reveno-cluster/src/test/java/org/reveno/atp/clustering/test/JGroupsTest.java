@@ -120,6 +120,9 @@ public class JGroupsTest {
         RevenoClusterConfiguration config = new RevenoClusterConfiguration();
         config.clusterNodeAddresses(IntStream.of(nodes).mapToObj(JGroupsTest::inet).collect(Collectors.toList()));
         config.currentNodeAddress(inet(port));
+        config.unicast().retransmitIntervalMillis(60 * 1000);
+        config.unicast().maxRetransmitTimeMillis(120 * 1000);
+        config.unicast().pingTimeoutMillis(10 * 1000);
 
         UnicastAllProvider provider = new UnicastAllProvider("classpath:/tcp.xml");
         provider.initialize(config);
