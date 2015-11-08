@@ -121,8 +121,8 @@ public class JGroupsBuffer extends AbstractClusterBuffer implements ClusterBuffe
                     channel.send(msg);
                 } catch (Exception e) {
                     LOG.error("replicate", e);
+                    throw Exceptions.runtime(e);
                 }
-
             });
         } catch (Exception e) {
             // TODO send as metric
@@ -140,7 +140,7 @@ public class JGroupsBuffer extends AbstractClusterBuffer implements ClusterBuffe
                 .filter(t -> config.clusterNodeAddresses().contains(t.getVal2()))
                 .map(t -> new AddressPair(t.getVal1(), t.getVal2().getAddressType()))
                 .sorted((a, b) -> {
-                    if (a.mode == IOMode.ASYNC || a.mode == IOMode.ASYNC_UNRELIABLE) return 1; else return -1;
+                    if (a.mode == IOMode.ASYNC_UNRELIABLE) return 1; else return -1;
                 })
                 .collect(Collectors.toList());
         lastView = view;

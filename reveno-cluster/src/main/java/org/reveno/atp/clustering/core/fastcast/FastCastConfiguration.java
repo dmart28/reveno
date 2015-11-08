@@ -115,6 +115,14 @@ public class FastCastConfiguration {
         this.retransmissionPacketHistory = retransmissionPacketHistory;
     }
 
+    private boolean alwaysFlush = true;
+    public boolean alwaysFlush() {
+        return alwaysFlush;
+    }
+    public void alwaysFlush(boolean alwaysFlush) {
+        this.alwaysFlush = alwaysFlush;
+    }
+
     private SocketConfiguration socketConfiguration = new SocketConfiguration();
     public SocketConfiguration socketConfiguration() {
         return socketConfiguration;

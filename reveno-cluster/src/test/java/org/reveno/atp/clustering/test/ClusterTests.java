@@ -38,6 +38,7 @@ public class ClusterTests extends RevenoBaseTest {
             this.configure(e);
             e.clusterConfiguration().multicast().host("229.9.9.10");
             e.clusterConfiguration().multicast().port(47365);
+            e.clusterConfiguration().multicast().preferBatchingToLatency(true);
         };
         basicTest(() -> ClusterTestUtils.createClusterEngines(2, forEach, MulticastAllProvider::new), forEach,
                 MulticastAllProvider::new);
@@ -168,8 +169,13 @@ public class ClusterTests extends RevenoBaseTest {
         generateAndSendCommands(engine1, 10_000);
 
         LOG.info("1-2 Shutting down ...");
-        Assert.assertTrue(Utils.waitFor(() -> engine2.query().select(OrderView.class).size() == 10_000, sec(30)));
         engine1.shutdown();
+        try {
+            Assert.assertTrue(Utils.waitFor(() -> engine2.query().select(OrderView.class).size() == 10_000, sec(30)));
+        } catch (Throwable t) {
+            LOG.info("{}", engine2.query().select(OrderView.class).size());
+            throw t;
+        }
         engine2.shutdown();
 
         Engine replayEngine = configure(new Engine(engine2.getBaseDir()));

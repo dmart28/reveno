@@ -27,6 +27,7 @@ public class MulticastAllProvider extends JGroupsClusterProvider {
             fcConfig.threadParkMicros(config.revenoMulticast().threadParkMicros());
             fcConfig.topicName("rvntopic");
             fcConfig.transportName("default");
+            fcConfig.alwaysFlush(!config.revenoMulticast().preferBatchingToLatency());
         }
         return new FastCastBuffer(fcConfig);
     }

@@ -260,6 +260,14 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
         }
 
         @Override
+        public void preferBatchingToLatency(boolean batching) {
+            this.preferBatchingToLatency = batching;
+        }
+        public boolean preferBatchingToLatency() {
+            return preferBatchingToLatency;
+        }
+
+        @Override
         public void ttl(int ttl) {
             this.ttl = ttl;
         }
@@ -270,14 +278,15 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
         protected String host;
         protected int port;
         protected String netInterface = "127.0.0.1";
-        protected int receiveBufferSize = 1024 * 1024;
+        protected int receiveBufferSize = 3 * 1024 * 1024;
         protected int sendBufferSize = 1024 * 1024;
-        protected int packetsPerSecond = 20_000;
+        protected int packetsPerSecond = 100_000;
         protected int spinLoopMicros = 0;
         protected int threadParkMicros = 20;
         protected int retransmitPacketsHistory = 100_000;
-        protected int datagramSize = 4000;
+        protected int datagramSize = 1000;
         protected int ttl = 8;
+        protected boolean preferBatchingToLatency = false;
     }
 
     public static class RevenoUnicastConfiguration implements UnicastConfiguration {

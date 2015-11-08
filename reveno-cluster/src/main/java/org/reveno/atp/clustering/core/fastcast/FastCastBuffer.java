@@ -88,11 +88,16 @@ public class FastCastBuffer extends AbstractClusterBuffer implements ClusterBuff
     @Override
     public void disconnect() {
         publisher.flush();
+        // to make sure it's really flushed ...
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException ignored) {
+        }
         fastCast.getTransportDriver(config.transportName()).terminate();
         fastCast.getTransport(config.transportName()).close();
-        if (publisher instanceof PacketSendBuffer) {
-            ((PacketSendBuffer)publisher).free();
-        }
+        //if (publisher instanceof PacketSendBuffer) {
+        //    ((PacketSendBuffer)publisher).free();
+        //}
     }
 
     @Override
@@ -138,12 +143,11 @@ public class FastCastBuffer extends AbstractClusterBuffer implements ClusterBuff
             }
 
             byteSource.setBuffer(sendBuffer);
-            int i = 0;
-            while (!publisher().offer(null, byteSource, 0, sendBuffer.limit(), true)) {
-                LockSupport.parkNanos(1);
-                if (i++ > 20) return false;
+            boolean res = publisher().offer(null, byteSource, 0, sendBuffer.limit(), config.alwaysFlush());
+            if (LOG.isDebugEnabled() && !res) {
+                LOG.warn("FCST: Can't send to FC!");
             }
-            return true;
+            return res;
         } finally {
             sendBuffer.clear();
         }
@@ -188,9 +192,10 @@ public class FastCastBuffer extends AbstractClusterBuffer implements ClusterBuff
             transportConf.spinLoopMicros(config.spinLoopMicros());
 
             PublisherConf publisherConf = new PublisherConf(1);
-            publisherConf.heartbeatInterval(30);
+            publisherConf.heartbeatInterval(20);
             publisherConf.numPacketHistory(config.retransmissionPacketHistory());
             publisherConf.pps(config.packetsPerSecond());
+            publisherConf.ppsWindow(10);
 
             SubscriberConf subscriberConf = new SubscriberConf(1);
             subscriberConf.receiveBufferPackets(10_000);

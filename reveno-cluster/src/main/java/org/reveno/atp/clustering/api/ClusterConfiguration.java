@@ -64,6 +64,8 @@ public interface ClusterConfiguration {
 
         void datagramSize(int size);
 
+        void preferBatchingToLatency(boolean batching);
+
         void ttl(int ttl);
     }
 
