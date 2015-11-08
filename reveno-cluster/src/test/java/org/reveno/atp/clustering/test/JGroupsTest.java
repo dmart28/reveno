@@ -15,6 +15,7 @@ import org.reveno.atp.core.serialization.ProtostuffSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -91,14 +92,14 @@ public class JGroupsTest {
         buffer2.messageNotifier(serializer, clusterBufferConsumer);
         buffer3.messageNotifier(serializer, clusterBufferConsumer);
 
-        serializer.serializeObject(buffer1, message);
+        serializer.serializeCommands(Collections.singletonList(message), buffer1);
         buffer1.replicate();
 
         Assert.assertTrue(Utils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));
 
         count.set(1);
         buffer2.lockIncoming();
-        serializer.serializeObject(buffer1, message);
+        serializer.serializeCommands(Collections.singletonList(message), buffer1);
         buffer1.replicate();
 
         Assert.assertTrue(Utils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));
@@ -106,7 +107,7 @@ public class JGroupsTest {
 
         count.set(2);
         buffer2.unlockIncoming();
-        serializer.serializeObject(buffer1, message);
+        serializer.serializeCommands(Collections.singletonList(message), buffer1);
         buffer1.replicate();
 
         Assert.assertTrue(Utils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));

@@ -1,18 +1,12 @@
-package org.reveno.atp.clustering.test;
-
-import static org.reveno.atp.utils.MeasureUtils.sec;
+package org.reveno.atp.clustering.test.cluster_tests;
 
 import com.google.common.base.Strings;
 import org.junit.Assert;
-import org.junit.Test;
 import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
 import org.reveno.atp.acceptance.tests.RevenoBaseTest;
 import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
-import org.reveno.atp.clustering.api.SyncMode;
 import org.reveno.atp.clustering.core.buffer.ClusterProvider;
-import org.reveno.atp.clustering.core.providers.MulticastAllProvider;
-import org.reveno.atp.clustering.core.providers.UnicastAllProvider;
 import org.reveno.atp.clustering.test.common.ClusterEngineWrapper;
 import org.reveno.atp.clustering.test.common.ClusterTestUtils;
 import org.reveno.atp.clustering.util.Utils;
@@ -29,92 +23,9 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class ClusterTests extends RevenoBaseTest {
+import static org.reveno.atp.utils.MeasureUtils.sec;
 
-    @Test
-    public void basicTestMulticast() throws Exception {
-        setModelType();
-        Consumer<ClusterEngineWrapper> forEach = e -> {
-            this.configure(e);
-            e.clusterConfiguration().multicast().host("229.9.9.10");
-            e.clusterConfiguration().multicast().port(47365);
-            e.clusterConfiguration().multicast().preferBatchingToLatency(true);
-        };
-        basicTest(() -> ClusterTestUtils.createClusterEngines(2, forEach, MulticastAllProvider::new), forEach,
-                MulticastAllProvider::new);
-    }
-
-    @Test
-    public void basicTestJGroups() throws Exception {
-        setModelType();
-        basicTest(() -> ClusterTestUtils.createClusterEngines(2, this::configure, UnicastAllProvider::new),
-                this::configure, UnicastAllProvider::new);
-    }
-
-    @Test
-    public void journalsReplicationTestJGroups() throws Exception {
-        setModelType();
-        Consumer<ClusterEngineWrapper> forEach = e -> {
-            this.configure(e);
-            e.clusterConfiguration().dataSync().mode(SyncMode.JOURNALS);
-        };
-        basicTest(() -> ClusterTestUtils.createClusterEngines(2, forEach, UnicastAllProvider::new),
-                forEach, UnicastAllProvider::new);
-    }
-
-    @Test
-    public void simultanousStartupTestJGroups() throws Exception {
-        setModelType();
-        simultanousStartupTest(() -> ClusterTestUtils.createClusterEngines(2, this::configure, UnicastAllProvider::new));
-    }
-
-    @Test
-    public void simultanousStartupTestFastCast() throws Exception {
-        setModelType();
-        Consumer<ClusterEngineWrapper> forEach = e -> {
-            this.configure(e);
-            e.clusterConfiguration().multicast().host("229.9.9.10");
-            e.clusterConfiguration().multicast().port(47366);
-            e.clusterConfiguration().multicast().sendRetries(100_000);
-        };
-        simultanousStartupTest(() -> ClusterTestUtils.createClusterEngines(2, forEach, MulticastAllProvider::new));
-    }
-
-    @Test
-    public void complicatedSimultanousStartupTestJGroups() throws Exception {
-        setModelType();
-        complicatedSimultanousStartupTest(() -> ClusterTestUtils.createClusterEngines(2, this::configure, UnicastAllProvider::new));
-    }
-
-    @Test
-    public void complicatedSimultanousStartupTestFastCast() throws Exception {
-        setModelType();
-        Consumer<ClusterEngineWrapper> forEach = e -> {
-            this.configure(e);
-            e.clusterConfiguration().multicast().host("229.9.9.10");
-            e.clusterConfiguration().multicast().port(47367);
-            e.clusterConfiguration().multicast().sendRetries(100_000);
-        };
-        complicatedSimultanousStartupTest(() -> ClusterTestUtils.createClusterEngines(2, forEach, MulticastAllProvider::new));
-    }
-
-    @Test
-    public void oneNodeFailInMiddleTestJGroups() throws Exception {
-        setModelType();
-        oneNodeFailInMiddleTest(() -> ClusterTestUtils.createClusterEngines(3, this::configure, UnicastAllProvider::new));
-    }
-
-    @Test
-    public void oneNodeFailInMiddleTestFastCast() throws Exception {
-        setModelType();
-        Consumer<ClusterEngineWrapper> forEach = e -> {
-            this.configure(e);
-            e.clusterConfiguration().multicast().host("229.9.9.10");
-            e.clusterConfiguration().multicast().port(47368);
-            e.clusterConfiguration().multicast().sendRetries(100_000);
-        };
-        oneNodeFailInMiddleTest(() -> ClusterTestUtils.createClusterEngines(3, forEach, MulticastAllProvider::new));
-    }
+public class ClusterBaseTest extends RevenoBaseTest {
 
     protected void oneNodeFailInMiddleTest(Supplier<List<ClusterEngineWrapper>> enginesFactory) throws Exception {
         List<ClusterEngineWrapper> engines = enginesFactory.get();
@@ -263,6 +174,7 @@ public class ClusterTests extends RevenoBaseTest {
         });
     }
 
-    protected static final Logger LOG = LoggerFactory.getLogger(ClusterTests.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(ClusterBaseTest.class);
+
 
 }
