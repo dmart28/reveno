@@ -103,7 +103,7 @@ public class JGroupsTest {
         buffer1.replicate();
 
         Assert.assertTrue(Utils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));
-        Assert.assertFalse(Utils.waitFor(() -> count.get() < 0, TEST_SHORT_TIMEOUT));
+        Assert.assertFalse(Utils.waitFor(() -> count.get() < 0, TEST_TIMEOUT));
 
         count.set(2);
         buffer2.unlockIncoming();
@@ -111,7 +111,7 @@ public class JGroupsTest {
         buffer1.replicate();
 
         Assert.assertTrue(Utils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));
-        Assert.assertFalse(Utils.waitFor(() -> count.get() < 0, TEST_SHORT_TIMEOUT));
+        Assert.assertFalse(Utils.waitFor(() -> count.get() < 0, TEST_TIMEOUT));
 
         buffer1.disconnect(); buffer2.disconnect(); buffer3.disconnect();
     }
@@ -164,7 +164,6 @@ public class JGroupsTest {
         }
     }
 
-    protected static final int TEST_TIMEOUT = 5000;
-    protected static final int TEST_SHORT_TIMEOUT = TEST_TIMEOUT / 10;
+    protected static final int TEST_TIMEOUT = 30_000;
     protected static final Logger LOG = LoggerFactory.getLogger(JGroupsTest.class);
 }

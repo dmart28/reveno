@@ -105,6 +105,10 @@ public class FailoverExecutor {
         }
     }
 
+    public ClusterView lastView() {
+        return lastView;
+    }
+
 
     protected void onClusterEvent(ClusterEvent event) {
         if (event == ClusterEvent.MEMBERSHIP_CHANGED) {

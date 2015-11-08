@@ -62,7 +62,7 @@ public class ClusterBaseTest extends RevenoBaseTest {
 
     protected void waitInCluster(ClusterEngineWrapper... engines) {
         for (ClusterEngineWrapper engine : engines) {
-            Assert.assertTrue(Utils.waitFor(() -> engine.failoverManager() != null && engine.isInCluster(), sec(30)));
+            Assert.assertTrue(Utils.waitFor(() -> engine.failoverManager() != null && engine.isElectedInCluster(), sec(30)));
         }
     }
 

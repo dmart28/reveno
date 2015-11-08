@@ -139,14 +139,8 @@ public class ClusterEngine extends Engine {
         return failoverManager;
     }
 
-    public boolean isInCluster() {
-        return cluster != null && cluster.view().viewId() != 0;
-    }
-
-    public long clusterViewId() {
-        if (cluster == null)
-            return 0;
-        return cluster.view().viewId();
+    public boolean isElectedInCluster() {
+        return cluster != null && failoverExecutor != null && failoverExecutor.lastView().viewId() > 0;
     }
 
     protected ClusterExecutor<ElectionResult, Void> leadershipExecutor() {
