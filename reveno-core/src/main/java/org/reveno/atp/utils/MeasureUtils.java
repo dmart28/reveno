@@ -29,5 +29,9 @@ public abstract class MeasureUtils {
 	public static long gb(int number) {
 		return 1024L * mb(number);
 	}
+
+	public static long sec(int secs) {
+		return secs * 1000;
+	}
 	
 }

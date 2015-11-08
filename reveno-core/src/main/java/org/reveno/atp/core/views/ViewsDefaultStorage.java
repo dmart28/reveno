@@ -66,7 +66,12 @@ public class ViewsDefaultStorage implements ViewsStorage, QueryManager  {
 	public <View> void remove(Class<View> viewType, long id) {
 		views.get(viewType).remove(id);
 	}
-	
+
+	@Override
+	public void clearAll() {
+		views.clear();
+	}
+
 	public ViewsDefaultStorage() {
 		views = MapUtils.concurrentRepositoryMap(524288, 0.75f);
 	}

@@ -18,23 +18,30 @@ package org.reveno.atp.core.api;
 
 import org.reveno.atp.core.api.channel.Buffer;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 public interface FailoverManager {
+
+	default boolean isSingleNode() {
+		return false;
+	}
 	
 	boolean isMaster();
 	
 	boolean isBlocked();
-	
-	
-	void onReplicationMessage(Consumer<Buffer> failoverHandler);
+
+
+	void onReplicationMessage(Consumer<List<Object>> failoverHandler);
 	
 	void addOnBlocked(Runnable handler);
 	
 	void addOnUnblocked(Runnable handler);
 	
 	
-	boolean replicate(Buffer buffer);
-	
+	boolean replicate(Consumer<Buffer> bufferWriter);
+
+	long unprocessedCount();
+
 	void processPendingMessages();
 }

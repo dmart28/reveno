@@ -16,11 +16,8 @@
 
 package org.reveno.atp.core;
 
-import org.reveno.atp.core.api.IdGenerator;
-import org.reveno.atp.core.api.InterceptorCollection;
-import org.reveno.atp.core.api.Journaler;
+import org.reveno.atp.core.api.*;
 import org.reveno.atp.core.api.TransactionCommitInfo.Builder;
-import org.reveno.atp.core.api.TxRepository;
 import org.reveno.atp.core.engine.WorkflowContext;
 import org.reveno.atp.core.engine.components.CommandsManager;
 import org.reveno.atp.core.engine.components.SerializersChain;
@@ -40,7 +37,17 @@ public class EngineWorkflowContext implements WorkflowContext {
 		this.configuration = configuration;
 		return this;
 	}
-	
+
+	private FailoverManager failoverManager;
+	@Override
+	public FailoverManager failoverManager() {
+		return failoverManager;
+	}
+	public EngineWorkflowContext failoverManager(FailoverManager failoverManager) {
+		this.failoverManager = failoverManager;
+		return this;
+	}
+
 	private IdGenerator idGenerator;
 	@Override
 	public IdGenerator idGenerator() {

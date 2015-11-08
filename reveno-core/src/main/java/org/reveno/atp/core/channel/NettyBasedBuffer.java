@@ -21,6 +21,7 @@ import io.netty.buffer.PooledByteBufAllocator;
 import org.reveno.atp.core.api.channel.Buffer;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import static org.reveno.atp.utils.MeasureUtils.kb;
 
@@ -36,10 +37,12 @@ public class NettyBasedBuffer implements Buffer {
 	
 	public NettyBasedBuffer(int length, boolean direct) {
 		this.buffer = direct ? PooledByteBufAllocator.DEFAULT.directBuffer(length) : PooledByteBufAllocator.DEFAULT.buffer(length);
+		this.buffer.order(ByteOrder.BIG_ENDIAN);
 	}
 
 	public NettyBasedBuffer(int length, int maxLength, boolean direct) {
 		this.buffer = direct ? PooledByteBufAllocator.DEFAULT.directBuffer(length, maxLength) : PooledByteBufAllocator.DEFAULT.buffer(length, maxLength);
+		this.buffer.order(ByteOrder.BIG_ENDIAN);
 	}
 
     @Override
@@ -197,12 +200,10 @@ public class NettyBasedBuffer implements Buffer {
 
 	@Override
 	public void limitNext(int count) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void resetNextLimit() {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

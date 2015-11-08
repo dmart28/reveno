@@ -1,0 +1,5 @@
+dependencies {
+    compile "com.google.guava:guava:$guavaVersion"
+    compile "junit:junit:$junitVersion"
+    compile project(":reveno-core")
+}

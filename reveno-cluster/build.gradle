@@ -1,5 +1,53 @@
+apply plugin: 'osgi'
+apply plugin: 'maven-publish'
+
 dependencies {
   compile project(":reveno-core")
 
   compile "org.jgroups:jgroups:$jgroupsVersion"
+  compile "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
+  compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+
+  compile "de.ruedigermoeller:fast-cast:$fastcastVersion"
+
+  testCompile project(":reveno-test-model")
+}
+
+test {
+  maxParallelForks = 1
+  forkEvery = 1
+}
+
+jar {
+  manifest {
+    name = 'org.reveno.reveno-core'
+    instruction 'Bundle-Vendor', 'Reveno'
+    instruction 'Bundle-Description', 'Reveno Clustering'
+    instruction 'Bundle-DocURL', 'http://reveno.org'
+  }
+}
+
+task fooJar(type: Jar) {
+  manifest = osgiManifest {
+    instruction 'Bundle-Vendor', 'Reveno'
+  }
+}
+
+task sourceJar(type: Jar) {
+  from sourceSets.main.allJava
+}
+
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      groupId 'org.reveno'
+      artifactId 'reveno-cluster'
+      version "$revenoVersion"
+      from components.java
+
+      artifact sourceJar {
+        classifier "sources"
+      }
+    }
+  }
 }

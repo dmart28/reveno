@@ -29,24 +29,32 @@ import java.util.stream.Stream;
 /*
  * File name pattern:
  * 
- * {prefix}-{date}-{version}
+ * {prefix}-{date}-{version}{rest}
  * 
  * Example:
  * 
- * /var/transactions/tx-2015_05_21-14
+ * /var/transactions/tx-2015_05_21-14-1
  * 
  */
 public abstract class VersionedFileUtils {
 
 	public static String nextVersionFile(File baseDir, String prefix) {
-		return nextVersionFile(baseDir, prefix, null);
+		return nextVersionFile(baseDir, prefix, null, "");
+	}
+
+	public static String nextVersionFile(File baseDir, String prefix, long lastTransactionId) {
+		return nextVersionFile(baseDir, prefix, null, "-" + String.format("%020d", lastTransactionId));
+	}
+
+	public static String nextVersionFile(File baseDir, String prefix, String version, long lastTransactionId) {
+		return nextVersionFile(baseDir, prefix, version, "-" + String.format("%020d", lastTransactionId));
 	}
 	
-	public static String nextVersionFile(File baseDir, String prefix, String version) { 
+	public static String nextVersionFile(File baseDir, String prefix, String version, String rest) {
 		Optional<String> lastFile = listFiles(baseDir, prefix, true).stream().reduce((a,b)->b);
 		
-		Function<Long, String> nextFile = (v) -> String.format("%s-%s-%s", prefix, format().format(new Date()),
-				version == null ? String.format("%010d", v + 1) : String.format("%010d", Long.parseLong(version)));
+		Function<Long, String> nextFile = v -> String.format("%s-%s-%s%s", prefix, format().format(new Date()),
+				version == null ? String.format("%010d", v + 1) : String.format("%010d", Long.parseLong(version)), rest);
 		if (!lastFile.isPresent()) {
 			return nextFile.apply(0L);
 		} else {
@@ -73,19 +81,18 @@ public abstract class VersionedFileUtils {
 	
 	public static VersionedFile parseVersionedFile(String fileName) {
 		String[] parts = fileName.split("-");
-		if (parts.length != 3) 
+		if (parts.length < 3)
 			throw new IllegalFileName(fileName, null);
 		
 		try {
 			Calendar c = Calendar.getInstance();
 			c.setTime(format().parse(parts[1]));
-			return new VersionedFile(fileName, parts[0], c, Long.parseLong(parts[2]));
+			return new VersionedFile(fileName, parts[0], c, Long.parseLong(parts[2]), produceRest(parts));
 		} catch (Throwable t) {
-			System.out.println(parts[1]);
 			throw new IllegalFileName(fileName, t);
 		}
 	}
-	
+
 	public static List<String> listFolders(File baseDir, String prefix) {
 		return listFiles(baseDir.getAbsolutePath())
 				.filter(File::isDirectory)
@@ -135,6 +142,12 @@ public abstract class VersionedFileUtils {
 		c.setTime(new Date());
 		return c;
 	}
+
+	protected static String[] produceRest(String[] parts) {
+		String[] rest = new String[parts.length - 3];
+		System.arraycopy(parts, 3, rest, 0, parts.length - 3);
+		return rest;
+	}
 	
 	
 	public static class VersionedFile {
@@ -157,12 +170,18 @@ public abstract class VersionedFileUtils {
 		public long getVersion() {
 			return version;
 		}
+
+		private String[] rest;
+		public String[] getRest() {
+			return rest;
+		}
 		
-		public VersionedFile(String name, String prefix, Calendar fileDate, long version) {
+		public VersionedFile(String name, String prefix, Calendar fileDate, long version, String[] rest) {
 			this.name = name;
 			this.prefix = prefix;
 			this.fileDate = fileDate;
 			this.version = version;
+			this.rest = rest;
 		}
 		
 		@Override

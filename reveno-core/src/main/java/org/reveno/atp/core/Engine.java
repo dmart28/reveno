@@ -31,6 +31,7 @@ import org.reveno.atp.api.query.ViewsMapper;
 import org.reveno.atp.api.transaction.TransactionContext;
 import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.api.transaction.TransactionStage;
+import org.reveno.atp.commons.NamedThreadFactory;
 import org.reveno.atp.core.api.*;
 import org.reveno.atp.core.api.serialization.EventsInfoSerializer;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
@@ -121,15 +122,17 @@ public class Engine implements Reveno {
 		init();
 		connectSystemHandlers();
 
-		journalsManager.roll();
-		
+		JournalsStorage.JournalStore temp = journalsManager.rollTemp();
+
 		eventPublisher.getPipe().start();
 		workflowEngine.init();
 		viewsProcessor.process(repository);
 		workflowEngine.setLastTransactionId(restorer.restore(repository).getLastTransactionId());
-		
+
 		workflowEngine.getPipe().sync();
 		eventPublisher.getPipe().sync();
+
+		journalsManager.rollFrom(temp, workflowEngine.getLastTransactionId());
 		
 		log.info("Engine is started.");
 		isStarted = true;
@@ -139,7 +142,7 @@ public class Engine implements Reveno {
 	public void shutdown() {
 		log.info("Shutting down engine.");
 		isStarted = false;
-		
+
 		workflowEngine.shutdown();
 		eventPublisher.getPipe().shutdown();
 		
@@ -148,7 +151,7 @@ public class Engine implements Reveno {
 		interceptors.getInterceptors(TransactionStage.TRANSACTION).forEach(TransactionInterceptor::destroy);
 
 		journalsManager.destroy();
-		
+
 		eventsManager.close();
 		
 		snapshotterIntervalExecutor.shutdown();
@@ -340,11 +343,11 @@ public class Engine implements Reveno {
 				.eventsCommitBuilder(eventBuilder).eventsJournaler(journalsManager.getEventsJournaler()).manager(eventsManager);
 		eventPublisher = new EventPublisher(eventProcessor, eventsContext);
 
-		EngineWorkflowContext workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
+		workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
 				.viewsProcessor(viewsProcessor).transactionsManager(transactionsManager).commandsManager(commandsManager)
 				.eventPublisher(eventPublisher).transactionCommitBuilder(txBuilder).transactionJournaler(journalsManager.getTransactionsJournaler())
 				.idGenerator(idGenerator).journalsManager(journalsManager).snapshotsManager(snapshotsManager).interceptorCollection(interceptors)
-				.configuration(config);
+				.configuration(config).failoverManager(failoverManager());
 		workflowEngine = new WorkflowEngine(processor, workflowContext, config.modelType());
 		restorer = new DefaultSystemStateRestorer(journalsStorage, workflowContext, eventsContext, workflowEngine);
 	}
@@ -375,9 +378,17 @@ public class Engine implements Reveno {
 		}
 		return null;
 	}
-	
+
+	/**
+	 * Since it is very unsecure to obtain Repository data out of transaction workflow,
+	 * this method should be used *only* when engine is stopped.
+	 */
 	protected void snapshotAll() {
 		snapshotsManager.getAll().forEach(s -> s.snapshot(repository.getData(), s.prepare()));
+	}
+
+	protected FailoverManager failoverManager() {
+		return new UnclusteredFailoverManager();
 	}
 
 	protected volatile boolean isStarted = false;
@@ -390,7 +401,8 @@ public class Engine implements Reveno {
 	protected TransactionPipeProcessor<ProcessorContext> processor;
 	protected PipeProcessor<Event> eventProcessor;
 	protected JournalsManager journalsManager;
-	
+	protected EngineWorkflowContext workflowContext;
+
 	protected RepositorySnapshotter restoreWith;
 	
 	protected RepositoryDataSerializer repositorySerializer = new DefaultJavaSerializer(getClass().getClassLoader());
@@ -413,8 +425,8 @@ public class Engine implements Reveno {
 	protected SnapshotStorage snapshotStorage;
 	protected SnapshottersManager snapshotsManager;
 	
-	protected final ExecutorService executor = Executors.newFixedThreadPool(7);
-	protected final ExecutorService eventExecutor = Executors.newFixedThreadPool(3);
+	protected final ExecutorService executor = Executors.newFixedThreadPool(7, new NamedThreadFactory("tx"));
+	protected final ExecutorService eventExecutor = Executors.newFixedThreadPool(3, new NamedThreadFactory("evn"));
 	protected final ScheduledExecutorService snapshotterIntervalExecutor = Executors.newSingleThreadScheduledExecutor();
 	protected static final Logger log = LoggerFactory.getLogger(Engine.class);
 	

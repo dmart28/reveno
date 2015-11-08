@@ -18,6 +18,7 @@ package org.reveno.atp.core.engine;
 
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
+import org.reveno.atp.api.exceptions.ReplicationFailedException;
 import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
@@ -48,7 +49,7 @@ public class InputHandlers {
 	}
 	
 	public void replication(ProcessorContext c, boolean endOfBatch) {
-		ex(c, !c.isRestore(), endOfBatch, replicator);
+		ex(c, !c.isRestore() && !c.isReplicated(), endOfBatch, replicator);
 	}
 	
 	public void transactionExecution(ProcessorContext c, boolean endOfBatch) {
@@ -93,11 +94,8 @@ public class InputHandlers {
 	protected final BiConsumer<ProcessorContext, Boolean> replicator = (c, eob) -> {
 		interceptors(TransactionStage.REPLICATION, c);
 		
-		if (eob) {
-			marshalled.clear();
-		} else {
-			services.serializer().serializeCommands(c.getCommands(), marshalled);
-		}
+		if (!services.failoverManager().replicate(b -> services.serializer().serializeCommands(c.getCommands(), b)))
+			c.abort(new ReplicationFailedException());
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> transactionExecutor = (c, eob) -> {
 		if (!c.isRestore())
@@ -109,7 +107,7 @@ public class InputHandlers {
 	protected final BiConsumer<ProcessorContext, Boolean> journaler = (c, eob) -> {
 		interceptors(TransactionStage.JOURNALING, c);
 
-		rollIfRequired();
+		rollIfRequired(c.transactionId());
 		services.transactionJournaler().writeData(b -> {
 			c.commitInfo().transactionId(c.transactionId()).time(c.time()).transactionCommits(c.getTransactions());
 			services.serializer().serialize(c.commitInfo(), b);
@@ -119,8 +117,13 @@ public class InputHandlers {
 		services.viewsProcessor().process(c.getMarkedRecords());
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> eventsPublisher = (c, eob) -> {
-		if (c.getEvents().size() > 0) 
-			services.eventPublisher().publishEvents(c.isRestore(), c.transactionId(), c.eventMetadata(), c.getEvents().toArray());
+		if (c.isReplicated()) {
+			services.eventPublisher().replicateEvents(c.transactionId());
+		} else {
+			if (c.getEvents().size() > 0)
+				services.eventPublisher().publishEvents(c.isRestore(), c.transactionId(),
+						c.eventMetadata(), c.getEvents().toArray());
+		}
 	};
 	
 
@@ -130,9 +133,9 @@ public class InputHandlers {
 					context.time(), services.repository(), stage));
 	}
 
-	protected void rollIfRequired() {
+	protected void rollIfRequired(long transactionId) {
 		if (isRollRequired(services.transactionJournaler().currentChannel())) {
-			services.journalsManager().roll(() -> isRollRequired(services.transactionJournaler().currentChannel()));
+			services.journalsManager().roll(transactionId, () -> isRollRequired(services.transactionJournaler().currentChannel()));
 		}
 	}
 

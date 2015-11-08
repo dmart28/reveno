@@ -39,7 +39,8 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 	@Override
 	public SystemState restore(TxRepository repository) {
 		workflowContext.repository(repository);
-		final long[] transactionId = { repository.get(SystemInfo.class, 0L).orElse(new SystemInfo(0L)).lastTransactionId };
+		final long snapshotTransactionId = repository.get(SystemInfo.class, 0L).orElse(new SystemInfo(0L)).lastTransactionId;
+		final long[] transactionId = { snapshotTransactionId };
 		try (InputProcessor processor = new DefaultInputProcessor(journalStorage)) {
 			processor.process(b -> {
 				EventsCommitInfo e = eventsContext.serializer().deserialize(eventsContext.eventsCommitBuilder(), b);
@@ -47,11 +48,15 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 			}, JournalType.EVENTS);
 			processor.process(b -> {
 				TransactionCommitInfo tx = workflowContext.serializer().deserialize(workflowContext.transactionCommitBuilder(), b);
-				transactionId[0] = tx.transactionId();
-				workflowEngine.getPipe().executeRestore(eventBus, tx);
+				if (tx.transactionId() > transactionId[0] || tx.transactionId() == snapshotTransactionId) {
+					transactionId[0] = tx.transactionId();
+					workflowEngine.getPipe().executeRestore(eventBus, tx);
+				} else if (LOG.isDebugEnabled()) {
+					LOG.debug("Transaction ID {} less than last Transaction ID {}", tx.transactionId(), transactionId[0]);
+				}
 			}, JournalType.TRANSACTIONS);
 		} catch (Throwable t) {
-			log.error("restore", t);
+			LOG.error("restore", t);
 			throw new RuntimeException(t);
 		}
 		workflowEngine.getPipe().sync();
@@ -75,5 +80,5 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 	protected final EngineEventsContext eventsContext;
 	protected final WorkflowEngine workflowEngine;
 	
-	protected static final Logger log = LoggerFactory.getLogger(DefaultSystemStateRestorer.class);
+	protected static final Logger LOG = LoggerFactory.getLogger(DefaultSystemStateRestorer.class);
 }

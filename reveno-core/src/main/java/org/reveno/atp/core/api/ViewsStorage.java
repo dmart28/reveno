@@ -25,5 +25,7 @@ public interface ViewsStorage {
 	<View> void insert(long id, View view);
 	
 	<View> void remove(Class<View> viewType, long id);
+
+	void clearAll();
 	
 }

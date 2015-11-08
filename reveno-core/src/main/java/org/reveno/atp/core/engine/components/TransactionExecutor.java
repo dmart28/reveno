@@ -61,7 +61,6 @@ public class TransactionExecutor {
 			}
 			
 			commit(services);
-			setSystemInfo(services, c.transactionId());
 		} catch (Throwable t) {
 			c.abort(t);
 			log.error("executeCommands", t);
@@ -97,14 +96,6 @@ public class TransactionExecutor {
 	
 	protected void compensateTransactions(WorkflowContext services, ListIterator<Object> transactionIterator) {
 		forEachPrev(transactionIterator, t -> services.transactionsManager().compensate(t, transactionContext));
-	}
-	
-	protected void setSystemInfo(WorkflowContext services, long transactionId) {
-		Optional<SystemInfo> si = services.repository().get(SystemInfo.class, 0L);
-		if (si.isPresent())
-			si.get().lastTransactionId = transactionId;
-		else
-			services.repository().store(0L, SystemInfo.class, new SystemInfo(transactionId));
 	}
 	
 	protected void forEachPrev(ListIterator<Object> i, Consumer<Object> c) {

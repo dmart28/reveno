@@ -58,7 +58,7 @@ public interface RepositorySnapshotter {
 	RepositoryData load();
 	
 	
-	public interface SnapshotIdentifier {
+	interface SnapshotIdentifier {
 		
 		byte getType();
 		
