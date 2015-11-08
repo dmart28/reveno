@@ -17,12 +17,12 @@ import org.reveno.atp.utils.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.function.Supplier;
 
 public class FailoverExecutor {
+
+    private static final int NUM_JOBS_TO_QUEUE = 500;
 
     public void init() {
         Preconditions.checkNotNull(leaderElector, "LeaderElector must be provided.");
@@ -42,7 +42,7 @@ public class FailoverExecutor {
         isStopped = true;
         electorExecutor.shutdown();
         try {
-            electorExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+            electorExecutor.awaitTermination(1, TimeUnit.MINUTES);
         } catch (InterruptedException e) {
             LOG.error(e.getMessage(), e);
         }
@@ -303,7 +303,16 @@ public class FailoverExecutor {
         this.buffer = failoverManager.buffer();
         this.failoverManager = failoverManager;
 
-        this.electorExecutor = Executors.newSingleThreadExecutor(new NamedThreadFactory("fe-" + config.currentNodeAddress()));
+        final BlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(NUM_JOBS_TO_QUEUE);
+        this.electorExecutor = new ThreadPoolExecutor(1, 1,
+                0L, TimeUnit.MILLISECONDS, queue, new NamedThreadFactory("fe-" + config.currentNodeAddress()));
+        this.electorExecutor.setRejectedExecutionHandler((r, executor) -> {
+            // this will block if the queue is full as opposed to throwing
+            try {
+                electorExecutor.getQueue().put(r);
+            } catch (InterruptedException ignored) {
+            }
+        });
     }
 
     protected volatile boolean isStopped = false;
@@ -324,7 +333,7 @@ public class FailoverExecutor {
     protected Runnable failoverListener;
 
     protected Marshaller marshaller;
-    protected final ExecutorService electorExecutor;
+    protected final ThreadPoolExecutor electorExecutor;
 
     protected static final Logger LOG = LoggerFactory.getLogger(FailoverExecutor.class);
 }
