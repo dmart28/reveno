@@ -291,7 +291,7 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
         protected int packetsPerSecond = 3_000;
         protected int spinLoopMicros = 0;
         protected int threadParkMicros = 20;
-        protected int retransmitPacketsHistory = 50_000;
+        protected int retransmitPacketsHistory = 9_000;
         protected int datagramSize = 1000;
         protected int ttl = 8;
         protected boolean preferBatchingToLatency = true;
