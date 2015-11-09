@@ -5,6 +5,7 @@ import org.nustaq.fastcast.api.FCSubscriber;
 import org.nustaq.fastcast.api.FastCast;
 import org.nustaq.fastcast.config.*;
 import org.nustaq.fastcast.impl.PacketSendBuffer;
+import org.nustaq.fastcast.util.FCLog;
 import org.nustaq.offheap.bytez.Bytez;
 import org.reveno.atp.clustering.api.*;
 import org.reveno.atp.clustering.core.components.AbstractClusterBuffer;
@@ -181,6 +182,9 @@ public class FastCastBuffer extends AbstractClusterBuffer implements ClusterBuff
 
     public FastCastBuffer(FastCastConfiguration config) {
         try {
+            synchronized (FCLog.class) {
+                FCLog.setInstance(new FastCastSlf4jLogger());
+            }
             fastCast = new FastCastEx();
             fastCast.setNodeId(config.getCurrentNode().getNodeId());
 
