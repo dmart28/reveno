@@ -286,15 +286,15 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
         protected String host;
         protected int port;
         protected String netInterface = "127.0.0.1";
-        protected int receiveBufferSize = 3 * 1024 * 1024;
+        protected int receiveBufferSize = 1024 * 1024;
         protected int sendBufferSize = 1024 * 1024;
-        protected int packetsPerSecond = 5_000;
+        protected int packetsPerSecond = 3_000;
         protected int spinLoopMicros = 0;
         protected int threadParkMicros = 20;
-        protected int retransmitPacketsHistory = 80_000;
+        protected int retransmitPacketsHistory = 50_000;
         protected int datagramSize = 1000;
         protected int ttl = 8;
-        protected boolean preferBatchingToLatency = false;
+        protected boolean preferBatchingToLatency = true;
         protected int sendRetries = 15;
     }
 
