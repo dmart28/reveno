@@ -33,7 +33,7 @@ public class MutableRepositoryTest {
 	
 	@Before
 	public void setUp() {
-		underlyingRepository = new HashMapRepository();
+		underlyingRepository = new HashMapRepository(16, 0.75f);
 		repository = new MutableModelRepository(underlyingRepository, new ProtostuffSerializer());
 	}
 	

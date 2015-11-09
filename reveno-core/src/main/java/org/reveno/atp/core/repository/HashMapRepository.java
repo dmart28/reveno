@@ -91,11 +91,7 @@ public class HashMapRepository implements WriteableRepository {
 	public Set<Class<?>> getEntityTypes() {
 		return map.keySet();
 	}
-	
-	
-	public HashMapRepository() {
-		this(524288, 0.75f);
-	}
+
 	
 	public HashMapRepository(int capacity, float loadFactor) {
 		map = MapUtils.fastRepo(capacity, loadFactor);

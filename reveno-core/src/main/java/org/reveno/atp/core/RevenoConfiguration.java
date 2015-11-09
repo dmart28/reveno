@@ -79,7 +79,23 @@ public class RevenoConfiguration implements Configuration {
 		return this;
 	}
 
-    public CpuConsumption cpuConsumption() {
+	@Override
+	public void mapCapacity(int capacity) {
+		this.mapCapacity = capacity;
+	}
+	public int mapCapacity() {
+		return mapCapacity;
+	}
+
+	@Override
+	public void mapLoadFactor(float loadFactor) {
+		this.mapLoadFactor = loadFactor;
+	}
+	public float mapLoadFactor() {
+		return mapLoadFactor;
+	}
+
+	public CpuConsumption cpuConsumption() {
 		return cpuConsumption;
 	}
 	
@@ -88,6 +104,8 @@ public class RevenoConfiguration implements Configuration {
 	protected RevenoJournalingConfiguration journaling = new RevenoJournalingConfiguration();
 	protected CpuConsumption cpuConsumption = CpuConsumption.NORMAL;
 	protected ModelType modelType = ModelType.IMMUTABLE;
+	protected int mapCapacity = 524288;
+	protected float mapLoadFactor = 0.75f;
 	protected MutableModelFailover mutableModelFailover = MutableModelFailover.SNAPSHOTS;
 
 	

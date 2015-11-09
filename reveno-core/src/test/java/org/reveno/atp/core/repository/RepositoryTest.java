@@ -30,7 +30,7 @@ public class RepositoryTest {
 	
 	@Before
 	public void setUp() {
-		repository = new HashMapRepository();
+		repository = new HashMapRepository(16, 0.75f);
 	}
 	
 	@Test

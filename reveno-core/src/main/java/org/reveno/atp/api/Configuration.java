@@ -32,6 +32,10 @@ public interface Configuration {
 	Configuration mutableModelFailover(MutableModelFailover mutableModelFailover);
 
 	Configuration cpuConsumption(CpuConsumption cpuConsumption);
+
+	void mapCapacity(int capacity);
+
+	void mapLoadFactor(float loadFactor);
 	
     
 	public static interface SnapshotConfiguration {

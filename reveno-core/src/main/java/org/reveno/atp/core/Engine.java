@@ -329,7 +329,7 @@ public class Engine implements Reveno {
 	}
 	
 	protected WriteableRepository repository() {
-		return new HashMapRepository(/*1_000, 0.5f*/);
+		return new HashMapRepository(config.mapCapacity(), config.mapLoadFactor());
 	}
 	
 	protected void init() {
