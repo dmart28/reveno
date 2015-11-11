@@ -72,7 +72,7 @@ public class MessagingClusterStateCollector implements ClusterExecutor<ClusterSt
                         .stream()
                         .filter(kv -> view.members().contains(kv.getKey()))
                         .filter(kv -> kv.getValue().viewId == view.viewId()).count() == view.members().size(),
-                config.revenoElectionTimeouts().ackTimeout());
+                config.revenoElectionTimeouts().ackTimeoutNanos());
     }
 
     public MessagingClusterStateCollector(Cluster cluster, Supplier<Long> transactionId, RevenoClusterConfiguration config) {

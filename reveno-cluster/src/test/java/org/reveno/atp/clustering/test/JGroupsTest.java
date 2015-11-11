@@ -167,6 +167,6 @@ public class JGroupsTest {
         }
     }
 
-    protected static final int TEST_TIMEOUT = 30_000;
+    protected static final long TEST_TIMEOUT = 30_000l * 1_000_000;
     protected static final Logger LOG = LoggerFactory.getLogger(JGroupsTest.class);
 }

@@ -11,11 +11,10 @@ import java.util.function.Supplier;
 
 public abstract class Utils {
 
-    public static boolean waitFor(Supplier<Boolean> condition, long timeout) {
+    public static boolean waitFor(Supplier<Boolean> condition, long timeoutNanos) {
         long start = System.nanoTime();
-        timeout = timeout * 1_000_000;
         boolean result = false;
-        while (System.nanoTime() - start < timeout) {
+        while (System.nanoTime() - start < timeoutNanos) {
             result = condition.get();
             if (result) break;
 

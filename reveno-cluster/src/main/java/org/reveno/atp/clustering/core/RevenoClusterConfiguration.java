@@ -4,13 +4,14 @@ import org.reveno.atp.clustering.api.Address;
 import org.reveno.atp.clustering.api.ClusterConfiguration;
 import org.reveno.atp.clustering.api.InetAddress;
 import org.reveno.atp.clustering.api.SyncMode;
+import org.reveno.atp.utils.MeasureUtils;
 
 import java.util.Collections;
 import java.util.List;
 
 public class RevenoClusterConfiguration implements ClusterConfiguration {
 
-    protected static final int DEFAULT_TIMEOUT = 2000;
+    protected static final long DEFAULT_TIMEOUT = MeasureUtils.sec(5);
 
     @Override
     public void currentNodeAddress(Address nodeAddress) {
@@ -100,32 +101,50 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
 
     public static class RevenoTimeoutsConfiguration implements TimeoutsConfiguration {
         @Override
-        public void voteTimeout(long timeout) {
+        public void voteTimeoutNanos(long timeout) {
             this.voteTimeout = timeout;
         }
-        public long voteTimeout() {
+        public long voteTimeoutNanos() {
             return voteTimeout;
         }
 
         @Override
-        public void syncTimeout(long timeout) {
+        public void syncTimeoutNanos(long timeout) {
             this.syncTimeout = timeout;
         }
-        public long syncTimeout() {
+        public long syncTimeoutNanos() {
             return syncTimeout;
         }
 
         @Override
-        public void ackTimeout(long timeout) {
+        public void ackTimeoutNanos(long timeout) {
             this.ackTimeout = timeout;
         }
-        public long ackTimeout() {
+        public long ackTimeoutNanos() {
             return ackTimeout;
+        }
+
+        @Override
+        public void barrierTimeoutNanos(long timeout) {
+            this.barrierTimeout = timeout;
+        }
+        public long barrierTimeoutNanos() {
+            return barrierTimeout;
+        }
+
+        @Override
+        public void syncBarrierTimeoutNanos(long timeout) {
+            this.syncBarrierTimeoutNanos = timeout;
+        }
+        public long syncBarrierTimeoutNanos() {
+            return syncBarrierTimeoutNanos;
         }
 
         protected long voteTimeout = DEFAULT_TIMEOUT;
         protected long syncTimeout = DEFAULT_TIMEOUT;
         protected long ackTimeout = DEFAULT_TIMEOUT;
+        protected long barrierTimeout = MeasureUtils.sec(10);
+        protected long syncBarrierTimeoutNanos = MeasureUtils.sec(3 * 60);
     }
 
     public static class RevenoSyncConfiguration implements SyncConfiguration {

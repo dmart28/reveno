@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -73,7 +72,7 @@ public class MessagingMasterSlaveElector implements ClusterExecutor<ElectionResu
                         .stream()
                         .filter(kv -> view.members().contains(kv.getKey()))
                         .filter(kv -> view.viewId() == kv.getValue()).count() == view.members().size(),
-                config.revenoElectionTimeouts().ackTimeout());
+                config.revenoElectionTimeouts().ackTimeoutNanos());
     }
 
     protected List<VoteMessage> sendVoteNotifications(ClusterView view) {
@@ -88,7 +87,7 @@ public class MessagingMasterSlaveElector implements ClusterExecutor<ElectionResu
         Predicate<VoteMessage> diffSeed = m -> m.seed != seed;
         if (!Utils.waitFor(() ->
                 votes.values().stream().filter(inView).filter(diffSeed).count() == view.members().size(),
-                config.revenoElectionTimeouts().voteTimeout())) {
+                config.revenoElectionTimeouts().voteTimeoutNanos())) {
             return Collections.emptyList();
         }
 

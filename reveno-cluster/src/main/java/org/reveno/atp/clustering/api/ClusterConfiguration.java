@@ -24,11 +24,15 @@ public interface ClusterConfiguration {
 
 
     interface TimeoutsConfiguration {
-        void voteTimeout(long timeout);
+        void voteTimeoutNanos(long timeout);
 
-        void syncTimeout(long timeout);
+        void syncTimeoutNanos(long timeout);
 
-        void ackTimeout(long timeout);
+        void ackTimeoutNanos(long timeout);
+
+        void barrierTimeoutNanos(long timeout);
+
+        void syncBarrierTimeoutNanos(long timeout);
     }
 
     interface SyncConfiguration {

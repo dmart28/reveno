@@ -30,12 +30,16 @@ public class GroupBarrier {
     }
 
     private boolean waitOnGroup() {
+        long start = System.nanoTime();
         Optional<Boolean> came = Optional.empty();
         while (!came.isPresent() && isSynced() && view.members().size() > 0) {
             ackAll();
             came = waitFor(cameBarrier, came);
             if (!came.isPresent() && allCame())
                 came = Optional.of(true);
+            if (Math.abs(System.nanoTime() - start) > timeoutNanos) {
+                return false;
+            }
         }
         ackAll(); // double ack
         if (came.isPresent()) {
@@ -46,6 +50,9 @@ public class GroupBarrier {
                     passed = waitFor(passedBarrier, passed);
                     if (!passed.isPresent() && allPassed())
                         passed = Optional.of(true);
+                    if (Math.abs(System.nanoTime() - start) > timeoutNanos) {
+                        return false;
+                    }
                 }
                 return passed.isPresent() && passed.get();
             } else
@@ -57,7 +64,7 @@ public class GroupBarrier {
 
     protected Optional<Boolean> waitFor(SignalBarrier barrier, Optional<Boolean> came) {
         try {
-            barrier.awaitNanos(WAIT_TIMEOUT);
+            barrier.awaitNanos(WAIT_TIMEOUT_NANOS);
         } catch (InterruptedException e) {
             throw Exceptions.runtime(e);
         }
@@ -66,10 +73,11 @@ public class GroupBarrier {
         return came;
     }
 
-    public GroupBarrier(Cluster cluster, ClusterView view, String name) {
+    public GroupBarrier(Cluster cluster, ClusterView view, String name, long timeoutNanos) {
         this.cluster = cluster;
         this.view = view;
         this.id = name + view.viewId();
+        this.timeoutNanos = timeoutNanos;
 
         cluster.gateway().receive(BarrierMessage.TYPE, m -> m.id.equals(id) && isSynced(), this::tryCame);
         cluster.gateway().receive(BarrierPassed.TYPE, m -> m.id.equals(id) && isSynced(), this::tryPassed);
@@ -112,6 +120,7 @@ public class GroupBarrier {
     protected Cluster cluster;
     protected ClusterView view;
     protected String id;
+    protected long timeoutNanos;
 
     protected Set<Address> came = Collections.newSetFromMap(new ConcurrentHashMap<>());
     protected Set<Address> passed = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -119,5 +128,5 @@ public class GroupBarrier {
     protected SignalBarrier cameBarrier = new SignalBarrier();
     protected SignalBarrier passedBarrier = new SignalBarrier();
 
-    protected static final long WAIT_TIMEOUT = 1_000_000;
+    protected static final long WAIT_TIMEOUT_NANOS = 200_000;
 }

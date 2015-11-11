@@ -121,7 +121,7 @@ public class FileStorageTransferServer implements StorageTransferServer {
                 bytesread[0] += read;
             LOG.debug("FSTF: received next {} bytes from {}", read, conn);
             return bytesread[0] == 17;
-        }, config.revenoElectionTimeouts().syncTimeout());
+        }, config.revenoElectionTimeouts().syncTimeoutNanos());
     }
 
     protected int readSilent(SocketChannel conn, ByteBuffer buffer) {

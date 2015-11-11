@@ -155,7 +155,7 @@ public class FailoverExecutor {
             waitOnBarrier(view, "unlock-buffer");
 
             unblockMasterOrSynchronizeSlave(view, election, state);
-            waitOnBarrier(view, "sync");
+            waitOnBarrier(view, "sync", config.revenoElectionTimeouts().syncBarrierTimeoutNanos());
 
             // block master only if it was unblocked because of
             // option waitAllNodesSync switched off
@@ -273,8 +273,12 @@ public class FailoverExecutor {
     }
 
     protected void waitOnBarrier(ClusterView view, String name) {
+        waitOnBarrier(view, name, config.revenoElectionTimeouts().barrierTimeoutNanos());
+    }
+
+    protected void waitOnBarrier(ClusterView view, String name, long timeout) {
         LOG.debug("Wait on barrier [{}]", name);
-        final GroupBarrier barrier = new GroupBarrier(cluster, view, name);
+        final GroupBarrier barrier = new GroupBarrier(cluster, view, name, timeout);
         if (!barrier.waitOn()) {
             throw new FailoverAbortedException(String.format("Timeout wait on barrier [%s] in view [%s].", name, view));
         } else {
@@ -288,7 +292,7 @@ public class FailoverExecutor {
 
     protected void await() {
         try {
-            Thread.sleep(config.revenoElectionTimeouts().ackTimeout());
+            Thread.sleep(config.revenoElectionTimeouts().ackTimeoutNanos() / 1_000_000);
         } catch (InterruptedException ignored) {
         }
     }
