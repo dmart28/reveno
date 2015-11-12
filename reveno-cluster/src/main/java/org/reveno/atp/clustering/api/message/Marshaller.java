@@ -17,10 +17,26 @@ package org.reveno.atp.clustering.api.message;
 
 import org.reveno.atp.core.api.channel.Buffer;
 
+/**
+ * Used to marshall and unmarshall messages for internal communication
+ * in Reveno.
+ */
 public interface Marshaller {
 
+    /**
+     * Marshals given message to specified buffer.
+     *
+     * @param buffer into which message will be marshalled
+     * @param message which will be marshalled
+     */
     void marshall(Buffer buffer, Message message);
 
+    /**
+     * Reads message from provided buffer.
+     *
+     * @param buffer from which message data will be read
+     * @return unmarshalled message from buffer
+     */
     Message unmarshall(Buffer buffer);
 
 }

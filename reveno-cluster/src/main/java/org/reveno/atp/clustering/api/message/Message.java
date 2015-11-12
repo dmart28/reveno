@@ -18,15 +18,40 @@ package org.reveno.atp.clustering.api.message;
 import org.reveno.atp.clustering.api.Address;
 import org.reveno.atp.core.api.channel.Buffer;
 
+/**
+ * General message instance which is used solely for
+ * internal communications in Reveno, primarily in
+ * leadership election process. Every {@link Message} insance should
+ * contain unique {@link #type()}.
+ */
 public abstract class Message {
 
+    /**
+     * Provides an ability to serialize current message instance
+     * data down to buffer.
+     * @param buffer into which message will be serialized
+     */
     public abstract void write(Buffer buffer);
 
+    /**
+     * Provides an ability to deserialize current message instance
+     * data from the given buffer
+     * @param buffer from which message will be read
+     */
     public abstract void read(Buffer buffer);
 
+    /**
+     * Unique message type in the system.
+     * @return
+     */
     public abstract int type();
 
     private transient Address address;
+
+    /**
+     * Returns address from which this message was originally sent.
+     * @return
+     */
     public Address address() {
         return address;
     }

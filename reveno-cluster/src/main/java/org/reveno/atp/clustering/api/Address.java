@@ -18,19 +18,48 @@ package org.reveno.atp.clustering.api;
 
 import java.util.Objects;
 
+/**
+ * In Reveno, Address is the basic abstraction on the notion of some
+ * another running instance of Reveno. It consists of three basic configurations:
+ * Connection String (which is typically represented by IP Host address and Port),
+ * {@link IOMode} of connection to this node and unique NodeID among cluster, which
+ * can also represent uniquelly this node.
+ *
+ * The well known and most commonly used implementor of this class is {@link InetAddress}.
+ */
 public class Address {
 
 	private String connectionString;
+
+	/**
+	 * Connection String, which allows current node to perform network
+	 * (or other transport) communications.
+	 * @return
+	 */
 	public String getConnectionString() {
 		return connectionString;
 	}
 	
 	private IOMode addressType;
+
+	/**
+	 * Type of the IO mode of connection, that will be open to node
+	 * at given Address.
+	 * @return
+	 */
 	public IOMode getAddressType() {
 		return addressType;
 	}
 
 	private String nodeId;
+
+	/**
+	 * Unique Node Identificator among cluster of Reveno nodes.
+	 * For example, if cluster consists of three nodes, each node
+	 * should know others two Node IDs, so it can communicate with it
+	 * selectively.
+	 * @return
+	 */
 	public String getNodeId() {
 		return nodeId;
 	}
