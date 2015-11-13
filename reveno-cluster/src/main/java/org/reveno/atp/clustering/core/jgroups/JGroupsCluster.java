@@ -68,7 +68,7 @@ public class JGroupsCluster implements Cluster {
                 List<Address> members = view.getMembers().stream()
                         .map(a -> new Tuple<>(a, JChannelHelper.physicalAddress(channel, config, a)))
                         .filter(t -> t.getVal2() != null)
-                        .filter(t -> config.clusterNodeAddresses().contains(t.getVal2()))
+                        .filter(t -> config.nodesAddresses().contains(t.getVal2()))
                         .peek(t -> addressMap.put(t.getVal2(), t.getVal1()))
                         .map(Tuple::getVal2).collect(Collectors.toList());
                 currentView = new ClusterView(view.getViewId().getId(), members);

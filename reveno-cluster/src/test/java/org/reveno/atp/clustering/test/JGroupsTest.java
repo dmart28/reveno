@@ -118,7 +118,7 @@ public class JGroupsTest {
 
     protected static UnicastAllProvider jgroupsProvider(int port, int[] nodes) {
         RevenoClusterConfiguration config = new RevenoClusterConfiguration();
-        config.clusterNodeAddresses(IntStream.of(nodes).mapToObj(JGroupsTest::inet).collect(Collectors.toList()));
+        config.nodesAddresses(IntStream.of(nodes).mapToObj(JGroupsTest::inet).collect(Collectors.toList()));
         config.currentNodeAddress(inet(port));
         config.unicast().retransmitIntervalMillis(60 * 1000);
         config.unicast().maxRetransmitTimeMillis(120 * 1000);

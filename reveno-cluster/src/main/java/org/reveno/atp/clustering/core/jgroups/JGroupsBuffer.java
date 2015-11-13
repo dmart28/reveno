@@ -21,7 +21,6 @@ import org.jgroups.JChannel;
 import org.jgroups.Message;
 import org.jgroups.View;
 import org.jgroups.conf.ClassConfigurator;
-import org.jgroups.protocols.RSVP;
 import org.reveno.atp.clustering.api.ClusterBuffer;
 import org.reveno.atp.clustering.api.ClusterEvent;
 import org.reveno.atp.clustering.api.ClusterView;
@@ -38,15 +37,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
-import java.util.concurrent.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -155,7 +149,7 @@ public class JGroupsBuffer extends AbstractClusterBuffer implements ClusterBuffe
         addresses = view.getMembers().stream()
                 .map(a -> new Tuple<>(a, JChannelHelper.physicalAddress(channel, config, a)))
                 .filter(t -> t.getVal2() != null)
-                .filter(t -> config.clusterNodeAddresses().contains(t.getVal2()))
+                .filter(t -> config.nodesAddresses().contains(t.getVal2()))
                 .map(t -> new AddressPair(t.getVal1(), t.getVal2().getAddressType()))
                 .sorted((a, b) -> {
                     if (a.mode == IOMode.ASYNC_UNRELIABLE) return 1; else return -1;

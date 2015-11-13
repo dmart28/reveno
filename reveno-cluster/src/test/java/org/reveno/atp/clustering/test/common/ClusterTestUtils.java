@@ -54,7 +54,7 @@ public abstract class ClusterTestUtils {
                     .filter(subEngine -> engine != subEngine)
                     .map(ClusterEngineWrapper::getCurrentAddress)
                     .collect(Collectors.toList());
-            engine.clusterConfiguration().clusterNodeAddresses(nodes);
+            engine.clusterConfiguration().nodesAddresses(nodes);
         }
         return result;
     }

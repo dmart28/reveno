@@ -35,7 +35,7 @@ public class MulticastAllProvider extends JGroupsClusterProvider {
             fcConfig.networkInterface(config.revenoMulticast().netInterface());
             fcConfig.packetsPerSecond(config.revenoMulticast().packetsPerSecond());
             fcConfig.retransmissionPacketHistory(config.revenoMulticast().retransmitPacketsHistory());
-            fcConfig.setNodeAddresses(config.clusterNodeAddresses());
+            fcConfig.setNodeAddresses(config.nodesAddresses());
             fcConfig.socketConfiguration().socketReceiveBufferSize(config.revenoMulticast().receiveBufferSize());
             fcConfig.socketConfiguration().socketSendBufferSize(config.revenoMulticast().sendBufferSize());
             fcConfig.socketConfiguration().ttl(config.revenoMulticast().ttl());

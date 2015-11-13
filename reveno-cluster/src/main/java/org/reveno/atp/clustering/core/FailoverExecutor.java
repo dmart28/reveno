@@ -304,7 +304,7 @@ public class FailoverExecutor {
     }
 
     protected boolean isQuorum(ClusterView view) {
-        return view.members().size() != 0 && view.members().size() >= config.clusterNodeAddresses().size() / 2;
+        return view.members().size() != 0 && view.members().size() >= config.nodesAddresses().size() / 2;
     }
 
     protected void await() {

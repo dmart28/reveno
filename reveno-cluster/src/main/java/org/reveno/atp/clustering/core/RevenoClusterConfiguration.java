@@ -17,10 +17,7 @@
 
 package org.reveno.atp.clustering.core;
 
-import org.reveno.atp.clustering.api.Address;
-import org.reveno.atp.clustering.api.ClusterConfiguration;
-import org.reveno.atp.clustering.api.InetAddress;
-import org.reveno.atp.clustering.api.SyncMode;
+import org.reveno.atp.clustering.api.*;
 import org.reveno.atp.utils.MeasureUtils;
 
 import java.util.Collections;
@@ -29,6 +26,16 @@ import java.util.List;
 public class RevenoClusterConfiguration implements ClusterConfiguration {
 
     protected static final long DEFAULT_TIMEOUT = MeasureUtils.sec(5);
+
+    @Override
+    public void currentNodeAddress(String host, String port, String nodeId) {
+        this.nodeAddress = new InetAddress(host + ":" + port, nodeId, IOMode.ASYNC);
+    }
+
+    @Override
+    public void currentNodeAddress(String host, String port, String nodeId, IOMode mode) {
+        this.nodeAddress = new InetAddress(host + ":" + port, nodeId, mode);
+    }
 
     @Override
     public void currentNodeAddress(Address nodeAddress) {
@@ -42,10 +49,15 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
     }
 
     @Override
-    public void clusterNodeAddresses(List<Address> nodeAddresses) {
+    public void nodesInetAddresses(List<InetAddress> addresses) {
+        this.nodeAddresses.addAll(addresses);
+    }
+
+    @Override
+    public void nodesAddresses(List<Address> nodeAddresses) {
         this.nodeAddresses = nodeAddresses;
     }
-    public List<Address> clusterNodeAddresses() {
+    public List<Address> nodesAddresses() {
         return Collections.unmodifiableList(nodeAddresses);
     }
 
@@ -288,7 +300,7 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
         }
 
         @Override
-        public void datagramSize(int size) {
+        public void packetSize(int size) {
             this.datagramSize = size;
         }
         public int datagramSize() {

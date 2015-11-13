@@ -48,7 +48,7 @@ public abstract class JGroupsClusterProvider implements ClusterProvider {
         Properties props = new Properties();
         props.put("jgroups.tcp.bind_addr", ((InetAddress) config.currentNodeAddress()).getHost());
         props.put("jgroups.tcp.bind_port", Integer.toString(((InetAddress) config.currentNodeAddress()).getPort()));
-        props.put("jgroups.tcpping.initial_hosts", makeInitialHostsString(config.clusterNodeAddresses()));
+        props.put("jgroups.tcpping.initial_hosts", makeInitialHostsString(config.nodesAddresses()));
         props.put("jgroups.auth.token", Optional.ofNullable(config.authToken()).orElse(""));
         setProperties(props);
 

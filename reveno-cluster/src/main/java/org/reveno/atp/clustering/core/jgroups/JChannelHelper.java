@@ -50,7 +50,7 @@ public abstract class JChannelHelper {
         } catch (UnknownHostException e) {
             return null;
         }
-        return config.clusterNodeAddresses().stream().map(a -> (InetAddress) a).filter(a -> a.getHost().equals(inet.getHostAddress())
+        return config.nodesAddresses().stream().map(a -> (InetAddress) a).filter(a -> a.getHost().equals(inet.getHostAddress())
                 && a.getPort() == Integer.parseInt(parts[1])).findFirst().orElse(null);
     }
 }
