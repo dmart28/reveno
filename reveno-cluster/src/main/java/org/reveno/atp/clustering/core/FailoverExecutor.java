@@ -39,6 +39,10 @@ import java.util.function.Supplier;
 
 public class FailoverExecutor {
 
+    /**
+     * Used by internal queue of ThreadPoolExecutor, to make sure we won't loose
+     * any new Leadership Election process requests.
+     */
     private static final int NUM_JOBS_TO_QUEUE = 500;
 
     public void init() {

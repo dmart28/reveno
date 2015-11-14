@@ -20,6 +20,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Represents the View of the cluster at some given period of time.
+ * By View we mean next thing: at some period of time, which has its
+ * unique number {@code viewId}, we have seen N members at the cluster.
+ * If any node(s) leave or new one(s) added, new {@code ClusterView} is
+ * registered in the cluster and shared among all nodes.
+ *
+ * This class is immutable.
+ */
 public class ClusterView {
 
 	public static final ClusterView EMPTY_VIEW = new ClusterView(0, Collections.emptyList());

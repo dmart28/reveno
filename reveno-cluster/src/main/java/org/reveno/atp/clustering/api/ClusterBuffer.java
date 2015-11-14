@@ -59,6 +59,10 @@ public interface ClusterBuffer extends Buffer {
 
     void prepare();
 
+    /**
+     * Send all written data down to endpoint.
+     * @return whether data was fully sent or not
+     */
     boolean replicate();
 
 }

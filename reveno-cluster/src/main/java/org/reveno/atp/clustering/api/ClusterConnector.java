@@ -25,6 +25,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+/**
+ * {@link Cluster} gateway interface, which can be used for internal communication
+ * between Reveno nodes. You should note that it doesn't used for real time commands
+ * replication, for that purpose separate {@link ClusterBuffer} is used.
+ *
+ * The main consumer of that interface might be Leadership Election executor.
+ */
 public interface ClusterConnector {
 
 	void send(List<Address> dest, Message message);

@@ -20,6 +20,10 @@ import org.reveno.atp.clustering.api.Cluster;
 import org.reveno.atp.clustering.api.ClusterBuffer;
 import org.reveno.atp.clustering.core.RevenoClusterConfiguration;
 
+/**
+ * Factory for the two major (and possibly distinct in implementation)
+ * things - {@link Cluster} and {@link ClusterBuffer}.
+ */
 public interface ClusterProvider {
 
     void initialize(RevenoClusterConfiguration config);

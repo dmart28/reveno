@@ -35,6 +35,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
+/**
+ * Abstract provider where {@link Cluster} implementation is always used as
+ * JGroups, and {@link ClusterBuffer} may vary.
+ */
 public abstract class JGroupsClusterProvider implements ClusterProvider {
     public static final String CLUSTER_NAME = "rvno_jg";
 

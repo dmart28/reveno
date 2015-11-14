@@ -20,7 +20,18 @@ import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap;
 import it.unimi.dsi.fastutil.bytes.Byte2ObjectOpenHashMap;
 
 public enum SyncMode {
-    SNAPSHOT((byte) 1), JOURNALS((byte) 2);
+    /**
+     * When one node wants to sync its transaction data with other node
+     * in cluster, the latest Snapshot of the whole system will be sent and
+     * applied by requester.
+     */
+    SNAPSHOT((byte) 1),
+    /**
+     * When one node wants to sync its transaction data with other node
+     * in cluster, the latest possibly available Journals will be sent and
+     * replayed by requester.
+     */
+    JOURNALS((byte) 2);
 
     protected byte type;
     protected static final Byte2ObjectMap<SyncMode> map = new Byte2ObjectOpenHashMap<>();
