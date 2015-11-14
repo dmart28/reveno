@@ -30,6 +30,7 @@ import org.reveno.atp.core.Engine;
 
 import java.text.DecimalFormat;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.locks.LockSupport;
 
 public class LatencyTest extends RevenoBaseTest {
 
@@ -91,8 +92,8 @@ public class LatencyTest extends RevenoBaseTest {
 			e.config().journaling().volumes(1);
 			e.config().journaling().minVolumes(0);
             e.config().journaling().volumesSize(8 * 1024 * 1024 * 1024L, 1024);
-			e.config().journaling().channelOptions(ChannelOptions.BUFFERING_MMAP_OS);
-			e.interceptors().add(TransactionStage.REPLICATION, new TransactionInterceptor() {
+			e.config().journaling().channelOptions(ChannelOptions.BUFFERING_VM);
+			e.interceptors().add(TransactionStage.TRANSACTION, new TransactionInterceptor() {
 				@Override
 				public void destroy() {
 				}
@@ -127,7 +128,7 @@ public class LatencyTest extends RevenoBaseTest {
 					for (long i = 1; i <= 200_000; i++) {
 						engine.executeCommand(cmd);
 					}
-					Thread.yield();
+					LockSupport.parkNanos(1);
 				}
 				} catch (Throwable t) {
 					t.printStackTrace();
@@ -142,14 +143,14 @@ public class LatencyTest extends RevenoBaseTest {
 		}
 		
 		sendCommandSync(engine, new Credit(accountId, 2, System.currentTimeMillis()));
-		
+
 		log.info("Avg latency: " + (int)(((double)latency[0] / ((TOTAL_TRANSACTIONS) * threadCount() - COLD_START_COUNT))) + " nanos");
 		log.info("Worst latency: " + new DecimalFormat("##.###").format(worstLatency[0] / 1_000_000d) + " millis");
-		log.info("Worst precent: " + 
+		log.info("Bad precent (>3mls): " +
 				new DecimalFormat("##.########").format((((double)worstCount[0] / (TOTAL_TRANSACTIONS * threadCount() - COLD_START_COUNT)) * 100)) + "%");
 		log.info("Best precent: " + 
 				new DecimalFormat("##.########").format((((double)bestCount[0] / (TOTAL_TRANSACTIONS * threadCount() - COLD_START_COUNT)) * 100)) + "%");
-		sleep(2000);
+		sleep(7000);
 		
 		engine.shutdown();
 	}
