@@ -30,7 +30,6 @@ public class UnicastAllProvider extends JGroupsClusterProvider {
 
     @Override
     void setProperties(Properties properties) {
-        properties.setProperty("max.stable.attempts", Integer.toString(config.revenoUnicast().maxStableAttempts()));
         properties.setProperty("max.retransmit.time", Integer.toString(config.revenoUnicast().maxRetransmitTimeMillis()));
         properties.setProperty("retransmit.interval", Integer.toString(config.revenoUnicast().retransmitIntervalMillis()));
         properties.setProperty("nodes.ping.timeout", Integer.toString(config.revenoUnicast().pingTimeoutMillis()));

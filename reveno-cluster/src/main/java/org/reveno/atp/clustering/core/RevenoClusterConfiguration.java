@@ -420,15 +420,7 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
             return maxRetransmitTimeMillis;
         }
 
-        @Override
-        public void maxStableAttempts(int attempts) {
-            this.maxStableAttempts = attempts;
-        }
-        public int maxStableAttempts() {
-            return maxStableAttempts;
-        }
-
-        protected int receiveBufferSize = 5 * 1024 * 1024;
+        protected int receiveBufferSize = 1024 * 1024;
         protected int sendBufferSize = 1024 * 1024;
         protected int pingTimeoutMls = 5000;
         protected int maxReceiveThreads = 1;
@@ -436,7 +428,6 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
         protected int receiveQueueMaxSize = 0;
         protected int maxReadBatchMessages = 10;
         protected int retransmitIntervalMillis = 1000;
-        protected int maxRetransmitTimeMillis = 1500;
-        protected int maxStableAttempts = 3;
+        protected int maxRetransmitTimeMillis = 3000;
     }
 }

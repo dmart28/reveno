@@ -313,25 +313,75 @@ public interface ClusterConfiguration {
     }
 
     interface UnicastConfiguration {
+        /**
+         * Socket receive buffer size. Default 1MB.
+         * @param size
+         */
         void receiveBufferSize(int size);
 
+        /**
+         * Socket send buffer size. Default 1MB.
+         * @param size
+         */
         void sendBufferSize(int size);
 
+        /**
+         * Timeout for ping heartbeat and discovery requests.
+         * Defaults to 5 seconds.
+         * @param pingTimeout
+         */
         void pingTimeoutMillis(int pingTimeout);
 
+        /**
+         * Minimum number of threads to be used for messages handling.
+         * Default is 1.
+         * @param threads
+         */
         void minReceiveThreads(int threads);
 
+        /**
+         * Maximum number of threads to be used for messages handling.
+         * Default is 1.
+         * @param threads
+         */
         void maxReceiveThreads(int threads);
 
+        /**
+         * The size of the queue which will be used when all handling threads
+         * are busy. 0 disables it.
+         *
+         * Default is 0.
+         * @param size
+         */
         void receiveQueueMaxSize(int size);
 
+        /**
+         * Max number of messages a read will try to read from the socket.
+         * Setting this to a higher value will increase speed when receiving a lot of messages.
+         * However, when the receive message rate is small, then every read will create an array of
+         * max_read_batch_size messages.
+         *
+         * Default is 10.
+         * @param size
+         */
         void maxReadBatchMessages(int size);
 
+        /**
+         * Interval (in milliseconds) at which messages in the send windows are resent.
+         *
+         * Default is 1 sec.
+         * @param millis
+         */
         void retransmitIntervalMillis(int millis);
 
+        /**
+         * Max number of milliseconds we try to retransmit a message to any given member.
+         * After that, the connection is removed. 0 disables this
+         *
+         * Default is 3 sec.
+         * @param millis
+         */
         void maxRetransmitTimeMillis(int millis);
-
-        void maxStableAttempts(int attempts);
     }
 
     enum CommandsXmitTransport {
