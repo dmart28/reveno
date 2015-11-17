@@ -128,7 +128,6 @@ public class LatencyTest extends RevenoBaseTest {
 					for (long i = 1; i <= 200_000; i++) {
 						engine.executeCommand(cmd);
 					}
-					LockSupport.parkNanos(1);
 				}
 				} catch (Throwable t) {
 					t.printStackTrace();
