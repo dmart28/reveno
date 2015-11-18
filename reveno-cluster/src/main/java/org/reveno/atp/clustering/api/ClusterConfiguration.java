@@ -150,7 +150,7 @@ public interface ClusterConfiguration {
          * A mode in which two nodes will perform synchronization during Leadership Election. First option means that
          * all nodes makes snapshots in advance and then just send it by request from other nodes.
          * Second option is when the node sends required Journal files to other nodes, which contains events with
-         * transaction ID >= current node last transaction ID.
+         * transaction ID more or equals to current node last transaction ID.
          *
          * First option is prefered, but is not recommended for big models, because of size of snapshot
          * and costs spent to make it for each Leadership Election process.

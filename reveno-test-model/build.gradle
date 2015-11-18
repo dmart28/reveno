@@ -3,3 +3,7 @@ dependencies {
     compile "junit:junit:$junitVersion"
     compile project(":reveno-core")
 }
+
+javadoc {
+    enabled = false
+}

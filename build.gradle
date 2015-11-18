@@ -1,3 +1,32 @@
+buildscript {
+	repositories { jcenter() }
+
+	dependencies {
+		classpath 'com.netflix.nebula:gradle-aggregate-javadocs-plugin:2.2.+'
+	}
+}
+
+//apply plugin: 'nebula-aggregate-javadocs'
+import org.gradle.api.*
+
+Project rootProject = project.rootProject
+rootProject.gradle.projectsEvaluated {
+	Set<Project> javaSubprojects = rootProject.subprojects.findAll { subproject -> subproject.plugins.hasPlugin(JavaPlugin) }
+	if (!javaSubprojects.isEmpty()) {
+		rootProject.task("aggregateJavadocs", type: Javadoc) {
+			title = '<h1>Reveno Framework </h1>'
+			options.bottom = '<i>Copyright &#169; 2015 Artem Dmitriev. All Rights Reserved.</i>'
+			description = 'Aggregates Javadoc API documentation of all subprojects.'
+			group = JavaBasePlugin.DOCUMENTATION_GROUP
+			dependsOn javaSubprojects.javadoc
+
+			source javaSubprojects.javadoc.source
+			destinationDir rootProject.file("$rootProject.buildDir/docs/javadoc")
+			classpath = rootProject.files(javaSubprojects.javadoc.classpath)
+		}
+	}
+}
+
 allprojects {
 	apply plugin: "java"
 	apply plugin: "idea"
@@ -39,6 +68,40 @@ allprojects {
 
 	task wrapper(type: Wrapper) {
 		gradleVersion = '2.6'
+	}
+
+	tasks.withType(Javadoc) {
+		options.addStringOption('Xdoclint:none', '-quiet')
+		options.setMemberLevel(org.gradle.external.javadoc.JavadocMemberLevel.PUBLIC)
+	}
+
+	javadoc {
+		title = '<h1>Reveno Framework </h1>'
+
+		options.bottom = '<i>Copyright &#169; 2015 Artem Dmitriev. All Rights Reserved.</i>'
+		options.addStringOption('XDignore.symbol.file', '-quiet')
+		include '**/clustering/**'
+		include '**/api/**'
+		include '**/commons/**'
+		include '**/core/**'
+		include '**/utils/**'
+		include '**/metrics/**'
+		exclude '**/acceptance/**'
+		exclude '**/test/**'
+	}
+
+	task javadocJar(type: Jar, dependsOn: javadoc) {
+		classifier = 'javadoc'
+		from javadoc.destinationDir
+	}
+
+	task sourcesJar(type: Jar) {
+		classifier = 'sources'
+		from sourceSets.main.allSource
+	}
+
+	artifacts {
+		archives sourcesJar, javadocJar
 	}
 
 	defaultTasks 'clean', 'build'

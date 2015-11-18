@@ -5,5 +5,9 @@ subprojects {
 	dependencies {
 		compile project(":reveno-core")
 	}
+
+	javadoc {
+		enabled = false
+	}
 }
 
