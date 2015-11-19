@@ -117,6 +117,10 @@ reveno.shutdown();
 
 For the quick start guide and other very useful documentation, go to our page [http://reveno.org](http://reveno.org/quickstart-guide/)
 
+# Javadoc
+
+Our javadoc page can be found [here](http://javadoc.reveno.org)
+
 # Support
 [Google Groups](https://groups.google.com/forum/#!forum/reveno-dev) | 
 [Email support](mailto:support@reveno.org) | 
