@@ -1,4 +1,4 @@
-# Reveno - Event-Sourced Transaction Processing Framework
+# Reveno | Event-Sourced Transaction Processing Framework
 Reveno is thoroughgoing lightning-fast, durable and yet simple async transaction processing JVM based framework made to fit your domain in first place. It's highly influenced by patterns/approaches like CQRS, ES, Zero-Copy, DDD, Mechanical Symphaty.
 
 ### High performance with low latency
