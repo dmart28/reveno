@@ -85,6 +85,34 @@ dependencies {
 }
 ```
 
+# Sample usage
+
+```java
+Reveno reveno = new Engine("/tmp/reveno-sample");
+reveno.config().mutableModel();
+
+reveno.domain()
+	.transaction("createAccount", (t,c) ->
+		c.repo().store(t.id(), 
+			new Account(t.arg())))
+	.uniqueIdFor(Account.class).command();
+
+reveno.domain()
+	.transaction("changeBalance", (t,c) -> 
+		c.repo().forceGet(Account.class, t.arg())
+			.balance += t.intArg("inc"))
+	.command();
+
+reveno.startup();
+
+long accountId = reveno.executeSync("createAccount",
+		map("name", "John"));
+reveno.executeSync("changeBalance", 
+		map("id", accountId, "inc", 10_000));
+
+reveno.shutdown();
+```
+
 # Quick start guide
 
 For the quick start guide and other very useful documentation, go to our page [http://reveno.org](http://reveno.org/quickstart-guide/)
