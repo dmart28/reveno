@@ -4,7 +4,7 @@ Reveno is thoroughgoing lightning-fast, durable and yet simple async transaction
 ### High performance with low latency
 Able to process millions of transactions per second with mean latency measured by tens of microseconds on an average hardware, thus delivering the result with the speed of lightning.
 
-### Transactions durability
+### Durability
 A rich set of configurations for journaling, in-memory model snapshotting and clustered failover replication makes the system totally reliable, so you make sure no single bit of data is lost.
 
 ### Easy to code, fluent API
@@ -16,17 +16,11 @@ The purpose of Reveno is to give an easy domain-oriented development tool with s
 
 ### Few highlights:
 * Reveno is based on JVM and written fully on Java.
-
 * Reveno is fast - Able to process millions of transaction per second with microseconds latency.
-
 * Reveno is domain oriented - your primary focus will be on the core domain and domain logic only.
-
 * Reveno is an in-memory transactional event-driven framework with separated command and query sides and event sourcing intruded. See our Architecture overview
-
 * Reveno is modular - use only components you really need to.
-
 * Reveno is robust - we have much durability options as well as failover replication among cluster, pre-allocated volumes and much more.
-
 * Reveno is lightweight. The core is about 300kb only.
 
 # Installation
@@ -86,6 +80,7 @@ dependencies {
 ```
 
 # Sample usage
+This example is not a quite useful in reality, but can give you a very good look at how easily relatively complex things can be done. For more real case example, we strongly encourage you to look at our [examples](https://github.com/dmart28/reveno/tree/master/examples).
 
 ```java
 Reveno reveno = new Engine("/tmp/reveno-sample");
