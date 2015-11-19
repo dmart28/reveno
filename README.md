@@ -90,6 +90,6 @@ dependencies {
 For the quick start guide and other very useful documentation, go to our page [http://reveno.org](http://reveno.org/quickstart-guide/)
 
 # Support
-[Google Groups](https://groups.google.com/forum/#!forum/reveno-dev)
-[Support mail](mailto:support@reveno.org)
+[Google Groups](https://groups.google.com/forum/#!forum/reveno-dev) | 
+[Support mail](mailto:support@reveno.org) | 
 [Issues](https://github.com/dmart28/reveno/issues)
