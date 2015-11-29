@@ -2,6 +2,16 @@ apply plugin: 'osgi'
 apply plugin: 'maven-publish'
 
 sourceSets {
+	perfTest {
+		java {
+			srcDir 'java'
+		}
+		resources {
+			srcDir 'resources'
+		}
+		compileClasspath = sourceSets.main.output + configurations.perfTestCompile
+		runtimeClasspath = output + sourceSets.main.output + configurations.perfTestRuntime
+	}
 	acceptanceTest {
 		java {
 			srcDir 'java'
@@ -10,19 +20,16 @@ sourceSets {
 			srcDir 'resources'
 		}
 	}
-	perfTest {
-		java {
-			srcDir 'java'
-		}
-		resources {
-			srcDir 'resources'
-		}
-			}
 	test {
 		java {
 			srcDirs = ['src/test/java', 'src/acceptanceTest/java']
 		}
 	}
+}
+
+configurations {
+	perfTestCompile.extendsFrom compile, testCompile
+	perfTestRuntime.extendsFrom runtime, perfTestCompile, testRuntime
 }
 
 jar {
@@ -74,4 +81,13 @@ dependencies {
 	acceptanceTestCompile "org.easymock:easymock:$easymockVersion"
 
 	perfTestCompile project(":reveno-test-model")
+}
+
+idea {
+	module {
+		//and some extra test source dirs
+		testSourceDirs += file('src/perfTest/java')
+		generatedSourceDirs += file('src/perfTest/java')
+		scopes.TEST.plus += [ configurations.perfTestCompile ]
+	}
 }

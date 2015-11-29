@@ -1,4 +1,4 @@
-/** 
+/**
  *  Copyright (c) 2015 The original author or authors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,9 +14,23 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.api.query;
+package org.reveno.atp.examples.basic_views;
 
-@FunctionalInterface
-public interface ViewsMapper<Entity, View> {
-	View map(long id, Entity entity, MappingContext repository);
+import java.util.Base64;
+
+public abstract class LongUtils {
+
+    public static String longToBase64(long number) {
+        return Base64.getEncoder().encodeToString(longToBytes(number));
+    }
+
+    public static byte[] longToBytes(long l) {
+        byte[] result = new byte[8];
+        for (int i = 7; i >= 0; i--) {
+            result[i] = (byte)(l & 0xFF);
+            l >>= 8;
+        }
+        return result;
+    }
+
 }

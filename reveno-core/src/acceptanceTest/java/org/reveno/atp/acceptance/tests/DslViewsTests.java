@@ -76,7 +76,7 @@ public class DslViewsTests extends RevenoBaseTest {
 		reveno.domain().viewMapper(Page.class, PageView.class, (id,e,r) -> new PageView(id, e.name, r.get(LinkView.class, e.linksIds.get(0)).get()));
 		
 		reveno.startup();
-		
+
 		long pageId = reveno.executeSync(create, new HashMap<>());
 		
 		Assert.assertTrue(pageId != 0);

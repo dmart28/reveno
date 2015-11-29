@@ -128,8 +128,8 @@ public class OnDemandViewsContext implements MappingContext {
 		@Override
 		public boolean contains(Object o) {
 			Optional<V> v;
-			for (int i = 0; i < ids.length; i++) {
-				if ((v = storage.find(viewType, ids[i])).isPresent() && v.get().equals(o))
+			for (long id1 : ids) {
+				if ((v = storage.find(viewType, id1)).isPresent() && v.get().equals(o))
 					return true;
 			}
 			return false;
@@ -175,7 +175,7 @@ public class OnDemandViewsContext implements MappingContext {
 		
 		@Override
 		public boolean containsAll(Collection<?> c) {
-			return c.stream().allMatch(cc -> contains(cc));
+			return c.stream().allMatch(this::contains);
 		}
 
 		@Override
@@ -269,7 +269,7 @@ public class OnDemandViewsContext implements MappingContext {
 			
 			@Override
 			public boolean hasNext() {
-				return ids.length - 1 <= index;
+				return ids.length - 1 >= index;
 			}
 
 			@Override
@@ -312,6 +312,23 @@ public class OnDemandViewsContext implements MappingContext {
 				throw new UnsupportedOperationException("The List is read-only!");
 			}
 			
+		}
+
+		@Override
+		public String toString() {
+			Iterator<V> it = listIterator();
+			if (! it.hasNext())
+				return "[]";
+
+			StringBuilder sb = new StringBuilder();
+			sb.append('[');
+			for (;;) {
+				V e = it.next();
+				sb.append(e == this ? "(this Collection)" : e);
+				if (! it.hasNext())
+					return sb.append(']').toString();
+				sb.append(',').append(' ');
+			}
 		}
 	}
 	
@@ -366,7 +383,7 @@ public class OnDemandViewsContext implements MappingContext {
 
 			@Override
 			public boolean hasNext() {
-				return ids.length - 1 <= index;
+				return ids.length - 1 >= index;
 			}
 
 			@Override

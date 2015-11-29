@@ -144,6 +144,10 @@ public interface Reveno {
 
 	<R> R executeSync(String command, Map<String, Object> args);
 
+	<R> R executeSync(String command);
+
 	<R> CompletableFuture<Result<R>> execute(String command, Map<String, Object> args);
+
+	<R> CompletableFuture<Result<R>> execute(String command);
 	
 }

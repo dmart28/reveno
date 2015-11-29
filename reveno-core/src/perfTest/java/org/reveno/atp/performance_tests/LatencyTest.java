@@ -30,7 +30,6 @@ import org.reveno.atp.core.Engine;
 
 import java.text.DecimalFormat;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.locks.LockSupport;
 
 public class LatencyTest extends RevenoBaseTest {
 
@@ -56,25 +55,25 @@ public class LatencyTest extends RevenoBaseTest {
 		test.testPhased();
 		test.tearDown();
 	}
-	
+
 	@Test
 	public void testLow() throws Exception {
 		log.info("Testing with LOW consumption:");
 		doTest(CpuConsumption.LOW);
 	}
-	
+
 	@Test
 	public void testNormal() throws Exception {
 		log.info("Testing with NORMAL consumption:");
 		doTest(CpuConsumption.NORMAL);
 	}
-	
+
 	@Test
 	public void testHigh() throws Exception {
 		log.info("Testing with HIGH consumption:");
 		doTest(CpuConsumption.HIGH);
 	}
-	
+
 	@Test
 	public void testPhased() throws Exception {
 		log.info("Testing with PHASED consumption:");

@@ -67,6 +67,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -305,9 +306,19 @@ public class Engine implements Reveno {
 	}
 
 	@Override
+	public <R> R executeSync(String command) {
+		return executeSync(command, Collections.emptyMap());
+	}
+
+	@Override
 	public <R> CompletableFuture<Result<R>> execute(String command, Map<String, Object> args) {
 		Optional<DynamicCommand> dc = getDynamicCommand(command);
 		return execute(dc.get(), args);
+	}
+
+	@Override
+	public <R> CompletableFuture<Result<R>> execute(String command) {
+		return execute(command, Collections.emptyMap());
 	}
 
 	public InterceptorCollection interceptors() {
