@@ -38,6 +38,46 @@ public class AbstractDynamicTransaction {
 		return (T) args.get(name);
 	}
 
+	public byte byteArg(String name) {
+		return (byte) args.get(name);
+	}
+
+	public byte byteArg() {
+		return (byte) arg();
+	}
+
+	public short shortArg(String name) {
+		return (short) args.get(name);
+	}
+
+	public short shortArg() {
+		return (short) arg();
+	}
+
+	public float floatArg(String name) {
+		return (float) args.get(name);
+	}
+
+	public float floatArg() {
+		return (float) arg();
+	}
+
+	public double doubleArg(String name) {
+		return (double) args.get(name);
+	}
+
+	public double doubleArg() {
+		return (double) arg();
+	}
+
+	public char charArg(String name) {
+		return (char) args.get(name);
+	}
+
+	public char charArg() {
+		return (char) arg();
+	}
+
 	public long longArg(String name) {
 		return (long) args.get(name);
 	}

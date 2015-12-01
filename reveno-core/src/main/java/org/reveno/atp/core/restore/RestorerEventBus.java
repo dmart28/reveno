@@ -92,7 +92,8 @@ public class RestorerEventBus implements RestoreableEventBus {
 		if (event.getTransactionId() <= lastTransactionId && event.getFlag() == 0) {
 			log.warn("Transaction ID < Last Transaction ID - this is abnormal [{};{}]", event.getTransactionId(), lastTransactionId);
 			addMissedEvents(event);
-		} else if (event.getTransactionId() - lastTransactionId > 1) {
+		} else // TODO it might be just that not all transactions issue events, so nothing is missing
+		if (event.getTransactionId() - lastTransactionId > 1) {
 			log.info("Missing transaction events from {} to {}", lastTransactionId + 1, event.getTransactionId() - 1);
 			unpublishedEvents.add(new LongRange(lastTransactionId + 1, event.getTransactionId() - 1));
 		}

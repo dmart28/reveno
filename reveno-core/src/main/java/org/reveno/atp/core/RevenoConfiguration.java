@@ -43,6 +43,9 @@ public class RevenoConfiguration implements Configuration {
 	public JournalingConfiguration journaling() {
 		return journaling;
 	}
+	public RevenoJournalingConfiguration revenoJournaling() {
+		return journaling;
+	}
 
 	@Override
 	public Configuration mutableModel() {
@@ -58,10 +61,6 @@ public class RevenoConfiguration implements Configuration {
 
 	public ModelType modelType() {
 		return modelType;
-	}
-
-	public RevenoJournalingConfiguration revenoJournaling() {
-		return journaling;
 	}
 
 	@Override

@@ -100,8 +100,8 @@ public class DefaultJournaler implements Journaler {
 			throw new RuntimeException("Journaler must be in writing mode.");
 	}
 
-	protected AtomicReference<Channel> channel = new AtomicReference<Channel>();
-	protected AtomicReference<Channel> oldChannel = new AtomicReference<Channel>();
+	protected AtomicReference<Channel> channel = new AtomicReference<>();
+	protected AtomicReference<Channel> oldChannel = new AtomicReference<>();
 	protected volatile Runnable rolledHandler;
 	protected volatile boolean isWriting = false;
 	protected static final Logger log = LoggerFactory.getLogger(DefaultJournaler.class);

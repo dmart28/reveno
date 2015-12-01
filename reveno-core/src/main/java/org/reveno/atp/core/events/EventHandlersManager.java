@@ -39,6 +39,8 @@ public class EventHandlersManager implements EventsManager {
 	}
 	
 	public ExecutorService asyncEventExecutor() {
+		// TODO when we call this method, we have sequencer, so we can apply
+		// simple round-robin here, which will perform faster than random.
 		return asyncListenersExecutor.get(rand.nextInt(asyncListenersExecutor.size()));
 	}
 	
