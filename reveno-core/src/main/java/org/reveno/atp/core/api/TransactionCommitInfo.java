@@ -21,19 +21,27 @@ import java.util.List;
 public interface TransactionCommitInfo {
 	
 	long transactionId();
+
+	long time();
+
+	long flag();
+
+	long tag();
+
+	List<Object> transactionCommits();
 	
 	TransactionCommitInfo transactionId(long transactionId);
 	
-	long time();
-	
 	TransactionCommitInfo time(long time);
-	
-	List<Object> transactionCommits();
-	
+
+	TransactionCommitInfo flag(long flag);
+
+	TransactionCommitInfo tag(long tag);
+
 	TransactionCommitInfo transactionCommits(List<Object> commands);
 	
 	
-	public interface Builder {
+	interface Builder {
 		TransactionCommitInfo create();
 	}
 	

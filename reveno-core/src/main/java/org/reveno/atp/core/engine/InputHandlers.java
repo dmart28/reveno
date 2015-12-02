@@ -103,6 +103,7 @@ public class InputHandlers {
 		
 		interceptors(TransactionStage.TRANSACTION, c);
 		txExecutor.executeCommands(c, services);
+
 	};
 	protected final BiConsumer<ProcessorContext, Boolean> journaler = (c, eob) -> {
 		interceptors(TransactionStage.JOURNALING, c);

@@ -48,6 +48,24 @@ public class TransactionCommitInfoImpl implements TransactionCommitInfo {
 		this.time = time;
 		return this;
 	}
+
+	private long flag;
+	public long flag() {
+		return flag;
+	}
+	public TransactionCommitInfo flag(long flag) {
+		this.flag = flag;
+		return this;
+	}
+
+	private long tag;
+	public long tag() {
+		return tag;
+	}
+	public TransactionCommitInfo tag(long tag) {
+		this.tag = tag;
+		return this;
+	}
 	
 	private List<Object> transactionCommits;
 	public List<Object> transactionCommits() {

@@ -16,6 +16,8 @@
 
 package org.reveno.atp.utils;
 
+import org.reveno.atp.core.api.channel.Buffer;
+
 public abstract class BinaryUtils {
 
 	public static long bytesToLong(byte[] b) {
@@ -78,6 +80,23 @@ public abstract class BinaryUtils {
 		result = 31 * result + data[11];
 		
 		return result;
+	}
+
+	public static void writeNullable(long flag, Buffer buffer) {
+		if (flag == 0l) {
+			buffer.writeByte((byte) 0);
+		} else {
+			buffer.writeByte((byte) 1);
+			buffer.writeLong(flag);
+		}
+	}
+
+	public static long readNullable(Buffer buffer) {
+		byte sign = buffer.readByte();
+		if (sign == 1) {
+			return buffer.readLong();
+		}
+		return 0l;
 	}
 	
 }

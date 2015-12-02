@@ -21,20 +21,21 @@ import org.reveno.atp.core.api.EventsCommitInfo;
 import org.reveno.atp.core.api.EventsCommitInfo.Builder;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.serialization.EventsInfoSerializer;
+import org.reveno.atp.utils.BinaryUtils;
 
 public class SimpleEventsSerializer implements EventsInfoSerializer {
 
 	@Override
 	public void serialize(EventsCommitInfo info, Buffer buffer) {
-		buffer.writeLong(info.getTransactionId());
-		buffer.writeLong(info.getTime());
-		buffer.writeInt(info.getFlag());
+		buffer.writeLong(info.transactionId());
+		buffer.writeLong(info.time());
+		BinaryUtils.writeNullable(info.flag(), buffer);
 	}
 
 	@Override
 	public EventsCommitInfo deserialize(Builder builder, Buffer buffer) {
-		EventsCommitInfo eci = builder.create(buffer.readLong(), buffer.readLong(), buffer.readInt());
-		if (eci.getTransactionId() == 0 && eci.getTime() == 0) {
+		EventsCommitInfo eci = builder.create(buffer.readLong(), buffer.readLong(), BinaryUtils.readNullable(buffer));
+		if (eci.transactionId() == 0 && eci.time() == 0) {
 			throw new BufferOutOfBoundsException();
 		}
 		return eci;

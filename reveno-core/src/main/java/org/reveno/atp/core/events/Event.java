@@ -49,11 +49,11 @@ public class Event implements Destroyable {
 		return this;
 	}
 	
-	private int flag;
-	public int getFlag() {
+	private long flag;
+	public long getFlag() {
 		return flag;
 	}
-	public Event flag(int flag) {
+	public Event flag(long flag) {
 		this.flag = flag;
 		return this;
 	}

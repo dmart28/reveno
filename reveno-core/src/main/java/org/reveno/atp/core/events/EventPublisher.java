@@ -27,8 +27,8 @@ import java.util.function.BiConsumer;
 
 public class EventPublisher {
 
-	public static final int ASYNC_ERROR_FLAG = 0xBABECAFE;
-	public static final int SYNC_FLAG = 0xCAFEBABE;
+	public static final long ASYNC_ERROR_FLAG = 1 << 1;
+	public static final long SYNC_FLAG = 1 << 2;
 	
 	protected EventsContext context;
 
@@ -110,7 +110,7 @@ public class EventPublisher {
 	};
 	
 	protected final BiConsumer<Event, Boolean> journaler = (e, eof) -> {
-		if (e.getFlag() == SYNC_FLAG) {
+		if ((e.getFlag() & SYNC_FLAG) == SYNC_FLAG) {
 			e.syncFuture().complete(null);
 		} else {
 			context.eventsJournaler().writeData(b -> {

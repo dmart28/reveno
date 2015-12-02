@@ -79,25 +79,25 @@ public class RestorerEventBus implements RestoreableEventBus {
 	
 	public void processNextEvent(EventsCommitInfo event) {
 		if (lastTransactionId == -1L) {
-			lastTransactionId = event.getTransactionId();
+			lastTransactionId = event.transactionId();
 			maxTransactionId = lastTransactionId;
 			return;
 		}
 		
-		if (event.getFlag() == EventPublisher.ASYNC_ERROR_FLAG) {
-			log.info("Failed transaction event [{}]", event.getTransactionId());
-			unpublishedEvents.add(new LongRange(event.getTransactionId()));
+		if ((event.flag() & EventPublisher.ASYNC_ERROR_FLAG) == EventPublisher.ASYNC_ERROR_FLAG) {
+			log.info("Failed transaction event [{}]", event.transactionId());
+			unpublishedEvents.add(new LongRange(event.transactionId()));
 			return;
 		}
-		if (event.getTransactionId() <= lastTransactionId && event.getFlag() == 0) {
-			log.warn("Transaction ID < Last Transaction ID - this is abnormal [{};{}]", event.getTransactionId(), lastTransactionId);
+		if (event.transactionId() <= lastTransactionId && event.flag() == 0) {
+			log.warn("Transaction ID < Last Transaction ID - this is abnormal [{};{}]", event.transactionId(), lastTransactionId);
 			addMissedEvents(event);
 		} else // TODO it might be just that not all transactions issue events, so nothing is missing
-		if (event.getTransactionId() - lastTransactionId > 1) {
-			log.info("Missing transaction events from {} to {}", lastTransactionId + 1, event.getTransactionId() - 1);
-			unpublishedEvents.add(new LongRange(lastTransactionId + 1, event.getTransactionId() - 1));
+		if (event.transactionId() - lastTransactionId > 1) {
+			log.debug("Missing transaction events from {} to {}", lastTransactionId + 1, event.transactionId() - 1);
+			unpublishedEvents.add(new LongRange(lastTransactionId + 1, event.transactionId() - 1));
 		}
-		lastTransactionId = event.getTransactionId();
+		lastTransactionId = event.transactionId();
 		if (lastTransactionId > maxTransactionId)
 			maxTransactionId = lastTransactionId;
 	}
@@ -107,10 +107,10 @@ public class RestorerEventBus implements RestoreableEventBus {
 		Iterator<LongRange> i = unpublishedEvents.iterator();
 		while (i.hasNext()) {
 			LongRange range = i.next();
-			if (!range.higher(event.getTransactionId())) {
-				if (range.contains(event.getTransactionId())) {
+			if (!range.higher(event.transactionId())) {
+				if (range.contains(event.transactionId())) {
 					i.remove();
-					Collections.addAll(toAdd, range.split(event.getTransactionId()));
+					Collections.addAll(toAdd, range.split(event.transactionId()));
 					break;
 				}
 			}

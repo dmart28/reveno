@@ -30,6 +30,7 @@ import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.reveno.atp.core.serialization.protostuff.ZeroCopyBufferInput;
 import org.reveno.atp.core.serialization.protostuff.ZeroCopyLinkBuffer;
+import org.reveno.atp.utils.BinaryUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,6 +59,8 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 
 		buffer.writeLong(info.transactionId());
 		buffer.writeLong(info.time());
+		BinaryUtils.writeNullable(info.flag(), buffer);
+		BinaryUtils.writeNullable(info.tag(), buffer);
 		buffer.writeInt(info.transactionCommits().size());
 
 		serializeObjects(buffer, info.transactionCommits());
@@ -69,12 +72,16 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 
 		long transactionId = buffer.readLong();
 		long time = buffer.readLong();
+		long flag = BinaryUtils.readNullable(buffer);
+		long tag = BinaryUtils.readNullable(buffer);
 		if (transactionId == 0 && time == 0) {
 			throw new BufferOutOfBoundsException();
 		}
 		List<Object> commits = deserializeObjects(buffer);
 
-		return builder.create().transactionId(transactionId).time(time).transactionCommits(commits);
+		return builder.create().transactionId(transactionId)
+				.time(time).transactionCommits(commits)
+				.flag(flag).tag(tag);
 	}
 
 	@Override

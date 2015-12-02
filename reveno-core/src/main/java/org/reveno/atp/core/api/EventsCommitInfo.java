@@ -33,25 +33,25 @@ public interface EventsCommitInfo {
 	 * 
 	 * @return transactionId
 	 */
-	long getTransactionId();
+	long transactionId();
 	
 	/**
 	 * The time of events execution.
 	 * 
 	 * @return time
 	 */
-	long getTime();
+	long time();
 	
 	/**
 	 * Some flag of events commit for internal handling or restore process.
 	 * 
 	 * @return flag
 	 */
-	int getFlag();
+	long flag();
 	
 	
-	public interface Builder {
-		EventsCommitInfo create(long txId, long time, int flag);
+	interface Builder {
+		EventsCommitInfo create(long txId, long time, long flag);
 	}
 	
 }
