@@ -83,10 +83,8 @@ public class InputHandlers {
 	}
 	
 	public void destroy() {
-		marshalled.release();
 	}
-	
-	protected final Buffer marshalled = new ChannelBuffer(ByteBuffer.allocateDirect(MeasureUtils.mb(1)));
+
 	protected WorkflowContext services;
 	protected TransactionExecutor txExecutor;
 	protected Supplier<Long> nextTransactionId;
