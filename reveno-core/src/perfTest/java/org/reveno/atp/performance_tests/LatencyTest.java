@@ -16,7 +16,6 @@
 
 package org.reveno.atp.performance_tests;
 
-import org.junit.Test;
 import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
 import org.reveno.atp.acceptance.api.transactions.Credit;
 import org.reveno.atp.acceptance.tests.RevenoBaseTest;
@@ -33,48 +32,52 @@ import java.util.concurrent.ExecutionException;
 
 public class LatencyTest extends RevenoBaseTest {
 
-	public static final long TOTAL_TRANSACTIONS = 120_000_000;
-	public static final long COLD_START_COUNT = 20_000_000;
+	public static final long TOTAL_TRANSACTIONS = 180_000_000;
+	public static final long COLD_START_COUNT = 40_000_000;
 	
 	public static void main(String[] args) throws Exception {
 		LatencyTest test = new LatencyTest();
 		test.modelType = ModelType.IMMUTABLE;
-		test.setUp();
-		test.testLow();
-		test.tearDown();
-		
-		test.setUp();
-		test.testNormal();
-		test.tearDown();
-		
-		test.setUp();
-		test.testHigh();
-		test.tearDown();
-		
-		test.setUp();
-		test.testPhased();
-		test.tearDown();
+		if (args[0].equals("low")) {
+			test.setUp();
+			test.testLow();
+			test.tearDown();
+		}
+
+		if (args[0].equals("normal")) {
+			test.setUp();
+			test.testNormal();
+			test.tearDown();
+		}
+
+		if (args[0].equals("high")) {
+			test.setUp();
+			test.testHigh();
+			test.tearDown();
+		}
+
+		if (args[0].equals("phased")) {
+			test.setUp();
+			test.testPhased();
+			test.tearDown();
+		}
 	}
 
-	@Test
 	public void testLow() throws Exception {
 		log.info("Testing with LOW consumption:");
 		doTest(CpuConsumption.LOW);
 	}
 
-	@Test
 	public void testNormal() throws Exception {
 		log.info("Testing with NORMAL consumption:");
 		doTest(CpuConsumption.NORMAL);
 	}
 
-	@Test
 	public void testHigh() throws Exception {
 		log.info("Testing with HIGH consumption:");
 		doTest(CpuConsumption.HIGH);
 	}
 
-	@Test
 	public void testPhased() throws Exception {
 		log.info("Testing with PHASED consumption:");
 		doTest(CpuConsumption.PHASED);
@@ -88,9 +91,9 @@ public class LatencyTest extends RevenoBaseTest {
 		final long[] bestCount = { 0L };
 		Engine engine = createEngine(e -> {
 			e.config().cpuConsumption(consumption);
-			e.config().journaling().volumes(1);
+			e.config().journaling().volumes(4);
 			e.config().journaling().minVolumes(0);
-            e.config().journaling().volumesSize(8 * 1024 * 1024 * 1024L, 1024);
+            e.config().journaling().volumesSize(2 * 1024 * 1024 * 1024L, 1024);
 			e.config().journaling().channelOptions(ChannelOptions.BUFFERING_VM);
 			e.interceptors().add(TransactionStage.TRANSACTION, new TransactionInterceptor() {
 				@Override
@@ -146,9 +149,9 @@ public class LatencyTest extends RevenoBaseTest {
 		log.info("Worst latency: " + new DecimalFormat("##.###").format(worstLatency[0] / 1_000_000d) + " millis");
 		log.info("Bad precent (>3mls): " +
 				new DecimalFormat("##.########").format((((double)worstCount[0] / (TOTAL_TRANSACTIONS * threadCount() - COLD_START_COUNT)) * 100)) + "%");
-		log.info("Best precent: " + 
+		log.info("Best precent (<1mcr): " +
 				new DecimalFormat("##.########").format((((double)bestCount[0] / (TOTAL_TRANSACTIONS * threadCount() - COLD_START_COUNT)) * 100)) + "%");
-		sleep(7000);
+		sleep(20000);
 		
 		engine.shutdown();
 	}
