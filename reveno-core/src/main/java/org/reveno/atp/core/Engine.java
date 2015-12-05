@@ -63,6 +63,7 @@ import org.reveno.atp.core.storage.FileSystemStorage;
 import org.reveno.atp.core.views.ViewsDefaultStorage;
 import org.reveno.atp.core.views.ViewsManager;
 import org.reveno.atp.core.views.ViewsProcessor;
+import org.reveno.atp.utils.Exceptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -295,7 +296,22 @@ public class Engine implements Reveno {
 
 			return r.getResult();
 		} catch (InterruptedException | ExecutionException e) {
-			throw new RuntimeException(e);
+			throw Exceptions.runtime(e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <R> R executeSync(Object command) {
+		try {
+			Result<? extends R> r = (Result<? extends R>) executeCommand(command).get();
+			if (!r.isSuccess()) {
+				throw new RuntimeException("Failed to execute command.", r.getException());
+			}
+
+			return r.getResult();
+		} catch (InterruptedException | ExecutionException e) {
+			throw Exceptions.runtime(e);
 		}
 	}
 

@@ -127,6 +127,8 @@ public interface Reveno {
 	 * indicator of success and optional throwable object in case if failure.
 	 */
 	<R> CompletableFuture<Result<R>> executeCommand(Object command);
+
+	<R> R executeSync(Object command);
 	
 	/**
 	 * Same as {@link #executeCommand(Object)}, but allows to execute a batch of 

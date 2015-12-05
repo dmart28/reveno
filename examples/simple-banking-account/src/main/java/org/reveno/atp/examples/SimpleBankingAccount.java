@@ -44,8 +44,8 @@ public class SimpleBankingAccount {
         Reveno reveno = init(args[0]);
         reveno.startup();
 
-        long id = reveno.<Long>executeCommand(new CreateAccount("John", Currency.getInstance("EUR"))).get().getResult();
-        reveno.executeCommand(new AddToBalanceCommand(id, 10000, Currency.getInstance("USD"))).get();
+        long id = reveno.executeSync(new CreateAccount("John", Currency.getInstance("EUR")));
+        reveno.executeSync(new AddToBalanceCommand(id, 10000, Currency.getInstance("USD")));
 
         printStats(reveno, id);
 
