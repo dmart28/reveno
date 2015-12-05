@@ -74,8 +74,8 @@ Maven
 Gradle
 ```groovy
 dependencies {
-    compile 'org.reveno:reveno-core:1.13'
-    compile 'org.reveno:reveno-cluster:1.13'
+    compile 'org.reveno:reveno-core:1.15'
+    compile 'org.reveno:reveno-cluster:1.15'
 }
 ```
 
