@@ -15,9 +15,10 @@ public class Examples {
         Reveno reveno = new Engine(args[0]);
         reveno.config().mutableModel();
         reveno.config().mutableModelFailover(Configuration.MutableModelFailover.COMPENSATING_ACTIONS);
-        reveno.domain().transaction("createAccount", (t,c) -> {
-            c.repo().store(t.id(), new Account(t.id(), t.longArg("balance")));
-        }).uniqueIdFor(Account.class).conditionalCommand((cmd, c) -> cmd.longArg("balance") >= 0l).command();
+        reveno.domain().transaction("createAccount",
+                (t,c) -> c.repo().store(t.id(), new Account(t.id(), t.longArg("balance"))))
+                .uniqueIdFor(Account.class)
+                .conditionalCommand((cmd, c) -> cmd.longArg("balance") >= 0l).command();
 
         // we use same AddToBalance class as command and tx action for simplicity here
         // as we don't need any special logic in commands rather than just call tx action
