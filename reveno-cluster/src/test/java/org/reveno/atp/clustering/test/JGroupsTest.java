@@ -94,7 +94,7 @@ public class JGroupsTest {
 
         serializer.serializeCommands(Collections.singletonList(message), buffer1);
         buffer1.replicate();
-        
+
         Assert.assertTrue(Utils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));
 
         count.set(1);

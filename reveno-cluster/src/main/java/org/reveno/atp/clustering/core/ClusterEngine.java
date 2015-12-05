@@ -17,9 +17,7 @@
 
 package org.reveno.atp.clustering.core;
 
-import org.reveno.atp.clustering.api.Cluster;
-import org.reveno.atp.clustering.api.ClusterBuffer;
-import org.reveno.atp.clustering.api.ClusterConfiguration;
+import org.reveno.atp.clustering.api.*;
 import org.reveno.atp.clustering.api.message.Marshaller;
 import org.reveno.atp.clustering.core.api.ClusterExecutor;
 import org.reveno.atp.clustering.core.api.ClusterState;
@@ -151,8 +149,11 @@ public class ClusterEngine extends Engine {
         super.shutdown();
     }
 
-    @Override
-    public FailoverManager failoverManager() {
+    public ClusterStateInfo clusterStateInfo() {
+        return stateInfo;
+    }
+
+    protected FailoverManager failoverManager() {
         return failoverManager;
     }
 
@@ -184,6 +185,23 @@ public class ClusterEngine extends Engine {
         workflowContext.repository(repository);
         return workflowEngine.getLastTransactionId();
     }
+
+    protected ClusterStateInfo stateInfo = new ClusterStateInfo() {
+        @Override
+        public boolean isMaster() {
+            return failoverManager != null && failoverManager.isMaster();
+        }
+
+        @Override
+        public boolean isBlocked() {
+            return failoverManager != null && failoverManager.isBlocked();
+        }
+
+        @Override
+        public ClusterView currentView() {
+            return cluster == null ? null : cluster.view();
+        }
+    };
 
     protected RevenoClusterConfiguration configuration = new RevenoClusterConfiguration();
     protected ClusterProvider clusterProvider;

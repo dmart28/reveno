@@ -40,8 +40,7 @@ public class ClusterBaseTest extends RevenoBaseTest {
 
         waitInCluster(engine1, engine2, engine3);
 
-        Assert.assertTrue(Utils.waitFor(() -> engine1.failoverManager() != null &&
-                engine1.failoverManager().isMaster(), sec(TIMEOUT_SECS)));
+        Assert.assertTrue(Utils.waitFor(() -> engine1.clusterStateInfo().isMaster(), sec(TIMEOUT_SECS)));
         long accountId = sendCommandSync(engine1, new CreateNewAccountCommand("USD", 1000_000L));
 
         Assert.assertTrue(Utils.waitFor(() -> engine2.query().find(AccountView.class, accountId).isPresent(), sec(TIMEOUT_SECS)));
@@ -62,7 +61,7 @@ public class ClusterBaseTest extends RevenoBaseTest {
 
     protected void waitInCluster(ClusterEngineWrapper... engines) {
         for (ClusterEngineWrapper engine : engines) {
-            Assert.assertTrue(Utils.waitFor(() -> engine.failoverManager() != null && engine.isElectedInCluster(), sec(TIMEOUT_SECS)));
+            Assert.assertTrue(Utils.waitFor(() -> engine.isStarted() && engine.isElectedInCluster(), sec(TIMEOUT_SECS)));
         }
     }
 
@@ -77,8 +76,7 @@ public class ClusterBaseTest extends RevenoBaseTest {
 
         waitInCluster(engine1, engine2);
 
-        Assert.assertTrue(Utils.waitFor(() -> engine1.failoverManager() != null &&
-                engine1.failoverManager().isMaster(), sec(TIMEOUT_SECS)));
+        Assert.assertTrue(Utils.waitFor(() -> engine1.clusterStateInfo().isMaster(), sec(TIMEOUT_SECS)));
 
         generateAndSendCommands(engine1, 10_000);
 
@@ -98,8 +96,7 @@ public class ClusterBaseTest extends RevenoBaseTest {
         executor.execute(engine1::startup);
         executor.execute(engine2::startup);
 
-        Assert.assertTrue(Utils.waitFor(() -> engine1.failoverManager() != null &&
-                engine1.failoverManager().isMaster(), sec(TIMEOUT_SECS)));
+        Assert.assertTrue(Utils.waitFor(() -> engine1.clusterStateInfo().isMaster(), sec(TIMEOUT_SECS)));
         long accountId = sendCommandSync(engine1, new CreateNewAccountCommand("USD", 1000_000L));
 
         Assert.assertTrue(Utils.waitFor(() -> engine2.query().find(AccountView.class, accountId).isPresent(), sec(TIMEOUT_SECS)));
@@ -119,7 +116,7 @@ public class ClusterBaseTest extends RevenoBaseTest {
 
         waitInCluster(engine1, engine2);
 
-        Assert.assertTrue(Utils.waitFor(() -> engine1.failoverManager().isMaster(), sec(TIMEOUT_SECS)));
+        Assert.assertTrue(Utils.waitFor(() -> engine1.clusterStateInfo().isMaster(), sec(TIMEOUT_SECS)));
         long accountId = sendCommandSync(engine1, new CreateNewAccountCommand("USD", 1000_000L));
 
         Assert.assertTrue(Utils.waitFor(() -> engine2.query().find(AccountView.class, accountId).isPresent(), sec(TIMEOUT_SECS)));
