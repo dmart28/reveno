@@ -94,7 +94,7 @@ public class JGroupsTest {
 
         serializer.serializeCommands(Collections.singletonList(message), buffer1);
         buffer1.replicate();
-
+        
         Assert.assertTrue(Utils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));
 
         count.set(1);
@@ -103,7 +103,6 @@ public class JGroupsTest {
         buffer1.replicate();
 
         Assert.assertTrue(Utils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));
-        Assert.assertFalse(Utils.waitFor(() -> count.get() < 0, TEST_TIMEOUT));
 
         count.set(2);
         buffer2.unlockIncoming();
@@ -111,7 +110,6 @@ public class JGroupsTest {
         buffer1.replicate();
 
         Assert.assertTrue(Utils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));
-        Assert.assertFalse(Utils.waitFor(() -> count.get() < 0, TEST_TIMEOUT));
 
         buffer1.disconnect(); buffer2.disconnect(); buffer3.disconnect();
     }
