@@ -61,12 +61,12 @@ Maven
     <dependency>
         <groupId>org.reveno</groupId>
         <artifactId>reveno-core</artifactId>
-        <version>1.13</version>
+        <version>1.15</version>
     </dependency>
     <dependency>
         <groupId>org.reveno</groupId>
         <artifactId>reveno-cluster</artifactId>
-        <version>1.13</version>
+        <version>1.15</version>
     </dependency>
 </dependencies>
 ```
