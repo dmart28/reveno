@@ -111,7 +111,7 @@ public interface ClusterConfiguration {
     TimeoutsConfiguration electionTimeouts();
 
     /**
-     * Data synchronization timeouts. Data Synchonization is a process, which is issued at some stage
+     * Data Synchronization configurations. Data Synchronization is a process, which is issued at some stage
      * of Leadership Election process. First, nodes sends to each other their last transaction IDs processed.
      * After that, somes might discover that their internal state is not the last in cluster. In that case,
      * they ask the node with the most actual state to share last transactions / snapshot, efficiently syncing

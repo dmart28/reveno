@@ -21,6 +21,7 @@ import org.reveno.atp.clustering.api.*;
 import org.reveno.atp.utils.MeasureUtils;
 
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 public class RevenoClusterConfiguration implements ClusterConfiguration {
@@ -41,7 +42,7 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
     public void currentNodeAddress(Address nodeAddress) {
         this.nodeAddress = nodeAddress;
         if (sync.port == 0 && nodeAddress instanceof InetAddress) {
-            sync.port = ((InetAddress) nodeAddress).getPort() + 1;
+            sync.port = ((InetAddress) nodeAddress).getPort() + 10;
         }
     }
     public Address currentNodeAddress() {
@@ -119,7 +120,7 @@ public class RevenoClusterConfiguration implements ClusterConfiguration {
 
 
     protected Address nodeAddress;
-    protected List<Address> nodeAddresses;
+    protected List<Address> nodeAddresses = new LinkedList<>();
     protected int priority = 1;
     protected String authToken;
     protected CommandsXmitTransport transport = CommandsXmitTransport.UNICAST;

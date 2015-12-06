@@ -35,6 +35,15 @@ public class InetAddress extends Address {
 		return host;
 	}
 
+	/**
+	 * Default constructor.
+	 * @param inetAddress network address at which node is discoverable in form "host:port"
+	 * @param nodeId unqiue amoung cluster Node ID, which length should be less than 10 characters
+	 */
+	public InetAddress(String inetAddress, String nodeId) {
+		this(inetAddress, nodeId, IOMode.ASYNC);
+	}
+
 	public InetAddress(String inetAddress, IOMode addressType) {
 		this(inetAddress, Base64.getEncoder().encodeToString(Bits.intToBytes(
 				(int) Bits.crc32(inetAddress.getBytes()))), addressType);
