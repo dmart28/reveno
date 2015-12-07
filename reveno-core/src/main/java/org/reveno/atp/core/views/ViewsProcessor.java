@@ -41,6 +41,9 @@ public class ViewsProcessor {
 	}
 	
 	@SuppressWarnings("unchecked")
+	/**
+	 * TODO we should strongly support mutable views to be GC-friendly
+	 */
 	protected void map(Class<?> entityType, long id, Object entity) {
 		ViewHandlerHolder<Object, Object> holder = (ViewHandlerHolder<Object, Object>) manager.resolveEntity(entityType);
 		if (holder == null) 
