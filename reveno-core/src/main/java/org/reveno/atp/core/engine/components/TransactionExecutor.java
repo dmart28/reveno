@@ -36,6 +36,7 @@ import java.util.function.Consumer;
 public class TransactionExecutor {
 
 	public void executeCommands(ProcessorContext c, WorkflowContext services) {
+		// TODO reduce alloc cost by listIterator
 		ListIterator<Object> cmdIterator = c.getCommands().listIterator();
 		ListIterator<Object> transactionIterator = c.getTransactions().listIterator();
 		try {
@@ -52,6 +53,7 @@ public class TransactionExecutor {
 				int index = 0;
 				while (cmdIterator.hasNext()) {
 					Object result = services.commandsManager().execute(cmdIterator.next(), commandContext);
+					// TODO reduce alloc cost
 					transactionIterator = c.getTransactions().listIterator(index);
 					executeTransactions(services, transactionIterator);
 					if (c.hasResult())
@@ -150,6 +152,7 @@ public class TransactionExecutor {
 	protected static class InnerTransactionContext implements TransactionContext {
 		public EventBus eventBus;
 		public WriteableRepository repository;
+		// TODO make much more efficient
 		protected Map<Object, Object> map = new HashMap<>();
 
 		@Override

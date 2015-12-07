@@ -102,6 +102,7 @@ public class ZeroCopyLinkBuffer extends LinkBuffer {
 
     @Override
     public LinkBuffer writeVarInt32(int value) throws IOException {
+        // TODO too costly operation
         byte[] buf = new byte[5];
         int locPtr = 0;
         while (true)
@@ -123,6 +124,7 @@ public class ZeroCopyLinkBuffer extends LinkBuffer {
 
     @Override
     public LinkBuffer writeVarInt64(long value) throws IOException {
+        // TODO too costly operation
         byte[] buf = new byte[10];
         int locPtr = 0;
 

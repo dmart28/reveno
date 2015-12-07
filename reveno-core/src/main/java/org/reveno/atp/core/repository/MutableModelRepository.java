@@ -159,11 +159,12 @@ public class MutableModelRepository implements TxRepository, Destroyable {
 	}
 	
 	protected boolean saveEntityState(long entityId, Class<?> type, Object entity, EntityRecoveryState state) {
-		if (!stashed.get(type).contains(entityId)) {
+		LongOpenHashSet stashedEntities = stashed.get(type);
+		if (!stashedEntities.contains(entityId)) {
 			if (!serializer.isRegistered(entity.getClass()))
 				serializer.registerTransactionType(entity.getClass());
 			marshallEntity(entityId, type, entity, state);
-			stashed.get(type).add(entityId);
+			stashedEntities.add(entityId);
 			return true;
 		} else
 			return false;
@@ -213,7 +214,7 @@ public class MutableModelRepository implements TxRepository, Destroyable {
 	};
 	protected static final Logger log = LoggerFactory.getLogger(MutableModelRepository.class);
 	
-	public static enum EntityRecoveryState {
+	public enum EntityRecoveryState {
 		ADD((byte)1), REMOVE((byte)2), UPDATE((byte)3);
 		
 		protected byte type;

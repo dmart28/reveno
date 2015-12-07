@@ -105,6 +105,7 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	public RepositoryData deserialize(Buffer buffer) {
 		changeClassLoaderIfRequired();
 
+		// TODO unnecessary allocation
         Input input = new ZeroCopyBufferInput(buffer, true);
         RepositoryData repoData = repoSchema.newMessage();
         try {
@@ -194,6 +195,7 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	}
 
 	protected void changeClassLoaderIfRequired() {
+		// TODO check only once since only single thread uses serializers in Reveno
 		if (Thread.currentThread().getContextClassLoader() != classLoader) {
 			Thread.currentThread().setContextClassLoader(classLoader);
 		}

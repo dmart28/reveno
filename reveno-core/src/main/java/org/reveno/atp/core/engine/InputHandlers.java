@@ -36,7 +36,9 @@ import java.util.function.Supplier;
 public class InputHandlers {
 
 	@SuppressWarnings("unchecked")
-	public void ex(ProcessorContext c, boolean filter, boolean eob, BiConsumer<ProcessorContext, Boolean> body) {
+	public void ex(ProcessorContext c, boolean filter, boolean eob,
+				   // TODO replace to prevent Boolean heap rubbish
+				   BiConsumer<ProcessorContext, Boolean> body) {
 		if (!c.isAborted() && filter) {
 			try {
 				body.accept(c, eob);
@@ -87,6 +89,7 @@ public class InputHandlers {
 
 	protected WorkflowContext services;
 	protected TransactionExecutor txExecutor;
+	// TODO LongSupplier
 	protected Supplier<Long> nextTransactionId;
 	
 	protected final BiConsumer<ProcessorContext, Boolean> replicator = (c, eob) -> {
