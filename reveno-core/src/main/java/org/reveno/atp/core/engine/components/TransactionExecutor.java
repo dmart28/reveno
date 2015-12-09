@@ -36,9 +36,8 @@ import java.util.function.Consumer;
 public class TransactionExecutor {
 
 	public void executeCommands(ProcessorContext c, WorkflowContext services) {
-		// TODO reduce alloc cost by listIterator
-		ListIterator<Object> cmdIterator = c.getCommands().listIterator();
-		ListIterator<Object> transactionIterator = c.getTransactions().listIterator();
+		List<Object> cmds = c.getCommands();
+		List<Object> txs = c.getTransactions();
 		try {
 			c.eventBus().currentTransactionId(c.transactionId()).underlyingEventBus(c.defaultEventBus());
 			repository.underlying(services.repository()).map(c.getMarkedRecords());
@@ -48,17 +47,15 @@ public class TransactionExecutor {
 			begin(services);
 			
 			if (c.isRestore()) {
-				executeTransactions(services, transactionIterator);
+				executeTransactions(services, txs, 0);
 			} else {
 				int index = 0;
-				while (cmdIterator.hasNext()) {
-					Object result = services.commandsManager().execute(cmdIterator.next(), commandContext);
-					// TODO reduce alloc cost
-					transactionIterator = c.getTransactions().listIterator(index);
-					executeTransactions(services, transactionIterator);
+				for (int i = 0; i < cmds.size(); i++) {
+					Object result = services.commandsManager().execute(cmds.get(i), commandContext);
+					executeTransactions(services, txs, index);
 					if (c.hasResult())
 						c.commandResult(result);
-					index = c.getTransactions().size();
+					index = txs.size();
 				}
 			}
 			
@@ -91,9 +88,9 @@ public class TransactionExecutor {
 			services.repository().begin();
 	}
 
-	protected void executeTransactions(WorkflowContext services, ListIterator<Object> i) {
-		while (i.hasNext())
-			services.transactionsManager().execute(i.next(), transactionContext);
+	protected void executeTransactions(WorkflowContext services, List<Object> txs, int index) {
+		for (int i = index; i < txs.size(); i++)
+			services.transactionsManager().execute(txs.get(i), transactionContext);
 	}
 	
 	protected void compensateTransactions(WorkflowContext services, ListIterator<Object> transactionIterator) {

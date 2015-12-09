@@ -20,6 +20,7 @@ import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.api.exceptions.ReplicationFailedException;
 import org.reveno.atp.api.transaction.TransactionStage;
+import org.reveno.atp.commons.BoolBiConsumer;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.channel.Channel;
 import org.reveno.atp.core.channel.ChannelBuffer;
@@ -31,14 +32,13 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.function.BiConsumer;
+import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 public class InputHandlers {
 
 	@SuppressWarnings("unchecked")
-	public void ex(ProcessorContext c, boolean filter, boolean eob,
-				   // TODO replace to prevent Boolean heap rubbish
-				   BiConsumer<ProcessorContext, Boolean> body) {
+	public void ex(ProcessorContext c, boolean filter, boolean eob, BoolBiConsumer<ProcessorContext> body) {
 		if (!c.isAborted() && filter) {
 			try {
 				body.accept(c, eob);
@@ -89,24 +89,23 @@ public class InputHandlers {
 
 	protected WorkflowContext services;
 	protected TransactionExecutor txExecutor;
-	// TODO LongSupplier
-	protected Supplier<Long> nextTransactionId;
+	protected LongSupplier nextTransactionId;
 	
-	protected final BiConsumer<ProcessorContext, Boolean> replicator = (c, eob) -> {
+	protected final BoolBiConsumer<ProcessorContext> replicator = (c, eob) -> {
 		interceptors(TransactionStage.REPLICATION, c);
 		
 		if (!services.failoverManager().replicate(b -> services.serializer().serializeCommands(c.getCommands(), b)))
 			c.abort(new ReplicationFailedException());
 	};
-	protected final BiConsumer<ProcessorContext, Boolean> transactionExecutor = (c, eob) -> {
+	protected final BoolBiConsumer<ProcessorContext> transactionExecutor = (c, eob) -> {
 		if (!c.isRestore())
-			c.transactionId(nextTransactionId.get());
+			c.transactionId(nextTransactionId.getAsLong());
 		
 		interceptors(TransactionStage.TRANSACTION, c);
 		txExecutor.executeCommands(c, services);
 
 	};
-	protected final BiConsumer<ProcessorContext, Boolean> journaler = (c, eob) -> {
+	protected final BoolBiConsumer<ProcessorContext> journaler = (c, eob) -> {
 		interceptors(TransactionStage.JOURNALING, c);
 
 		rollIfRequired(c.transactionId());
@@ -115,10 +114,10 @@ public class InputHandlers {
 			services.serializer().serialize(c.commitInfo(), b);
 		}, eob);
 	};
-	protected final BiConsumer<ProcessorContext, Boolean> viewsUpdater = (c, eob) -> {
+	protected final BoolBiConsumer<ProcessorContext> viewsUpdater = (c, eob) -> {
 		services.viewsProcessor().process(c.getMarkedRecords());
 	};
-	protected final BiConsumer<ProcessorContext, Boolean> eventsPublisher = (c, eob) -> {
+	protected final BoolBiConsumer<ProcessorContext> eventsPublisher = (c, eob) -> {
 		if (c.isReplicated()) {
 			services.eventPublisher().replicateEvents(c.transactionId());
 		} else {
@@ -146,7 +145,7 @@ public class InputHandlers {
 	}
 	
 	
-	public InputHandlers(WorkflowContext context, Supplier<Long> nextTransactionId) {
+	public InputHandlers(WorkflowContext context, LongSupplier nextTransactionId) {
 		this.services = context;
 		this.txExecutor = new TransactionExecutor();
 		this.nextTransactionId = nextTransactionId;
