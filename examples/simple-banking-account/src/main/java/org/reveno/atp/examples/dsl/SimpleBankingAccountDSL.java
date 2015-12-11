@@ -36,15 +36,15 @@ public class SimpleBankingAccountDSL {
                 .command();
         reveno.domain()
                 .transaction("changeBalance", (t, c) ->
-                        c.repo().store(t.longArg(), c.repo().forceGet(Account.class, t.arg()).add(t.intArg("inc"))))
+                        c.repo().store(t.longArg(), c.repo().get(Account.class, t.arg()).add(t.intArg("inc"))))
                 .command();
         reveno.domain().viewMapper(Account.class, AccountView.class, (id, e, r) -> new AccountView(id, e.name, e.balance));
         return reveno;
     }
 
     protected static void printStats(Reveno reveno, long accountId) {
-        LOG.info("Account {} name: {}", accountId, reveno.query().find(AccountView.class, accountId).get().name);
-        LOG.info("Account {} balance: {}", accountId, reveno.query().find(AccountView.class, accountId).get().balance);
+        LOG.info("Account {} name: {}", accountId, reveno.query().find(AccountView.class, accountId).name);
+        LOG.info("Account {} balance: {}", accountId, reveno.query().find(AccountView.class, accountId).balance);
     }
 
     public static void main(String[] args) {

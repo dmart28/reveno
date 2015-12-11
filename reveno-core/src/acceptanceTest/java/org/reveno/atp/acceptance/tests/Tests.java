@@ -65,7 +65,7 @@ public class Tests extends RevenoBaseTest {
 		Waiter accountCreatedEvent = listenFor(reveno, AccountCreatedEvent.class);
 		Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class);
 		long accountId = sendCommandSync(reveno, new CreateNewAccountCommand("USD", 1000_000L));
-		AccountView accountView = reveno.query().find(AccountView.class, accountId).get();
+		AccountView accountView = reveno.query().find(AccountView.class, accountId);
 		
 		Assert.assertTrue(accountCreatedEvent.isArrived());
 		Assert.assertEquals(accountId, accountView.accountId);
@@ -74,8 +74,8 @@ public class Tests extends RevenoBaseTest {
 		Assert.assertEquals(0, accountView.orders().size());
 		
 		long orderId = sendCommandSync(reveno, new NewOrderCommand(accountId, null, "EUR/USD", 134000, 1000, OrderType.MARKET));
-		OrderView orderView = reveno.query().find(OrderView.class, orderId).get();
-		accountView = reveno.query().find(AccountView.class, accountId).get();
+		OrderView orderView = reveno.query().find(OrderView.class, orderId);
+		accountView = reveno.query().find(AccountView.class, accountId);
 		
 		Assert.assertTrue(orderCreatedEvent.isArrived());
 		Assert.assertEquals(orderId, orderView.id);
@@ -349,7 +349,7 @@ public class Tests extends RevenoBaseTest {
 			r.domain().transactionWithCompensatingAction(Debit.class, Transactions::debit, RollbackTransactions::rollbackDebit);
 			
 			r.domain().command(TestCmd.class, (c,d) -> d.executeTransaction(new TestTx()));
-			r.domain().transactionAction(TestTx.class, (a,b) -> { repo[0] = b.repository(); throw new RuntimeException(); });
+			r.domain().transactionAction(TestTx.class, (a,b) -> { repo[0] = b.repo(); throw new RuntimeException(); });
 		};
 		Reveno reveno = createEngine(consumer);
 		reveno.startup();
@@ -360,15 +360,15 @@ public class Tests extends RevenoBaseTest {
 		
 		Assert.assertFalse(f.get().isSuccess());
 		Assert.assertEquals(RuntimeException.class, f.get().getException().getClass());
-		Assert.assertEquals(1000, repo[0].get(Account.class, accountId).get().balance());
-		Assert.assertEquals(1000, reveno.query().find(AccountView.class, accountId).get().balance);
+		Assert.assertEquals(1000, repo[0].get(Account.class, accountId).balance());
+		Assert.assertEquals(1000, reveno.query().find(AccountView.class, accountId).balance);
 		
 		reveno.shutdown();
 		
 		reveno = createEngine(consumer);
 		reveno.startup();
 		
-		Assert.assertEquals(1000, reveno.query().find(AccountView.class, accountId).get().balance);
+		Assert.assertEquals(1000, reveno.query().find(AccountView.class, accountId).balance);
 		
 		reveno.shutdown();
 	}

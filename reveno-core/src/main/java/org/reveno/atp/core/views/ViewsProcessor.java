@@ -17,11 +17,13 @@
 package org.reveno.atp.core.views;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import org.reveno.atp.api.domain.Repository;
 import org.reveno.atp.core.api.ViewsStorage;
 import org.reveno.atp.core.views.ViewsManager.ViewHandlerHolder;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class ViewsProcessor {
 
@@ -30,16 +32,28 @@ public class ViewsProcessor {
 		repo.getEntityTypes().forEach(c -> repo.getEntities(c).forEach((k,v) -> map(c, k, v)));
 		repository.repositorySource(null);
 	}
-	
+
+	public Class<?> currentType;
+	private final Consumer<? super Long2ObjectMap.Entry<Object>> m = new Consumer<Long2ObjectMap.Entry<Object>>() {
+		@Override
+		public void accept(Long2ObjectMap.Entry<Object> entry) {
+			map(currentType, entry.getLongKey(), entry.getValue());
+		}
+	};
+	private final Consumer<Map.Entry<Class<?>, Long2ObjectLinkedOpenHashMap<Object>>> c = e -> {
+		currentType = e.getKey();
+		e.getValue().long2ObjectEntrySet().forEach(m);
+	};
+
 	public void process(Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> marked) {
 		repository.marked(marked);
-		marked.forEach((k, v) -> v.long2ObjectEntrySet().forEach(e -> map(k, e.getLongKey(), e.getValue())));
+		marked.entrySet().forEach(c);
 	}
 
 	public void erase() {
 		storage.clearAll();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	/**
 	 * TODO we should strongly support mutable views to be GC-friendly

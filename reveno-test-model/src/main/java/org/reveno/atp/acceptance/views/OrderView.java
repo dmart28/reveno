@@ -28,7 +28,7 @@ public class OrderView extends ViewBase {
 	
 	private final long accountId;
 	public AccountView account() {
-		return query.find(AccountView.class, accountId).get();
+		return query.find(AccountView.class, accountId);
 	}
 	
 	public final long size;
@@ -40,7 +40,7 @@ public class OrderView extends ViewBase {
 	
 	private final Optional<Long> positionId;
 	public Optional<PositionView> position() {
-		return positionId.isPresent() ? query.find(PositionView.class, positionId.get()) : Optional.empty();
+		return positionId.isPresent() ? query.findO(PositionView.class, positionId.get()) : Optional.empty();
 	}
 	
 	public OrderView(long id, long accountId, long size, long price, long time, Optional<Long> positionId,

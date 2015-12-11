@@ -41,12 +41,12 @@ public class RepositoryTest {
 		repository.store(1L, item1);
 		repository.store(2L, item2);
 		
-		Assert.assertTrue(repository.get(Bin.class, 1L).isPresent());
-		Assert.assertTrue(repository.get(Bin.class, 2L).isPresent());
-		Assert.assertFalse(repository.get(Bin.class, 3L).isPresent());
+		Assert.assertTrue(repository.has(Bin.class, 1L));
+		Assert.assertTrue(repository.has(Bin.class, 2L));
+		Assert.assertFalse(repository.has(Bin.class, 3L));
 		
-		Assert.assertTrue(repository.get(Bin.class, 1L).isPresent());
-		Assert.assertTrue(repository.get(Bin.class, 2L).isPresent());
+		Assert.assertTrue(repository.has(Bin.class, 1L));
+		Assert.assertTrue(repository.has(Bin.class, 2L));
 		
 		repository.remove(Bin.class, 2L);
 		Assert.assertEquals(1, repository.getEntities(Bin.class).size());

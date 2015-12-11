@@ -24,7 +24,7 @@ public class Examples {
         // as we don't need any special logic in commands rather than just call tx action
         reveno.domain().command(AddToBalance.class, (c, ctx) -> ctx.executeTransaction(c));
         reveno.domain().transactionWithCompensatingAction(AddToBalance.class, (t, ctx) -> {
-            Account account = ctx.repo().forceGet(Account.class, t.account);
+            Account account = ctx.repo().get(Account.class, t.account);
             ctx.data().put("exists", true);
             account.add(t.amount);
             // then some exception happens eventually
@@ -33,7 +33,7 @@ public class Examples {
         }, (t, ctx) -> {
             // we shouldn't decrement balance if we are not sure that it actually used to happen
             if (ctx.data().containsKey("exists")) {
-                ctx.repo().forceGet(Account.class, t.account).add(-t.amount);
+                ctx.repo().get(Account.class, t.account).add(-t.amount);
             }
         });
 
@@ -43,19 +43,19 @@ public class Examples {
         long acc = reveno.executeSync("createAccount", MapUtils.map("balance", 1000l));
         // this is normal execution which won't lead to any issue
         reveno.executeCommand(new AddToBalance(acc, 5)).get();
-        long goodIncrementBalance = reveno.query().find(AccountView.class, acc).get().balance;
+        long goodIncrementBalance = reveno.query().find(AccountView.class, acc).balance;
         LOG.info("Balance after fine command: {}", goodIncrementBalance);
 
         // try wrong account ID, in which case exception will be thrown by Tx Action,
         // but there should be no compensating action decrement of balance
         reveno.executeCommand(new AddToBalance(acc + 1, 5)).get();
-        long wrongCommandBalance = reveno.query().find(AccountView.class, acc).get().balance;
+        long wrongCommandBalance = reveno.query().find(AccountView.class, acc).balance;
         LOG.info("Balance after wrong command: {}", wrongCommandBalance);
 
         // this will lead to compensating action to be executed, decrementing balance back to its value
         // so final balance will be 1005, not 101505
         reveno.executeCommand(new AddToBalance(acc, 100500)).get();
-        wrongCommandBalance = reveno.query().find(AccountView.class, acc).get().balance;
+        wrongCommandBalance = reveno.query().find(AccountView.class, acc).balance;
         LOG.info("Balance after wrong command: {}", wrongCommandBalance);
 
         reveno.shutdown();

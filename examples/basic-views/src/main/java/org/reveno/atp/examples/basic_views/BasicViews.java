@@ -38,12 +38,12 @@ public class BasicViews {
         Reveno reveno = new Engine(args[0]);
         reveno.config().mutableModel();
 
-        reveno.domain().transaction("createTrader", (tx, ctx) -> {
-            ctx.repository().store(tx.id(), new Trader(tx.id()));
-        }).uniqueIdFor(Trader.class).command();
+        reveno.domain().transaction("createTrader", (tx, ctx) ->
+            ctx.repo().store(tx.id(), new Trader(tx.id()))
+        ).uniqueIdFor(Trader.class).command();
         reveno.domain().transaction("createOrder", (tx, ctx) -> {
-            ctx.repository().forceGet(Trader.class, tx.arg("trId")).orders.add(tx.id());
-            ctx.repository().store(tx.id(), new Order(tx.id(), tx.longArg("size"), tx.longArg("price")));
+            ctx.repo().get(Trader.class, tx.arg("trId")).orders.add(tx.id());
+            ctx.repo().store(tx.id(), new Order(tx.id(), tx.longArg("size"), tx.longArg("price")));
         }).uniqueIdFor(Order.class).command();
 
         reveno.domain().viewMapper(Trader.class, TraderView.class, (id, e, r) ->
@@ -56,9 +56,9 @@ public class BasicViews {
         long traderId = reveno.executeSync("createTrader");
         long orderId = reveno.executeSync("createOrder", MapUtils.map("trId", traderId, "size", 1000l, "price", (long)(3.14 * PRECISION)));
 
-        TraderView trader = reveno.query().find(TraderView.class, traderId).get();
+        TraderView trader = reveno.query().find(TraderView.class, traderId);
         LOG.info("Trader: {}", trader);
-        OrderView order = reveno.query().find(OrderView.class, orderId).get();
+        OrderView order = reveno.query().find(OrderView.class, orderId);
         LOG.info("Order: {}", order);
 
         reveno.shutdown();

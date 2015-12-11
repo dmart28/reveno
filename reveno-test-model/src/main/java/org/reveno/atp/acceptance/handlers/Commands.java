@@ -45,26 +45,28 @@ public abstract class Commands {
 	}
 	
 	public static void credit(Credit credit, CommandContext ctx) {
-		ctx.repository().get(Account.class, credit.accountId).isPresent();
+		if (!ctx.repo().has(Account.class, credit.accountId))
+			throw new RuntimeException();
 		
 		ctx.executeTransaction(credit);
 	}
 	
 	public static void debit(Debit debit, CommandContext ctx) {
-		ctx.repository().get(Account.class, debit.accountId).isPresent();
-		
+		if (!ctx.repo().has(Account.class, debit.accountId))
+			throw new RuntimeException();
+
 		ctx.executeTransaction(debit);
 	}
 	
 	public static Long newOrder(NewOrderCommand cmd, CommandContext ctx) { 
 		long orderId = ctx.id(Order.class);
-		Account account = ctx.repository().get(Account.class, cmd.accountId).get();
+		Account account = ctx.repo().get(Account.class, cmd.accountId);
 		
 		if (cmd.positionId != null) {
 			long positionId = cmd.positionId;
 			require(account.positions().positions().containsKey(positionId), format("Can't find position %d in account %d", positionId, account.id()));
-			Position position = ctx.repository().get(Position.class, cmd.positionId).get();
-			long sum = position.sum() + account.orders().stream().map(oid -> ctx.repository().get(Order.class, oid))
+			Position position = ctx.repo().get(Position.class, cmd.positionId);
+			long sum = position.sum() + account.orders().stream().map(oid -> ctx.repo().getO(Order.class, oid))
 					.flatMap(Commands::streamopt).filter(o -> o.positionId().isPresent() && o.positionId().get() == positionId)
 					.map(Order::size).reduce(0L, Long::sum);
 			require(sum != 0, format("The position %d is already filled.", positionId));

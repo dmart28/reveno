@@ -46,10 +46,10 @@ public class RecordingRepository implements WriteableRepository {
 	}
 
 	@Override
-	public <T> Optional<T> get(Class<T> entityType, long id) {
-		Optional<T> result = underlyingRepo.get(entityType, id);
-		if (result.isPresent())
-			markedRecords.get(entityType).put(id, result.get());
+	public <T> T get(Class<T> entityType, long id) {
+		T result = underlyingRepo.get(entityType, id);
+		if (result != null)
+			markedRecords.get(entityType).put(id, result);
 		return result;
 	}
 	
@@ -59,7 +59,7 @@ public class RecordingRepository implements WriteableRepository {
 	}
 	
 	@Override
-	public <T> Optional<T> getClean(Class<T> entityType, long id) {
+	public <T> T getClean(Class<T> entityType, long id) {
 		return underlyingRepo.getClean(entityType, id);
 	}
 

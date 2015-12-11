@@ -19,6 +19,7 @@ package org.reveno.atp.core.engine;
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
 import org.reveno.atp.api.exceptions.ReplicationFailedException;
+import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.commons.BoolBiConsumer;
 import org.reveno.atp.core.api.channel.Buffer;
@@ -31,11 +32,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 public class InputHandlers {
+
+	public static final EmptyResult EMPTY_RESULT = new EmptyResult();
 
 	@SuppressWarnings("unchecked")
 	public void ex(ProcessorContext c, boolean filter, boolean eob, BoolBiConsumer<ProcessorContext> body) {
@@ -79,7 +84,7 @@ public class InputHandlers {
 				if (c.hasResult())
 					c.future().complete(new Result<>(c.commandResult()));
 				else
-					c.future().complete(new EmptyResult());
+					c.future().complete(EMPTY_RESULT);
 			}
 		}
 	}
@@ -90,6 +95,11 @@ public class InputHandlers {
 	protected WorkflowContext services;
 	protected TransactionExecutor txExecutor;
 	protected LongSupplier nextTransactionId;
+	protected ProcessorContext ctxJ;
+	protected final Consumer<Buffer> journalerConsumer = b -> {
+		ctxJ.commitInfo().transactionId(ctxJ.transactionId()).time(ctxJ.time()).transactionCommits(ctxJ.getTransactions());
+		services.serializer().serialize(ctxJ.commitInfo(), b);
+	};
 	
 	protected final BoolBiConsumer<ProcessorContext> replicator = (c, eob) -> {
 		interceptors(TransactionStage.REPLICATION, c);
@@ -109,10 +119,8 @@ public class InputHandlers {
 		interceptors(TransactionStage.JOURNALING, c);
 
 		rollIfRequired(c.transactionId());
-		services.transactionJournaler().writeData(b -> {
-			c.commitInfo().transactionId(c.transactionId()).time(c.time()).transactionCommits(c.getTransactions());
-			services.serializer().serialize(c.commitInfo(), b);
-		}, eob);
+		this.ctxJ = c;
+		services.transactionJournaler().writeData(journalerConsumer, eob);
 	};
 	protected final BoolBiConsumer<ProcessorContext> viewsUpdater = (c, eob) -> {
 		services.viewsProcessor().process(c.getMarkedRecords());
@@ -126,12 +134,13 @@ public class InputHandlers {
 						c.eventMetadata(), c.getEvents().toArray());
 		}
 	};
-	
 
 	protected void interceptors(TransactionStage stage, ProcessorContext context) {
-		if (!context.isRestore() && services.interceptorCollection().getInterceptors(stage).size() > 0)
-			services.interceptorCollection().getInterceptors(stage).forEach(i -> i.intercept(context.transactionId(),
-					context.time(), services.repository(), stage));
+		List<TransactionInterceptor> interceptors = services.interceptorCollection().getInterceptors(stage);
+		if (!context.isRestore() && interceptors.size() > 0)
+			for (int i = 0; i < interceptors.size(); i++) {
+				interceptors.get(i).intercept(context.transactionId(), context.time(), services.repository(), stage);
+			}
 	}
 
 	protected void rollIfRequired(long transactionId) {

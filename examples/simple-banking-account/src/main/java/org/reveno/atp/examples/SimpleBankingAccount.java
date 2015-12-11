@@ -59,7 +59,7 @@ public class SimpleBankingAccount {
     }
 
     protected static void printStats(Reveno reveno, long id) {
-        LOG.info("Balance of Account {}: {}", id, reveno.query().find(AccountView.class, id).get().balance);
+        LOG.info("Balance of Account {}: {}", id, reveno.query().find(AccountView.class, id).balance);
     }
 
 
@@ -118,10 +118,10 @@ public class SimpleBankingAccount {
         public final Currency currency;
 
         public static void handler(AddToBalanceCommand cmd, CommandContext ctx) {
-            if (!ctx.repository().has(Account.class, cmd.accountId)) {
+            if (!ctx.repo().has(Account.class, cmd.accountId)) {
                 throw new RuntimeException(String.format("Account %s wasn't found!", cmd.accountId));
             }
-            Account account = ctx.repository().forceGet(Account.class, cmd.accountId);
+            Account account = ctx.repo().get(Account.class, cmd.accountId);
 
             ctx.executeTransaction(new AddToBalance(cmd.accountId, converter.convert(cmd.currency, account.currency, cmd.amount)));
         }
@@ -140,7 +140,7 @@ public class SimpleBankingAccount {
         public final long amount;
 
         public static void handler(AddToBalance tx, TransactionContext ctx) {
-            ctx.repo().store(tx.accountId, ctx.repo().forceGet(Account.class, tx.accountId).add(tx.amount));
+            ctx.repo().store(tx.accountId, ctx.repo().get(Account.class, tx.accountId).add(tx.amount));
         }
 
         public AddToBalance(long accountId, long amount) {

@@ -39,7 +39,7 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 	@Override
 	public SystemState restore(TxRepository repository) {
 		workflowContext.repository(repository);
-		final long snapshotTransactionId = repository.get(SystemInfo.class, 0L).orElse(new SystemInfo(0L)).lastTransactionId;
+		final long snapshotTransactionId = repository.getO(SystemInfo.class, 0L).orElse(new SystemInfo(0L)).lastTransactionId;
 		final long[] transactionId = { snapshotTransactionId };
 		try (InputProcessor processor = new DefaultInputProcessor(journalStorage)) {
 			processor.process(b -> {

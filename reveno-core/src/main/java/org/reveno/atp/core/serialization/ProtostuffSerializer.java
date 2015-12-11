@@ -141,8 +141,8 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	}
 
 	protected void serializeObjects(Buffer buffer, List<Object> objs) {
-		for (Object tc : objs) {
-			serializeObject(buffer, tc);
+		for (int i = 0; i < objs.size(); i++) {
+			serializeObject(buffer, objs.get(i));
 		}
 	}
 

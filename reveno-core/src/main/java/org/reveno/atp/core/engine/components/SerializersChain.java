@@ -16,6 +16,8 @@
 
 package org.reveno.atp.core.engine.components;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.reveno.atp.api.exceptions.BufferOutOfBoundsException;
 import org.reveno.atp.core.api.TransactionCommitInfo;
 import org.reveno.atp.core.api.TransactionCommitInfo.Builder;
@@ -53,7 +55,7 @@ public class SerializersChain implements TransactionInfoSerializer {
 	
 	@Override
 	public void serialize(TransactionCommitInfo info, Buffer buffer) {
-		tryTo(buffer, s -> s.serialize(info, buffer));
+		tryTo(buffer, serializer.get().with(buffer, info));
 	}
 	
 	@Override
@@ -63,7 +65,7 @@ public class SerializersChain implements TransactionInfoSerializer {
 	
 	@Override
 	public void serializeCommands(List<Object> commands, Buffer buffer) {
-		tryTo(buffer, s -> s.serializeCommands(commands, buffer));
+		tryTo(buffer, serializer.get().with(buffer, commands));
 	}
 	
 	@Override
@@ -137,6 +139,43 @@ public class SerializersChain implements TransactionInfoSerializer {
 	
 	protected List<TransactionInfoSerializer> transactionSerializers;
 	protected TransactionInfoSerializer preferedSerializer;
-	protected Map<Integer, TransactionInfoSerializer> transactionSerializersMap = new HashMap<>();
+	protected Int2ObjectMap<TransactionInfoSerializer> transactionSerializersMap = new Int2ObjectOpenHashMap<>();
+	protected static final ThreadLocal<Serializer> serializer = new ThreadLocal<Serializer>() {
+		@Override
+		protected Serializer initialValue() {
+			return new Serializer();
+		}
+	};
 	protected static final Logger log = LoggerFactory.getLogger(SerializersChain.class);
+
+	/**
+	 * The payment for less garbage in real-time.
+	 */
+	protected static class Serializer implements Consumer<TransactionInfoSerializer> {
+		private Buffer buffer;
+		private TransactionCommitInfo info;
+		private List<Object> commands;
+
+		public Serializer with(Buffer buffer, TransactionCommitInfo info) {
+			this.buffer = buffer;
+			this.commands = null;
+			this.info = info;
+			return this;
+		}
+
+		public Serializer with(Buffer buffer, List<Object> commands) {
+			this.buffer = buffer;
+			this.info = null;
+			this.commands = commands;
+			return this;
+		}
+
+		@Override
+		public void accept(TransactionInfoSerializer transactionInfoSerializer) {
+			if (commands == null)
+				transactionInfoSerializer.serialize(info, buffer);
+			else
+				transactionInfoSerializer.serializeCommands(commands, buffer);
+		}
+	}
 }

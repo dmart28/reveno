@@ -114,7 +114,7 @@ public class TransactionExecutor {
 		public IdGenerator idGenerator;
 		
 		@Override
-		public Repository repository() {
+		public Repository repo() {
 			return repository;
 		}
 		
@@ -158,7 +158,7 @@ public class TransactionExecutor {
 		}
 
 		@Override
-		public WriteableRepository repository() {
+		public WriteableRepository repo() {
 			return repository;
 		}
 		

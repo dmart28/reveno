@@ -29,7 +29,7 @@ public class AccountView extends ViewBase {
 	// lazy evaluation here
 	private Set<Long> orders;
 	public Set<OrderView> orders() {
-		return orders.stream().flatMap(o -> sops(query.find(OrderView.class, o))).collect(Collectors.toSet());
+		return orders.stream().flatMap(o -> sops(query.findO(OrderView.class, o))).collect(Collectors.toSet());
 	}
 	
 	public Set<PositionView> positions;

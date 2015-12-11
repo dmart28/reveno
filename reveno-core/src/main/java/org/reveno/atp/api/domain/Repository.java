@@ -31,7 +31,11 @@ public interface Repository {
 	 * @param id identificator of an entity
 	 * @return entity
 	 */
-	<T> Optional<T> get(Class<T> entityType, long id);
+	<T> T get(Class<T> entityType, long id);
+
+	default <T> Optional<T> getO(Class<T> entityType, long id) {
+		return Optional.ofNullable(get(entityType, id));
+	}
 	
 	<T> boolean has(Class<T> entityType, long id);
 	
@@ -45,7 +49,7 @@ public interface Repository {
 	 * @param id identificator of an entity
 	 * @return entity
 	 */
-	<T> Optional<T> getClean(Class<T> entityType, long id);
+	<T> T getClean(Class<T> entityType, long id);
 	
 	/**
 	 * Snapshot all data from the repository.
@@ -64,10 +68,5 @@ public interface Repository {
 	 * @return
 	 */
 	Set<Class<?>> getEntityTypes();
-
-
-	default <T> T forceGet(Class<T> entityType, long id) {
-		return get(entityType, id).get();
-	}
 	
 }

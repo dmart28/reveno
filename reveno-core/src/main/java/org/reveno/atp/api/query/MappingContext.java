@@ -26,7 +26,15 @@ import java.util.stream.Stream;
 
 public interface MappingContext {
 
-	<V> Optional<V> get(Class<V> viewType, long id);
+	<V> V get(Class<V> viewType, long id);
+
+	default <V> Optional<V> getO(Class<V> viewType, long id) {
+		return Optional.ofNullable(get(viewType, id));
+	}
+
+	<V> List<V> link(long[] ids, Class<V> viewType);
+
+	<V> Set<V> linkSet(long[] ids, Class<V> viewType);
 
 	<V> List<V> link(Stream<Long> ids, Class<V> viewType);
 	

@@ -68,17 +68,17 @@ public class MutableModelRepository implements TxRepository, Destroyable {
 	}
 
 	@Override
-	public <T> Optional<T> get(Class<T> entityType, long id) {
-		Optional<T> entity = repository.get(entityType, id);
+	public <T> T get(Class<T> entityType, long id) {
+		T entity = repository.get(entityType, id);
 		
-		if (isTransaction.get() && entity.isPresent())
-			saveEntityState(id, entityType, entity.get(), EntityRecoveryState.UPDATE);
+		if (isTransaction.get() && entity != null)
+			saveEntityState(id, entityType, entity, EntityRecoveryState.UPDATE);
 		return entity;
 	}
 	
 	@Override
 	public <T> boolean has(Class<T> entityType, long id) {
-		return getClean(entityType, id).isPresent();
+		return getClean(entityType, id) != null;
 	}
 
 	@Override
@@ -95,7 +95,7 @@ public class MutableModelRepository implements TxRepository, Destroyable {
 	}
 	
 	@Override
-	public <T> Optional<T> getClean(Class<T> entityType, long id) {
+	public <T> T getClean(Class<T> entityType, long id) {
 		return repository.get(entityType, id);
 	}
 

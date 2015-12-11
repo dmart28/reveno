@@ -16,12 +16,10 @@
 
 package org.reveno.atp.core.api;
 
-import java.util.Optional;
-
 public interface ViewsStorage {
 
-	<View> Optional<View> find(Class<View> viewType, long id);
-	
+	<View> View find(Class<View> viewType, long id);
+
 	<View> void insert(long id, View view);
 	
 	<View> void remove(Class<View> viewType, long id);

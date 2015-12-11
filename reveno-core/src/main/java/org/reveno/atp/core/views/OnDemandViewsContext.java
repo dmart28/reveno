@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 public class OnDemandViewsContext implements MappingContext {
 
 	@Override
-	public <V> Optional<V> get(Class<V> viewType, long id) {
+	public <V> V get(Class<V> viewType, long id) {
 		if (viewType == this.viewType && id == this.id) {
 			return storage.find(viewType, id);
 		}
@@ -51,30 +51,40 @@ public class OnDemandViewsContext implements MappingContext {
 		}
 		return storage.find(viewType, id);
 	}
-	
+
+	@Override
+	public <V> List<V> link(long[] ids, Class<V> viewType) {
+		return new LinkViewList<>(ids, viewType);
+	}
+
+	@Override
+	public <V> Set<V> linkSet(long[] ids, Class<V> viewType) {
+		return new LinkViewSet<>(ids, viewType);
+	}
+
 	@Override
 	public <V> List<V> link(Stream<Long> ids, Class<V> viewType) {
-		return new LinkViewList<V>(ids.mapToLong(i->i).toArray(), viewType);
+		return new LinkViewList<>(ids.mapToLong(i->i).toArray(), viewType);
 	}
 
 	@Override
 	public <V> Set<V> linkSet(Stream<Long> ids, Class<V> viewType) {
-		return new LinkViewSet<V>(ids.mapToLong(i->i).toArray(), viewType);
+		return new LinkViewSet<>(ids.mapToLong(i->i).toArray(), viewType);
 	}
 
 	@Override
 	public <V> List<V> link(LongCollection ids, Class<V> viewType) {
-		return new LinkViewList<V>(ids.toLongArray(), viewType);
+		return new LinkViewList<>(ids.toLongArray(), viewType);
 	}
 
 	@Override
 	public <V> Set<V> linkSet(LongCollection ids, Class<V> viewType) {
-		return new LinkViewSet<V>(ids.toLongArray(), viewType);
+		return new LinkViewSet<>(ids.toLongArray(), viewType);
 	}
 
 	@Override
 	public <V> Supplier<V> link(Class<V> viewType, long id) {
-		return () -> storage.find(viewType, id).orElseGet(() -> null);
+		return () -> Optional.ofNullable(storage.find(viewType, id)).orElseGet(() -> null);
 	}
 	
 	protected Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> marked;
@@ -127,9 +137,9 @@ public class OnDemandViewsContext implements MappingContext {
 
 		@Override
 		public boolean contains(Object o) {
-			Optional<V> v;
+			V v;
 			for (long id1 : ids) {
-				if ((v = storage.find(viewType, id1)).isPresent() && v.get().equals(o))
+				if ((v = storage.find(viewType, id1)) != null && v.equals(o))
 					return true;
 			}
 			return false;
@@ -144,9 +154,9 @@ public class OnDemandViewsContext implements MappingContext {
 		@Override
 		public Object[] toArray() {
 			V[] arr = (V[]) Array.newInstance(viewType, ids.length);
-			Optional<V> v;
+			V v;
 			for (int i = 0; i < arr.length; i++) {
-				arr[i] = (v = storage.find(viewType, ids[i])).isPresent() ? v.get() : null;
+				arr[i] = (v = storage.find(viewType, ids[i])) != null ? v : null;
 			}
 			return arr;
 		}
@@ -156,9 +166,9 @@ public class OnDemandViewsContext implements MappingContext {
 		public <T> T[] toArray(T[] a) {
 			if (a.length < ids.length) 
 				a = (T[]) Array.newInstance(a.getClass(), ids.length);
-			Optional<V> v;
+			V v;
 			for (int i = 0; i < a.length; i++) {
-				a[i] = (v = storage.find(viewType, ids[i])).isPresent() ? (T) v.get() : null;
+				a[i] = (v = storage.find(viewType, ids[i])) != null ? (T) v : null;
 			}
 			return a;
 		}
@@ -204,8 +214,8 @@ public class OnDemandViewsContext implements MappingContext {
 
 		@Override
 		public V get(int index) {
-			Optional<V> v;
-			return (v = storage.find(viewType, ids[index])).isPresent() ? v.get() : null;
+			V v;
+			return (v = storage.find(viewType, ids[index])) != null ? v : null;
 		}
 
 		@Override
@@ -225,18 +235,18 @@ public class OnDemandViewsContext implements MappingContext {
 
 		@Override
 		public int indexOf(Object o) {
-			Optional<V> v;
+			V v;
 			for (int i = 0; i < ids.length; i++)
-				if ((v = storage.find(viewType, ids[i])).isPresent() && v.get().equals(o))
+				if ((v = storage.find(viewType, ids[i])) != null && v.equals(o))
 					return i;
 			return 0;
 		}
 
 		@Override
 		public int lastIndexOf(Object o) {
-			Optional<V> v;
+			V v;
 			for (int i = ids.length - 1; i <= 0; i--)
-				if ((v = storage.find(viewType, ids[i])).isPresent() && v.get().equals(o))
+				if ((v = storage.find(viewType, ids[i])) != null && v.equals(o))
 					return i;
 			return 0;
 		}

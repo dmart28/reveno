@@ -43,8 +43,8 @@ public class ClusterBaseTest extends RevenoBaseTest {
         Assert.assertTrue(Utils.waitFor(() -> engine1.clusterStateInfo().isMaster(), sec(TIMEOUT_SECS)));
         long accountId = sendCommandSync(engine1, new CreateNewAccountCommand("USD", 1000_000L));
 
-        Assert.assertTrue(Utils.waitFor(() -> engine2.query().find(AccountView.class, accountId).isPresent(), sec(TIMEOUT_SECS)));
-        Assert.assertTrue(Utils.waitFor(() -> engine3.query().find(AccountView.class, accountId).isPresent(), sec(TIMEOUT_SECS)));
+        Assert.assertTrue(Utils.waitFor(() -> engine2.query().findO(AccountView.class, accountId).isPresent(), sec(TIMEOUT_SECS)));
+        Assert.assertTrue(Utils.waitFor(() -> engine3.query().findO(AccountView.class, accountId).isPresent(), sec(TIMEOUT_SECS)));
 
         int failed = generateAndSendCommands(engine1, 10_000, i -> {
             if (i == 6000) {
@@ -99,7 +99,7 @@ public class ClusterBaseTest extends RevenoBaseTest {
         Assert.assertTrue(Utils.waitFor(() -> engine1.clusterStateInfo().isMaster(), sec(TIMEOUT_SECS)));
         long accountId = sendCommandSync(engine1, new CreateNewAccountCommand("USD", 1000_000L));
 
-        Assert.assertTrue(Utils.waitFor(() -> engine2.query().find(AccountView.class, accountId).isPresent(), sec(TIMEOUT_SECS)));
+        Assert.assertTrue(Utils.waitFor(() -> engine2.query().findO(AccountView.class, accountId).isPresent(), sec(TIMEOUT_SECS)));
 
         shutdownAll(engines);
         executor.shutdownNow();
@@ -119,7 +119,7 @@ public class ClusterBaseTest extends RevenoBaseTest {
         Assert.assertTrue(Utils.waitFor(() -> engine1.clusterStateInfo().isMaster(), sec(TIMEOUT_SECS)));
         long accountId = sendCommandSync(engine1, new CreateNewAccountCommand("USD", 1000_000L));
 
-        Assert.assertTrue(Utils.waitFor(() -> engine2.query().find(AccountView.class, accountId).isPresent(), sec(TIMEOUT_SECS)));
+        Assert.assertTrue(Utils.waitFor(() -> engine2.query().findO(AccountView.class, accountId).isPresent(), sec(TIMEOUT_SECS)));
         generateAndSendCommands(engine1, 10_000);
 
         LOG.info("1-2 Shutting down ...");
@@ -135,7 +135,7 @@ public class ClusterBaseTest extends RevenoBaseTest {
         Engine replayEngine = configure(new Engine(engine2.getBaseDir()));
         replayEngine.startup();
 
-        Assert.assertTrue(replayEngine.query().find(AccountView.class, accountId).isPresent());
+        Assert.assertTrue(replayEngine.query().findO(AccountView.class, accountId).isPresent());
         Assert.assertEquals(10_001, replayEngine.query().select(AccountView.class).size());
         Assert.assertEquals(10_000, replayEngine.query().select(OrderView.class).size());
 

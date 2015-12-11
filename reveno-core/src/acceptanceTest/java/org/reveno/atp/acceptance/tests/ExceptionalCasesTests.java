@@ -109,7 +109,7 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 			AccountView acc = accs.iterator().next();
 			long orderId = sendCommandSync(reveno, new NewOrderCommand(acc.accountId, null,
 					"TEST/TEST", 134000, 1000, OrderType.MARKET));
-			acc = reveno.query().find(AccountView.class, 1L).get();
+			acc = reveno.query().find(AccountView.class, 1L);
 			Assert.assertTrue(acc.orders().stream().filter(o -> o.id == orderId).findFirst().isPresent());
 			// in very rare cases we might get result, but event didn't came to pipe, so 
 			// even though we syncAll(), the event might come to pipe after syncAll().
@@ -124,7 +124,7 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		reveno.startup();
 		
 		if (accs.size() != 0) {
-			AccountView acc = reveno.query().find(AccountView.class, 1L).get();
+			AccountView acc = reveno.query().find(AccountView.class, 1L);
 			Assert.assertTrue(acc.orders().stream().filter(o -> o.symbol.equals("TEST/TEST")).findFirst().isPresent());
 		}
 		
@@ -155,9 +155,9 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 
 		reveno.performCommands(commands).get();
 
-		AccountView account = reveno.query().find(AccountView.class, 1L).get();
+		AccountView account = reveno.query().find(AccountView.class, 1L);
 		Assert.assertEquals(0, account.orders().size());
-		account = reveno.query().find(AccountView.class, 2L).get();
+		account = reveno.query().find(AccountView.class, 2L);
 		Assert.assertEquals(10, account.orders().size());
 
 		reveno.shutdown();
@@ -167,8 +167,8 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		reveno = createEngine();
 		reveno.startup();
 
-		Assert.assertTrue(reveno.query().find(AccountView.class, 1L).isPresent());
-		Assert.assertFalse(reveno.query().find(AccountView.class, 2L).isPresent());
+		Assert.assertTrue(reveno.query().findO(AccountView.class, 1L).isPresent());
+		Assert.assertFalse(reveno.query().findO(AccountView.class, 2L).isPresent());
 
 		reveno.shutdown();
 	}

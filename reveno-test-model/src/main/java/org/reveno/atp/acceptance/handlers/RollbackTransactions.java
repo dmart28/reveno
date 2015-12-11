@@ -13,23 +13,23 @@ import java.util.Optional;
 public class RollbackTransactions {
 
 	public static void rollbackCreateAccount(CreateAccount tx, TransactionContext ctx) {
-		ctx.repository().remove(Account.class, tx.id);
+		ctx.repo().remove(Account.class, tx.id);
 	}
 	
 	public static void rollbackCredit(Credit tx, TransactionContext ctx) {
-		Account acc = ctx.repository().get(Account.class, tx.accountId).get();
+		Account acc = ctx.repo().get(Account.class, tx.accountId);
 		acc.addBalance(-tx.amount);
 	}
 	
 	public static void rollbackDebit(Debit tx, TransactionContext ctx) {
-		Optional<Account> acc = ctx.repository().get(Account.class, tx.accountId);
-		acc.get().addBalance(tx.amount);
+		Account acc = ctx.repo().get(Account.class, tx.accountId);
+		acc.addBalance(tx.amount);
 	}
 	
 	public static void rollbackAcceptOrder(AcceptOrder tx, TransactionContext ctx) {
-		Account account = ctx.repository().get(Account.class, tx.accountId).get();
+		Account account = ctx.repo().get(Account.class, tx.accountId);
 		account.removeOrder(tx.id);
-		ctx.repository().remove(Order.class, tx.id);
+		ctx.repo().remove(Order.class, tx.id);
 	}
 	
 }

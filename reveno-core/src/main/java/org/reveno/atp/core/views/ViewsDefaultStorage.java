@@ -53,8 +53,8 @@ public class ViewsDefaultStorage implements ViewsStorage, QueryManager  {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <View> Optional<View> find(Class<View> viewType, long id) {
-		return Optional.ofNullable((View)views.get(viewType).get(id));
+	public <V> V find(Class<V> viewType, long id) {
+		return (V) views.get(viewType).get(id);
 	}
 
 	@Override
@@ -70,10 +70,6 @@ public class ViewsDefaultStorage implements ViewsStorage, QueryManager  {
 	@Override
 	public void clearAll() {
 		views.clear();
-	}
-
-	public ViewsDefaultStorage() {
-		views = MapUtils.concurrentRepositoryMap(524288, 0.75f);
 	}
 	
 	public ViewsDefaultStorage(int capacity, float loadFactor) {

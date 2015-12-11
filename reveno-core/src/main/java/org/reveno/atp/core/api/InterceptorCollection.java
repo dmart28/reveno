@@ -16,22 +16,22 @@
 
 package org.reveno.atp.core.api;
 
+import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap;
+import it.unimi.dsi.fastutil.bytes.Byte2ObjectOpenHashMap;
 import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.api.transaction.TransactionStage;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class InterceptorCollection {
 
-	protected Map<TransactionStage, List<TransactionInterceptor>> interceptors = new HashMap<>();
+	protected Byte2ObjectMap<List<TransactionInterceptor>> interceptors = new Byte2ObjectOpenHashMap<>();
 	
 	public List<TransactionInterceptor> getInterceptors(TransactionStage stage) {
-		if (!interceptors.containsKey(stage))
-			interceptors.put(stage, new ArrayList<>());
-		return interceptors.get(stage);
+		if (!interceptors.containsKey(stage.getType()))
+			interceptors.put(stage.getType(), new ArrayList<>());
+		return interceptors.get(stage.getType());
 	}
 	
 	public void add(TransactionStage stage, TransactionInterceptor interceptor) {
