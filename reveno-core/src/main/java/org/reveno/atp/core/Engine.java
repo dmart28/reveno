@@ -361,6 +361,7 @@ public class Engine implements Reveno {
 	
 	protected void init() {
 		repository = factory.create(loadLastSnapshot());
+		viewsStorage = new ViewsDefaultStorage(config.mapCapacity(), config.mapLoadFactor());
 		viewsProcessor = new ViewsProcessor(viewsManager, viewsStorage);
 		processor = new DisruptorTransactionPipeProcessor(txBuilder, config.cpuConsumption(), config.revenoDisruptor().bufferSize(), executor);
 		eventProcessor = new DisruptorEventPipeProcessor(CpuConsumption.NORMAL, config.revenoDisruptor().bufferSize(), eventExecutor);
@@ -370,7 +371,7 @@ public class Engine implements Reveno {
 				.eventsCommitBuilder(eventBuilder).eventsJournaler(journalsManager.getEventsJournaler()).manager(eventsManager);
 		eventPublisher = new EventPublisher(eventProcessor, eventsContext);
 
-		workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
+		workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository).classLoader(classLoader)
 				.viewsProcessor(viewsProcessor).transactionsManager(transactionsManager).commandsManager(commandsManager)
 				.eventPublisher(eventPublisher).transactionCommitBuilder(txBuilder).transactionJournaler(journalsManager.getTransactionsJournaler())
 				.idGenerator(idGenerator).journalsManager(journalsManager).snapshotsManager(snapshotsManager).interceptorCollection(interceptors)
@@ -429,6 +430,7 @@ public class Engine implements Reveno {
 	protected PipeProcessor<Event> eventProcessor;
 	protected JournalsManager journalsManager;
 	protected EngineWorkflowContext workflowContext;
+	protected ViewsDefaultStorage viewsStorage;
 
 	protected RepositorySnapshotter restoreWith;
 	
@@ -437,7 +439,6 @@ public class Engine implements Reveno {
 	protected TransactionCommitInfo.Builder txBuilder = new TransactionCommitInfoImpl.PojoBuilder();
 	protected EventsCommitInfo.Builder eventBuilder = new EventsCommitInfoImpl.PojoBuilder();
 	protected EventHandlersManager eventsManager = new EventHandlersManager();
-	protected ViewsDefaultStorage viewsStorage = new ViewsDefaultStorage();
 	protected ViewsManager viewsManager = new ViewsManager();
 	protected TransactionsManager transactionsManager = new TransactionsManager();
 	protected CommandsManager commandsManager = new CommandsManager();

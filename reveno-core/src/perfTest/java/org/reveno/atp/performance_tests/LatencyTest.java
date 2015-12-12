@@ -16,8 +16,6 @@
 
 package org.reveno.atp.performance_tests;
 
-import org.reveno.atp.acceptance.api.commands.CreateNewAccountCommand;
-import org.reveno.atp.acceptance.api.transactions.Credit;
 import org.reveno.atp.acceptance.tests.RevenoBaseTest;
 import org.reveno.atp.api.ChannelOptions;
 import org.reveno.atp.api.Configuration;
@@ -103,15 +101,16 @@ public class LatencyTest extends RevenoBaseTest {
 				ctx.executeTransaction(t);
 			});
 			e.domain().transactionAction(AddBalance.class, (t, ctx) -> {
-				ctx.repo().forceGet(Account.class, t.acc).balance += t.amount;
+				ctx.repo().get(Account.class, t.acc).balance += t.amount;
 			});
 			e.config().mutableModel();
 			e.config().mutableModelFailover(Configuration.MutableModelFailover.COMPENSATING_ACTIONS);
+			e.config().mapCapacity(1024);
 
 			e.config().cpuConsumption(consumption);
-			e.config().journaling().volumes(4);
+			e.config().journaling().volumes(8);
 			e.config().journaling().minVolumes(0);
-			e.config().journaling().volumesSize(2 * 1024 * 1024 * 1024L, 1024);
+			e.config().journaling().volumesSize(1 * 1024 * 1024 * 1024L, 1024);
 			if (type.equals("buffering")) {
 				e.config().journaling().channelOptions(ChannelOptions.BUFFERING_VM);
 			} else {

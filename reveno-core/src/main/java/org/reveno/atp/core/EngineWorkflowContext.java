@@ -38,6 +38,16 @@ public class EngineWorkflowContext implements WorkflowContext {
 		return this;
 	}
 
+	private ClassLoader classLoader;
+	@Override
+	public ClassLoader classLoader() {
+		return classLoader;
+	}
+	public EngineWorkflowContext classLoader(ClassLoader classLoader) {
+		this.classLoader = classLoader;
+		return this;
+	}
+
 	private FailoverManager failoverManager;
 	@Override
 	public FailoverManager failoverManager() {

@@ -51,19 +51,19 @@ public class MutableRepositoryTest {
 		repository.store(1L, item1);
 		repository.store(2L, item2);
 		
-		Assert.assertTrue(repository.get(Bin.class, 1L).isPresent());
-		Assert.assertTrue(repository.get(Bin.class, 2L).isPresent());
-		Assert.assertFalse(repository.get(Bin.class, 3L).isPresent());
+		Assert.assertTrue(repository.has(Bin.class, 1L));
+		Assert.assertTrue(repository.has(Bin.class, 2L));
+		Assert.assertFalse(repository.has(Bin.class, 3L));
 		
-		Assert.assertTrue(underlyingRepository.get(Bin.class, 1L).isPresent());
-		Assert.assertTrue(underlyingRepository.get(Bin.class, 2L).isPresent());
+		Assert.assertTrue(underlyingRepository.has(Bin.class, 1L));
+		Assert.assertTrue(underlyingRepository.has(Bin.class, 2L));
 		
 		repository.rollback();
 		
-		Assert.assertFalse(underlyingRepository.get(Bin.class, 1L).isPresent());
-		Assert.assertFalse(underlyingRepository.get(Bin.class, 2L).isPresent());
-		Assert.assertFalse(repository.get(Bin.class, 1L).isPresent());
-		Assert.assertFalse(repository.get(Bin.class, 2L).isPresent());
+		Assert.assertFalse(underlyingRepository.has(Bin.class, 1L));
+		Assert.assertFalse(underlyingRepository.has(Bin.class, 2L));
+		Assert.assertFalse(repository.has(Bin.class, 1L));
+		Assert.assertFalse(repository.has(Bin.class, 2L));
 	}
 	
 	@Test
@@ -99,40 +99,40 @@ public class MutableRepositoryTest {
 		
 		Record rec = new Record();
 		repository.store(1L, rec);
-		Assert.assertTrue(repository.get(Bin.class, 1L).isPresent());
-		Assert.assertTrue(repository.get(Bin.class, 2L).isPresent());
-		Assert.assertTrue(repository.get(Record.class, 1L).isPresent());
+		Assert.assertTrue(repository.has(Bin.class, 1L));
+		Assert.assertTrue(repository.has(Bin.class, 2L));
+		Assert.assertTrue(repository.has(Record.class, 1L));
 		repository.commit();
 		
-		Assert.assertTrue(underlyingRepository.get(Bin.class, 1L).isPresent());
-		Assert.assertTrue(underlyingRepository.get(Bin.class, 2L).isPresent());
-		Assert.assertTrue(underlyingRepository.get(Record.class, 1L).isPresent());
+		Assert.assertTrue(underlyingRepository.has(Bin.class, 1L));
+		Assert.assertTrue(underlyingRepository.has(Bin.class, 2L));
+		Assert.assertTrue(underlyingRepository.has(Record.class, 1L));
 		
 		repository.begin();
-		rec = repository.get(Record.class, 1L).get();
+		rec = repository.get(Record.class, 1L);
 		rec.addBin(1L);
 		repository.rollback();
 		
-		Assert.assertEquals(0, repository.get(Record.class, 1L).get().bins.size());
+		Assert.assertEquals(0, repository.get(Record.class, 1L).bins.size());
 		
 		repository.begin();
-		rec = repository.get(Record.class, 1L).get();
+		rec = repository.get(Record.class, 1L);
 		rec.addBin(1L);
 		rec.addBin(2L);
 		repository.commit();
 		
-		Assert.assertEquals(2, repository.get(Record.class, 1L).get().bins.size());
-		Assert.assertArrayEquals(new Long[] {1L, 2L}, repository.get(Record.class, 1L).get().bins.toArray());
+		Assert.assertEquals(2, repository.get(Record.class, 1L).bins.size());
+		Assert.assertArrayEquals(new Long[] {1L, 2L}, repository.get(Record.class, 1L).bins.toArray());
 		
 		repository.begin();
-		rec = repository.get(Record.class, 1L).get();
+		rec = repository.get(Record.class, 1L);
 		rec.removeBin(1L);
 		repository.commit();
 		
-		Assert.assertEquals(1, repository.get(Record.class, 1L).get().bins.size());
-		Assert.assertArrayEquals(new Long[] {2L}, repository.get(Record.class, 1L).get().bins.toArray());
+		Assert.assertEquals(1, repository.get(Record.class, 1L).bins.size());
+		Assert.assertArrayEquals(new Long[] {2L}, repository.get(Record.class, 1L).bins.toArray());
 		
-		rec = repository.get(Record.class, 1L).get();
+		rec = repository.get(Record.class, 1L);
 		rec.addBin(1L);
 		
 		repository.begin();

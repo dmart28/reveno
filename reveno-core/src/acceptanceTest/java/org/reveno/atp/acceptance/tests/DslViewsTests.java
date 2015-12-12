@@ -20,19 +20,19 @@ public class DslViewsTests extends RevenoBaseTest {
 		reveno.config().mutableModel();
 		
 		DynamicCommand createPage = reveno.domain().transaction("createPage", (tx, ctx) -> {
-		    ctx.repository().store(tx.id(), new Page(tx.arg()));
+		    ctx.repo().store(tx.id(), new Page(tx.arg()));
 		}).uniqueIdFor(Page.class).command();
 		
 		DynamicCommand createLink = reveno.domain().transaction("createLink", (tx, ctx) -> {
 			if (tx.opArg("page").isPresent()) {
-		    	ctx.repository().get(Page.class, tx.arg("page")).ifPresent(p -> p.linksIds.add(tx.arg("page")));
+		    	ctx.repo().getO(Page.class, tx.arg("page")).ifPresent(p -> p.linksIds.add(tx.arg("page")));
 		    }
-		    ctx.repository().store(tx.id(), new Link(tx.arg("name"), tx.arg("url")));
+		    ctx.repo().store(tx.id(), new Link(tx.arg("name"), tx.arg("url")));
 		}).uniqueIdFor(Link.class).command();
 		
 		DynamicCommand updateLink = reveno.domain().transaction("updateLink", (tx, ctx) -> {
-			ctx.repository().get(Link.class, tx.arg("id")).get().url = tx.arg("newUrl");
-		}).conditionalCommand((c,ctx) -> ctx.repository().has(Link.class, c.arg("id"))).command();
+			ctx.repo().getO(Link.class, tx.arg("id")).get().url = tx.arg("newUrl");
+		}).conditionalCommand((c,ctx) -> ctx.repo().has(Link.class, c.arg("id"))).command();
 		
 		reveno.domain().viewMapper(Link.class, LinkView.class, (id,e,r) -> new LinkView(id, e.name, e.url));
 		reveno.domain().viewMapper(Page.class, PageView.class, (id,e,r) -> new PageView(id, e.name, r.link(e.linksIds, LinkView.class)));
@@ -42,8 +42,8 @@ public class DslViewsTests extends RevenoBaseTest {
 		long pageId = reveno.executeSync(createPage, MapUtils.map("name", "Open Source"));
 		long linkId = reveno.executeSync(createLink, MapUtils.map("name", "reveno", "url", "http://reveno.org", "page", pageId));
 		
-		Assert.assertTrue(reveno.query().find(PageView.class, pageId).isPresent());
-		PageView page = reveno.query().find(PageView.class, pageId).get();
+		Assert.assertTrue(reveno.query().findO(PageView.class, pageId).isPresent());
+		PageView page = reveno.query().find(PageView.class, pageId);
 		Assert.assertEquals(page.links.size(), 1);
 		Assert.assertEquals(page.links.get(0).id, linkId);
 		Assert.assertEquals(page.links.get(0).url, "http://reveno.org");
@@ -57,7 +57,7 @@ public class DslViewsTests extends RevenoBaseTest {
 		
 		reveno.executeSync(updateLink, MapUtils.map("id", linkId + 1, "newUrl", "http://new.reveno.org"));
 		
-		Assert.assertSame(page.links.get(0), reveno.query().find(LinkView.class, linkId).get());
+		Assert.assertSame(page.links.get(0), reveno.query().find(LinkView.class, linkId));
 		
 		reveno.shutdown();
 	}
@@ -68,12 +68,12 @@ public class DslViewsTests extends RevenoBaseTest {
 		reveno.config().mutableModel();
 		
 		DynamicCommand create = reveno.domain().transaction("create", (tx, ctx) -> {
-			ctx.repository().store(tx.id(Page.class), new Page("test", tx.id(Link.class)));
-			ctx.repository().store(tx.id(Link.class), new Link("tt", "http://g.le"));
+			ctx.repo().store(tx.id(Page.class), new Page("test", tx.id(Link.class)));
+			ctx.repo().store(tx.id(Link.class), new Link("tt", "http://g.le"));
 		}).uniqueIdFor(Page.class, Link.class).returnsIdOf(Page.class).command();
 		
 		reveno.domain().viewMapper(Link.class, LinkView.class, (id,e,r) -> new LinkView(id, e.name, e.url));
-		reveno.domain().viewMapper(Page.class, PageView.class, (id,e,r) -> new PageView(id, e.name, r.get(LinkView.class, e.linksIds.get(0)).get()));
+		reveno.domain().viewMapper(Page.class, PageView.class, (id,e,r) -> new PageView(id, e.name, r.get(LinkView.class, e.linksIds.get(0))));
 		
 		reveno.startup();
 
@@ -81,13 +81,13 @@ public class DslViewsTests extends RevenoBaseTest {
 		
 		Assert.assertTrue(pageId != 0);
 		
-		PageView page = reveno.query().find(PageView.class, pageId).get();
+		PageView page = reveno.query().find(PageView.class, pageId);
 		
 		Assert.assertEquals(1, page.links.size());
 		
 		long linkId = page.links.get(0).id;
 		
-		Assert.assertSame(reveno.query().find(LinkView.class, linkId).get(), page.links.get(0));
+		Assert.assertSame(reveno.query().find(LinkView.class, linkId), page.links.get(0));
 		
 		reveno.shutdown();
 	}
@@ -113,7 +113,7 @@ public class DslViewsTests extends RevenoBaseTest {
 		
 		long pageId = reveno.executeSync(createPage, MapUtils.map("name", "Wikipedia"));
 		Assert.assertEquals(1L, pageId);
-		PageView view = reveno.query().find(PageView.class, pageId).get();
+		PageView view = reveno.query().find(PageView.class, pageId);
 		Assert.assertEquals("Wikipedia", view.name);
 		
 		reveno.shutdown();
@@ -125,24 +125,22 @@ public class DslViewsTests extends RevenoBaseTest {
 		
 		reveno.startup();
 		
-		view = reveno.query().find(PageView.class, pageId).get();
+		view = reveno.query().find(PageView.class, pageId);
 		Assert.assertEquals("Wikipedia", view.name);
 		
 		reveno.shutdown();
 	}
 
 	private DynamicCommand createCommandShort(TestRevenoEngine reveno) {
-		DynamicCommand createPage = reveno.domain().transaction("createPage", (tx, ctx) -> {
-		    ctx.repository().store(tx.id(), new Page(tx.arg()));
+		return reveno.domain().transaction("createPage", (tx, ctx) -> {
+		    ctx.repo().store(tx.id(), new Page(tx.arg()));
 		}).uniqueIdFor(Page.class).command();
-		return createPage;
 	}
 	
 	private DynamicCommand createCommandLong(TestRevenoEngine reveno) {
-		DynamicCommand createPage = reveno.domain().transaction("createPage", (tx, ctx) -> {
-		    ctx.repository().store(tx.id(), new Page(tx.arg("name")));
+		return reveno.domain().transaction("createPage", (tx, ctx) -> {
+		    ctx.repo().store(tx.id(), new Page(tx.arg("name")));
 		}).uniqueIdFor(Page.class).returnsIdOf(Page.class).command();
-		return createPage;
 	}
 	
 	public static class Page {

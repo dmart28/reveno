@@ -23,13 +23,9 @@ import java.util.Map;
 public interface TransactionContext {
 	
 	EventBus eventBus();
-	
-	WriteableRepository repository();
+
+	WriteableRepository repo();
 	
 	Map<Object, Object> data();
-
-	default WriteableRepository repo() {
-		return repository();
-	}
 	
 }

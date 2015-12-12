@@ -32,7 +32,7 @@ public class BasicEvents {
     }
 
     protected static void showBalance(Reveno reveno, long accId) {
-        LOG.info("Account balance: {}", reveno.query().find(AccountView.class, accId).get().balance);
+        LOG.info("Account balance: {}", reveno.query().find(AccountView.class, accId).balance);
     }
 
     protected static void init(Reveno reveno) {
@@ -41,10 +41,10 @@ public class BasicEvents {
         }).uniqueIdFor(Account.class).conditionalCommand((cmd, c) -> cmd.longArg("balance") >= 0l).command();
 
         reveno.domain().transaction("changeBalance", (t, c) -> {
-            Account account = c.repo().forceGet(Account.class, t.longArg());
+            Account account = c.repo().get(Account.class, t.longArg());
             c.repo().store(t.longArg(), account.add(t.longArg("amount")));
             c.eventBus().publishEvent(new BalanceAddedEvent(t.longArg(), t.longArg("amount")));
-        }).conditionalCommand((cmd, c) -> c.repository().has(Account.class, cmd.longArg())).command();
+        }).conditionalCommand((cmd, c) -> c.repo().has(Account.class, cmd.longArg())).command();
 
         reveno.domain().viewMapper(Account.class, AccountView.class, (e, c, r) -> new AccountView(c.balance / PRECISION));
         reveno.events().eventHandler(BalanceAddedEvent.class, (e, m) -> {

@@ -39,13 +39,13 @@ public class ImmutableModelRepository implements TxRepository {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> Optional<T> get(Class<T> entityType, long id) {
-		Optional<T> entity = repository.get(entityType, id);
+	public <T> T get(Class<T> entityType, long id) {
+		T entity = repository.get(entityType, id);
 		if (isTransaction.get()) {
-			if (entity.isPresent() && isDeleted(entityType, id))
-				return Optional.empty();
+			if (entity != null && isDeleted(entityType, id))
+				return null;
 			else if (added.containsKey(entityType) && added.get(entityType).containsKey(id))
-				return Optional.of((T) added.get(entityType).get(id));
+				return (T) added.get(entityType).get(id);
 			else
 				return entity;
 		} else {
@@ -55,11 +55,11 @@ public class ImmutableModelRepository implements TxRepository {
 	
 	@Override
 	public <T> boolean has(Class<T> entityType, long id) {
-		return get(entityType, id).isPresent();
+		return get(entityType, id) != null;
 	}
 	
 	@Override
-	public <T> Optional<T> getClean(Class<T> entityType, long id) {
+	public <T> T getClean(Class<T> entityType, long id) {
 		return get(entityType, id);
 	}
 
@@ -70,7 +70,7 @@ public class ImmutableModelRepository implements TxRepository {
 			map.forEach((k,v) -> v.forEach((k1, v1) -> {
 				if (!isDeleted(k, k1))
 					v.remove(k1);
-				added.get(k).forEach((id, e) -> v.put(id, e));
+				added.get(k).forEach(v::put);
 			}));
 			return new RepositoryData(map);
 		} else
@@ -124,7 +124,7 @@ public class ImmutableModelRepository implements TxRepository {
 	public Object remove(Class<?> entityType, long entityId) {
 		if (isTransaction.get()) {
 			removed.get(entityType).add(entityId);
-			return repository.get(entityType, entityId).get();
+			return repository.get(entityType, entityId);
 		} else
 			return repository.remove(entityType, entityId);
 	}

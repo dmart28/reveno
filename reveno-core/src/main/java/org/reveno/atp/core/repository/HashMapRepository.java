@@ -29,19 +29,17 @@ import java.util.Set;
 public class HashMapRepository implements WriteableRepository {
 	
 	@Override
-	public <T> Optional<T> get(Class<T> entityType, long id) {
-		T entity = (T) map.get(entityType).get(id);
-		
-		return Optional.ofNullable(entity);
+	public <T> T get(Class<T> entityType, long id) {
+		return (T) map.get(entityType).get(id);
 	}
 	
 	@Override
 	public <T> boolean has(Class<T> entityType, long id) {
-		return get(entityType, id).isPresent();
+		return get(entityType, id) != null;
 	}
 	
 	@Override
-	public <T> Optional<T> getClean(Class<T> entityType, long id) {
+	public <T> T getClean(Class<T> entityType, long id) {
 		return get(entityType, id);
 	}
 

@@ -16,6 +16,8 @@
 
 package org.reveno.atp.core.engine.components;
 
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.reveno.atp.api.commands.CommandContext;
 import org.reveno.atp.api.transaction.TransactionContext;
 import org.reveno.atp.core.api.IdGenerator;
@@ -35,8 +37,8 @@ public class DefaultIdGenerator implements IdGenerator, BiConsumer<DefaultIdGene
 
 	@Override
 	public long next(Class<?> entityType) {
-		Optional<IdsBundle> bundle = context.repository().get(IdsBundle.class, 0L);
-		long id = lastIds.getOrDefault(entityType, 0L) + (bundle.isPresent() ? bundle.get().get(entityType) + 1 : 1);
+		IdsBundle bundle = context.repo().get(IdsBundle.class, 0L);
+		long id = lastIds.getOrDefault(entityType, 0L) + (bundle != null ? bundle.get(entityType) + 1 : 1);
 		lastIds.put(entityType, lastIds.getOrDefault(entityType, 0L) + 1);
 		
 		context.executeTransaction(new NextIdTransaction(entityType, id));
@@ -46,10 +48,11 @@ public class DefaultIdGenerator implements IdGenerator, BiConsumer<DefaultIdGene
 	@Override
 	public void accept(DefaultIdGenerator.NextIdTransaction t, TransactionContext u) {
 		lastIds.clear();
-		u.repository().store(0, u.repository().get(IdsBundle.class, 0).orElse(new IdsBundle()).store(t.entityType, t.id));
+		u.repo().store(0, u.repo().has(IdsBundle.class, 0) ? u.repo().get(IdsBundle.class, 0).store(t.entityType, t.id)
+				: new IdsBundle().store(t.entityType, t.id));
 	}
 
-	protected Map<Class<?>, Long> lastIds = new HashMap<>();
+	protected Object2LongMapEx<Class<?>> lastIds = new Object2LongOpenHashMapEx<>();
 	protected CommandContext context;
 	
 	
@@ -77,5 +80,21 @@ public class DefaultIdGenerator implements IdGenerator, BiConsumer<DefaultIdGene
 			this.id = id;
 		}
 	}
-	
+
+	public interface Object2LongMapEx<T> extends Object2LongMap<T> {
+		long getOrDefault(T key, long value);
+	}
+
+	public static class Object2LongOpenHashMapEx<T> extends Object2LongOpenHashMap<T> implements Object2LongMapEx<T> {
+
+		@Override
+		public long getOrDefault(T key, long value) {
+			if (this.containsKey(key)) {
+				return this.getLong(key);
+			} else {
+				return value;
+			}
+		}
+	}
+
 }

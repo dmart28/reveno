@@ -20,7 +20,7 @@ import org.reveno.atp.api.domain.Repository;
 
 public interface CommandContext {
 
-	Repository repository();
+	Repository repo();
 	
 	long id(Class<?> entityType);
 	

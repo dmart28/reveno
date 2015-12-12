@@ -36,12 +36,12 @@ public class TestEngineStarts {
 		
 		engine.startup();
 		
-		Assert.assertFalse(engine.query().find(LastCalculatedView.class, 1).isPresent());
+		Assert.assertFalse(engine.query().findO(LastCalculatedView.class, 1).isPresent());
 		Result<Double> r = engine.<Double>executeCommand(new SqrtCommand(16)).get();
 		Assert.assertTrue(r.isSuccess());
 		Assert.assertEquals(r.getResult(), 4, 0.001);
-		Assert.assertTrue(engine.query().find(LastCalculatedView.class, 1).isPresent());
-		Assert.assertEquals(4, engine.query().find(LastCalculatedView.class, 1).get().sqrt, 0.001);
+		Assert.assertTrue(engine.query().findO(LastCalculatedView.class, 1).isPresent());
+		Assert.assertEquals(4, engine.query().findO(LastCalculatedView.class, 1).get().sqrt, 0.001);
 
 		engine.shutdown();
 		
@@ -50,11 +50,11 @@ public class TestEngineStarts {
 		
 		engine.startup();
 		
-		Assert.assertTrue(engine.query().find(LastCalculatedView.class, 1).isPresent());
-		Assert.assertEquals(4, engine.query().find(LastCalculatedView.class, 1).get().sqrt, 0.001);
+		Assert.assertTrue(engine.query().findO(LastCalculatedView.class, 1).isPresent());
+		Assert.assertEquals(4, engine.query().find(LastCalculatedView.class, 1).sqrt, 0.001);
 		engine.executeCommand(new SqrtCommand(64)).get();
 		// 3 because we call u.id(..) twice in command handler
-		Assert.assertEquals(8, engine.query().find(LastCalculatedView.class, 3).get().sqrt, 0.001);
+		Assert.assertEquals(8, engine.query().find(LastCalculatedView.class, 3).sqrt, 0.001);
 		
 		engine.shutdown();
 		
@@ -73,10 +73,10 @@ public class TestEngineStarts {
 			return result;
 		});
 		engine.domain().transactionAction(WriteLastCalculationTransaction.class, (t, u) -> {
-			u.repository().store(t.id, t.sqrt);
+			u.repo().store(t.id, t.sqrt);
 		});
 		engine.domain().viewMapper(Double.class, LastCalculatedView.class, (id,e,r) -> {
-			Optional<LastCalculatedView> old = r.get(LastCalculatedView.class, id);
+			Optional<LastCalculatedView> old = r.getO(LastCalculatedView.class, id);
 			if (old.isPresent()) {
 				old.get().sqrt = e;
 				return old.get();

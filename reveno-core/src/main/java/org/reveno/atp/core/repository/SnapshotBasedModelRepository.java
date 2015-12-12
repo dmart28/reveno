@@ -53,7 +53,7 @@ public class SnapshotBasedModelRepository implements TxRepository {
 	}
 
 	@Override
-	public <T> Optional<T> get(Class<T> entityType, long id) {
+	public <T> T get(Class<T> entityType, long id) {
 		return repository.get(entityType, id);
 	}
 	
@@ -63,7 +63,7 @@ public class SnapshotBasedModelRepository implements TxRepository {
 	}
 	
 	@Override
-	public <T> Optional<T> getClean(Class<T> entityType, long id) {
+	public <T> T getClean(Class<T> entityType, long id) {
 		return get(entityType, id);
 	}
 
@@ -112,13 +112,13 @@ public class SnapshotBasedModelRepository implements TxRepository {
 			if (entityAdded.contains(entityId)) 
 				return;
 			
-			Optional<T> oldT = repository.get((Class<T>)type, entityId);
+			T oldT = repository.get((Class<T>)type, entityId);
 			Long2ObjectOpenHashMap<Object> data = snapshotted.get(type);
 			
-			if (!oldT.isPresent()) {
+			if (oldT == null) {
 				entityAdded.add(entityId);
 			} else if (!data.containsKey(entityId)) {
-				data.put(entityId, oldT.get());
+				data.put(entityId, oldT);
 			}
 		}
 	}
