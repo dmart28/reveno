@@ -101,10 +101,10 @@ public class LatencyTest extends RevenoBaseTest {
 				ctx.executeTransaction(t);
 			});
 			e.domain().transactionAction(AddBalance.class, (t, ctx) -> {
-				ctx.repo().get(Account.class, t.acc).balance += t.amount;
+				ctx.repo().store(t.acc, ctx.repo().get(Account.class, t.acc).add(t.amount));
 			});
-			e.config().mutableModel();
-			e.config().mutableModelFailover(Configuration.MutableModelFailover.COMPENSATING_ACTIONS);
+			//e.config().mutableModel();
+			//e.config().mutableModelFailover(Configuration.MutableModelFailover.COMPENSATING_ACTIONS);
 			e.config().mapCapacity(1024);
 
 			e.config().cpuConsumption(consumption);
@@ -180,6 +180,10 @@ public class LatencyTest extends RevenoBaseTest {
 	public static class Account {
 		public final long id;
 		public long balance;
+
+		public Account add(long amount) {
+			return new Account(balance + amount);
+		}
 
 		public Account(long id) {
 			this.id = id;
