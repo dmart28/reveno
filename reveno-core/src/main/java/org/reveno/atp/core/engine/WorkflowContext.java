@@ -29,6 +29,8 @@ import org.reveno.atp.core.views.ViewsProcessor;
 public interface WorkflowContext {
 	
 	RevenoConfiguration configuration();
+
+	ClassLoader classLoader();
 	
 
 	FailoverManager failoverManager();

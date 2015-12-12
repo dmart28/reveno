@@ -55,8 +55,6 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 
 	@Override
 	public void serialize(TransactionCommitInfo info, Buffer buffer) {
-		changeClassLoaderIfRequired();
-
 		buffer.writeLong(info.transactionId());
 		buffer.writeLong(info.time());
 		BinaryUtils.writeNullable(info.flag(), buffer);
@@ -195,7 +193,6 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	}
 
 	protected void changeClassLoaderIfRequired() {
-		// TODO check only once since only single thread uses serializers in Reveno
 		if (Thread.currentThread().getContextClassLoader() != classLoader) {
 			Thread.currentThread().setContextClassLoader(classLoader);
 		}

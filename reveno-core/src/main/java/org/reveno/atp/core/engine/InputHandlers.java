@@ -100,9 +100,14 @@ public class InputHandlers {
 		ctxJ.commitInfo().transactionId(ctxJ.transactionId()).time(ctxJ.time()).transactionCommits(ctxJ.getTransactions());
 		services.serializer().serialize(ctxJ.commitInfo(), b);
 	};
-	
+
+	private boolean changedClassLoaderReplicator = false;
 	protected final BoolBiConsumer<ProcessorContext> replicator = (c, eob) -> {
 		interceptors(TransactionStage.REPLICATION, c);
+		if (!changedClassLoaderReplicator) {
+			changeClassLoaderIfRequired();
+			changedClassLoaderReplicator = true;
+		}
 		
 		if (!services.failoverManager().replicate(b -> services.serializer().serializeCommands(c.getCommands(), b)))
 			c.abort(new ReplicationFailedException());
@@ -115,11 +120,16 @@ public class InputHandlers {
 		txExecutor.executeCommands(c, services);
 
 	};
+	private boolean changedClassLoaderJournaler = false;
 	protected final BoolBiConsumer<ProcessorContext> journaler = (c, eob) -> {
 		interceptors(TransactionStage.JOURNALING, c);
 
 		rollIfRequired(c.transactionId());
 		this.ctxJ = c;
+		if (!changedClassLoaderJournaler) {
+			changeClassLoaderIfRequired();
+			changedClassLoaderJournaler = true;
+		}
 		services.transactionJournaler().writeData(journalerConsumer, eob);
 	};
 	protected final BoolBiConsumer<ProcessorContext> viewsUpdater = (c, eob) -> {
@@ -151,6 +161,12 @@ public class InputHandlers {
 
 	protected boolean isRollRequired(Channel ch) {
 		return services.configuration().revenoJournaling().isPreallocated() && ch.size() - ch.position() <= 0;
+	}
+
+	protected void changeClassLoaderIfRequired() {
+		if (Thread.currentThread().getContextClassLoader() != services.classLoader()) {
+			Thread.currentThread().setContextClassLoader(services.classLoader());
+		}
 	}
 	
 	

@@ -371,7 +371,7 @@ public class Engine implements Reveno {
 				.eventsCommitBuilder(eventBuilder).eventsJournaler(journalsManager.getEventsJournaler()).manager(eventsManager);
 		eventPublisher = new EventPublisher(eventProcessor, eventsContext);
 
-		workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository)
+		workflowContext = new EngineWorkflowContext().serializers(serializer).repository(repository).classLoader(classLoader)
 				.viewsProcessor(viewsProcessor).transactionsManager(transactionsManager).commandsManager(commandsManager)
 				.eventPublisher(eventPublisher).transactionCommitBuilder(txBuilder).transactionJournaler(journalsManager.getTransactionsJournaler())
 				.idGenerator(idGenerator).journalsManager(journalsManager).snapshotsManager(snapshotsManager).interceptorCollection(interceptors)
