@@ -15,11 +15,12 @@ Most of todays solutions are suffering from excessively complex architecture and
 The purpose of Reveno is to give an easy domain-oriented development tool with simple and transparent infrastructure, with perfectly fitted components for max performance. But easy doesn't mean simplistic. Instead, we are different in intention to give you as many options as possible, so you can choose the best one for you.
 
 ### Few highlights:
+* Reveno is an in-memory transactional event-driven framework with CQRS and event sourcing intruded. See our Architecture overview
 * Reveno is based on JVM and written fully on Java.
 * Reveno is fast - Able to process millions of transaction per second with microseconds latency.
 * Reveno is domain oriented - your primary focus will be on the core domain and domain logic only.
-* Reveno is an in-memory transactional event-driven framework with CQRS and event sourcing intruded. See our Architecture overview
 * Reveno is modular - use only components you really need to.
+* Reveno is GC-friendly - despite it is general purpose framework, we minize the costs as much as possible.
 * Reveno is robust - we have much durability options as well as failover replication among cluster, pre-allocated volumes and much more.
 * Reveno is lightweight. The core is about 300kb only.
 
