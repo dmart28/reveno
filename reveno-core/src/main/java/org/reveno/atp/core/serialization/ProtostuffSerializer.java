@@ -20,6 +20,10 @@ import io.protostuff.Input;
 import io.protostuff.LowCopyProtostuffOutput;
 import io.protostuff.Schema;
 import io.protostuff.runtime.RuntimeSchema;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.exceptions.BufferOutOfBoundsException;
 import org.reveno.atp.commons.ByteArrayObjectMap;
@@ -39,9 +43,9 @@ import java.util.List;
 import java.util.Map;
 
 import static org.reveno.atp.utils.BinaryUtils.sha1;
+import static org.reveno.atp.utils.BinaryUtils.crc32;
 
 public class ProtostuffSerializer implements RepositoryDataSerializer, TransactionInfoSerializer {
-	protected static final int SHA1_DIGEST_SIZE = 20;
 
 	@Override
 	public int getSerializerType() {
@@ -50,14 +54,21 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	
 	@Override
 	public boolean isRegistered(Class<?> type) {
-		return names.containsKey(type);
+		return sha1Names.containsKey(type);
 	}
 
 	@Override
 	public void registerTransactionType(Class<?> txDataType) {
-		byte[] key = sha1(txDataType.getName());
-		registered.put(key, new ProtoTransactionTypeHolder(txDataType, RuntimeSchema.getSchema(txDataType)));
-		names.put(txDataType, key);
+		byte[] shaKey = sha1(txDataType.getName());
+		long crc = crc32(txDataType.getName());
+		ProtoTransactionTypeHolder ptth = new ProtoTransactionTypeHolder(txDataType,
+				RuntimeSchema.getSchema(txDataType), registeredCrc.containsKey(crc));
+		registeredSha1.put(shaKey, ptth);
+		if (!registeredCrc.containsKey(crc)) {
+			registeredCrc.put(crc, ptth);
+		}
+		sha1Names.put(txDataType, shaKey);
+		crcNames.put(txDataType, crc);
 	}
 
 	@Override
@@ -155,14 +166,23 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	public void serializeObject(Buffer buffer, Object tc) {
         ZeroCopyLinkBuffer zeroCopyLinkBuffer = linkedBuff.get();
         LowCopyProtostuffOutput lowCopyProtostuffOutput = output.get();
-		byte[] key = names.get(tc.getClass());
-        Schema<Object> schema = (Schema<Object>) registered.get(key).schema;
+		zeroCopyLinkBuffer.withBuffer(buffer);
+		lowCopyProtostuffOutput.buffer = zeroCopyLinkBuffer;
 
-        zeroCopyLinkBuffer.withBuffer(buffer);
-        lowCopyProtostuffOutput.buffer = zeroCopyLinkBuffer;
+		long crc = crcNames.get(tc.getClass());
+        ProtoTransactionTypeHolder ptth = registeredCrc.get(crc);
+		if (ptth.crcCollision) {
+			byte[] key = sha1Names.get(tc.getClass());
+			ptth = registeredSha1.get(key);
+			buffer.writeByte(SHA1_TYPE);
+			buffer.writeBytes(key, 0, SHA1_DIGEST_SIZE);
+		} else {
+			buffer.writeByte(CRC32_TYPE);
+			buffer.writeLong(crc);
+		}
 
-        buffer.writeBytes(key, 0, SHA1_DIGEST_SIZE);
         buffer.markSize();
+		Schema<Object> schema = (Schema<Object>) ptth.schema;
         try {
             schema.writeTo(lowCopyProtostuffOutput, tc);
         } catch (IOException e) {
@@ -173,7 +193,7 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	
 	protected List<Object> deserializeObjects(Buffer buffer) {
 		int len = buffer.readInt();
-		List<Object> commits =  new ArrayList<>(len);
+		List<Object> commits = new ArrayList<>(len);
 
 		for (int i = 0; i < len; i++) {
 			commits.add(i, deserializeObject(buffer));
@@ -184,7 +204,14 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 	@SuppressWarnings("unchecked")
 	public Object deserializeObject(Buffer buffer) {
 		Input input = new ZeroCopyBufferInput(buffer, true);
-		Schema<Object> schema = (Schema<Object>)registered.get(buffer, SHA1_DIGEST_SIZE).schema;
+		byte type = buffer.readByte();
+		Schema<Object> schema;
+		if (type == CRC32_TYPE) {
+			long crc = buffer.readLong();
+			schema = (Schema<Object>) registeredCrc.get(crc).schema;
+		} else {
+			schema = (Schema<Object>) registeredSha1.get(buffer, SHA1_DIGEST_SIZE).schema;
+		}
 		int size = buffer.readInt();
 		Object message = schema.newMessage();
 		try {
@@ -215,19 +242,25 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
         }
     };
 	protected ClassLoader classLoader;
-	protected ByteArrayObjectMap<ProtoTransactionTypeHolder> registered = new ByteArrayObjectMap<>();
-	protected Map<Class<?>, byte[]> names = new HashMap<>(64);
+	protected ByteArrayObjectMap<ProtoTransactionTypeHolder> registeredSha1 = new ByteArrayObjectMap<>();
+	protected Long2ObjectMap<ProtoTransactionTypeHolder> registeredCrc = new Long2ObjectOpenHashMap<>();
+	protected Map<Class<?>, byte[]> sha1Names = new HashMap<>(64);
+	protected Object2LongMap<Class<?>> crcNames = new Object2LongOpenHashMap<>(64);
 	protected final Schema<RepositoryData> repoSchema = RuntimeSchema.createFrom(RepositoryData.class);
 	protected static final int PROTO_TYPE = 0x222;
-
+	protected static final int SHA1_DIGEST_SIZE = 20;
+	protected static final byte SHA1_TYPE = 1;
+	protected static final byte CRC32_TYPE = 2;
 
 	protected static class ProtoTransactionTypeHolder {
 		public final Class<?> transactionType;
 		public final Schema<?> schema;
+		public final boolean crcCollision;
 
-		public ProtoTransactionTypeHolder(Class<?> transactionType, Schema<?> schema) {
+		public ProtoTransactionTypeHolder(Class<?> transactionType, Schema<?> schema, boolean crcCollision) {
 			this.transactionType = transactionType;
 			this.schema = schema;
+			this.crcCollision = crcCollision;
 		}
 	}
 

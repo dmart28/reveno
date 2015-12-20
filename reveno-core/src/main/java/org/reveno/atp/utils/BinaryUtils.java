@@ -19,8 +19,10 @@ package org.reveno.atp.utils;
 import it.unimi.dsi.fastutil.bytes.ByteArrays;
 import org.reveno.atp.core.api.channel.Buffer;
 
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.zip.CRC32;
 
 public abstract class BinaryUtils {
 	private static final MessageDigest SHA1;
@@ -118,6 +120,16 @@ public abstract class BinaryUtils {
 		} catch (Exception e) {
 			throw Exceptions.runtime(e);
 		}
+	}
+
+	public static long crc32(String value) {
+		CRC32 crc = new CRC32();
+		try {
+			crc.update(value.getBytes("UTF-8"));
+		} catch (UnsupportedEncodingException e) {
+			throw Exceptions.runtime(e);
+		}
+		return crc.getValue();
 	}
 	
 }
