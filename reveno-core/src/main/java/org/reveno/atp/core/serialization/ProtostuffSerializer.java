@@ -64,11 +64,13 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 		ProtoTransactionTypeHolder ptth = new ProtoTransactionTypeHolder(txDataType,
 				RuntimeSchema.getSchema(txDataType), registeredCrc.containsKey(crc));
 		registeredSha1.put(shaKey, ptth);
-		if (!registeredCrc.containsKey(crc)) {
+		if (!ptth.crcCollision) {
 			registeredCrc.put(crc, ptth);
 		}
 		sha1Names.put(txDataType, shaKey);
-		crcNames.put(txDataType, crc);
+		if (!ptth.crcCollision) {
+			crcNames.put(txDataType, crc);
+		}
 	}
 
 	@Override
