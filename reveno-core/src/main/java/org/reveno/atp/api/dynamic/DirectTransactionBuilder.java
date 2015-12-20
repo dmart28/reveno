@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
+@SuppressWarnings("all")
 public class DirectTransactionBuilder {
 	
 	protected static final String PACKAGE = "org.reveno.atp.api.dynamic.";
@@ -51,18 +52,32 @@ public class DirectTransactionBuilder {
 	}
 
 	protected void init() {
-		dynamicCommand = new ByteBuddy()
-				  .subclass(AbstractDynamicCommand.class)
-				  .name(PACKAGE + COMMAND_NAME_PREFIX + name)
-				  .make()
-				  .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
-				  .getLoaded();
-		dynamicTransaction = new ByteBuddy()
-				  .subclass(AbstractDynamicTransaction.class)
-				  .name(PACKAGE + TRANSACTION_NAME_PREFIX + name)
-				  .make()
-				  .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
-				  .getLoaded();
+		try {
+			dynamicCommand = new ByteBuddy()
+					.subclass(AbstractDynamicCommand.class)
+					.name(PACKAGE + COMMAND_NAME_PREFIX + name)
+					.make()
+					.load(classLoader, ClassLoadingStrategy.Default.INJECTION)
+					.getLoaded();
+		} catch (Exception e) {
+			try {
+				dynamicCommand = (Class<? extends AbstractDynamicCommand>)classLoader.loadClass(PACKAGE + COMMAND_NAME_PREFIX + name);
+			} catch (ClassNotFoundException ignored) {
+			}
+		}
+		try {
+			dynamicTransaction = new ByteBuddy()
+					.subclass(AbstractDynamicTransaction.class)
+					.name(PACKAGE + TRANSACTION_NAME_PREFIX + name)
+					.make()
+					.load(classLoader, ClassLoadingStrategy.Default.INJECTION)
+					.getLoaded();
+		} catch (Exception e) {
+			try {
+				dynamicTransaction = (Class<? extends AbstractDynamicTransaction>)classLoader.loadClass(PACKAGE + TRANSACTION_NAME_PREFIX + name);
+			} catch (ClassNotFoundException ignored) {
+			}
+		}
 		serializer.registerTransactionType(dynamicCommand);
 		serializer.registerTransactionType(dynamicTransaction);
 	}

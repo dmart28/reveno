@@ -392,13 +392,12 @@ public class Tests extends RevenoBaseTest {
 	@Test
 	public void testPreallocatedMultipleVolumes() throws Exception {
 		Consumer<TestRevenoEngine> c = reveno -> {
-			Assert.assertEquals(5, reveno.getJournalsStorage().getVolumes().length);
-			Assert.assertEquals(5, reveno.getJournalsStorage().getLastStores().length);
+			Assert.assertEquals(6, reveno.getJournalsStorage().getVolumes().length);
+			Assert.assertEquals(4, reveno.getJournalsStorage().getLastStores().length);
 		};
 		testPreallocatedJournals(500_000, ChannelOptions.UNBUFFERED_IO, c);
-		testPreallocatedJournals(500_000, ChannelOptions.BUFFERING_VM, c);
-		testPreallocatedJournals(500_000, ChannelOptions.BUFFERING_MMAP_OS, c);
 		testPreallocatedJournals(500_000, ChannelOptions.BUFFERING_OS, c);
+		testPreallocatedJournals(500_000, ChannelOptions.BUFFERING_MMAP_OS, c);
 		testPreallocatedJournals(500_000, ChannelOptions.UNBUFFERED_IO, r -> {}, true);
 		testPreallocatedJournals(500_000, ChannelOptions.BUFFERING_VM, r -> {}, true);
 		testPreallocatedJournals(500_000, ChannelOptions.BUFFERING_MMAP_OS, r -> {}, true);
@@ -431,14 +430,14 @@ public class Tests extends RevenoBaseTest {
 			}
 		};
 		TestRevenoEngine reveno = createEngine(consumer);
-		Waiter accountsWaiter = listenFor(reveno, AccountCreatedEvent.class, 10_000);
-		Waiter ordersWaiter = listenFor(reveno, OrderCreatedEvent.class, 10_000);
+		Waiter accountsWaiter = listenFor(reveno, AccountCreatedEvent.class, 5_000);
+		Waiter ordersWaiter = listenFor(reveno, OrderCreatedEvent.class, 5_000);
 		reveno.startup();
 
-		generateAndSendCommands(reveno, 10_000);
+		generateAndSendCommands(reveno, 5_000);
 
-		Assert.assertEquals(10_000, reveno.query().select(AccountView.class).size());
-		Assert.assertEquals(10_000, reveno.query().select(OrderView.class).size());
+		Assert.assertEquals(5_000, reveno.query().select(AccountView.class).size());
+		Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
 
 		Assert.assertTrue(accountsWaiter.isArrived());
 		Assert.assertTrue(ordersWaiter.isArrived());
@@ -451,16 +450,16 @@ public class Tests extends RevenoBaseTest {
 		ordersWaiter = listenFor(reveno, OrderCreatedEvent.class, 1);
 		reveno.startup();
 
-		Assert.assertEquals(10_000, reveno.query().select(AccountView.class).size());
-		Assert.assertEquals(10_000, reveno.query().select(OrderView.class).size());
+		Assert.assertEquals(5_000, reveno.query().select(AccountView.class).size());
+		Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
 
 		Assert.assertFalse(accountsWaiter.isArrived());
 		Assert.assertFalse(ordersWaiter.isArrived());
 
 		long accountId = sendCommandSync(reveno, new CreateNewAccountCommand("USD", 1000_000L));
-		Assert.assertEquals(10_001, accountId);
+		Assert.assertEquals(5_001, accountId);
 		long orderId = sendCommandSync(reveno, new NewOrderCommand(accountId, null, "EUR/USD", 134000, 1000, OrderType.MARKET));
-		Assert.assertEquals(10_001, orderId);
+		Assert.assertEquals(5_001, orderId);
 
 		reveno.shutdown();
 

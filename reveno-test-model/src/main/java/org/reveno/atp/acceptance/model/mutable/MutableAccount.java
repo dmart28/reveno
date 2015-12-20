@@ -99,11 +99,6 @@ public class MutableAccount implements Account {
 		return false;
 	}
 	
-	public static final AccountFactory FACTORY = new AccountFactory() {
-		@Override
-		public Account create(long id, String currency, long balance) {
-			return new MutableAccount(id, currency, balance);
-		}
-	};
+	public static final AccountFactory FACTORY = MutableAccount::new;
 	
 }

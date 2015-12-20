@@ -16,9 +16,22 @@
 
 package org.reveno.atp.utils;
 
+import it.unimi.dsi.fastutil.bytes.ByteArrays;
 import org.reveno.atp.core.api.channel.Buffer;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 public abstract class BinaryUtils {
+	private static final MessageDigest SHA1;
+
+	static {
+		try {
+			SHA1 = MessageDigest.getInstance("SHA1");
+		} catch (NoSuchAlgorithmException e) {
+			throw Exceptions.runtime(e);
+		}
+	}
 
 	public static long bytesToLong(byte[] b) {
 		return ((((long) b[0]) << 56) | (((long) b[1] & 0xff) << 48) | (((long) b[2] & 0xff) << 40)
@@ -97,6 +110,14 @@ public abstract class BinaryUtils {
 			return buffer.readLong();
 		}
 		return 0l;
+	}
+
+	public static byte[] sha1(String value) {
+		try {
+			return SHA1.digest(value.getBytes("UTF-8"));
+		} catch (Exception e) {
+			throw Exceptions.runtime(e);
+		}
 	}
 	
 }

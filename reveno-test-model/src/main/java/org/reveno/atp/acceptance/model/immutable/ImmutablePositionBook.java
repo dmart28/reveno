@@ -48,11 +48,11 @@ public class ImmutablePositionBook implements PositionBook {
 	
 	public ImmutablePositionBook merge(long toPositionId, List<Long> mergedPositions) {
 		Position toPosition = positions.get(toPositionId);
-		List<Fill> newFills = mergedPositions.stream().map(pid -> positions.get(pid))
+		List<Fill> newFills = mergedPositions.stream().map(positions::get)
 				.flatMap(p -> p.fills().stream()).collect(Collectors.toList());
 		HashMap<Long, Position> newPositions = new HashMap<>(positions);
 		newPositions.put(toPositionId, toPosition.addFills(newFills));
-		mergedPositions.forEach(p -> newPositions.remove(p));
+		mergedPositions.forEach(newPositions::remove);
 		
 		return new ImmutablePositionBook(newPositions);
 	}

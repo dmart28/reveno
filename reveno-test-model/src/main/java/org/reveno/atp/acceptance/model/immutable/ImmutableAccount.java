@@ -96,12 +96,7 @@ public class ImmutableAccount implements Account {
 		this.positions = positions;
 	}
 	
-	public static final AccountFactory FACTORY = new AccountFactory() {
-		@Override
-		public Account create(long id, String currency, long balance) {
-			return new ImmutableAccount(id, currency, balance);
-		}
-	};
+	public static final AccountFactory FACTORY = ImmutableAccount::new;
 
 	@Override
 	public boolean isImmutable() {

@@ -99,7 +99,7 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		
 		reveno = createEngine();
 		reveno.startup();
-		
+
 		Assert.assertTrue(5_000 > reveno.query().select(OrderView.class).size());
 		
 		Collection<AccountView> accs = reveno.query().select(AccountView.class, a -> a.accountId == 1);
@@ -135,7 +135,7 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 			dontDelete = true;
 			throw new RuntimeException(t);
 		}
-		
+
 		reveno.shutdown();
 	}
 
@@ -174,7 +174,7 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 	}
 
 	protected void eraseRandomBuffer(File file) throws Exception {
-		eraseBuffer(file, (Math.random() * Math.random()));
+		eraseBuffer(file, 0.8);
 	}
 
 	protected void eraseBuffer(File file, double ratio) throws Exception {
