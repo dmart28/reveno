@@ -1,4 +1,5 @@
 apply plugin: 'osgi'
+apply plugin: 'signing'
 apply plugin: 'maven-publish'
 
 sourceSets {
@@ -83,11 +84,60 @@ dependencies {
 	perfTestCompile project(":reveno-test-model")
 }
 
+signing {
+	sign configurations.archives
+}
+
 idea {
 	module {
 		//and some extra test source dirs
 		testSourceDirs += file('src/perfTest/java')
 		generatedSourceDirs += file('src/perfTest/java')
 		scopes.TEST.plus += [ configurations.perfTestCompile ]
+	}
+}
+
+uploadArchives {
+	repositories {
+		mavenDeployer {
+			beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+			repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+				authentication(userName: ossrhUsername, password: ossrhPassword)
+			}
+
+			snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+				authentication(userName: ossrhUsername, password: ossrhPassword)
+			}
+
+			pom.project {
+				name 'Reveno Core'
+				packaging 'jar'
+				// optionally artifactId can be defined here
+				description 'Reveno framework core engine.'
+				url 'http://reveno.org'
+
+				scm {
+					connection 'scm:git:https://github.com/dmart28/reveno.git'
+					developerConnection 'scm:git:git@github.com:dmart28/reveno.git'
+					url 'https://github.com/dmart28/reveno'
+				}
+
+				licenses {
+					license {
+						name 'The Apache License, Version 2.0'
+						url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+					}
+				}
+
+				developers {
+					developer {
+						id 'dmart28'
+						name 'Artem Dmitriev'
+						email 'artem@reveno.org'
+					}
+				}
+			}
+		}
 	}
 }
