@@ -27,28 +27,7 @@ The purpose of Reveno is to give an easy domain-oriented development tool with s
 # Installation
 
 ## Maven repository
-Currently, Reveno is not part of Maven Central, by this reason we provide our own repository.
-
-Maven
-```xml
-<repositories>
-    <repository>
-        <id>reveno</id>
-        <url>http://mvn.reveno.org</url>
-    </repository>
-</repositories>
-```
-
-Gradle
-```groovy
-repositories {
-    maven {
-        url "http://mvn.reveno.org"
-    }
-}
-```
-
-The current list of available artifacts consists of:
+The current list of available artifacts in Maven consists of:
 
 * reveno-core – includes all Reveno core packages, responsible for engine initialization, transaction processing, etc.
 * reveno-metrics – includes packages, responsible for gathering metrics from working engine, and sending them to Graphite, Slf4j, etc.
