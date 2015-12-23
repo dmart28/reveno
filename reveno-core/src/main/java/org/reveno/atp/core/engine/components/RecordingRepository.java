@@ -95,7 +95,7 @@ public class RecordingRepository implements WriteableRepository {
 	}
 
 	@Override
-	public Object remove(Class<?> entityClass, long entityId) {
+	public <T> T remove(Class<T> entityClass, long entityId) {
 		markedRecords.get(entityClass).remove(entityId);
 		markedRecords.get(entityClass).put(-entityId, EMPTY);
 		return underlyingRepo.remove(entityClass, entityId);

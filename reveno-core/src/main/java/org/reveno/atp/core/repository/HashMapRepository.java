@@ -63,10 +63,10 @@ public class HashMapRepository implements WriteableRepository {
 	}
 
 	@Override
-	public Object remove(Class<?> entityClass, long entityId) {
+	public <T> T remove(Class<T> entityClass, long entityId) {
 		Long2ObjectOpenHashMap<Object> data = map.get(entityClass);
 		if (data != null)
-			return data.remove(entityId);
+			return (T) data.remove(entityId);
 		return null;
 	}
 

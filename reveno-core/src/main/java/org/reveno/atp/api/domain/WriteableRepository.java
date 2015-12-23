@@ -20,11 +20,38 @@ import java.util.Map;
 
 public interface WriteableRepository extends Repository {
 
+	/**
+	 * Stores new entity to the repository. It will be then available in repository
+	 * under {@code entityId} and {@code entity.getClass()} values strictly.
+	 *
+	 * @param entityId unique identity of the entity being stored
+	 * @param entity entity being stored
+	 * @param <T>
+     * @return old entity that was stored under this keys, {@code null} unless
+     */
 	<T> T store(long entityId, T entity);
-	
+
+	/**
+	 * Stores new entity to the repository. You should explicitly define the Class instance
+	 * under which it will be stored along with unique entity identity.
+	 *
+	 * @param entityId unique identity of the entity being stored
+	 * @param type explicit type of entity
+	 * @param entity entity being stored
+	 * @param <T>
+     * @return old entity that was stored under this keys, {@code null} unless
+     */
 	<T> T store(long entityId, Class<? super T> type, T entity);
-	
-	Object remove(Class<?> entityClass, long entityId);
+
+	/**
+	 * Removes entity from repository.
+	 *
+	 * @param entityClass type of entity
+	 * @param entityId identity of entity
+	 * @param <T>
+     * @return last stored value if any, {@code null} unless
+     */
+	<T> T remove(Class<T> entityClass, long entityId);
 	
 	void load(Map<Class<?>, Map<Long, Object>> map);
 	

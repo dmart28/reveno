@@ -42,8 +42,8 @@ public class SnapshotBasedModelRepository implements TxRepository {
 	}
 
 	@Override
-	public Object remove(Class<?> entityClass, long entityId) {
-		checkAndStore(entityId, (Class<Object>)entityClass);
+	public <T> T remove(Class<T> entityClass, long entityId) {
+		checkAndStore(entityId, entityClass);
 		return repository.remove(entityClass, entityId);
 	}
 

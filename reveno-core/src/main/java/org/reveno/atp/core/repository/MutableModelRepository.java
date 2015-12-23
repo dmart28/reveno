@@ -55,8 +55,8 @@ public class MutableModelRepository implements TxRepository, Destroyable {
 	}
 
 	@Override
-	public Object remove(Class<?> entityClass, long entityId) {
-		Object entity = repository.remove(entityClass, entityId);
+	public <T> T remove(Class<T> entityClass, long entityId) {
+		T entity = repository.remove(entityClass, entityId);
 		if (isTransaction.get() && entity != null)
 			saveEntityState(entityId, entityClass, entity, EntityRecoveryState.ADD);
 		return entity;
