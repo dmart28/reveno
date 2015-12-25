@@ -50,7 +50,9 @@ public class InputHandlers {
 			} catch (Throwable t) {
 				log.error("inputHandlers", t);
 				c.abort(t);
-				c.future().complete(new EmptyResult(t));
+				if (c.future() != null) {
+					c.future().complete(new EmptyResult(t));
+				}
 			}
 		}
 	}

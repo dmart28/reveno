@@ -26,12 +26,20 @@ public class RevenoMetrics {
 	}
 	
 	public void listen(Engine engine) {
-		engine.interceptors().add(TransactionStage.REPLICATION, interceptor);
+		if (engine.isClustered()) {
+			engine.interceptors().add(TransactionStage.REPLICATION, interceptor);
+		} else {
+			engine.interceptors().add(TransactionStage.TRANSACTION, interceptor);
+		}
 		interceptor.init();
 	}
 	
 	public void shutdown(Engine engine) {
-		engine.interceptors().getInterceptors(TransactionStage.REPLICATION).remove(interceptor);
+		if (engine.isClustered()) {
+			engine.interceptors().getInterceptors(TransactionStage.REPLICATION).remove(interceptor);
+		} else {
+			engine.interceptors().getInterceptors(TransactionStage.TRANSACTION).remove(interceptor);
+		}
 		interceptor.shutdown();
 	}
 	

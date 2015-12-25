@@ -341,6 +341,10 @@ public class Engine implements Reveno {
 		return interceptors;
 	}
 
+	public boolean isClustered() {
+		return !failoverManager().isSingleNode();
+	}
+
 	protected Optional<DynamicCommand> getDynamicCommand(String command) {
 		Optional<DynamicCommand> dc = DirectTransactionBuilder.loadExistedCommand(command, classLoader);
 		if (!dc.isPresent()) {
