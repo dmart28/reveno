@@ -68,11 +68,10 @@ public class DefaultIdGenerator implements IdGenerator, BiConsumer<DefaultIdGene
 			return this;
 		}
 		
-		protected Object2LongMapEx<Class<?>> ids = new Object2LongOpenHashMapEx<>();
+		protected Object2LongOpenHashMapEx<Class<?>> ids = new Object2LongOpenHashMapEx<>();
 	}
 	
 	public static class NextIdTransaction implements Serializable {
-		@Deprecated
 		public final Class<?> entityType;
 		public final long id;
 		
