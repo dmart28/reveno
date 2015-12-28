@@ -33,15 +33,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class MetricsInterceptor implements TransactionInterceptor {
-	
-	protected long start = -1L;
 
 	@Override
 	public void intercept(long transactionId, long time, WriteableRepository repository, TransactionStage stage) {
-		if (stage == TransactionStage.REPLICATION) {
-			counter.inc();
-			histogram.update(System.nanoTime() - time);
-		}
+		counter.inc();
+		histogram.update(System.nanoTime() - time);
 	}
 	
 	@Override
