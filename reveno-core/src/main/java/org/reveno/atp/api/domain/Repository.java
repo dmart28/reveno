@@ -38,6 +38,11 @@ public interface Repository {
 	}
 	
 	<T> boolean has(Class<T> entityType, long id);
+
+	default <T> T getOrDefault(Class<T> entityType, long id, T defaultValue) {
+		T t;
+		return ((t = get(entityType, id)) != null) ? t : defaultValue;
+	}
 	
 	/**
 	 * Gets entity from repository without marking it as dirty, 
