@@ -116,10 +116,6 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 		this.snapshotStorage = snapshotStorage;
 	}
 	
-	protected SnapshotStore nextStore() {
-		return snapshotStorage.nextSnapshotStore();
-	}
-	
 	protected RevenoConfiguration configuration;
 	protected SnapshottersManager snapshotsManager;
 	protected SnapshotStorage snapshotStorage;

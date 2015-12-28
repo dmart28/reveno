@@ -151,10 +151,10 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 
 	@Override
 	public JournalStore nextTempStore() {
-		VersionedFile txFile = parseVersionedFile(nextVersionFile(baseDir, "tmp_" + TRANSACTION_PREFIX, 0));
-		VersionedFile evnFile = parseVersionedFile(nextVersionFile(baseDir, "tmp_" + EVENTS_PREFIX, 0));
+		VersionedFile txFile = parseVersionedFile(nextVersionFile(baseDir, TRANSACTION_PREFIX, 0));
+		VersionedFile evnFile = parseVersionedFile(nextVersionFile(baseDir, EVENTS_PREFIX, 0));
 
-		return store(txFile, evnFile);
+		return store(txFile, evnFile, "tmp_");
 	}
 
 	@Override
@@ -172,7 +172,7 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 					"Versions of Journals are not equal [tx=%d,evn=%d]",
 					txFile.getVersion(), evnFile.getVersion()));
 
-		return store(txFile, evnFile);
+		return store(txFile, evnFile, "");
 	}
 
 	@Override
@@ -287,8 +287,8 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 	protected JournalStore[] getJournalStores(List<VersionedFile> txs, List<VersionedFile> evns) {
 		LOG.debug("evns: " + evns.size() + ", txs: " + txs.size());
 		List<JournalStore> collect = txs.stream().map(tx -> evns.stream()
-				.filter(e -> e.getVersion() == tx.getVersion())
-				.map(e -> store(tx, e)).findFirst().get()).collect(Collectors.toList());
+				.filter(e -> e.getVersion() == tx.getVersion() && e.getFileDate().equals(tx.getFileDate()))
+				.map(e -> store(tx, e, "")).findFirst().get()).collect(Collectors.toList());
 		return collect.toArray(new JournalStore[collect.size()]);
 	}
 	
@@ -318,10 +318,10 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 		return txs.stream().filter(f -> f.getVersion() > lastSnap.getVersion()).collect(Collectors.toList());
 	}
 	
-	protected JournalStore store(VersionedFile txFile, VersionedFile evnFile) {
+	protected JournalStore store(VersionedFile txFile, VersionedFile evnFile, String prefix) {
 		try {
-			new File(baseDir, txFile.getName()).createNewFile();
-			new File(baseDir, evnFile.getName()).createNewFile();
+			new File(baseDir, prefix + txFile.getName()).createNewFile();
+			new File(baseDir, prefix + evnFile.getName()).createNewFile();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -331,7 +331,8 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 		} else if (txFile.getRest().length != evnFile.getRest().length) {
 			throw new IllegalArgumentException("Transaction and Event file names are not equal!");
 		}
-		return new JournalStore(txFile.getName(), evnFile.getName(), Long.toString(txFile.getVersion()), lastTxId);
+		return new JournalStore(prefix + txFile.getName(), prefix + evnFile.getName(),
+				Long.toString(txFile.getVersion()), lastTxId);
 	}
 
 	protected void preallocateFiles(File file, long size) {

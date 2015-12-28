@@ -38,31 +38,37 @@ import java.util.stream.Stream;
  */
 public abstract class VersionedFileUtils {
 
+	public static final String LONG_FORMAT = "%020d";
+
 	public static String nextVersionFile(File baseDir, String prefix) {
 		return nextVersionFile(baseDir, prefix, null, "");
 	}
 
 	public static String nextVersionFile(File baseDir, String prefix, long lastTransactionId) {
-		return nextVersionFile(baseDir, prefix, null, "-" + String.format("%020d", lastTransactionId));
+		return nextVersionFile(baseDir, prefix, null, "-" + String.format(LONG_FORMAT, lastTransactionId));
 	}
 
 	public static String nextVersionFile(File baseDir, String prefix, String version, long lastTransactionId) {
-		return nextVersionFile(baseDir, prefix, version, "-" + String.format("%020d", lastTransactionId));
+		return nextVersionFile(baseDir, prefix, version, "-" + String.format(LONG_FORMAT, lastTransactionId));
 	}
 	
 	public static String nextVersionFile(File baseDir, String prefix, String version, String rest) {
-		Optional<String> lastFile = listFiles(baseDir, prefix, true).stream().reduce((a,b)->b);
+		Optional<String> lastFile = listFiles(baseDir, prefix, false).stream().reduce((a,b)->b);
 		
 		Function<Long, String> nextFile = v -> String.format("%s-%s-%s%s", prefix, format().format(new Date()),
-				version == null ? String.format("%010d", v + 1) : String.format("%010d", Long.parseLong(version)), rest);
+				version == null ? String.format(LONG_FORMAT, v + 1) : String.format(LONG_FORMAT, Long.parseLong(version)), rest);
 		if (!lastFile.isPresent()) {
 			return nextFile.apply(0L);
 		} else {
 			VersionedFile file = parseVersionedFile(lastFile.get());
-			if (daysBetween(file.getFileDate(), now()) >= 0) {
+			if (file.getFileDate().equals(now())) {
 				return nextFile.apply(file.getVersion());
 			} else {
-				throw new RuntimeException("Your system clock is out of sync with transaction data. Please check it.");
+				if (daysBetween(file.getFileDate(), now()) >= 0) {
+					return nextFile.apply(file.getVersion());
+				} else {
+					throw new RuntimeException("Your system clock is out of sync with transaction data. Please check it.");
+				}
 			}
 		}
 	}
