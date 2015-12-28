@@ -18,7 +18,7 @@ package org.reveno.atp.api.dynamic;
 
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -114,6 +114,6 @@ public class AbstractDynamicTransaction {
 	}
 	
 	protected Object2LongOpenHashMap<Class<?>> ids = new Object2LongOpenHashMap<Class<?>>();
-	protected Map<String, Object> args = new HashMap<>();
+	protected Map<String, Object> args = new LinkedHashMap<>();
 	
 }
