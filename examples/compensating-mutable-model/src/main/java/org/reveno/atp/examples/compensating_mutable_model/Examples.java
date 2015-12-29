@@ -18,7 +18,7 @@ public class Examples {
         reveno.domain().transaction("createAccount",
                 (t,c) -> c.repo().store(t.id(), new Account(t.id(), t.longArg("balance"))))
                 .uniqueIdFor(Account.class)
-                .conditionalCommand((cmd, c) -> cmd.longArg("balance") >= 0l).command();
+                .conditionalCommand((cmd, c) -> cmd.longArg("balance") >= 0L).command();
 
         // we use same AddToBalance class as command and tx action for simplicity here
         // as we don't need any special logic in commands rather than just call tx action

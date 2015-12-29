@@ -38,11 +38,10 @@ public class BasicEvents {
     protected static void init(Reveno reveno) {
         reveno.domain().transaction("createAccount", (t,c) -> {
             c.repo().store(t.id(), new Account(t.id(), t.longArg("balance")));
-        }).uniqueIdFor(Account.class).conditionalCommand((cmd, c) -> cmd.longArg("balance") >= 0l).command();
+        }).uniqueIdFor(Account.class).conditionalCommand((cmd, c) -> cmd.longArg("balance") >= 0L).command();
 
         reveno.domain().transaction("changeBalance", (t, c) -> {
-            Account account = c.repo().get(Account.class, t.longArg());
-            c.repo().store(t.longArg(), account.add(t.longArg("amount")));
+            c.repo().remap(t.longArg(), Account.class, (id, a) -> a.add(t.longArg("amount")));
             c.eventBus().publishEvent(new BalanceAddedEvent(t.longArg(), t.longArg("amount")));
         }).conditionalCommand((cmd, c) -> c.repo().has(Account.class, cmd.longArg())).command();
 

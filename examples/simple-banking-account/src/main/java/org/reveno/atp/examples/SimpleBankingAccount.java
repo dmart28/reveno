@@ -62,21 +62,6 @@ public class SimpleBankingAccount {
         LOG.info("Balance of Account {}: {}", id, reveno.query().find(AccountView.class, id).balance);
     }
 
-
-    public interface CurrencyConverter {
-        long convert(Currency from, Currency to, long amount);
-    }
-
-    public static class DumbCurrencyConverter implements CurrencyConverter {
-        @Override
-        public long convert(Currency from, Currency to, long amount) {
-            if (from.getCurrencyCode().equals("USD") && to.getCurrencyCode().equals("EUR")) {
-                return (long) (amount * 0.8822);
-            }
-            return amount;
-        }
-    }
-
     /**
      * In current example it pays role of both Command and Transaction Action.
      */
@@ -140,7 +125,7 @@ public class SimpleBankingAccount {
         public final long amount;
 
         public static void handler(AddToBalance tx, TransactionContext ctx) {
-            ctx.repo().store(tx.accountId, ctx.repo().get(Account.class, tx.accountId).add(tx.amount));
+            ctx.repo().remap(tx.accountId, Account.class, (id, a) -> a.add(tx.amount));
         }
 
         public AddToBalance(long accountId, long amount) {
@@ -151,4 +136,17 @@ public class SimpleBankingAccount {
 
     protected static final Logger LOG = LoggerFactory.getLogger(SimpleBankingAccount.class);
 
+    public interface CurrencyConverter {
+        long convert(Currency from, Currency to, long amount);
+    }
+
+    public static class DumbCurrencyConverter implements CurrencyConverter {
+        @Override
+        public long convert(Currency from, Currency to, long amount) {
+            if (from.getCurrencyCode().equals("USD") && to.getCurrencyCode().equals("EUR")) {
+                return (long) (amount * 0.8822);
+            }
+            return amount;
+        }
+    }
 }
