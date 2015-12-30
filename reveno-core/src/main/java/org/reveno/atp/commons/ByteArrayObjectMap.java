@@ -1,6 +1,5 @@
 package org.reveno.atp.commons;
 
-import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap;
 import it.unimi.dsi.fastutil.bytes.Byte2ObjectOpenHashMap;
 import org.reveno.atp.core.api.channel.Buffer;
 
@@ -55,7 +54,7 @@ public class ByteArrayObjectMap<T> {
     }
 
     protected class Node {
-        public Byte2ObjectMap<Node> map = new Byte2ObjectOpenHashMap<>(256);
+        public Byte2ObjectOpenHashMap<Node> map = new Byte2ObjectOpenHashMap<>(256);
         public T value;
     }
 

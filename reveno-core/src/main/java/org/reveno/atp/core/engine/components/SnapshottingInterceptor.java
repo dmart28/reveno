@@ -120,6 +120,7 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 	protected SnapshottersManager snapshotsManager;
 	protected SnapshotStorage snapshotStorage;
 	protected JournalsManager journalsManager;
+	// this is not used for actual snapshotting - it's for mutable model only
 	protected RepositoryDataSerializer serializer;
 	protected final ExecutorService executor = Executors.newSingleThreadExecutor();
 	protected static final Logger log = LoggerFactory.getLogger(SnapshottingInterceptor.class);

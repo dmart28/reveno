@@ -245,7 +245,7 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
     };
 	protected ClassLoader classLoader;
 	protected ByteArrayObjectMap<ProtoTransactionTypeHolder> registeredSha1 = new ByteArrayObjectMap<>();
-	protected Long2ObjectMap<ProtoTransactionTypeHolder> registeredCrc = new Long2ObjectOpenHashMap<>();
+	protected Long2ObjectMap<ProtoTransactionTypeHolder> registeredCrc = new Long2ObjectOpenHashMap<>(64);
 	protected Map<Class<?>, byte[]> sha1Names = new HashMap<>(64);
 	protected Object2LongMap<Class<?>> crcNames = new Object2LongOpenHashMap<>(64);
 	protected final Schema<RepositoryData> repoSchema = RuntimeSchema.createFrom(RepositoryData.class);
