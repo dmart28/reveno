@@ -41,12 +41,12 @@ Maven
     <dependency>
         <groupId>org.reveno</groupId>
         <artifactId>reveno-core</artifactId>
-        <version>1.18</version>
+        <version>1.19</version>
     </dependency>
     <dependency>
         <groupId>org.reveno</groupId>
         <artifactId>reveno-cluster</artifactId>
-        <version>1.18</version>
+        <version>1.19</version>
     </dependency>
 </dependencies>
 ```
@@ -54,8 +54,8 @@ Maven
 Gradle
 ```groovy
 dependencies {
-    compile 'org.reveno:reveno-core:1.18'
-    compile 'org.reveno:reveno-cluster:1.18'
+    compile 'org.reveno:reveno-core:1.19'
+    compile 'org.reveno:reveno-cluster:1.19'
 }
 ```
 
