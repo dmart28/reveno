@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package org.reveno.atp.examples.basic_views;
+package org.reveno.atp.test.utils;
 
 import java.util.Base64;
 

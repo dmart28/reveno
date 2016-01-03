@@ -2,6 +2,7 @@ package org.reveno.atp.commons;
 
 import java.util.Objects;
 
+@FunctionalInterface
 public interface BoolBiConsumer<T> {
 
     void accept(T t, boolean b);

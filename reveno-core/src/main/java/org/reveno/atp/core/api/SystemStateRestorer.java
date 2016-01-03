@@ -22,7 +22,7 @@ public interface SystemStateRestorer {
 	SystemState restore(TxRepository repository);
 	
 	
-	public static class SystemState {
+	class SystemState {
 		private long lastTransactionId;
 		public long getLastTransactionId() {
 			return lastTransactionId;

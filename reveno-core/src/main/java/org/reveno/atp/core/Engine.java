@@ -34,7 +34,6 @@ import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.commons.NamedThreadFactory;
 import org.reveno.atp.core.api.*;
 import org.reveno.atp.core.api.serialization.EventsInfoSerializer;
-import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.api.serialization.TransactionInfoSerializer;
 import org.reveno.atp.core.api.storage.FoldersStorage;
 import org.reveno.atp.core.api.storage.JournalsStorage;
@@ -56,7 +55,6 @@ import org.reveno.atp.core.repository.HashMapRepository;
 import org.reveno.atp.core.repository.MutableModelRepository;
 import org.reveno.atp.core.repository.SnapshotBasedModelRepository;
 import org.reveno.atp.core.restore.DefaultSystemStateRestorer;
-import org.reveno.atp.core.serialization.DefaultJavaSerializer;
 import org.reveno.atp.core.serialization.SimpleEventsSerializer;
 import org.reveno.atp.core.snapshots.SnapshottersManager;
 import org.reveno.atp.core.storage.FileSystemStorage;
@@ -84,7 +82,7 @@ public class Engine implements Reveno {
 		this.foldersStorage = foldersStorage;
 		this.journalsStorage = journalsStorage;
 		this.snapshotStorage = snapshotStorage;
-		this.snapshotsManager = new SnapshottersManager(snapshotStorage, repositorySerializer);
+		this.snapshotsManager = new SnapshottersManager(snapshotStorage, classLoader);
 		serializer = new SerializersChain(classLoader);
 	}
 	
@@ -98,7 +96,7 @@ public class Engine implements Reveno {
 		this.foldersStorage = storage;
 		this.journalsStorage = storage;
 		this.snapshotStorage = storage;
-		this.snapshotsManager = new SnapshottersManager(snapshotStorage, repositorySerializer);
+		this.snapshotsManager = new SnapshottersManager(snapshotStorage, classLoader);
 		serializer = new SerializersChain(classLoader);
 	}
 	
@@ -397,7 +395,7 @@ public class Engine implements Reveno {
 		domain().transactionAction(NextIdTransaction.class, idGenerator);
 		if (config.revenoSnapshotting().every() != -1) {
 			TransactionInterceptor nTimeSnapshotter = new SnapshottingInterceptor(config, snapshotsManager, snapshotStorage,
-					journalsManager, repositorySerializer);
+					journalsManager);
 			interceptors.add(TransactionStage.TRANSACTION, nTimeSnapshotter);
 			interceptors.add(TransactionStage.JOURNALING, nTimeSnapshotter);
 		}
@@ -415,8 +413,12 @@ public class Engine implements Reveno {
 	 * Since it is very unsecure to obtain Repository data out of transaction workflow,
 	 * this method should be used *only* when engine is stopped.
 	 */
-	protected void snapshotAll() {
-		snapshotsManager.getAll().forEach(s -> s.snapshot(repository.getData(), s.prepare()));
+	protected synchronized void snapshotAll() {
+		snapshotsManager.getAll().forEach(s -> {
+			RepositorySnapshotter.SnapshotIdentifier id = s.prepare();
+			s.snapshot(repository.getData(), id);
+			s.commit(id);
+		});
 	}
 
 	protected FailoverManager failoverManager() {
@@ -437,8 +439,7 @@ public class Engine implements Reveno {
 	protected ViewsDefaultStorage viewsStorage;
 
 	protected RepositorySnapshotter restoreWith;
-	
-	protected RepositoryDataSerializer repositorySerializer = new DefaultJavaSerializer(getClass().getClassLoader());
+
 	protected EventsInfoSerializer eventsSerializer = new SimpleEventsSerializer();
 	protected TransactionCommitInfo.Builder txBuilder = new TransactionCommitInfoImpl.PojoBuilder();
 	protected EventsCommitInfo.Builder eventBuilder = new EventsCommitInfoImpl.PojoBuilder();

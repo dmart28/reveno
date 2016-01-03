@@ -19,11 +19,10 @@ package org.reveno.atp.core.snapshots;
 import org.reveno.atp.api.RepositorySnapshotter;
 import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
+import org.reveno.atp.core.serialization.DefaultJavaSerializer;
+import org.reveno.atp.core.serialization.ProtostuffSerializer;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 public class SnapshottersManager {
 	
@@ -32,19 +31,20 @@ public class SnapshottersManager {
 	}
 	
 	public void resetSnapshotters() {
-		snapshotters = new LinkedHashSet<>();
+		snapshotters = new ArrayList<>();
 	}
 	
-	public Collection<RepositorySnapshotter> getAll() {
-		return Collections.unmodifiableSet(snapshotters);
+	public List<RepositorySnapshotter> getAll() {
+		return snapshotters;
+	}
+
+	public SnapshottersManager(SnapshotStorage storage, ClassLoader classLoader) {
+		ProtostuffSerializer protostuffSerializer = new ProtostuffSerializer(classLoader);
+		DefaultJavaSerializer javaSerializer = new DefaultJavaSerializer(classLoader);
+		snapshotters.add(new DefaultSnapshotter(storage, javaSerializer, protostuffSerializer));
 	}
 	
 	
-	public SnapshottersManager(SnapshotStorage storage, RepositoryDataSerializer repoSerializer) {
-		snapshotters.add(new DefaultSnapshotter(storage, repoSerializer));
-	}
-	
-	
-	protected volatile Set<RepositorySnapshotter> snapshotters = new LinkedHashSet<>();
+	protected volatile List<RepositorySnapshotter> snapshotters = new ArrayList<>();
 	
 }

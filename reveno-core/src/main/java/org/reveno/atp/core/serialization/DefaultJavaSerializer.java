@@ -59,7 +59,6 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 				ObjectOutputStream os = new ObjectOutputStream(ba)) {
 			os.writeObject(info.transactionCommits());
 		} catch (IOException e) {
-			log.error("", e);
 			throw new SerializerException(Action.SERIALIZATION, getClass(), e);
 		}
 	}
@@ -77,7 +76,6 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 			 ObjectInputStreamEx os = new ObjectInputStreamEx(is, classLoader)) {
 			return builder.create().transactionId(transactionId).time(time).transactionCommits((List<Object>)os.readObject());
 		} catch (IOException | ClassNotFoundException e) {
-			log.error("", e);
 			throw new SerializerException(Action.DESERIALIZATION, getClass(), e);
 		}
 	}
@@ -88,7 +86,6 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 				ObjectOutputStream os = new ObjectOutputStream(ba)) {
 			os.writeObject(repository);
 		} catch (IOException e) {
-			log.error("", e);
 			throw new SerializerException(Action.SERIALIZATION, getClass(), e);
 		}
 	}
@@ -100,7 +97,6 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 						classLoader)) {
 			return (RepositoryData) os.readObject();
 		} catch (IOException | ClassNotFoundException e) {
-			log.error("", e);
 			throw new SerializerException(Action.DESERIALIZATION, getClass(), e);
 		}
 	}
@@ -111,7 +107,6 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 			 ObjectOutputStream os = new ObjectOutputStream(ba)) {
 			os.writeObject(commands);
 		} catch (IOException e) {
-			log.error("", e);
 			throw new SerializerException(Action.SERIALIZATION, getClass(), e);
 		}
 	}
@@ -123,7 +118,6 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 			 ObjectInputStreamEx os = new ObjectInputStreamEx(is, classLoader)) {
 			return (List<Object>) os.readObject();
 		} catch (IOException | ClassNotFoundException e) {
-			log.error("", e);
 			throw new SerializerException(Action.DESERIALIZATION, getClass(), e);
 		}
 	}
@@ -136,7 +130,6 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 			buffer.writeInt(ba.size());
 			buffer.writeBytes(ba.toByteArray());
 		} catch (IOException e) {
-			log.error("", e);
 			throw new SerializerException(Action.SERIALIZATION, getClass(), e);
 		}
 	}
@@ -149,7 +142,6 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 						classLoader)) {
 			return os.readObject();
 		} catch (IOException | ClassNotFoundException e) {
-			log.error("", e);
 			throw new SerializerException(Action.DESERIALIZATION, getClass(), e);
 		}
 	}
@@ -163,8 +155,6 @@ public class DefaultJavaSerializer implements RepositoryDataSerializer,
 	}
 
 	private ClassLoader classLoader;
-	private static final Logger log = LoggerFactory
-			.getLogger(DefaultJavaSerializer.class);
 	protected static final int DEFAULT_TYPE = 0x111;
 
 	/*

@@ -18,6 +18,7 @@ package org.reveno.atp.examples.basic_views;
 
 import org.reveno.atp.api.Reveno;
 import org.reveno.atp.core.Engine;
+import org.reveno.atp.test.utils.LongUtils;
 import org.reveno.atp.utils.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,7 @@ public class BasicViews {
             ctx.repo().store(tx.id(), new Trader(tx.id()))
         ).uniqueIdFor(Trader.class).command();
         reveno.domain().transaction("createOrder", (tx, ctx) -> {
-            ctx.repo().get(Trader.class, tx.arg("trId")).orders.add(tx.id());
+            ctx.repo().remap(Trader.class, tx.arg("trId"), (id, t) -> t.orders.add(tx.id()));
             ctx.repo().store(tx.id(), new Order(tx.id(), tx.longArg("size"), tx.longArg("price")));
         }).uniqueIdFor(Order.class).command();
 
@@ -54,7 +55,7 @@ public class BasicViews {
         reveno.startup();
 
         long traderId = reveno.executeSync("createTrader");
-        long orderId = reveno.executeSync("createOrder", MapUtils.map("trId", traderId, "size", 1000l, "price", (long)(3.14 * PRECISION)));
+        long orderId = reveno.executeSync("createOrder", MapUtils.map("trId", traderId, "size", 1000L, "price", (long)(3.14 * PRECISION)));
 
         TraderView trader = reveno.query().find(TraderView.class, traderId);
         LOG.info("Trader: {}", trader);

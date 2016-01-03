@@ -21,6 +21,8 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import org.reveno.atp.api.domain.Repository;
 import org.reveno.atp.core.api.ViewsStorage;
 import org.reveno.atp.core.views.ViewsManager.ViewHandlerHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.function.Consumer;
@@ -33,7 +35,13 @@ public class ViewsProcessor {
 
 	public void process(Repository repo) {
 		repository.repositorySource(repo);
-		repo.getEntityTypes().forEach(c -> repo.getEntities(c).forEach((k,v) -> map(c, k, v)));
+		repo.getEntityTypes().forEach(c -> repo.getEntities(c).forEach((k,v) -> {
+			try {
+				map(c, k, v);
+			} catch (Throwable t) {
+				LOG.error(t.getMessage(), t);
+			}
+		}));
 		repository.repositorySource(null);
 	}
 
@@ -85,5 +93,6 @@ public class ViewsProcessor {
 		this.storage = storage;
 		this.repository = new OnDemandViewsContext(this, storage, manager);
 	}
-	
+
+	private static final Logger LOG = LoggerFactory.getLogger(ViewsProcessor.class);
 }

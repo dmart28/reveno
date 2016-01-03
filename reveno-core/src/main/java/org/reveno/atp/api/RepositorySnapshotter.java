@@ -17,6 +17,7 @@
 package org.reveno.atp.api;
 
 import org.reveno.atp.api.domain.RepositoryData;
+import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
 
 /**
@@ -28,25 +29,35 @@ import org.reveno.atp.core.api.storage.SnapshotStorage;
 public interface RepositorySnapshotter {
 
 	/**
-	 * Checks is there any available snapshot to be loaded.
+	 * Checks is there any available committed snapshot to be loaded.
 	 * 
-	 * @return if any snapshot available
+	 * @return if any committed snapshot available
 	 */
 	boolean hasAny();
 	
 	/**
 	 * Prepares SnapshotIdentifier pointer, using which snapshot
-	 * can be writen in particular way.
+	 * can be written in particular way. It should be noted that this identifier
+	 * should point for some temporary place, so, in case {@link #commit(SnapshotIdentifier)} is
+	 * never called, this snapshot wouldn't affect engine replays at all, in other words, not used
+	 * at all.
 	 * 
 	 * @return
 	 */
 	SnapshotIdentifier prepare();
+
+	/**
+	 * Commits @{code identifier} - makes it available for engine state replay.
+	 *
+	 * @param identifier
+     */
+	void commit(SnapshotIdentifier identifier);
 	
 	/**
 	 * Performs snapshotting of {@link RepositoryData} to some {@link SnapshotStorage}
 	 * 
 	 * @param repo latest state of domain model
-	 * @param identifier the result of perviously called {@link prepare()} method call
+	 * @param identifier the result of previously called {@link #prepare()} method call
 	 */
 	void snapshot(RepositoryData repo, SnapshotIdentifier identifier);
 	

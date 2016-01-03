@@ -21,6 +21,8 @@ import org.reveno.atp.core.api.channel.Buffer;
 
 public interface RepositoryDataSerializer {
 
+	int getSerializerType();
+
 	void serialize(RepositoryData repository, Buffer buffer);
 	
 	RepositoryData deserialize(Buffer buffer);

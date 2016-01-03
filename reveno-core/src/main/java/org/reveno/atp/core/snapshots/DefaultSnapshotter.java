@@ -34,7 +34,16 @@ public class DefaultSnapshotter implements RepositorySnapshotter {
 	
 	@Override
 	public SnapshotIdentifier prepare() {
-		return storage.nextSnapshotStore();
+		return storage.nextTempSnapshotStore();
+	}
+
+	@Override
+	public void commit(SnapshotIdentifier identifier) {
+		if (identifier.getType() != SnapshotStore.TYPE) {
+			return;
+		}
+		SnapshotStore snap = (SnapshotStore) identifier;
+		storage.move(snap, storage.nextSnapshotStore());
 	}
 
 	@Override
@@ -43,13 +52,25 @@ public class DefaultSnapshotter implements RepositorySnapshotter {
 			return;
 		}
 		SnapshotStore snap = (SnapshotStore) identifier;
-		try (Channel c = storage.snapshotChannel(snap.getSnapshotPath())) {
-			log.info("Performing default repository snapshot to " + snap);
-			
-			c.write(b -> repoSerializer.serialize(repo, b), true);
-		} catch (Throwable t) {
-			log.error("", t);
-			throw new RuntimeException(t);
+		for (int i = 0; i < serializers.length; i++) {
+			try (Channel c = storage.snapshotChannel(snap.getSnapshotPath())) {
+				LOG.debug("Performing default repository snapshot to {}", snap);
+
+				final int index = i;
+				c.write(b -> serializers[index].serialize(repo, b), true);
+			} catch (Throwable t) {
+				if (i + 1 == serializers.length) {
+					throw new RuntimeException(t);
+				} else {
+					LOG.info("Can't snapshot with {}, falling back to {}", serializers[i].getClass().getSimpleName(),
+							serializers[i + 1].getClass().getSimpleName());
+					SnapshotStore nextStore = storage.nextTempSnapshotStore();
+					storage.removeSnapshotStore(snap);
+					snap.setSnapshotPath(nextStore.getSnapshotPath());
+				}
+				continue;
+			}
+			break;
 		}
 	}
 
@@ -59,26 +80,29 @@ public class DefaultSnapshotter implements RepositorySnapshotter {
 			return null;
 		
 		SnapshotStore snap = storage.getLastSnapshotStore();
-		try (Channel c = storage.snapshotChannel(snap.getSnapshotPath())) {
-			log.info("Loading repository snapshot from " + snap);
+		for (RepositoryDataSerializer serializer : serializers) {
+			try (Channel c = storage.snapshotChannel(snap.getSnapshotPath())) {
+				LOG.debug("Loading repository snapshot from {}", snap);
 
-			return repoSerializer.deserialize(c.read());
-		} catch (Throwable t) {
-			log.error("", t);
-			throw new RuntimeException(t);
+				return serializer.deserialize(c.read());
+			} catch (Throwable ignored) {
+			} finally {
+				LOG.debug("Loaded repository snapshot from {}", snap);
+			}
 		}
+		return null;
 	}
 
 	public DefaultSnapshotter(
 			SnapshotStorage storage,
-			RepositoryDataSerializer repoSerializer) {
+			RepositoryDataSerializer... serializers) {
 		this.storage = storage;
-		this.repoSerializer = repoSerializer;
+		this.serializers = serializers;
 	}
 
 	
 	protected final SnapshotStorage storage;
-	protected final RepositoryDataSerializer repoSerializer;
-	protected static final Logger log = LoggerFactory.getLogger(DefaultSnapshotter.class);
+	protected final RepositoryDataSerializer[] serializers;
+	protected static final Logger LOG = LoggerFactory.getLogger(DefaultSnapshotter.class);
 
 }

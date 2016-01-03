@@ -47,6 +47,9 @@ public interface SnapshotStorage {
 		public String getSnapshotPath() {
 			return snapshotPath;
 		}
+		public void setSnapshotPath(String snapshotPath) {
+			this.snapshotPath = snapshotPath;
+		}
 		
 		private long snapshotTime;
 		public long getTime() {

@@ -33,4 +33,14 @@ public abstract class FileUtils {
 		}
 	}
 
+	public static File findFile(String folder, String start) throws IOException {
+		File dir = new File(folder);
+		File[] files = dir.listFiles((f,n) -> n.startsWith(start));
+		if (files.length == 0) {
+			return null;
+		} else {
+			return files[0];
+		}
+	}
+
 }

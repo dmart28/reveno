@@ -5,7 +5,6 @@ import org.reveno.atp.core.Engine;
 import org.reveno.atp.utils.MapUtils;
 
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.LockSupport;
 
 import static org.reveno.atp.examples.events.BasicEvents.*;
 

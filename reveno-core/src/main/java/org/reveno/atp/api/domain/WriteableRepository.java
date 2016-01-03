@@ -16,6 +16,7 @@
 
 package org.reveno.atp.api.domain;
 
+import org.reveno.atp.commons.BiLongConsumer;
 import org.reveno.atp.commons.BiLongFunction;
 
 import java.util.Map;
@@ -77,6 +78,21 @@ public interface WriteableRepository extends Repository {
 			return store(entityId, type, remap.apply(entityId, t));
 		}
 		return null;
+	}
+
+	/**
+	 * Version of {@link #remap(long, Class, BiLongFunction)} function for immutable repository.
+	 *
+	 * @param entityId
+	 * @param type
+	 * @param remap
+     * @param <T>
+     */
+	default <T> void remap(Class<T> type, long entityId, BiLongConsumer<? super T> remap) {
+		T t;
+		if ((t = get(type, entityId)) != null) {
+			remap.accept(entityId, t);
+		}
 	}
 
 	/**
