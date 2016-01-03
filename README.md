@@ -1,5 +1,5 @@
 # Reveno | Event-Sourced CQRS Transaction Processing Framework
-Reveno is thoroughgoing lightning-fast, durable and yet simple async transaction processing JVM based framework made to fit your domain in first place. It's highly influenced by patterns/approaches like CQRS, ES, Zero-Copy, DDD, Mechanical Symphaty.
+Reveno is thoroughgoing lightning-fast, durable and yet simple async transaction processing JVM based framework made to fit your domain in first place. It's highly influenced by patterns/approaches like Event Sourcing, CQRS, Zero-Copy, DDD, Mechanical Symphaty.
 
 ### High performance with low latency
 Able to process millions of transactions per second with mean latency measured by tens of microseconds on an average hardware, thus delivering the result with the speed of lightning.
@@ -15,7 +15,7 @@ Most of todays solutions are suffering from excessively complex architecture and
 The purpose of Reveno is to give an easy domain-oriented development tool with simple and transparent infrastructure, with perfectly fitted components for max performance. But easy doesn't mean simplistic. Instead, we are different in intention to give you as many options as possible, so you can choose the best one for you.
 
 ### Few highlights:
-* Reveno is an in-memory transactional event-driven framework with CQRS and event sourcing intruded. See our Architecture overview
+* Reveno is an in-memory transactional event-driven framework with CQRS and Event Sourcing intruded. See our Architecture overview
 * Reveno is based on JVM and written fully on Java.
 * Reveno is fast - Able to process millions of transaction per second with microseconds latency.
 * Reveno is domain oriented - your primary focus will be on the core domain and domain logic only.
