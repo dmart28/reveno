@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core.engine.components;
 
+import org.reveno.atp.api.Configuration;
 import org.reveno.atp.api.RepositorySnapshotter;
 import org.reveno.atp.api.RepositorySnapshotter.SnapshotIdentifier;
 import org.reveno.atp.api.domain.RepositoryData;
@@ -44,12 +45,20 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 		if (stage == TransactionStage.TRANSACTION) {
 			if (counter++ % configuration.revenoSnapshotting().every() == 0) {
 				asyncSnapshot(repository.getData(), transactionId);
+				if (configuration.modelType() == Configuration.ModelType.MUTABLE) {
+					try {
+						futures.remove(transactionId).get();
+					} catch (InterruptedException | ExecutionException ignored) {
+					}
+				}
 			}
-		} else if (stage == TransactionStage.JOURNALING && futures.containsKey(transactionId)) {
-			try {
-				futures.remove(transactionId).get();
-			} catch (InterruptedException | ExecutionException e) {
-				return;
+		} else if (stage == TransactionStage.JOURNALING && snapshots.containsKey(transactionId)) {
+			if (configuration.modelType() != Configuration.ModelType.MUTABLE) {
+				try {
+					futures.remove(transactionId).get();
+				} catch (InterruptedException | ExecutionException e) {
+					return;
+				}
 			}
 			try {
 				SnapshotIdentifier[] ids = snapshots.remove(transactionId);
