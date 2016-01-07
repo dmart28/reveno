@@ -120,6 +120,16 @@ public class ProcessorContext implements Destroyable {
 		isRestore = true;
 		return this;
 	}
+
+	@Contended
+	private boolean isSync;
+	public boolean isSync() {
+		return isSync;
+	}
+	public ProcessorContext sync() {
+		this.isSync = true;
+		return this;
+	}
 	
 	@Contended
 	private final List<Object> commands = new ArrayList<>();
@@ -190,6 +200,7 @@ public class ProcessorContext implements Destroyable {
 		markedRecords.values().forEach(Long2ObjectLinkedOpenHashMap::clear);
 		hasResult = false;
 		isAborted = false;
+		isSync = false;
 		isRestore = false;
 		isReplicated = false;
 		abortIssue = null;

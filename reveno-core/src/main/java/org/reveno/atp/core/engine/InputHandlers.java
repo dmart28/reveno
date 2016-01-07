@@ -58,19 +58,19 @@ public class InputHandlers {
 	}
 	
 	public void replication(ProcessorContext c, boolean endOfBatch) {
-		ex(c, !c.isRestore() && !c.isReplicated(), endOfBatch, replicator);
+		ex(c, !c.isRestore() && !c.isSync() && !c.isReplicated(), endOfBatch, replicator);
 	}
 	
 	public void transactionExecution(ProcessorContext c, boolean endOfBatch) {
-		ex(c, true, endOfBatch, transactionExecutor);
+		ex(c, !c.isSync(), endOfBatch, transactionExecutor);
 	}
 	
 	public void journaling(ProcessorContext c, boolean endOfBatch) {
-		ex(c, c.getTransactions().size() > 0 && !c.isRestore(), endOfBatch, journaler);
+		ex(c, !c.isSync() && c.getTransactions().size() > 0 && !c.isRestore(), endOfBatch, journaler);
 	}
 	
 	public void viewsUpdate(ProcessorContext c, boolean endOfBatch) {
-		ex(c, true, endOfBatch, viewsUpdater);
+		ex(c, !c.isSync(), endOfBatch, viewsUpdater);
 	}
 	
 	public void eventsPublishing(ProcessorContext c, boolean endOfBatch) {
@@ -141,9 +141,10 @@ public class InputHandlers {
 		if (c.isReplicated()) {
 			services.eventPublisher().replicateEvents(c.transactionId());
 		} else {
-			if (c.getEvents().size() > 0)
+			if (c.getEvents().size() > 0) {
 				services.eventPublisher().publishEvents(c.isRestore(), c.transactionId(),
 						c.eventMetadata(), c.getEvents().toArray());
+			}
 		}
 	};
 

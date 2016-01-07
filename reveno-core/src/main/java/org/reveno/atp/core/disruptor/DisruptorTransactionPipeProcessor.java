@@ -73,7 +73,7 @@ public class DisruptorTransactionPipeProcessor extends DisruptorPipeProcessor<Pr
 	
 	@Override
 	public void sync() {
-		CompletableFuture<EmptyResult> res = process((c,f) -> c.reset().future(f).abort(null));
+		CompletableFuture<EmptyResult> res = process((c,f) -> c.reset().sync().future(f).abort(null));
 		try {
 			res.get();
 		} catch (Throwable t) {
