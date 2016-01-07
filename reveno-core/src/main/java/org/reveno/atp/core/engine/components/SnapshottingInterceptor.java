@@ -89,10 +89,9 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 		data.data.computeIfAbsent(SystemInfo.class, k -> new HashMap<>()).put(0L, new SystemInfo(transactionId));
 		final List<RepositorySnapshotter> snaps = snapshotsManager.getAll();
 		final SnapshotIdentifier[] ids = new SnapshotIdentifier[snaps.size()];
-		final long lastVersion = journalsStorage.getLastStoreVersion();
-		LOG.info("LV: {}", lastVersion);
+		final long lastJournalVersion = journalsStorage.getLastStoreVersion();
 		for (int i = 0; i < snaps.size(); i++) {
-			ids[i] = snaps.get(i).prepare(lastVersion);
+			ids[i] = snaps.get(i).prepare(lastJournalVersion);
 		}
 		// hack to not box long two times
 		Long boxed = transactionId;

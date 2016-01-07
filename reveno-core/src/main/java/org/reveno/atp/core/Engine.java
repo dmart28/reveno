@@ -127,7 +127,7 @@ public class Engine implements Reveno {
 		eventPublisher.getPipe().start();
 		workflowEngine.init();
 		viewsProcessor.process(repository);
-		workflowEngine.setLastTransactionId(restorer.restore(lastSnapshotVersion(), repository).getLastTransactionId());
+		workflowEngine.setLastTransactionId(restorer.restore(journalVersionAfterSnapshot(), repository).getLastTransactionId());
 
 		workflowEngine.getPipe().sync();
 		eventPublisher.getPipe().sync();
@@ -382,14 +382,16 @@ public class Engine implements Reveno {
 		restorer = new DefaultSystemStateRestorer(journalsStorage, workflowContext, eventsContext, workflowEngine);
 	}
 
-	protected long lastSnapshotVersion() {
+	protected long journalVersionAfterSnapshot() {
 		if (restoreWith != null) {
-			return restoreWith.lastSnapshotVersion();
+			RepositorySnapshotter.SnapshotIdentifier lastSnap = restoreWith.lastSnapshot();
+			return lastSnap == null ? 0 : lastSnap.getLastJournalVersion();
 		}
 		return snapshotsManager.getAll().stream()
 				.filter(RepositorySnapshotter::hasAny)
 				.findFirst()
-				.map(RepositorySnapshotter::lastSnapshotVersion)
+				.map(RepositorySnapshotter::lastSnapshot)
+				.map(RepositorySnapshotter.SnapshotIdentifier::getLastJournalVersion)
 				.orElse(0L);
 	}
 

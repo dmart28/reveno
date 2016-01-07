@@ -57,7 +57,7 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
 
 		Assert.assertTrue(orderCreatedEvent.isArrived(10));
-		
+
 		reveno.shutdown();
 		
 		reveno = createEngine();

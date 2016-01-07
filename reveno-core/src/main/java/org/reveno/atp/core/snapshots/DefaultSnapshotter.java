@@ -28,9 +28,8 @@ import org.slf4j.LoggerFactory;
 public class DefaultSnapshotter implements RepositorySnapshotter {
 	
 	@Override
-	public long lastSnapshotVersion() {
-		SnapshotStore store = storage.getLastSnapshotStore();
-		return store == null ? -1 : store.getLastJournalVersion();
+	public SnapshotIdentifier lastSnapshot() {
+		return storage.getLastSnapshotStore();
 	}
 	
 	@Override

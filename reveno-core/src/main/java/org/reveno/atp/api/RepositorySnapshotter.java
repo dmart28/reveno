@@ -29,7 +29,7 @@ import org.reveno.atp.core.api.storage.SnapshotStorage;
 public interface RepositorySnapshotter {
 
 	default boolean hasAny() {
-		return lastSnapshotVersion() != -1;
+		return lastSnapshot() != null;
 	}
 
 	/**
@@ -37,7 +37,7 @@ public interface RepositorySnapshotter {
 	 * 
 	 * @return version of last committed snapshot available, -1 otherwise
 	 */
-	long lastSnapshotVersion();
+	SnapshotIdentifier lastSnapshot();
 	
 	/**
 	 * Prepares SnapshotIdentifier pointer, using which snapshot
@@ -48,13 +48,13 @@ public interface RepositorySnapshotter {
 	 * 
 	 * @return
 	 */
-	SnapshotIdentifier prepare(long version);
+	SnapshotIdentifier prepare(long lastJournalVersion);
 
 	/**
 	 * Performs snapshotting of {@link RepositoryData} to some {@link SnapshotStorage}
 	 *
 	 * @param repo latest state of domain model
-	 * @param identifier the result of previously called {@link #prepare()} method call
+	 * @param identifier the result of previously called {@link #prepare(long)} method call
 	 */
 	void snapshot(RepositoryData repo, SnapshotIdentifier identifier);
 
