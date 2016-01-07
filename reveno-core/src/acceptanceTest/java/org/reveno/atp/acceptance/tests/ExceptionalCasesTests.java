@@ -50,16 +50,14 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		eraseRandomBuffer(findFirstFile("evn"));
 		
 		reveno = createEngine();
-		Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class, Integer.MAX_VALUE);
+		Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class, 2000);
 		reveno.startup();
 		
 		Assert.assertEquals(5_000, reveno.query().select(AccountView.class).size());
 		Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
+
+		Assert.assertTrue(orderCreatedEvent.isArrived(10));
 		
-		Assert.assertFalse(orderCreatedEvent.isArrived());
-		Assert.assertTrue(orderCreatedEvent.getCount() != Integer.MAX_VALUE);
-		
-		reveno.syncAll();
 		reveno.shutdown();
 		
 		reveno = createEngine();
