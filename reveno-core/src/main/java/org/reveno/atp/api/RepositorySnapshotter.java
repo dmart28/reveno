@@ -20,12 +20,6 @@ import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
 
-/**
- * Snapshotter is the instrument 
- * 
- * @author Artem Dmitriev <art.dm.ser@gmail.com>
- *
- */
 public interface RepositorySnapshotter {
 
 	default boolean hasAny() {
@@ -33,37 +27,48 @@ public interface RepositorySnapshotter {
 	}
 
 	/**
-	 * Returns last available version of snapshot, -1 if no snapshot exists.
+	 * Returns last available snapshot.
 	 * 
-	 * @return version of last committed snapshot available, -1 otherwise
+	 * @return
 	 */
 	SnapshotIdentifier lastSnapshot();
+
+	/**
+	 * Returns last version of Journal, after which snapshot was made. It was
+	 * provided on the subsequent {@link #commit(long, SnapshotIdentifier)} method.
+	 *
+	 * It should return -1 if no snapshot had been made yet by this snapshotter.
+	 *
+	 * @return
+     */
+	long lastJournalVersionSnapshotted();
 	
 	/**
 	 * Prepares SnapshotIdentifier pointer, using which snapshot
 	 * can be written in particular way. It should be noted that this identifier
-	 * should point for some temporary place, so, in case {@link #commit(SnapshotIdentifier)} is
+	 * should point for some temporary place, so, in case {@link #commit(long, SnapshotIdentifier)} is
 	 * never called, this snapshot wouldn't affect engine replays at all, in other words, not used
 	 * at all.
 	 * 
 	 * @return
 	 */
-	SnapshotIdentifier prepare(long lastJournalVersion);
+	SnapshotIdentifier prepare();
 
 	/**
-	 * Performs snapshotting of {@link RepositoryData} to some {@link SnapshotStorage}
+	 * Performs actual snapshotting of {@link RepositoryData}. It still won't be available to
+	 * the system for replay until {@link #commit(long, SnapshotIdentifier)} method is called.
 	 *
 	 * @param repo latest state of domain model
-	 * @param identifier the result of previously called {@link #prepare(long)} method call
+	 * @param identifier the result of previously called {@link #prepare()} method call
 	 */
 	void snapshot(RepositoryData repo, SnapshotIdentifier identifier);
 
 	/**
-	 * Commits @{code identifier} - makes it available for engine state replay.
+	 * Commits snapshot @{code identifier} - makes it available for engine to replay.
 	 *
 	 * @param identifier
      */
-	void commit(SnapshotIdentifier identifier);
+	void commit(long lastJournalVersion, SnapshotIdentifier identifier);
 	
 	/**
 	 * Loads last snapshot into {@link RepositoryData}
@@ -78,8 +83,6 @@ public interface RepositorySnapshotter {
 		byte getType();
 		
 		long getTime();
-
-		long getLastJournalVersion();
 
 	}
 	

@@ -31,20 +31,26 @@ public class DefaultSnapshotter implements RepositorySnapshotter {
 	public SnapshotIdentifier lastSnapshot() {
 		return storage.getLastSnapshotStore();
 	}
-	
+
 	@Override
-	public SnapshotIdentifier prepare(long version) {
-		return storage.nextTempSnapshotStore(version);
+	public long lastJournalVersionSnapshotted() {
+		SnapshotStore store = storage.getLastSnapshotStore();
+		return store == null ? -1 : store.getLastJournalVersion();
 	}
 
 	@Override
-	public void commit(SnapshotIdentifier identifier) {
+	public SnapshotIdentifier prepare() {
+		return storage.nextTempSnapshotStore();
+	}
+
+	@Override
+	public void commit(long lastJournalVersion, SnapshotIdentifier identifier) {
 		if (identifier.getType() != SnapshotStore.TYPE) {
 			LOG.error("Wrong snapshot identifier type!");
 			return;
 		}
 		SnapshotStore snap = (SnapshotStore) identifier;
-		storage.move(snap, storage.nextSnapshotAfter(snap.getLastJournalVersion()));
+		storage.move(snap, storage.nextSnapshotAfter(lastJournalVersion));
 	}
 
 	@Override
@@ -67,7 +73,7 @@ public class DefaultSnapshotter implements RepositorySnapshotter {
 					LOG.info("Can't snapshot with {}, falling back to {}", serializers[i].getClass().getSimpleName(),
 							serializers[i + 1].getClass().getSimpleName());
 					storage.removeSnapshotStore(snap);
-					SnapshotStore nextStore = storage.nextTempSnapshotStore(snap.getLastJournalVersion());
+					SnapshotStore nextStore = storage.nextTempSnapshotStore();
 					snap.setSnapshotPath(nextStore.getSnapshotPath());
 				}
 				continue;

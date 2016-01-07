@@ -88,8 +88,8 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 	}
 
 	@Override
-	public SnapshotStore nextTempSnapshotStore(long journalVersion) {
-		return nextSnapshotAfter("temp_", journalVersion);
+	public SnapshotStore nextTempSnapshotStore() {
+		return nextSnapshotAfter("temp_", 0);
 	}
 
 	public SnapshotStore nextSnapshotAfter(String prefix, long journalVersion) {

@@ -384,14 +384,12 @@ public class Engine implements Reveno {
 
 	protected long journalVersionAfterSnapshot() {
 		if (restoreWith != null) {
-			RepositorySnapshotter.SnapshotIdentifier lastSnap = restoreWith.lastSnapshot();
-			return lastSnap == null ? 0 : lastSnap.getLastJournalVersion();
+			return restoreWith.lastJournalVersionSnapshotted();
 		}
 		return snapshotsManager.getAll().stream()
 				.filter(RepositorySnapshotter::hasAny)
 				.findFirst()
-				.map(RepositorySnapshotter::lastSnapshot)
-				.map(RepositorySnapshotter.SnapshotIdentifier::getLastJournalVersion)
+				.map(RepositorySnapshotter::lastJournalVersionSnapshotted)
 				.orElse(0L);
 	}
 
@@ -428,9 +426,9 @@ public class Engine implements Reveno {
 	 */
 	protected synchronized void snapshotAll() {
 		snapshotsManager.getAll().forEach(s -> {
-			RepositorySnapshotter.SnapshotIdentifier id = s.prepare(journalsStorage.getLastStoreVersion());
+			RepositorySnapshotter.SnapshotIdentifier id = s.prepare();
 			s.snapshot(repository.getData(), id);
-			s.commit(id);
+			s.commit(journalsStorage.getLastStoreVersion(), id);
 		});
 	}
 

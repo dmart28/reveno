@@ -27,7 +27,7 @@ public interface SnapshotStorage {
 	
 	SnapshotStore nextSnapshotAfter(long lastJournalVersion);
 
-	SnapshotStore nextTempSnapshotStore(long lastJournalVersion);
+	SnapshotStore nextTempSnapshotStore();
 
 	void removeSnapshotStore(SnapshotStore snapshot);
 
