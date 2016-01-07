@@ -181,7 +181,7 @@ public class ClusterEngine extends Engine {
         repository = factory.create(loadLastSnapshot());
         viewsProcessor.erase();
         viewsProcessor.process(repository);
-        workflowEngine.setLastTransactionId(restorer.restore(repository).getLastTransactionId());
+        workflowEngine.setLastTransactionId(restorer.restore(lastSnapshotVersion(), repository).getLastTransactionId());
         workflowContext.repository(repository);
         return workflowEngine.getLastTransactionId();
     }

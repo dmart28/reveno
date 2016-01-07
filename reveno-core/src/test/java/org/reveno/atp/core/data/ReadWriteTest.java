@@ -90,7 +90,7 @@ public class ReadWriteTest {
 		storage.nextStore();
 		CountDownLatch l = new CountDownLatch(totalCount);
 		InputProcessor processor = new DefaultInputProcessor(storage);
-		processor.process((b) -> {
+		processor.process(0, b -> {
 			try {
 				while (b.isAvailable()) {
 					Assert.assertEquals(totalCount - l.getCount(), serializer.deserialize(builder, b).time());

@@ -60,8 +60,9 @@ public class StorageTransferModelSync implements ClusterExecutor<Boolean, Transf
                 return false;
             }
         } else if (context.latestNode.syncMode == SyncMode.SNAPSHOT.getType()) {
-            SnapshotStorage.SnapshotStore tempStore = snapshots.nextTempSnapshotStore();
-            SnapshotStorage.SnapshotStore snapshotStore = snapshots.nextSnapshotStore();
+            final long lastVersion = storage.getLastStoreVersion();
+            SnapshotStorage.SnapshotStore tempStore = snapshots.nextTempSnapshotStore(lastVersion);
+            SnapshotStorage.SnapshotStore snapshotStore = snapshots.nextSnapshotAfter(lastVersion);
 
             if (receiveStore(view, context, sad, (byte) 0, snapshots.snapshotChannel(tempStore.getSnapshotPath()))) {
                 snapshots.move(tempStore, snapshotStore);

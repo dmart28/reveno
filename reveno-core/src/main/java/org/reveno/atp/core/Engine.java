@@ -127,7 +127,7 @@ public class Engine implements Reveno {
 		eventPublisher.getPipe().start();
 		workflowEngine.init();
 		viewsProcessor.process(repository);
-		workflowEngine.setLastTransactionId(restorer.restore(repository).getLastTransactionId());
+		workflowEngine.setLastTransactionId(restorer.restore(lastSnapshotVersion(), repository).getLastTransactionId());
 
 		workflowEngine.getPipe().sync();
 		eventPublisher.getPipe().sync();
@@ -382,6 +382,17 @@ public class Engine implements Reveno {
 		restorer = new DefaultSystemStateRestorer(journalsStorage, workflowContext, eventsContext, workflowEngine);
 	}
 
+	protected long lastSnapshotVersion() {
+		if (restoreWith != null) {
+			return restoreWith.lastSnapshotVersion();
+		}
+		return snapshotsManager.getAll().stream()
+				.filter(RepositorySnapshotter::hasAny)
+				.findFirst()
+				.map(RepositorySnapshotter::lastSnapshotVersion)
+				.orElse(0L);
+	}
+
 	protected Optional<RepositoryData> loadLastSnapshot() {
 		if (restoreWith != null && restoreWith.hasAny()) {
 			return Optional.of(restoreWith.load());
@@ -394,8 +405,8 @@ public class Engine implements Reveno {
 	protected void connectSystemHandlers() {
 		domain().transactionAction(NextIdTransaction.class, idGenerator);
 		if (config.revenoSnapshotting().every() != -1) {
-			TransactionInterceptor nTimeSnapshotter = new SnapshottingInterceptor(config, snapshotsManager, snapshotStorage,
-					journalsManager);
+			TransactionInterceptor nTimeSnapshotter = new SnapshottingInterceptor(config,
+					snapshotsManager, snapshotStorage, journalsStorage, journalsManager);
 			interceptors.add(TransactionStage.TRANSACTION, nTimeSnapshotter);
 			interceptors.add(TransactionStage.JOURNALING, nTimeSnapshotter);
 		}
@@ -415,7 +426,7 @@ public class Engine implements Reveno {
 	 */
 	protected synchronized void snapshotAll() {
 		snapshotsManager.getAll().forEach(s -> {
-			RepositorySnapshotter.SnapshotIdentifier id = s.prepare();
+			RepositorySnapshotter.SnapshotIdentifier id = s.prepare(journalsStorage.getLastStoreVersion());
 			s.snapshot(repository.getData(), id);
 			s.commit(id);
 		});

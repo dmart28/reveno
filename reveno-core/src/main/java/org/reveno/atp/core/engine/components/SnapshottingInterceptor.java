@@ -26,6 +26,7 @@ import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.core.JournalsManager;
 import org.reveno.atp.core.RevenoConfiguration;
 import org.reveno.atp.core.api.SystemInfo;
+import org.reveno.atp.core.api.storage.JournalsStorage;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
 import org.reveno.atp.core.snapshots.SnapshottersManager;
 import org.slf4j.Logger;
@@ -88,8 +89,10 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 		data.data.computeIfAbsent(SystemInfo.class, k -> new HashMap<>()).put(0L, new SystemInfo(transactionId));
 		final List<RepositorySnapshotter> snaps = snapshotsManager.getAll();
 		final SnapshotIdentifier[] ids = new SnapshotIdentifier[snaps.size()];
+		final long lastVersion = journalsStorage.getLastStoreVersion();
+		LOG.info("LV: {}", lastVersion);
 		for (int i = 0; i < snaps.size(); i++) {
-			ids[i] = snaps.get(i).prepare();
+			ids[i] = snaps.get(i).prepare(lastVersion);
 		}
 		// hack to not box long two times
 		Long boxed = transactionId;
@@ -106,16 +109,18 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 	}
 	
 	public SnapshottingInterceptor(RevenoConfiguration configuration,
-			SnapshottersManager snapshotsManager, SnapshotStorage snapshotStorage,
-			JournalsManager journalsManager) {
+								   SnapshottersManager snapshotsManager, SnapshotStorage snapshotStorage,
+								   JournalsStorage journalsStorage, JournalsManager journalsManager) {
 		this.configuration = configuration;
 		this.snapshotsManager = snapshotsManager;
 		this.journalsManager = journalsManager;
+		this.journalsStorage = journalsStorage;
 		this.snapshotStorage = snapshotStorage;
 	}
 	
 	protected RevenoConfiguration configuration;
 	protected SnapshottersManager snapshotsManager;
+	protected JournalsStorage journalsStorage;
 	protected SnapshotStorage snapshotStorage;
 	protected JournalsManager journalsManager;
 	protected final ExecutorService executor = Executors.newSingleThreadExecutor();

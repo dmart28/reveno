@@ -16,24 +16,13 @@
 
 package org.reveno.atp.utils;
 
-import it.unimi.dsi.fastutil.bytes.ByteArrays;
 import org.reveno.atp.core.api.channel.Buffer;
 
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.zip.CRC32;
 
 public abstract class BinaryUtils {
-	private static final MessageDigest SHA1;
-
-	static {
-		try {
-			SHA1 = MessageDigest.getInstance("SHA1");
-		} catch (NoSuchAlgorithmException e) {
-			throw Exceptions.runtime(e);
-		}
-	}
 
 	public static long bytesToLong(byte[] b) {
 		return ((((long) b[0]) << 56) | (((long) b[1] & 0xff) << 48) | (((long) b[2] & 0xff) << 40)
@@ -98,7 +87,7 @@ public abstract class BinaryUtils {
 	}
 
 	public static void writeNullable(long flag, Buffer buffer) {
-		if (flag == 0l) {
+		if (flag == 0L) {
 			buffer.writeByte((byte) 0);
 		} else {
 			buffer.writeByte((byte) 1);
@@ -111,12 +100,12 @@ public abstract class BinaryUtils {
 		if (sign == 1) {
 			return buffer.readLong();
 		}
-		return 0l;
+		return 0L;
 	}
 
 	public static byte[] sha1(String value) {
 		try {
-			return SHA1.digest(value.getBytes("UTF-8"));
+			return MessageDigest.getInstance("SHA1").digest(value.getBytes("UTF-8"));
 		} catch (Exception e) {
 			throw Exceptions.runtime(e);
 		}

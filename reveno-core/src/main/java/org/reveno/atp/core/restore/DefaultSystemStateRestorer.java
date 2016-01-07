@@ -37,16 +37,16 @@ public class DefaultSystemStateRestorer implements SystemStateRestorer {
 	 * @return information about last system state, such as last transactionId, etc.
 	 */
 	@Override
-	public SystemState restore(TxRepository repository) {
+	public SystemState restore(long fromVersion, TxRepository repository) {
 		workflowContext.repository(repository);
 		final long snapshotTransactionId = repository.getO(SystemInfo.class, 0L).orElse(new SystemInfo(0L)).lastTransactionId;
 		final long[] transactionId = { snapshotTransactionId };
 		try (InputProcessor processor = new DefaultInputProcessor(journalStorage)) {
-			processor.process(b -> {
+			processor.process(fromVersion, b -> {
 				EventsCommitInfo e = eventsContext.serializer().deserialize(eventsContext.eventsCommitBuilder(), b);
 				eventBus.processNextEvent(e);
 			}, JournalType.EVENTS);
-			processor.process(b -> {
+			processor.process(fromVersion, b -> {
 				TransactionCommitInfo tx = workflowContext.serializer().deserialize(workflowContext.transactionCommitBuilder(), b);
 				if (tx.transactionId() > transactionId[0] || tx.transactionId() == snapshotTransactionId) {
 					transactionId[0] = tx.transactionId();

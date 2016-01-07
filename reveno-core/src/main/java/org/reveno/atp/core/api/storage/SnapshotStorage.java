@@ -25,9 +25,9 @@ public interface SnapshotStorage {
 
 	SnapshotStore getLastSnapshotStore();
 	
-	SnapshotStore nextSnapshotStore();
+	SnapshotStore nextSnapshotAfter(long version);
 
-	SnapshotStore nextTempSnapshotStore();
+	SnapshotStore nextTempSnapshotStore(long version);
 
 	void removeSnapshotStore(SnapshotStore snapshot);
 
@@ -55,10 +55,22 @@ public interface SnapshotStorage {
 		public long getTime() {
 			return snapshotTime;
 		}
+
+		private long version;
+		public long getVersion() {
+			return version;
+		}
+
+		private long lastJournalVersion;
+		public long getLastJournalVersion() {
+			return lastJournalVersion;
+		}
 		
-		public SnapshotStore(String path, long time) {
+		public SnapshotStore(String path, long time, long version, long lastJournalVersion) {
 			this.snapshotPath = path;
 			this.snapshotTime = time;
+			this.version = version;
+			this.lastJournalVersion = lastJournalVersion;
 		}
 		
 		@Override

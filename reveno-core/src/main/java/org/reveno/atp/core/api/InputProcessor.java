@@ -33,7 +33,7 @@ import java.util.function.Consumer;
  */
 public interface InputProcessor extends AutoCloseable {
 
-	void process(Consumer<Buffer> consumer, JournalType type);
+	void process(long fromVersion, Consumer<Buffer> consumer, JournalType type);
 
 	
 	public enum JournalType {

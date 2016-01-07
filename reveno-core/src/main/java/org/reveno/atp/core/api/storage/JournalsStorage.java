@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core.api.storage;
 
+import jdk.nashorn.internal.scripts.JO;
 import org.reveno.atp.core.api.channel.Channel;
 
 public interface JournalsStorage {
@@ -24,7 +25,7 @@ public interface JournalsStorage {
 
 	JournalStore[] getAllStores();
 
-	JournalStore[] getLastStores();
+	JournalStore[] getStoresAfterVersion(long version);
 
 	JournalStore[] getVolumes();
 
@@ -44,6 +45,16 @@ public interface JournalsStorage {
 
 	JournalStore convertVolumeToStore(JournalStore volume, long lastTxId);
 
+	default JournalStore getLastStore() {
+		JournalStore[] stores = getAllStores();
+		return stores.length > 0 ? stores[stores.length - 1] : null;
+	}
+
+	default long getLastStoreVersion() {
+		JournalStore store = getLastStore();
+		return store == null ? 0 : store.getStoreVersion();
+	}
+
 	class JournalStore implements Comparable<JournalStore> {
 
 		private final long lastTransactionId;
@@ -61,13 +72,13 @@ public interface JournalsStorage {
 			return eventsCommitsAddress;
 		}
 
-		private final String storeVersion;
-		public String getStoreVersion() {
+		private final long storeVersion;
+		public long getStoreVersion() {
 			return storeVersion;
 		}
 
 		public JournalStore(String transactionCommitsAddress,
-				String eventsCommitsAddress, String storeVersion, long lastTransactionId) {
+				String eventsCommitsAddress, long storeVersion, long lastTransactionId) {
 			this.transactionCommitsAddress = transactionCommitsAddress;
 			this.eventsCommitsAddress = eventsCommitsAddress;
 			this.storeVersion = storeVersion;
@@ -76,12 +87,12 @@ public interface JournalsStorage {
 
 		@Override
 		public int compareTo(JournalStore other) {
-			return getStoreVersion().compareTo(other.getStoreVersion());
+			return Long.compare(getStoreVersion(), other.getStoreVersion());
 		}
 
 		@Override
 		public int hashCode() {
-			return storeVersion.hashCode();
+			return Long.hashCode(storeVersion);
 		}
 	}
 }

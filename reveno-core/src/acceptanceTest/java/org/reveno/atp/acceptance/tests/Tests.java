@@ -377,7 +377,7 @@ public class Tests extends RevenoBaseTest {
 	public void testPreallocatedSingleVolume() throws Exception {
 		Consumer<TestRevenoEngine> c = reveno -> {
 			Assert.assertEquals(9, reveno.getJournalsStorage().getVolumes().length);
-			Assert.assertEquals(1, reveno.getJournalsStorage().getLastStores().length);
+			Assert.assertEquals(1, reveno.getJournalsStorage().getAllStores().length);
 		};
 		testPreallocatedJournals(2_500_000, ChannelOptions.UNBUFFERED_IO, c);
 		testPreallocatedJournals(2_500_000, ChannelOptions.BUFFERING_VM, c);
@@ -393,7 +393,7 @@ public class Tests extends RevenoBaseTest {
 	public void testPreallocatedMultipleVolumes() throws Exception {
 		Consumer<TestRevenoEngine> c = reveno -> {
 			Assert.assertEquals(8, reveno.getJournalsStorage().getVolumes().length);
-			Assert.assertEquals(2, reveno.getJournalsStorage().getLastStores().length);
+			Assert.assertEquals(2, reveno.getJournalsStorage().getAllStores().length);
 		};
 		testPreallocatedJournals(500_000, ChannelOptions.UNBUFFERED_IO, c);
 		testPreallocatedJournals(500_000, ChannelOptions.BUFFERING_OS, c);

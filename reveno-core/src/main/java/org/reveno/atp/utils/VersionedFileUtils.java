@@ -45,18 +45,22 @@ public abstract class VersionedFileUtils {
 	}
 
 	public static String nextVersionFile(File baseDir, String prefix, long lastTransactionId) {
-		return nextVersionFile(baseDir, prefix, null, "-" + String.format(LONG_FORMAT, lastTransactionId));
+		return nextVersionFile(baseDir, prefix, null, String.format(LONG_FORMAT, lastTransactionId));
 	}
 
 	public static String nextVersionFile(File baseDir, String prefix, String version, long lastTransactionId) {
-		return nextVersionFile(baseDir, prefix, version, "-" + String.format(LONG_FORMAT, lastTransactionId));
+		return nextVersionFile(baseDir, prefix, version, String.format(LONG_FORMAT, lastTransactionId));
 	}
 	
 	public static String nextVersionFile(File baseDir, String prefix, String version, String rest) {
+		if (rest != null && !rest.isEmpty()) {
+			rest = "-" + rest;
+		}
+		final String restStr = rest;
 		Optional<String> lastFile = listFiles(baseDir, prefix, false).stream().reduce((a,b)->b);
 		
 		Function<Long, String> nextFile = v -> String.format("%s-%s-%s%s", prefix, format().format(new Date()),
-				version == null ? String.format(LONG_FORMAT, v + 1) : String.format(LONG_FORMAT, Long.parseLong(version)), rest);
+				version == null ? String.format(LONG_FORMAT, v + 1) : String.format(LONG_FORMAT, Long.parseLong(version)), restStr);
 		if (!lastFile.isPresent()) {
 			return nextFile.apply(0L);
 		} else {

@@ -28,12 +28,16 @@ import org.reveno.atp.core.api.storage.SnapshotStorage;
  */
 public interface RepositorySnapshotter {
 
+	default boolean hasAny() {
+		return lastSnapshotVersion() != -1;
+	}
+
 	/**
-	 * Checks is there any available committed snapshot to be loaded.
+	 * Returns last available version of snapshot, -1 if no snapshot exists.
 	 * 
-	 * @return if any committed snapshot available
+	 * @return version of last committed snapshot available, -1 otherwise
 	 */
-	boolean hasAny();
+	long lastSnapshotVersion();
 	
 	/**
 	 * Prepares SnapshotIdentifier pointer, using which snapshot
@@ -44,7 +48,15 @@ public interface RepositorySnapshotter {
 	 * 
 	 * @return
 	 */
-	SnapshotIdentifier prepare();
+	SnapshotIdentifier prepare(long version);
+
+	/**
+	 * Performs snapshotting of {@link RepositoryData} to some {@link SnapshotStorage}
+	 *
+	 * @param repo latest state of domain model
+	 * @param identifier the result of previously called {@link #prepare()} method call
+	 */
+	void snapshot(RepositoryData repo, SnapshotIdentifier identifier);
 
 	/**
 	 * Commits @{code identifier} - makes it available for engine state replay.
@@ -52,14 +64,6 @@ public interface RepositorySnapshotter {
 	 * @param identifier
      */
 	void commit(SnapshotIdentifier identifier);
-	
-	/**
-	 * Performs snapshotting of {@link RepositoryData} to some {@link SnapshotStorage}
-	 * 
-	 * @param repo latest state of domain model
-	 * @param identifier the result of previously called {@link #prepare()} method call
-	 */
-	void snapshot(RepositoryData repo, SnapshotIdentifier identifier);
 	
 	/**
 	 * Loads last snapshot into {@link RepositoryData}
@@ -74,7 +78,9 @@ public interface RepositorySnapshotter {
 		byte getType();
 		
 		long getTime();
-		
+
+		long getLastJournalVersion();
+
 	}
 	
 }

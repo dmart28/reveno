@@ -19,7 +19,7 @@ package org.reveno.atp.core.api;
 
 public interface SystemStateRestorer {
 	
-	SystemState restore(TxRepository repository);
+	SystemState restore(long fromVersion, TxRepository repository);
 	
 	
 	class SystemState {

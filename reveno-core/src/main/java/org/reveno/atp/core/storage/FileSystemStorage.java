@@ -38,6 +38,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.reveno.atp.utils.VersionedFileUtils.*;
+import static org.reveno.atp.utils.VersionedFileUtils.parseVersionedFile;
 
 public class FileSystemStorage implements FoldersStorage, JournalsStorage, SnapshotStorage {
 
@@ -64,33 +65,43 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 	public SnapshotStore getLastSnapshotStore() {
 		VersionedFile file = lastVersionedFile(baseDir, SNAPSHOT_PREFIX);
 		if (file != null) {
-			return new SnapshotStore(file.getName(), file.getFileDate().getTimeInMillis());
+			return new SnapshotStore(file.getName(), file.getFileDate().getTimeInMillis(),
+					file.getVersion(), file.getRest().length == 0 ? file.getVersion() : Long.parseLong(file.getRest()[0]));
 		} else
 			return null;
 	}
 
 	@Override
-	public SnapshotStore nextSnapshotStore() {
-		VersionedFile tx = lastVersionedFile(baseDir, TRANSACTION_PREFIX);
-		String nextFile = nextVersionFile(baseDir, SNAPSHOT_PREFIX, 
-				tx == null ? "1" : Long.toString(tx.getVersion()), "");
-		try {
-			new File(baseDir, nextFile).createNewFile();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		return new SnapshotStore(nextFile, System.currentTimeMillis());
+	public JournalStore[] getStoresAfterVersion(long journalVersion) {
+		final List<VersionedFile> txs = afterLastSnapshot(journalVersion, txs());
+		final List<VersionedFile> evns = afterLastSnapshot(journalVersion, evns());
+		if (txs.size() != evns.size())
+			throw new RuntimeException(String.format("Amount of Transaction files doesn't match to Events files [%s/%s]",
+					txs.size(), evns.size()));
+
+		return getJournalStores(txs, evns);
 	}
 
 	@Override
-	public SnapshotStore nextTempSnapshotStore() {
-		String nextFile = nextVersionFile(baseDir, "temp_" + SNAPSHOT_PREFIX);
+	public SnapshotStore nextSnapshotAfter(long journalVersion) {
+		return nextSnapshotAfter("", journalVersion);
+	}
+
+	@Override
+	public SnapshotStore nextTempSnapshotStore(long journalVersion) {
+		return nextSnapshotAfter("temp_", journalVersion);
+	}
+
+	public SnapshotStore nextSnapshotAfter(String prefix, long journalVersion) {
+		String nextFile = nextVersionFile(baseDir, prefix + SNAPSHOT_PREFIX,
+				null, Long.toString(journalVersion));
 		try {
 			new File(baseDir, nextFile).createNewFile();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		return new SnapshotStore(nextFile, System.currentTimeMillis());
+		VersionedFile vf = parseVersionedFile(nextFile);
+		return new SnapshotStore(nextFile, System.currentTimeMillis(), vf.getVersion(), journalVersion);
 	}
 
 	@Override
@@ -108,18 +119,6 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 		Optional<String> fileName = lastVersionFile(baseDir, SNAPSHOT_PREFIX);
 		if (fileName.isPresent())
 			new File(baseDir, fileName.get()).delete();
-	}
-
-	@Override
-	public JournalStore[] getLastStores() {
-		final VersionedFile snap = lastVersionedFile(baseDir, SNAPSHOT_PREFIX);
-		final List<VersionedFile> txs = snap != null ? afterLastSnapshot(snap, txs()) : txs();
-		final List<VersionedFile> evns = snap != null ? afterLastSnapshot(snap, evns()) : evns();
-		if (txs.size() != evns.size())
-			throw new RuntimeException(String.format("Amount of Transaction files doesn't match to Events files [%s/%s]",
-					txs.size(), evns.size()));
-
-		return getJournalStores(txs, evns);
 	}
 
 	@Override
@@ -199,7 +198,7 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 		preallocateFiles(new File(baseDir, evnFile.getName()), eventsSize);
 		LOG.info("Finished preallocating journal [{}]", evnFile.getName());
 
-		return new JournalStore(txFile.getName(), evnFile.getName(), Long.toString(txFile.getVersion()), 0);
+		return new JournalStore(txFile.getName(), evnFile.getName(), txFile.getVersion(), 0);
 	}
 
 	@Override
@@ -215,7 +214,7 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 		new File(baseDir, volume.getTransactionCommitsAddress()).renameTo(new File(baseDir, txFile.getName()));
 		new File(baseDir, volume.getEventsCommitsAddress()).renameTo(new File(baseDir, evnFile.getName()));
 
-		return new JournalStore(txFile.getName(), evnFile.getName(), Long.toString(txFile.getVersion()), lastTxId);
+		return new JournalStore(txFile.getName(), evnFile.getName(), txFile.getVersion(), lastTxId);
 	}
 
 	@Override
@@ -313,9 +312,8 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 		return listVersioned(baseDir, TRANSACTION_PREFIX);
 	}
 	
-	protected List<VersionedFile> afterLastSnapshot(
-			VersionedFile lastSnap, List<VersionedFile> txs) {
-		return txs.stream().filter(f -> f.getVersion() > lastSnap.getVersion()).collect(Collectors.toList());
+	protected List<VersionedFile> afterLastSnapshot(long version, List<VersionedFile> txs) {
+		return txs.stream().filter(f -> f.getVersion() > version).collect(Collectors.toList());
 	}
 	
 	protected JournalStore store(VersionedFile txFile, VersionedFile evnFile, String prefix) {
@@ -331,8 +329,7 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 		} else if (txFile.getRest().length != evnFile.getRest().length) {
 			throw new IllegalArgumentException("Transaction and Event file names are not equal!");
 		}
-		return new JournalStore(prefix + txFile.getName(), prefix + evnFile.getName(),
-				Long.toString(txFile.getVersion()), lastTxId);
+		return new JournalStore(prefix + txFile.getName(), prefix + evnFile.getName(), txFile.getVersion(), lastTxId);
 	}
 
 	protected void preallocateFiles(File file, long size) {

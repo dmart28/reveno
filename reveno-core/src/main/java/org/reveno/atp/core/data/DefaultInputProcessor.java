@@ -34,8 +34,8 @@ import java.util.stream.Collectors;
 public class DefaultInputProcessor implements InputProcessor, Closeable {
 	
 	@Override
-	public void process(final Consumer<Buffer> consumer, JournalType type) {
-		List<Channel> chs = Arrays.asList(stores()).stream().map((js) -> type == JournalType.EVENTS ?
+	public void process(final long fromVersion, final Consumer<Buffer> consumer, JournalType type) {
+		List<Channel> chs = Arrays.asList(stores(fromVersion)).stream().map((js) -> type == JournalType.EVENTS ?
 				js.getEventsCommitsAddress() : js.getTransactionCommitsAddress())
 				.map(storage::channel)/*.limit(Math.abs(stores().length - 1))*/.collect(Collectors.toList());
 		ChannelReader bufferReader = new ChannelReader(chs);
@@ -67,8 +67,8 @@ public class DefaultInputProcessor implements InputProcessor, Closeable {
 	}
 	
 	
-	protected JournalStore[] stores() {
-		return storage.getLastStores();
+	protected JournalStore[] stores(long fromVersion) {
+		return storage.getStoresAfterVersion(fromVersion);
 	}
 	
 	

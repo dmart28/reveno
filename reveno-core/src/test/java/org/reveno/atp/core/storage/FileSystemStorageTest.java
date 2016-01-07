@@ -48,34 +48,34 @@ public class FileSystemStorageTest {
 
 	@Test
 	public void genericTest() throws IOException {
-		assertEquals(0, storage.getLastStores().length);
+		assertEquals(0, storage.getAllStores().length);
 		assertEquals(null, storage.getLastSnapshotStore());
 		
 		JournalStore store1 = storage.nextStore();
 		assertNotNull(store1);
-		assertEquals("1", store1.getStoreVersion());
+		assertEquals(1, store1.getStoreVersion());
 		assertNotNull(store1.getEventsCommitsAddress());
 		assertNotNull(store1.getTransactionCommitsAddress());
 		
-		JournalStore[] stores = storage.getLastStores();
+		JournalStore[] stores = storage.getStoresAfterVersion(0);
 		assertEquals(1, stores.length);
 		assertEquals(0, stores[0].compareTo(store1));
 		assertEquals(stores[0].getEventsCommitsAddress(), store1.getEventsCommitsAddress());
 		assertEquals(stores[0].getTransactionCommitsAddress(), store1.getTransactionCommitsAddress());
 		
 		storage.nextStore();
-		stores = storage.getLastStores();
+		stores = storage.getStoresAfterVersion(0);
 		assertEquals(2, stores.length);
-		assertEquals("2", stores[1].getStoreVersion());
+		assertEquals(2, stores[1].getStoreVersion());
 		
-		SnapshotStore ss = storage.nextSnapshotStore();
+		SnapshotStore ss = storage.nextSnapshotAfter(2);
 		assertNotNull(ss);
-		assertTrue(ss.getSnapshotPath().endsWith("-00000000000000000002"));
+		assertTrue(ss.getSnapshotPath().endsWith("-00000000000000000001-2"));
 		
-		assertEquals(0, storage.getLastStores().length);
+		assertEquals(0, storage.getStoresAfterVersion(2).length);
 		
 		storage.nextStore();
-		assertEquals(1, storage.getLastStores().length);
+		assertEquals(1, storage.getStoresAfterVersion(2).length);
 	}
 	
 	@Test

@@ -28,27 +28,30 @@ import org.slf4j.LoggerFactory;
 public class DefaultSnapshotter implements RepositorySnapshotter {
 	
 	@Override
-	public boolean hasAny() {
-		return storage.getLastSnapshotStore() != null;
+	public long lastSnapshotVersion() {
+		SnapshotStore store = storage.getLastSnapshotStore();
+		return store == null ? -1 : store.getLastJournalVersion();
 	}
 	
 	@Override
-	public SnapshotIdentifier prepare() {
-		return storage.nextTempSnapshotStore();
+	public SnapshotIdentifier prepare(long version) {
+		return storage.nextTempSnapshotStore(version);
 	}
 
 	@Override
 	public void commit(SnapshotIdentifier identifier) {
 		if (identifier.getType() != SnapshotStore.TYPE) {
+			LOG.error("Wrong snapshot identifier type!");
 			return;
 		}
 		SnapshotStore snap = (SnapshotStore) identifier;
-		storage.move(snap, storage.nextSnapshotStore());
+		storage.move(snap, storage.nextSnapshotAfter(snap.getLastJournalVersion()));
 	}
 
 	@Override
 	public void snapshot(RepositoryData repo, SnapshotIdentifier identifier) {
 		if (identifier.getType() != SnapshotStore.TYPE) {
+			LOG.error("Wrong snapshot identifier type!");
 			return;
 		}
 		SnapshotStore snap = (SnapshotStore) identifier;
@@ -64,8 +67,8 @@ public class DefaultSnapshotter implements RepositorySnapshotter {
 				} else {
 					LOG.info("Can't snapshot with {}, falling back to {}", serializers[i].getClass().getSimpleName(),
 							serializers[i + 1].getClass().getSimpleName());
-					SnapshotStore nextStore = storage.nextTempSnapshotStore();
 					storage.removeSnapshotStore(snap);
+					SnapshotStore nextStore = storage.nextTempSnapshotStore(snap.getLastJournalVersion());
 					snap.setSnapshotPath(nextStore.getSnapshotPath());
 				}
 				continue;
