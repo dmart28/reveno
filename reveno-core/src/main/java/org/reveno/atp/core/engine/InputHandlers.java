@@ -120,7 +120,6 @@ public class InputHandlers {
 		
 		interceptors(TransactionStage.TRANSACTION, c);
 		txExecutor.executeCommands(c, services);
-
 	};
 	private boolean changedClassLoaderJournaler = false;
 	protected final BoolBiConsumer<ProcessorContext> journaler = (c, eob) -> {

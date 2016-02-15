@@ -40,7 +40,7 @@ public class TransactionExecutor {
 		List<Object> txs = c.getTransactions();
 		try {
 			c.eventBus().currentTransactionId(c.transactionId()).underlyingEventBus(c.defaultEventBus());
-			repository.underlying(services.repository()).map(c.getMarkedRecords());
+			repository.underlying(services.repository()).map(c.getMarkedRecords()).enableReadMark();
 			transactionContext.withContext(c).withRepository(repository).reset();
 			commandContext.withRepository(repository).withTransactionsHolder(c.getTransactions()).idGenerator(services.idGenerator());
 			
@@ -51,7 +51,9 @@ public class TransactionExecutor {
 			} else {
 				int index = 0;
 				for (int i = 0; i < cmds.size(); i++) {
+					repository.disableReadMark();
 					Object result = services.commandsManager().execute(cmds.get(i), commandContext);
+					repository.enableReadMark();
 					executeTransactions(services, txs, index);
 					if (c.hasResult())
 						c.commandResult(result);

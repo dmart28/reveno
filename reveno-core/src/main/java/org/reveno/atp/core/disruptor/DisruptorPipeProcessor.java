@@ -132,14 +132,6 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 		for (int i = 1; i < disruptorHandlers.size(); i++)
 			h = h.then(disruptorHandlers.get(i));
 	}
-
-	<U> U requireStarted(Supplier<U> body) {
-		if (isStarted)
-			return body.get();
-		else
-			throw new IllegalStateException(
-					"Pipe Processor must be started first.");
-	}
 	
 	protected EventHandler<T>[] convert(ProcessorHandler<T>[] h) {
 		EventHandler<T>[] acs = new EventHandler[h.length];

@@ -21,7 +21,6 @@ import org.reveno.atp.api.domain.RepositoryData;
 import org.reveno.atp.api.domain.WriteableRepository;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -39,6 +38,16 @@ public class RecordingRepository implements WriteableRepository {
 		this.underlyingRepo = repository;
 		return this;
 	}
+
+	public RecordingRepository enableReadMark() {
+		this.readMarking = true;
+		return this;
+	}
+
+	public RecordingRepository disableReadMark() {
+		this.readMarking = false;
+		return this;
+	}
 	
 	public RecordingRepository map(Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> markedRecords) {
 		this.markedRecords = markedRecords;
@@ -48,7 +57,7 @@ public class RecordingRepository implements WriteableRepository {
 	@Override
 	public <T> T get(Class<T> entityType, long id) {
 		T result = underlyingRepo.get(entityType, id);
-		if (result != null)
+		if (result != null && readMarking)
 			markedRecords.get(entityType).put(id, result);
 		return result;
 	}
@@ -66,14 +75,18 @@ public class RecordingRepository implements WriteableRepository {
 	@Override
 	public RepositoryData getData() {
 		RepositoryData data = underlyingRepo.getData();
-		data.data.forEach((k,v) -> markedRecords.get(k).putAll(v));
+		if (readMarking) {
+			data.data.forEach((k, v) -> markedRecords.get(k).putAll(v));
+		}
 		return data;
 	}
 
 	@Override
 	public Map<Long, Object> getEntities(Class<?> entityType) {
 		Map<Long, Object> result = underlyingRepo.getEntities(entityType);
-		markedRecords.get(entityType).putAll(result);
+		if (readMarking) {
+			markedRecords.get(entityType).putAll(result);
+		}
 		return result;
 	}
 	
@@ -112,6 +125,7 @@ public class RecordingRepository implements WriteableRepository {
 	}
 	
 	protected Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> markedRecords;
+	protected boolean readMarking = true;
 	protected static final Object EMPTY = new Object();
 	
 }
