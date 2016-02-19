@@ -46,7 +46,7 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 	public void intercept(long transactionId, long time, long systemFlag, WriteableRepository repository, TransactionStage stage) {
 		if (stage == TransactionStage.TRANSACTION) {
 			if ((systemFlag & SNAPSHOTTING_FLAG) == SNAPSHOTTING_FLAG ||
-					counter++ % configuration.revenoSnapshotting().every() == 0) {
+					(configuration.revenoSnapshotting().every() > 0 && counter++ % configuration.revenoSnapshotting().every() == 0)) {
 				asyncSnapshot(repository.getData(), transactionId);
 				if (configuration.modelType() == Configuration.ModelType.MUTABLE) {
 					try {

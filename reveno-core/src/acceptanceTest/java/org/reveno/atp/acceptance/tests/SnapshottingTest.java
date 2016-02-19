@@ -17,6 +17,7 @@ import org.reveno.atp.core.serialization.DefaultJavaSerializer;
 import org.reveno.atp.core.serialization.ProtostuffSerializer;
 import org.reveno.atp.core.snapshots.DefaultSnapshotter;
 import org.reveno.atp.core.storage.FileSystemStorage;
+import org.reveno.atp.utils.MeasureUtils;
 
 import java.io.File;
 import java.util.Arrays;
@@ -63,8 +64,55 @@ public class SnapshottingTest extends RevenoBaseTest {
         testSnapshottingEvery(null, new InMemorySnapshotter());
     }
 
+    @Test
+    public void testSnapshottingIntervalJavaSerializer() throws Exception {
+        testSnapshottingInterval(new DefaultJavaSerializer());
+    }
+
+    @Test
+    public void testSnapshottingIntervalProtostuffSerializer() throws Exception {
+        testSnapshottingInterval(new ProtostuffSerializer());
+    }
+
     public void testSnapshottingEvery(RepositoryDataSerializer repoSerializer) throws Exception {
         testSnapshottingEvery(repoSerializer, null);
+    }
+
+    public void testSnapshottingInterval(RepositoryDataSerializer repoSerializer) throws Exception {
+        testSnapshottingInterval(repoSerializer, null);
+    }
+
+    public void testSnapshottingInterval(RepositoryDataSerializer repoSerializer, RepositorySnapshotter snapshotter) throws Exception {
+        Consumer<TestRevenoEngine> consumer = r -> {
+            r.domain().resetSnapshotters();
+            if (snapshotter == null) {
+                r.domain().snapshotWith(new DefaultSnapshotter(new FileSystemStorage(tempDir, new RevenoConfiguration.RevenoJournalingConfiguration()), repoSerializer))
+                        .andRestoreWithIt();
+            } else {
+                r.domain().snapshotWith(snapshotter).andRestoreWithIt();
+            }
+        };
+        Reveno reveno = createEngine(consumer);
+        reveno.config().snapshotting().interval(1500);
+        reveno.startup();
+
+        generateAndSendCommands(reveno, 1_005);
+        Assert.assertEquals(0, tempDir.listFiles((dir, name) -> name.startsWith("snp")).length);
+        // yeah, this is really weird, should think about better approach
+        Thread.sleep(2000);
+
+        if (snapshotter == null) {
+            Assert.assertTrue(tempDir.listFiles((dir, name) -> name.startsWith("snp")).length > 0);
+        }
+        reveno.shutdown();
+
+        reveno = createEngine(consumer);
+        reveno.startup();
+
+        Assert.assertEquals(1_005, reveno.query().select(AccountView.class).size());
+        Assert.assertEquals(1_005, reveno.query().select(OrderView.class).size());
+
+        reveno.shutdown();
     }
 
     public void testSnapshottingEvery(RepositoryDataSerializer repoSerializer, RepositorySnapshotter snapshotter) throws Exception {

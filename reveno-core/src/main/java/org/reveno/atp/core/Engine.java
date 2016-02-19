@@ -415,7 +415,7 @@ public class Engine implements Reveno {
 	
 	protected void connectSystemHandlers() {
 		domain().transactionAction(NextIdTransaction.class, idGenerator);
-		if (config.revenoSnapshotting().every() != -1) {
+		if (config.revenoSnapshotting().every() != -1 || config.revenoSnapshotting().interval() > 0) {
 			TransactionInterceptor nTimeSnapshotter = new SnapshottingInterceptor(config,
 					snapshotsManager, snapshotStorage, journalsStorage, journalsManager);
 			interceptors.add(TransactionStage.TRANSACTION, nTimeSnapshotter);

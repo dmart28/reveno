@@ -52,7 +52,7 @@ public class InputHandlers {
 	public void ex(ProcessorContext c, boolean filter, boolean eob,
 				   TransactionStage stage, List<TransactionInterceptor> interceptors,
 				   BoolBiConsumer<ProcessorContext> body) {
-		if (!c.isAborted() && filter) {
+		if (c.isSystem() || (!c.isAborted() && filter)) {
 			try {
 				if (c.isSystem()) {
 					c.transactionId(transactionId.getAsLong());
