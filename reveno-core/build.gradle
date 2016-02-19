@@ -73,6 +73,7 @@ dependencies {
 	compile "io.protostuff:protostuff-uberjar:$protostuffVersion"
 	compile "io.netty:netty-buffer:$nettyVersion"
 	compile "net.bytebuddy:byte-buddy:$byteBuddyVersion"
+	compile "com.github.stephenc.high-scale-lib:high-scale-lib:$highScaleLibVersion"
 
 	testCompile project(":reveno-test-model")
 

@@ -43,10 +43,26 @@ public class InputHandlers {
 	public static final EmptyResult EMPTY_RESULT = new EmptyResult();
 
 	@SuppressWarnings("unchecked")
-	public void ex(ProcessorContext c, boolean filter, boolean eob, BoolBiConsumer<ProcessorContext> body) {
+	public void ex(ProcessorContext c, boolean filter, boolean eob,
+				   BoolBiConsumer<ProcessorContext> body) {
+		ex(c, filter, eob, null, null, body);
+	}
+
+	@SuppressWarnings("unchecked")
+	public void ex(ProcessorContext c, boolean filter, boolean eob,
+				   TransactionStage stage, List<TransactionInterceptor> interceptors,
+				   BoolBiConsumer<ProcessorContext> body) {
 		if (!c.isAborted() && filter) {
 			try {
-				body.accept(c, eob);
+				if (c.isSystem()) {
+					c.transactionId(transactionId.getAsLong());
+				}
+				if (stage != null && interceptors != null) {
+					interceptors(stage, interceptors, c);
+				}
+				if (!c.isSystem()) {
+					body.accept(c, eob);
+				}
 			} catch (Throwable t) {
 				log.error("inputHandlers", t);
 				c.abort(t);
@@ -58,15 +74,21 @@ public class InputHandlers {
 	}
 	
 	public void replication(ProcessorContext c, boolean endOfBatch) {
-		ex(c, !c.isRestore() && !c.isSync() && !c.isReplicated(), endOfBatch, replicator);
+		ex(c, !c.isRestore() && !c.isSync() && !c.isReplicated(), endOfBatch,
+				TransactionStage.REPLICATION, replicationInterceptors, replicator);
 	}
 	
 	public void transactionExecution(ProcessorContext c, boolean endOfBatch) {
-		ex(c, !c.isSync(), endOfBatch, transactionExecutor);
+		if (!c.isRestore() && !c.isSync())
+			c.transactionId(nextTransactionId.getAsLong());
+
+		ex(c, !c.isSync(), endOfBatch, TransactionStage.TRANSACTION, transactionInterceptors,
+				transactionExecutor);
 	}
 	
 	public void journaling(ProcessorContext c, boolean endOfBatch) {
-		ex(c, !c.isSync() && c.getTransactions().size() > 0 && !c.isRestore(), endOfBatch, journaler);
+		ex(c, !c.isSync() && c.getTransactions().size() > 0 && !c.isRestore(), endOfBatch,
+				TransactionStage.JOURNALING, journalingInterceptors, journaler);
 	}
 	
 	public void viewsUpdate(ProcessorContext c, boolean endOfBatch) {
@@ -97,7 +119,12 @@ public class InputHandlers {
 	protected WorkflowContext services;
 	protected TransactionExecutor txExecutor;
 	protected LongSupplier nextTransactionId;
+	protected LongSupplier transactionId;
 	protected ProcessorContext ctxJ;
+	protected List<TransactionInterceptor> replicationInterceptors;
+	protected List<TransactionInterceptor> transactionInterceptors;
+	protected List<TransactionInterceptor> journalingInterceptors;
+
 	protected final Consumer<Buffer> journalerConsumer = b -> {
 		ctxJ.commitInfo().transactionId(ctxJ.transactionId()).time(ctxJ.time()).transactionCommits(ctxJ.getTransactions());
 		services.serializer().serialize(ctxJ.commitInfo(), b);
@@ -105,26 +132,20 @@ public class InputHandlers {
 
 	private boolean changedClassLoaderReplicator = false;
 	protected final BoolBiConsumer<ProcessorContext> replicator = (c, eob) -> {
-		interceptors(TransactionStage.REPLICATION, c);
 		if (!changedClassLoaderReplicator) {
 			changeClassLoaderIfRequired();
 			changedClassLoaderReplicator = true;
 		}
-		
+
+		// TODO probably it's better to send generated transactionId by master node
 		if (!services.failoverManager().replicate(b -> services.serializer().serializeCommands(c.getCommands(), b)))
 			c.abort(new ReplicationFailedException());
 	};
 	protected final BoolBiConsumer<ProcessorContext> transactionExecutor = (c, eob) -> {
-		if (!c.isRestore())
-			c.transactionId(nextTransactionId.getAsLong());
-		
-		interceptors(TransactionStage.TRANSACTION, c);
 		txExecutor.executeCommands(c, services);
 	};
 	private boolean changedClassLoaderJournaler = false;
 	protected final BoolBiConsumer<ProcessorContext> journaler = (c, eob) -> {
-		interceptors(TransactionStage.JOURNALING, c);
-
 		rollIfRequired(c.transactionId());
 		this.ctxJ = c;
 		if (!changedClassLoaderJournaler) {
@@ -147,11 +168,10 @@ public class InputHandlers {
 		}
 	};
 
-	protected void interceptors(TransactionStage stage, ProcessorContext context) {
-		List<TransactionInterceptor> interceptors = services.interceptorCollection().getInterceptors(stage);
-		if (!context.isRestore() && interceptors.size() > 0)
+	protected void interceptors(TransactionStage stage, List<TransactionInterceptor> interceptors, ProcessorContext c) {
+		if (!c.isRestore() && interceptors.size() > 0)
 			for (int i = 0; i < interceptors.size(); i++) {
-				interceptors.get(i).intercept(context.transactionId(), context.time(), services.repository(), stage);
+				interceptors.get(i).intercept(c.transactionId(), c.time(), c.systemFlag(), services.repository(), stage);
 			}
 	}
 
@@ -172,10 +192,15 @@ public class InputHandlers {
 	}
 	
 	
-	public InputHandlers(WorkflowContext context, LongSupplier nextTransactionId) {
+	public InputHandlers(WorkflowContext context, LongSupplier nextTransactionId, LongSupplier transactionId) {
 		this.services = context;
 		this.txExecutor = new TransactionExecutor();
 		this.nextTransactionId = nextTransactionId;
+		this.transactionId = transactionId;
+
+		replicationInterceptors = context.interceptorCollection().getInterceptors(TransactionStage.REPLICATION);
+		transactionInterceptors = context.interceptorCollection().getInterceptors(TransactionStage.TRANSACTION);
+		journalingInterceptors = context.interceptorCollection().getInterceptors(TransactionStage.JOURNALING);
 	}
 	
 	protected static final Logger log = LoggerFactory.getLogger(InputHandlers.class);

@@ -136,6 +136,7 @@ public class Engine implements Reveno {
 		
 		log.info("Engine is started.");
 		isStarted = true;
+		postInit();
 	}
 
 	@Override
@@ -341,6 +342,16 @@ public class Engine implements Reveno {
 
 	public boolean isClustered() {
 		return !failoverManager().isSingleNode();
+	}
+
+	protected void postInit() {
+		if (config.revenoSnapshotting().interval() > 0) {
+			snapshotterIntervalExecutor.scheduleAtFixedRate(() -> {
+				workflowEngine.getPipe().process((c,f) -> {
+					c.reset().systemFlag(SnapshottingInterceptor.SNAPSHOTTING_FLAG).future(f);
+				});
+			}, config.revenoSnapshotting().interval(), config.revenoSnapshotting().interval(), TimeUnit.MILLISECONDS);
+		}
 	}
 
 	protected Optional<DynamicCommand> getDynamicCommand(String command) {

@@ -164,13 +164,15 @@ public class RevenoBaseTest {
 			protected long start = -1L;
 
 			@Override
-			public void intercept(long transactionId, long time, WriteableRepository repository,
+			public void intercept(long transactionId, long time, long flag, WriteableRepository repository,
 								  TransactionStage stage) {
-				if (start == -1 || transactionId == 1) start = System.currentTimeMillis();
-				if (transactionId % 10_000_000 == 0) {
-					log.info(String.format("%s tx per second!", (
-							Math.round((double) 10_000_000 * 1000) / (System.currentTimeMillis() - start))));
-					start = System.currentTimeMillis();
+				if (flag == 0) {
+					if (start == -1 || transactionId == 1) start = System.currentTimeMillis();
+					if (transactionId % 10_000_000 == 0) {
+						log.info(String.format("%s tx per second!", (
+								Math.round((double) 10_000_000 * 1000) / (System.currentTimeMillis() - start))));
+						start = System.currentTimeMillis();
+					}
 				}
 			}
 

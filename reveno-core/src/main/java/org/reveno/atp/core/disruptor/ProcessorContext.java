@@ -42,6 +42,20 @@ public class ProcessorContext implements Destroyable {
 		this.time = time;
 		return this;
 	}
+
+	private boolean isSystem = false;
+	public boolean isSystem() {
+		return isSystem;
+	}
+	private long systemFlag = 0L;
+	public long systemFlag() {
+		return systemFlag;
+	}
+	public ProcessorContext systemFlag(long systemFlag) {
+		this.isSystem = true;
+		this.systemFlag = systemFlag;
+		return this;
+	}
 	
 	private final RestoreableEventBus defaultEventBus = new ProcessContextEventBus();
 	public EventBus defaultEventBus() {
@@ -194,6 +208,8 @@ public class ProcessorContext implements Destroyable {
 	
 	public ProcessorContext reset() {
 		transactionId = 0L;
+		systemFlag = 0L;
+		isSystem = false;
 		commands.clear();
 		transactions.clear();
 		events.clear();

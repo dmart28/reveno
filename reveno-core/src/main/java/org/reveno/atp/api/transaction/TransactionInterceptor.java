@@ -30,6 +30,7 @@ import org.reveno.atp.core.api.Destroyable;
  */
 public interface TransactionInterceptor extends Destroyable {
 
-	void intercept(long transactionId, long time, WriteableRepository repository, TransactionStage stage);
+	void intercept(long transactionId, long time, long flags,
+				   WriteableRepository repository, TransactionStage stage);
 	
 }

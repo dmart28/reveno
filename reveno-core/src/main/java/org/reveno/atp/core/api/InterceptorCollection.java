@@ -29,9 +29,7 @@ public class InterceptorCollection {
 	protected Byte2ObjectMap<List<TransactionInterceptor>> interceptors = new Byte2ObjectOpenHashMap<>();
 	
 	public List<TransactionInterceptor> getInterceptors(TransactionStage stage) {
-		if (!interceptors.containsKey(stage.getType()))
-			interceptors.put(stage.getType(), new ArrayList<>());
-		return interceptors.get(stage.getType());
+		return interceptors.computeIfAbsent(stage.getType(), k -> new ArrayList<>());
 	}
 	
 	public void add(TransactionStage stage, TransactionInterceptor interceptor) {

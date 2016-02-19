@@ -38,18 +38,19 @@ public interface Configuration {
 	void mapLoadFactor(float loadFactor);
 	
     
-	public static interface SnapshotConfiguration {
+	interface SnapshotConfiguration {
 		SnapshotConfiguration atShutdown(boolean takeSnapshot);
 
 		SnapshotConfiguration every(long transactionCount);
+
+		SnapshotConfiguration interval(long millis);
 	}
 	
-	public static interface DisruptorConfiguration {
+	interface DisruptorConfiguration {
 		DisruptorConfiguration bufferSize(int bufferSize);
 	}
 
-	public static interface JournalingConfiguration {
-
+	interface JournalingConfiguration {
 		JournalingConfiguration maxObjectSize(int size);
 
 		JournalingConfiguration volumesSize(long txSize, long eventsSize);
@@ -59,14 +60,13 @@ public interface Configuration {
 		JournalingConfiguration minVolumes(int volumes);
 
 		JournalingConfiguration channelOptions(ChannelOptions options);
-
 	}
 	
-	public static enum ModelType { MUTABLE, IMMUTABLE }
+	enum ModelType { MUTABLE, IMMUTABLE }
 	
-	public static enum MutableModelFailover { SNAPSHOTS, COMPENSATING_ACTIONS}
+	enum MutableModelFailover { SNAPSHOTS, COMPENSATING_ACTIONS}
 	
-	public static enum CpuConsumption { LOW, NORMAL, HIGH, PHASED }
+	enum CpuConsumption { LOW, NORMAL, HIGH, PHASED }
 
 
 	default void modelType(ModelType modelType) {

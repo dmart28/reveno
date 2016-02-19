@@ -122,7 +122,7 @@ public class LatencyTest extends RevenoBaseTest {
 				}
 
 				@Override
-				public void intercept(long transactionId, long time, WriteableRepository repository, TransactionStage stage) {
+				public void intercept(long transactionId, long time, long flag, WriteableRepository repository, TransactionStage stage) {
 					if (++counter[0] > COLD_START_COUNT && transactionId < TOTAL_TRANSACTIONS - 5) {
 						final long lat = System.nanoTime() - time;
 						latency[0] += lat;

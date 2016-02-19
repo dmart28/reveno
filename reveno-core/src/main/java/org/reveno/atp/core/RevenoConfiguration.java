@@ -127,10 +127,19 @@ public class RevenoConfiguration implements Configuration {
 		public long every() {
 			return snapshotEvery;
 		}
+
+		@Override
+		public SnapshotConfiguration interval(long millis) {
+			this.interval = millis;
+			return this;
+		}
+		public long interval() {
+			return interval;
+		}
 		
 		private boolean snapshotAtShutdown = false;
 		private long snapshotEvery = -1;
-		
+		private long interval = -1;
 	}
 	
 	public static class RevenoDisruptorConfiguration implements DisruptorConfiguration {

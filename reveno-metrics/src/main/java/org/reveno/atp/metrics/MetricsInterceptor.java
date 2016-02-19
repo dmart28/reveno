@@ -35,9 +35,11 @@ import java.util.concurrent.TimeUnit;
 public class MetricsInterceptor implements TransactionInterceptor {
 
 	@Override
-	public void intercept(long transactionId, long time, WriteableRepository repository, TransactionStage stage) {
-		counter.inc();
-		histogram.update(System.nanoTime() - time);
+	public void intercept(long transactionId, long time, long systemFlag, WriteableRepository repository, TransactionStage stage) {
+		if (systemFlag == 0) {
+			counter.inc();
+			histogram.update(System.nanoTime() - time);
+		}
 	}
 	
 	@Override

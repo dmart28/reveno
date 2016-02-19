@@ -16,6 +16,7 @@
 
 package org.reveno.atp.core.engine.components;
 
+import org.cliffc.high_scale_lib.NonBlockingHashMapLong;
 import org.reveno.atp.api.Configuration;
 import org.reveno.atp.api.RepositorySnapshotter;
 import org.reveno.atp.api.RepositorySnapshotter.SnapshotIdentifier;
@@ -38,13 +39,14 @@ import java.util.concurrent.*;
 public class SnapshottingInterceptor implements TransactionInterceptor {
 	
 	protected long counter = 1L;
-	protected Map<Long, SnapshotIdentifier[]> snapshots = new ConcurrentHashMap<>();
-	protected Map<Long, Future<?>> futures = new ConcurrentHashMap<>();
+	protected NonBlockingHashMapLong<SnapshotIdentifier[]> snapshots = new NonBlockingHashMapLong<>();
+	protected NonBlockingHashMapLong<Future<?>> futures = new NonBlockingHashMapLong<>();
 
 	@Override
-	public void intercept(long transactionId, long time, WriteableRepository repository, TransactionStage stage) {
+	public void intercept(long transactionId, long time, long systemFlag, WriteableRepository repository, TransactionStage stage) {
 		if (stage == TransactionStage.TRANSACTION) {
-			if (counter++ % configuration.revenoSnapshotting().every() == 0) {
+			if ((systemFlag & SNAPSHOTTING_FLAG) == SNAPSHOTTING_FLAG ||
+					counter++ % configuration.revenoSnapshotting().every() == 0) {
 				asyncSnapshot(repository.getData(), transactionId);
 				if (configuration.modelType() == Configuration.ModelType.MUTABLE) {
 					try {
@@ -94,9 +96,7 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 		for (int i = 0; i < snaps.size(); i++) {
 			ids[i] = snaps.get(i).prepare();
 		}
-		// hack to not box long two times
-		Long boxed = transactionId;
-		futures.put(boxed, executor.submit(() -> {
+		futures.put(transactionId, executor.submit(() -> {
 			for (int i = 0; i < snaps.size(); i++) {
 				try {
 					snaps.get(i).snapshot(data, ids[i]);
@@ -105,7 +105,7 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 				}
 			}
 		}));
-		snapshots.put(boxed, ids);
+		snapshots.put(transactionId, ids);
 	}
 	
 	public SnapshottingInterceptor(RevenoConfiguration configuration,
@@ -125,5 +125,7 @@ public class SnapshottingInterceptor implements TransactionInterceptor {
 	protected JournalsManager journalsManager;
 	protected final ExecutorService executor = Executors.newSingleThreadExecutor();
 	protected static final Logger LOG = LoggerFactory.getLogger(SnapshottingInterceptor.class);
+
+	public static final long SNAPSHOTTING_FLAG = 0x345;
 
 }

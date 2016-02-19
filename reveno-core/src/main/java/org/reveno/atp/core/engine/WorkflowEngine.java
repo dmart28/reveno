@@ -42,7 +42,7 @@ public class WorkflowEngine {
 		this.modelType = modelType;
 		this.context = context;
 		this.inputProcessor = new PipeProcessorFailoverWrapper(inputProcessor);
-		this.handlers = new InputHandlers(context, this::nextTransactionId);
+		this.handlers = new InputHandlers(context, this::nextTransactionId, this::getLastTransactionId);
 	}
 	
 	public void init() {
