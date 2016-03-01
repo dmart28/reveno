@@ -36,10 +36,10 @@ public abstract class Commands {
 
 	public static Long createAccount(CreateNewAccountCommand cmd, CommandContext ctx) {
 		long accountId = ctx.id(Account.class);
-		ctx.executeTransaction(new CreateAccount(accountId, cmd.currency));
+		ctx.executeTxAction(new CreateAccount(accountId, cmd.currency));
 		
 		if (cmd.balance > 0)
-			ctx.executeTransaction(new Credit(accountId, cmd.balance, System.currentTimeMillis()));
+			ctx.executeTxAction(new Credit(accountId, cmd.balance, System.currentTimeMillis()));
 		
 		return accountId;
 	}
@@ -48,14 +48,14 @@ public abstract class Commands {
 		if (!ctx.repo().has(Account.class, credit.accountId))
 			throw new RuntimeException();
 		
-		ctx.executeTransaction(credit);
+		ctx.executeTxAction(credit);
 	}
 	
 	public static void debit(Debit debit, CommandContext ctx) {
 		if (!ctx.repo().has(Account.class, debit.accountId))
 			throw new RuntimeException();
 
-		ctx.executeTransaction(debit);
+		ctx.executeTxAction(debit);
 	}
 	
 	public static Long newOrder(NewOrderCommand cmd, CommandContext ctx) { 
@@ -72,7 +72,7 @@ public abstract class Commands {
 			require(sum != 0, format("The position %d is already filled.", positionId));
 		}
 		
-		ctx.executeTransaction(new AcceptOrder(orderId, cmd.accountId, cmd.positionId, cmd.symbol, cmd.price, cmd.size, cmd.orderType));
+		ctx.executeTxAction(new AcceptOrder(orderId, cmd.accountId, cmd.positionId, cmd.symbol, cmd.price, cmd.size, cmd.orderType));
 		
 		return orderId;
 	}

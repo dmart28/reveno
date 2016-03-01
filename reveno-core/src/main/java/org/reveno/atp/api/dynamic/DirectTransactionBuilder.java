@@ -125,7 +125,7 @@ public class DirectTransactionBuilder {
 					result = tx.ids.get(entityReturnIdType.get());
 				}
 				
-				b.executeTransaction(tx);
+				b.executeTxAction(tx);
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}

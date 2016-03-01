@@ -38,14 +38,8 @@ import org.reveno.atp.api.Configuration.MutableModelFailover;
 import org.reveno.atp.api.Reveno;
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.domain.Repository;
-import org.reveno.atp.core.RevenoConfiguration;
-import org.reveno.atp.core.api.serialization.RepositoryDataSerializer;
 import org.reveno.atp.core.serialization.DefaultJavaSerializer;
-import org.reveno.atp.core.serialization.ProtostuffSerializer;
-import org.reveno.atp.core.snapshots.DefaultSnapshotter;
-import org.reveno.atp.core.storage.FileSystemStorage;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.ExecutorService;
@@ -269,7 +263,7 @@ public class Tests extends RevenoBaseTest {
 			r.domain().transactionWithCompensatingAction(Credit.class, Transactions::credit, RollbackTransactions::rollbackCredit);
 			r.domain().transactionWithCompensatingAction(Debit.class, Transactions::debit, RollbackTransactions::rollbackDebit);
 			
-			r.domain().command(TestCmd.class, (c,d) -> d.executeTransaction(new TestTx()));
+			r.domain().command(TestCmd.class, (c,d) -> d.executeTxAction(new TestTx()));
 			r.domain().transactionAction(TestTx.class, (a,b) -> { repo[0] = b.repo(); throw new RuntimeException(); });
 		};
 		Reveno reveno = createEngine(consumer);

@@ -55,7 +55,7 @@ public class DefaultIdGenerator implements IdGenerator, BiConsumer<DefaultIdGene
 		long id = lastId + (bundle != null ? bundle.get(sha, crc) + 1 : 1);
 		lastIds.put(entityType, lastId + 1);
 
-		context.executeTransaction(new NextIdTransaction(null, id, crc, sha));
+		context.executeTxAction(new NextIdTransaction(null, id, crc, sha));
 		return id;
 	}
 	

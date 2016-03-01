@@ -22,7 +22,7 @@ public class Examples {
 
         // we use same AddToBalance class as command and tx action for simplicity here
         // as we don't need any special logic in commands rather than just call tx action
-        reveno.domain().command(AddToBalance.class, (c, ctx) -> ctx.executeTransaction(c));
+        reveno.domain().command(AddToBalance.class, (c, ctx) -> ctx.executeTxAction(c));
         reveno.domain().transactionWithCompensatingAction(AddToBalance.class, (t, ctx) -> {
             Account account = ctx.repo().get(Account.class, t.account);
             ctx.data().put("exists", true);

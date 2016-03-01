@@ -23,7 +23,13 @@ public interface CommandContext {
 	Repository repo();
 	
 	long id(Class<?> entityType);
-	
-	CommandContext executeTransaction(Object transactionParam);
+
+	CommandContext executeTxAction(Object transactionAction);
+
+	@Deprecated
+	/**
+	 * Use {@link #executeTxAction(Object)} instead.
+	 */
+	CommandContext executeTransaction(Object transactionAction);
 	
 }

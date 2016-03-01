@@ -126,11 +126,16 @@ public class TransactionExecutor {
 		}
 		
 		@Override
-		public CommandContext executeTransaction(Object transactionParam) {
-			transactions.add(transactionParam);
+		public CommandContext executeTxAction(Object transactionAction) {
+			transactions.add(transactionAction);
 			return this;
 		}
-		
+
+		@Override
+		public CommandContext executeTransaction(Object transactionAction) {
+			return executeTxAction(transactionAction);
+		}
+
 		public InnerCommandContext withRepository(Repository repository) {
 			this.repository = repository;
 			return this;

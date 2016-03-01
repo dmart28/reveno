@@ -18,7 +18,6 @@ package org.reveno.atp.performance_tests;
 
 import org.reveno.atp.acceptance.tests.RevenoBaseTest;
 import org.reveno.atp.api.ChannelOptions;
-import org.reveno.atp.api.Configuration;
 import org.reveno.atp.api.Configuration.CpuConsumption;
 import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.domain.WriteableRepository;
@@ -91,14 +90,14 @@ public class LatencyTest extends RevenoBaseTest {
 		Engine engine = createEngine(e -> {
 			e.domain().command(CreateAccount.class, Long.class, (c, ctx) -> {
 				c.id = ctx.id(Account.class);
-				ctx.executeTransaction(c);
+				ctx.executeTxAction(c);
 				return c.id;
 			});
 			e.domain().transactionAction(CreateAccount.class, (t, ctx) -> {
 				ctx.repo().store(t.id, new Account(t.id));
 			});
 			e.domain().command(AddBalance.class, (t, ctx) -> {
-				ctx.executeTransaction(t);
+				ctx.executeTxAction(t);
 			});
 			e.domain().transactionAction(AddBalance.class, (t, ctx) -> {
 				ctx.repo().store(t.acc, ctx.repo().get(Account.class, t.acc).add(t.amount));

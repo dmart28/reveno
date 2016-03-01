@@ -65,7 +65,7 @@ public class TestEngineStarts {
 		Reveno engine = new Engine(baseDir);
 		engine.domain().command(SqrtCommand.class, Double.class, (c, u) -> {
 			double result = Math.sqrt(c.number);
-			u.executeTransaction(new WriteLastCalculationTransaction(u.id(SqrtCommand.class), result));
+			u.executeTxAction(new WriteLastCalculationTransaction(u.id(SqrtCommand.class), result));
 			
 			// test next id generation as well
 			u.id(SqrtCommand.class);

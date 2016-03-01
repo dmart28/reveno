@@ -77,7 +77,7 @@ public class SimpleBankingAccount {
          */
         public static long handler(CreateAccount cmd, CommandContext ctx) {
             cmd.id = ctx.id(Account.class);
-            ctx.executeTransaction(cmd);
+            ctx.executeTxAction(cmd);
 
             return cmd.id;
         }
@@ -108,7 +108,7 @@ public class SimpleBankingAccount {
             }
             Account account = ctx.repo().get(Account.class, cmd.accountId);
 
-            ctx.executeTransaction(new AddToBalance(cmd.accountId, converter.convert(cmd.currency, account.currency, cmd.amount)));
+            ctx.executeTxAction(new AddToBalance(cmd.accountId, converter.convert(cmd.currency, account.currency, cmd.amount)));
         }
 
         public AddToBalanceCommand(long accountId, long amount, Currency currency) {
