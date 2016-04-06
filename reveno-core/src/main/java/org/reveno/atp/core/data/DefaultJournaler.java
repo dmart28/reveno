@@ -32,7 +32,7 @@ public class DefaultJournaler implements Journaler {
 		requireWriting();
 
 		Channel ch = channel.get();
-		ch.write(writer::accept, endOfBatch);
+		ch.write(writer, endOfBatch);
 
 		if (!oldChannel.compareAndSet(ch, ch)) {
 			if (oldChannel.get().isOpen())

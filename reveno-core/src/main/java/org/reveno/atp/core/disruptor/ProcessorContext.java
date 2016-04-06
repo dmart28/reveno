@@ -43,10 +43,21 @@ public class ProcessorContext implements Destroyable {
 		return this;
 	}
 
+	@Contended
+	private boolean skipViews = false;
+	public boolean isSkipViews() {
+		return skipViews;
+	}
+	public ProcessorContext skipViews() {
+		this.skipViews = true;
+		return this;
+	}
+
 	private boolean isSystem = false;
 	public boolean isSystem() {
 		return isSystem;
 	}
+	@Contended
 	private long systemFlag = 0L;
 	public long systemFlag() {
 		return systemFlag;
@@ -193,13 +204,16 @@ public class ProcessorContext implements Destroyable {
 		this.eventMetadata = eventMetadata;
 		return this;
 	}
-	
-	@Contended
-	private final Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> markedRecords = MapUtils.linkedFastRepo();
+
+	private Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> markedRecords = MapUtils.linkedFastRepo();
 	public Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> getMarkedRecords() {
 		return markedRecords;
 	}
-	
+	public ProcessorContext setMarkedRecords(Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> markedRecords) {
+		this.markedRecords = markedRecords;
+		return this;
+	}
+
 	@Contended
 	private final TransactionCommitInfo commitInfo;
 	public TransactionCommitInfo commitInfo() {
@@ -210,6 +224,7 @@ public class ProcessorContext implements Destroyable {
 		transactionId = 0L;
 		systemFlag = 0L;
 		isSystem = false;
+		skipViews = false;
 		commands.clear();
 		transactions.clear();
 		events.clear();

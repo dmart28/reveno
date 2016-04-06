@@ -26,6 +26,7 @@ import org.reveno.atp.acceptance.api.events.OrderCreatedEvent;
 import org.reveno.atp.acceptance.model.Order.OrderType;
 import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.RandomAccessFile;
@@ -59,7 +60,7 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		Assert.assertTrue(orderCreatedEvent.isArrived(10));
 
 		reveno.shutdown();
-		
+
 		reveno = createEngine();
 		Waiter accountCreatedEvent = listenFor(reveno, AccountCreatedEvent.class, 1);
 		orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class, 1);
@@ -69,8 +70,8 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
 		
 		try {
-		Assert.assertFalse(accountCreatedEvent.isArrived());
-		Assert.assertFalse(orderCreatedEvent.isArrived());
+		Assert.assertFalse(accountCreatedEvent.isArrived(3));
+		Assert.assertFalse(orderCreatedEvent.isArrived(3));
 		Assert.assertEquals(1, accountCreatedEvent.getCount());
 		Assert.assertEquals(1, orderCreatedEvent.getCount());
 		} catch (Throwable t) {
@@ -103,11 +104,13 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 		Collection<AccountView> accs = reveno.query().select(AccountView.class, a -> a.accountId == 1);
 		
 		if (accs.size() != 0) {
+			Assert.assertEquals(accs.size(), 1);
 			Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class, 1);
 			AccountView acc = accs.iterator().next();
 			long orderId = sendCommandSync(reveno, new NewOrderCommand(acc.accountId, null,
 					"TEST/TEST", 134000, 1000, OrderType.MARKET));
-			acc = reveno.query().find(AccountView.class, 1L);
+			acc = reveno.query().find(AccountView.class, acc.accountId);
+			LOG.info("Account orders: " + acc.orders().size() + ", " + acc.orders.size());
 			Assert.assertTrue(acc.orders().stream().filter(o -> o.id == orderId).findFirst().isPresent());
 			// in very rare cases we might get result, but event didn't came to pipe, so 
 			// even though we syncAll(), the event might come to pipe after syncAll().
@@ -180,5 +183,6 @@ public class ExceptionalCasesTests extends RevenoBaseTest {
 			raf.setLength((long)((raf.length() * ratio)));
 		}
 	}
-	
+
+	protected static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ExceptionalCasesTests.class);
 }

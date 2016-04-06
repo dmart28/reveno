@@ -43,5 +43,7 @@ public interface PipeProcessor<T extends Destroyable> {
 	default PipeProcessor<T> then(ProcessorHandler<T>... handler) {
 		return pipe(handler);
 	}
+
+	long SYNC_FLAG = 0x111;
 	
 }

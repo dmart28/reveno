@@ -59,6 +59,7 @@ public class FileStorageTransferServer implements StorageTransferServer {
             LOG.debug("FSTF: transfer Server is started on {}", listenAddr);
             while (!Thread.interrupted()) {
                 final SocketChannel conn = accept(listener);
+                if (conn == null) break;
                 executor.execute(() -> sendStoragesToNode(conn));
             }
             LOG.debug("FSTF: transfer Server stopped on {}", listenAddr);
@@ -154,6 +155,9 @@ public class FileStorageTransferServer implements StorageTransferServer {
             conn.configureBlocking(true);
             LOG.info("FSTF: Accepted new connection: {}", conn);
             return conn;
+        } catch (IOException e) {
+            LOG.info("FSTF: Acceptor was closed: {}", e.getMessage());
+            return null;
         } catch (Exception e) {
             throw Exceptions.runtime(e);
         }

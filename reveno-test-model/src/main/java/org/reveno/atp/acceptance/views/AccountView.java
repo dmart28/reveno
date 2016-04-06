@@ -27,7 +27,7 @@ public class AccountView extends ViewBase {
 	public long balance;
 	
 	// lazy evaluation here
-	private Set<Long> orders;
+	public Set<Long> orders;
 	public Set<OrderView> orders() {
 		return orders.stream().flatMap(o -> sops(query.findO(OrderView.class, o))).collect(Collectors.toSet());
 	}

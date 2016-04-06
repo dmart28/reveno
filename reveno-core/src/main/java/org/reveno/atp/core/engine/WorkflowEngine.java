@@ -27,7 +27,6 @@ import org.reveno.atp.core.disruptor.ProcessorContext;
 import org.reveno.atp.core.engine.processor.PipeProcessor;
 import org.reveno.atp.core.engine.processor.ProcessorHandler;
 import org.reveno.atp.core.engine.processor.TransactionPipeProcessor;
-import org.reveno.atp.core.events.EventPublisher;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -52,19 +51,7 @@ public class WorkflowEngine {
 		} else {
 			pipe = inputProcessor.pipe(handlers::replication);
 		}
-		if (modelType == ModelType.MUTABLE) {
-			pipe.then((c, eof) -> {
-				handlers.transactionExecution(c, eof);
-				if (!c.isAborted())
-					handlers.viewsUpdate(c, eof);
-			})
-			.then(handlers::journaling)
-			.then(handlers::result, handlers::eventsPublishing);
-		} else {
-			pipe.then(handlers::transactionExecution)
-			.then(handlers::journaling, handlers::viewsUpdate)
-			.then(handlers::result, handlers::eventsPublishing);
-		}
+		buildPipe(pipe);
 		inputProcessor.start();
 		context.failoverManager().addOnBlocked(() -> {
 			getPipe().sync();
@@ -77,7 +64,7 @@ public class WorkflowEngine {
 
 		started = true;
 	}
-	
+
 	public void shutdown() {
 		started = false;
 
@@ -97,11 +84,27 @@ public class WorkflowEngine {
 	public void setLastTransactionId(long lastTransactionId) {
 		this.lastTransactionId = lastTransactionId;
 	}
-	
+
 	protected long nextTransactionId() {
 		return ++lastTransactionId;
 	}
-	
+
+	protected void buildPipe(PipeProcessor<ProcessorContext> pipe) {
+		if (modelType == ModelType.MUTABLE) {
+			pipe.then((c, eof) -> {
+				handlers.transactionMutableExecution(c, eof);
+				if (!c.isAborted())
+					handlers.viewsMutableUpdate(c, eof);
+			})
+					.then(handlers::journaling)
+					.then(handlers::result, handlers::eventsPublishing);
+		} else {
+			pipe.then(handlers::transactionImmutableExecution)
+					.then(handlers::journaling, handlers::viewsImmutableUpdate)
+					.then(handlers::result, handlers::eventsPublishing);
+		}
+	}
+
 	protected volatile long lastTransactionId;
 	protected volatile boolean started = false;
 	protected ModelType modelType;

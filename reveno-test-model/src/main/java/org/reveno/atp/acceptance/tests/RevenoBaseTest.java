@@ -78,7 +78,7 @@ public class RevenoBaseTest {
            });
     }
     
-    protected boolean dontDelete = false;
+    protected volatile boolean dontDelete = false;
     
     @Parameter
     public ModelType modelType;
@@ -192,8 +192,8 @@ public class RevenoBaseTest {
 		sendCommandsBatch(reveno, new CreateNewAccountCommand("USD", 1000_000L), count);
 		
 		List<NewOrderCommand> commands = new ArrayList<>();
-		for (int i = 0; i < count; i++) {
-			commands.add(new NewOrderCommand((long)(count*Math.random()) + 1, null, "EUR/USD",
+		for (long i = 0; i < count; i++) {
+			commands.add(new NewOrderCommand(i + 1, null, "EUR/USD",
 					134000, (long)(1000*Math.random()), OrderType.MARKET));
 		}
 		return sendCommandsBatch(reveno, commands, c);
