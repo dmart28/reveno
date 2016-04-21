@@ -28,11 +28,11 @@ public class SimpleCounter implements Counter {
 	public void sendTo(List<Sink> sinks, boolean sync) {
 		long count = counter.getAndSet(0);
 		long current = System.currentTimeMillis();
-		long interval = (current - lastTime) / (1000);
+		long interval = (current - lastTime) / 1000;
 		if (interval > 0) {
 			for (long i = lastTime; i <= current; i += 1000) {
 				for (Sink s : sinks) {
-					s.send(name + ".hits", Long.toString(count / interval), i / 1000);
+					s.send(metricsName, Long.toString(count / interval), i / 1000);
 				}
 			}
 		}
@@ -56,9 +56,11 @@ public class SimpleCounter implements Counter {
 	
 	public SimpleCounter(String name) {
 		this.name = name;
+		this.metricsName = name + ".hits";
 	}
 	
-	protected String name;
+	protected final String name;
+	protected final String metricsName;
 	protected long lastTime = System.currentTimeMillis();
 	protected final AtomicLong counter = new AtomicLong();
 

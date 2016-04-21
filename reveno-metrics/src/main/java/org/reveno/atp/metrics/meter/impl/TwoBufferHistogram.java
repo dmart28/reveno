@@ -75,11 +75,11 @@ public class TwoBufferHistogram implements Histogram {
 		prevMean = mean;
 		
 		for (Sink sink : sinks) {
-			sink.send(name + ".count", Long.toString(sum), timestamp);
-			sink.send(name + ".mean", Long.toString(mean), timestamp);
-			sink.send(name + ".min", Long.toString(min), timestamp);
-			sink.send(name + ".max", Long.toString(max), timestamp);
-			sink.send(name + ".stddev", Long.toString(stddev), timestamp);
+			sink.send(countName, Long.toString(sum), timestamp);
+			sink.send(meanName, Long.toString(mean), timestamp);
+			sink.send(minName, Long.toString(min), timestamp);
+			sink.send(maxName, Long.toString(max), timestamp);
+			sink.send(stddevName, Long.toString(stddev), timestamp);
 		}
 		
 		buffer.clear();
@@ -173,16 +173,26 @@ public class TwoBufferHistogram implements Histogram {
 		}
 		this.type = type;
 		this.name = name;
+		this.countName = name + ".count";
+		this.meanName = name + ".mean";
+		this.minName = name + ".min";
+		this.maxName = name + ".max";
+		this.stddevName = name + ".stddev";
 	}
 	
 	protected long prevMean = -1L;
 	protected LongAdder count = new LongAdder();
 	protected volatile int bit = WRITING;
-	protected final String name;
 	protected final ByteBuffer[] bufs;
 	protected final int bufferSize;
 	protected final int bufferCount = 2;
 	protected final AtomicLong switcher = new AtomicLong();
 	protected final HistogramType type;
-	
+
+	protected final String name;
+	protected final String countName;
+	protected final String meanName;
+	protected final String minName;
+	protected final String maxName;
+	protected final String stddevName;
 }

@@ -300,7 +300,7 @@ public class PickledGraphite {
      *
      * @throws IOException
      */
-    byte[] pickleMetrics(List<MetricTuple> metrics) throws IOException {
+    protected byte[] pickleMetrics(List<MetricTuple> metrics) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream(metrics.size() * 75); // Extremely rough estimate of 75 bytes per message
         Writer pickled = new OutputStreamWriter(out, charset);
 
