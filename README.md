@@ -16,7 +16,7 @@ The purpose of Reveno is to give an easy domain-oriented development tool with s
 
 ### Few highlights:
 * Reveno is an in-memory transactional event-driven framework with CQRS and Event Sourcing intruded. See our Architecture overview
-* Reveno is based on JVM and written fully on Java.
+* Reveno is based on JVM and written fully in Java.
 * Reveno is fast - Able to process millions of transaction per second with microseconds latency.
 * Reveno is domain oriented - your primary focus will be on the core domain and domain logic only.
 * Reveno is modular - use only components you really need to.
