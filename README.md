@@ -1,4 +1,6 @@
 # Reveno | Event-Sourcing CQRS framework
+
+[![Join the chat at https://gitter.im/dmart28/reveno](https://badges.gitter.im/dmart28/reveno.svg)](https://gitter.im/dmart28/reveno?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 Reveno is thoroughgoing lightning-fast, durable and yet simple async transaction processing JVM based framework made to fit your domain in first place. It's highly influenced by patterns/approaches like Event Sourcing, CQRS, Zero-Copy, DDD, Mechanical Symphaty.
 
 ### High performance with low latency
