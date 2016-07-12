@@ -113,7 +113,7 @@ public class Tests extends RevenoBaseTest {
 		
 		// after restart we expect that there will be 3 replayed
 		// events - the count of exceptions
-		Assert.assertFalse(w.isArrived());
+		Assert.assertFalse(w.isArrived(1));
 		Assert.assertEquals(1, w.getCount());
 		
 		reveno.shutdown();
@@ -140,7 +140,7 @@ public class Tests extends RevenoBaseTest {
 		w = listenFor(reveno, AccountCreatedEvent.class, 4);
 		reveno.startup();
 		
-		Assert.assertFalse(w.isArrived());
+		Assert.assertFalse(w.isArrived(1));
 		Assert.assertEquals(1, w.getCount());
 		
 		reveno.shutdown();
@@ -173,8 +173,8 @@ public class Tests extends RevenoBaseTest {
 		Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class);
 		reveno.startup();
 		
-		Assert.assertFalse(accountCreatedEvent.isArrived());
-		Assert.assertFalse(orderCreatedEvent.isArrived());
+		Assert.assertFalse(accountCreatedEvent.isArrived(1));
+		Assert.assertFalse(orderCreatedEvent.isArrived(1));
 		
 		Assert.assertEquals(1, reveno.query().select(AccountView.class).size());
 		Assert.assertEquals(1, reveno.query().select(OrderView.class).size());
@@ -194,8 +194,8 @@ public class Tests extends RevenoBaseTest {
 		Assert.assertEquals(10_000, reveno.query().select(AccountView.class).size());
 		Assert.assertEquals(10_000, reveno.query().select(OrderView.class).size());
 		
-		Assert.assertFalse(accountsWaiter.isArrived());
-		Assert.assertFalse(ordersWaiter.isArrived());
+		Assert.assertFalse(accountsWaiter.isArrived(1));
+		Assert.assertFalse(ordersWaiter.isArrived(1));
 		
 		long accountId = sendCommandSync(reveno, new CreateNewAccountCommand("USD", 1000_000L));
 		Assert.assertEquals(10_001, accountId);
@@ -240,7 +240,7 @@ public class Tests extends RevenoBaseTest {
 		Waiter accountCreatedEvent = listenFor(reveno, AccountCreatedEvent.class);
 		revenoRestarted.startup();
 		
-		Assert.assertFalse(accountCreatedEvent.isArrived());
+		Assert.assertFalse(accountCreatedEvent.isArrived(1));
 		Assert.assertEquals(counter.get(), reveno.query().select(AccountView.class).size());
 		
 		revenoRestarted.shutdown();
@@ -368,8 +368,8 @@ public class Tests extends RevenoBaseTest {
 		Assert.assertEquals(5_000, reveno.query().select(AccountView.class).size());
 		Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
 
-		Assert.assertFalse(accountsWaiter.isArrived());
-		Assert.assertFalse(ordersWaiter.isArrived());
+		Assert.assertFalse(accountsWaiter.isArrived(1));
+		Assert.assertFalse(ordersWaiter.isArrived(1));
 
 		long accountId = sendCommandSync(reveno, new CreateNewAccountCommand("USD", 1000_000L));
 		Assert.assertEquals(5_001, accountId);

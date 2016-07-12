@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 
 public class SnapshottingTest extends RevenoBaseTest {
-    protected static final int SNAP_INTERVAL = 1500;
+    protected static final int SNAP_INTERVAL = 30;
 
     @Test
     public void testShutdownSnapshotting() throws Exception {
@@ -94,13 +94,13 @@ public class SnapshottingTest extends RevenoBaseTest {
             }
         };
         Reveno reveno = createEngine(consumer);
-        reveno.config().snapshotting().interval(1500);
+        reveno.config().snapshotting().interval(SNAP_INTERVAL);
         reveno.startup();
 
-        generateAndSendCommands(reveno, 1_005);
         Assert.assertEquals(0, tempDir.listFiles((dir, name) -> name.startsWith("snp")).length);
+        generateAndSendCommands(reveno, 1_005);
         // yeah, this is really weird, should think about better approach
-        Thread.sleep(SNAP_INTERVAL * 5);
+        Thread.sleep(SNAP_INTERVAL * 10);
 
         if (snapshotter == null) {
             Assert.assertTrue(tempDir.listFiles((dir, name) -> name.startsWith("snp")).length > 0);
@@ -166,8 +166,8 @@ public class SnapshottingTest extends RevenoBaseTest {
 
         Assert.assertEquals(10_008, reveno.query().select(AccountView.class).size());
         Assert.assertEquals(10_008, reveno.query().select(OrderView.class).size());
-        Assert.assertFalse(accountCreatedEvent.isArrived());
-        Assert.assertFalse(orderCreatedEvent.isArrived());
+        Assert.assertFalse(accountCreatedEvent.isArrived(1));
+        Assert.assertFalse(orderCreatedEvent.isArrived(1));
 
         reveno.shutdown();
     }

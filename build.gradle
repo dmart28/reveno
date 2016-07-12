@@ -50,10 +50,11 @@ allprojects {
 		testCompile "org.easymock:easymock:$easymockVersion"
 	}
 
-	def forks = Math.max(1, (int) (Runtime.runtime.availableProcessors() / 2))
+	def forks = Math.max(1, (int) (Runtime.runtime.availableProcessors()))
 
 	test {
-		minHeapSize = "512m"
+		minHeapSize = "256m"
+		maxHeapSize = "256m"
 		maxParallelForks = forks
 		forkEvery = 1
 		systemProperty 'protostuff.runtime.collection_schema_on_repeated_fields', 'true'
