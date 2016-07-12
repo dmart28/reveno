@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 
 public class SnapshottingTest extends RevenoBaseTest {
+    protected static final int SNAP_INTERVAL = 1500;
 
     @Test
     public void testShutdownSnapshotting() throws Exception {
@@ -99,7 +100,7 @@ public class SnapshottingTest extends RevenoBaseTest {
         generateAndSendCommands(reveno, 1_005);
         Assert.assertEquals(0, tempDir.listFiles((dir, name) -> name.startsWith("snp")).length);
         // yeah, this is really weird, should think about better approach
-        Thread.sleep(2000);
+        Thread.sleep(SNAP_INTERVAL * 5);
 
         if (snapshotter == null) {
             Assert.assertTrue(tempDir.listFiles((dir, name) -> name.startsWith("snp")).length > 0);
