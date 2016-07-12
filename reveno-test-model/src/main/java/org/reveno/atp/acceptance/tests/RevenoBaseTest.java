@@ -309,7 +309,7 @@ public class RevenoBaseTest {
 		}
 		
 		public boolean isArrived() throws InterruptedException {
-			return await(1, TimeUnit.SECONDS);
+			return await(10, TimeUnit.SECONDS);
 		}
 
         public boolean isArrived(int time) throws InterruptedException {
