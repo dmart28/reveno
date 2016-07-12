@@ -47,6 +47,7 @@ public class JGroupsTest {
         cluster2.gateway().receive(TestMessage.TYPE, m -> { LOG.info("MSG2:{}", m); count.incrementAndGet(); });
         cluster3.gateway().receive(TestMessage.TYPE, m -> { LOG.info("MSG3:{}", m); count.incrementAndGet(); });
 
+        Utils.waitFor(() -> cluster1.view().members().size() > 1, TEST_TIMEOUT);
         cluster1.gateway().send(cluster1.view().members(), new TestMessage("Hello!"));
 
         Assert.assertTrue(Utils.waitFor(() -> count.get() == 2, TEST_TIMEOUT));
