@@ -62,9 +62,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 
@@ -236,24 +238,33 @@ public class RevenoBaseTest {
 	}
 
 	protected int sendCommandsBatch(Reveno reveno, List<?> commands, Consumer<Integer> c) throws InterruptedException, ExecutionException {
-		int failedToSend = 0;
+		AtomicInteger failedToSend = new AtomicInteger(0);
+		List<CompletableFuture<Result<Object>>> futures = new ArrayList<>(commands.size());
 		for (int i = 0; i < commands.size() - 1; i++) {
 			c.accept(i);
 			try {
-				reveno.executeCommand(commands.get(i));
-			} catch (FailoverRulesException e) {
-				failedToSend++;
+				futures.add(reveno.executeCommand(commands.get(i)));
+			} catch (Throwable e) {
+				failedToSend.incrementAndGet();
 				log.info("Skipping to send command {}, message: {}", i, e.getMessage());
 				LockSupport.parkNanos(100);
 			}
 		}
 		try {
 			sendCommandSync(reveno, commands.get(commands.size() - 1));
-		} catch (FailoverRulesException e) {
-			failedToSend++;
+		} catch (Throwable e) {
+			failedToSend.incrementAndGet();
 			log.info("Skipping to send command {}, message: {}", commands.size(), e.getMessage());
 		}
-		return failedToSend;
+		futures.forEach(f -> {
+			try {
+				if (!f.get().isSuccess()) {
+					failedToSend.incrementAndGet();
+				}
+			} catch (Throwable ignored) {
+			}
+		});
+		return failedToSend.get();
 	}
 	
 	protected <T> Waiter listenFor(Reveno reveno, Class<T> event) {

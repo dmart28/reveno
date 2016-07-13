@@ -122,7 +122,7 @@ public class ClusterFailoverManager implements FailoverManager {
     @Override
     public synchronized void processPendingMessages() {
         if (notProcessedTransactions.size() > 0) {
-            notProcessedTransactions.forEach(failoverHandler::accept);
+            notProcessedTransactions.forEach(failoverHandler);
             notProcessedTransactions.clear();
         }
     }
