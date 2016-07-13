@@ -53,11 +53,15 @@ public class ClusterBaseTest extends RevenoBaseTest {
             if (i == 6000) {
                 engine2.shutdown();
                 RevenoUtils.waitFor(() -> viewId != engine1.clusterStateInfo().currentView().viewId()
-                        && electionId != engine1.clusterStateInfo().electionId(), sec(Integer.MAX_VALUE));
+                        && electionId != engine1.clusterStateInfo().electionId()
+                        && !engine1.clusterStateInfo().isBlocked()
+                        && engine1.clusterStateInfo().isMaster(), Long.MAX_VALUE);
             }
         });
 
         // we fail and then reorganize again - nothing should be left
+        log.info("ViewId {}:{}", viewId, engine1.clusterStateInfo().currentView().viewId());
+        log.info("ElectionId {}:{}", electionId, engine1.clusterStateInfo().electionId());
         Assert.assertEquals(0, failed);
         Assert.assertTrue(engine1.query().select(OrderView.class).size() == 10_000);
 

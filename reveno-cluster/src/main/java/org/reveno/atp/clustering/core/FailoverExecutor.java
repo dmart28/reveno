@@ -204,6 +204,7 @@ public class FailoverExecutor {
             makeMasterIfElected(election);
 
             LOG.info("Election Process Time: {} ms", System.currentTimeMillis() - t1);
+            elections.incrementAndGet();
             notifyListener();
         } catch (Throwable t) {
             LOG.error("Leadership election is failed for view: {}, {}", view, t.getMessage());
@@ -292,7 +293,6 @@ public class FailoverExecutor {
     }
 
     private void notifyListener() {
-        elections.incrementAndGet();
         if (failoverListener != null) {
             failoverListener.run();
         }
