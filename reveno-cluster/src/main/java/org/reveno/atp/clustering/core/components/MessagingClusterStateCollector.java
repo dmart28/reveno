@@ -26,6 +26,7 @@ import org.reveno.atp.clustering.core.api.ClusterState;
 import org.reveno.atp.clustering.core.api.MessagesReceiver;
 import org.reveno.atp.clustering.core.messages.NodeState;
 import org.reveno.atp.clustering.util.Utils;
+import org.reveno.atp.utils.RevenoUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +85,7 @@ public class MessagingClusterStateCollector implements ClusterExecutor<ClusterSt
         NodeState message = new NodeState(view.viewId(), currentTransactionId, config.revenoDataSync().mode().getType(),
                 config.revenoDataSync().port());
         cluster.gateway().send(view.members(), message, cluster.gateway().oob());
-        return Utils.waitFor(() -> nodesStates.keySet().containsAll(view.members()) && nodesStates.entrySet()
+        return RevenoUtils.waitFor(() -> nodesStates.keySet().containsAll(view.members()) && nodesStates.entrySet()
                         .stream()
                         .filter(kv -> view.members().contains(kv.getKey()))
                         .filter(kv -> kv.getValue().viewId == view.viewId()).count() == view.members().size(),

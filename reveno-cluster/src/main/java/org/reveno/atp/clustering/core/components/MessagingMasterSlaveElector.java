@@ -28,6 +28,7 @@ import org.reveno.atp.clustering.core.messages.VoteAck;
 import org.reveno.atp.clustering.core.messages.VoteMessage;
 import org.reveno.atp.clustering.util.Utils;
 import org.reveno.atp.utils.BinaryUtils;
+import org.reveno.atp.utils.RevenoUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +85,7 @@ public class MessagingMasterSlaveElector implements ClusterExecutor<ElectionResu
 
     protected boolean allAcked(ClusterView view) {
         cluster.gateway().send(view.members(), new VoteAck(view.viewId()), cluster.gateway().oob());
-        return Utils.waitFor(() -> acks.keySet().containsAll(view.members()) && acks.entrySet()
+        return RevenoUtils.waitFor(() -> acks.keySet().containsAll(view.members()) && acks.entrySet()
                         .stream()
                         .filter(kv -> view.members().contains(kv.getKey()))
                         .filter(kv -> view.viewId() == kv.getValue()).count() == view.members().size(),
@@ -101,7 +102,7 @@ public class MessagingMasterSlaveElector implements ClusterExecutor<ElectionResu
     protected List<VoteMessage> waitForAnswers(ClusterView view) {
         Predicate<VoteMessage> inView = m -> m.viewId == view.viewId() && view.members().contains(m.address());
         Predicate<VoteMessage> diffSeed = m -> m.seed != seed;
-        if (!Utils.waitFor(() ->
+        if (!RevenoUtils.waitFor(() ->
                 votes.values().stream().filter(inView).filter(diffSeed).count() == view.members().size(),
                 config.revenoElectionTimeouts().voteTimeoutNanos())) {
             return Collections.emptyList();

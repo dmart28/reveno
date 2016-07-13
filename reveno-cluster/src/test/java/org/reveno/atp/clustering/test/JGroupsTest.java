@@ -12,6 +12,7 @@ import org.reveno.atp.clustering.core.providers.UnicastAllProvider;
 import org.reveno.atp.clustering.util.Utils;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.serialization.ProtostuffSerializer;
+import org.reveno.atp.utils.RevenoUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,17 +48,17 @@ public class JGroupsTest {
         cluster2.gateway().receive(TestMessage.TYPE, m -> { LOG.info("MSG2:{}", m); count.incrementAndGet(); });
         cluster3.gateway().receive(TestMessage.TYPE, m -> { LOG.info("MSG3:{}", m); count.incrementAndGet(); });
 
-        Utils.waitFor(() -> cluster1.view().members().size() > 1, TEST_TIMEOUT);
+        RevenoUtils.waitFor(() -> cluster1.view().members().size() > 1, TEST_TIMEOUT);
         cluster1.gateway().send(cluster1.view().members(), new TestMessage("Hello!"));
 
-        Assert.assertTrue(Utils.waitFor(() -> count.get() == 2, TEST_TIMEOUT));
+        Assert.assertTrue(RevenoUtils.waitFor(() -> count.get() == 2, TEST_TIMEOUT));
         count.set(0);
 
         cluster2.disconnect();
 
         cluster1.gateway().send(cluster1.view().members(), new TestMessage("World!"));
 
-        Assert.assertTrue(Utils.waitFor(() -> count.get() == 1, TEST_TIMEOUT));
+        Assert.assertTrue(RevenoUtils.waitFor(() -> count.get() == 1, TEST_TIMEOUT));
 
         cluster1.disconnect();
         cluster3.disconnect();
@@ -96,21 +97,21 @@ public class JGroupsTest {
         serializer.serializeCommands(Collections.singletonList(message), buffer1);
         buffer1.replicate();
 
-        Assert.assertTrue(Utils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));
+        Assert.assertTrue(RevenoUtils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));
 
         count.set(1);
         buffer2.lockIncoming();
         serializer.serializeCommands(Collections.singletonList(message), buffer1);
         buffer1.replicate();
 
-        Assert.assertTrue(Utils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));
+        Assert.assertTrue(RevenoUtils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));
 
         count.set(2);
         buffer2.unlockIncoming();
         serializer.serializeCommands(Collections.singletonList(message), buffer1);
         buffer1.replicate();
 
-        Assert.assertTrue(Utils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));
+        Assert.assertTrue(RevenoUtils.waitFor(() -> count.get() == 0, TEST_TIMEOUT));
 
         buffer1.disconnect(); buffer2.disconnect(); buffer3.disconnect();
     }

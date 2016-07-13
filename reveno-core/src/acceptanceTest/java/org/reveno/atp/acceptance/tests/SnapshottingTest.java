@@ -17,7 +17,7 @@ import org.reveno.atp.core.serialization.DefaultJavaSerializer;
 import org.reveno.atp.core.serialization.ProtostuffSerializer;
 import org.reveno.atp.core.snapshots.DefaultSnapshotter;
 import org.reveno.atp.core.storage.FileSystemStorage;
-import org.reveno.atp.utils.MeasureUtils;
+import org.reveno.atp.utils.RevenoUtils;
 
 import java.io.File;
 import java.util.Arrays;
@@ -94,26 +94,26 @@ public class SnapshottingTest extends RevenoBaseTest {
             }
         };
         Reveno reveno = createEngine(consumer);
-        reveno.config().snapshotting().interval(SNAP_INTERVAL);
-        reveno.startup();
+        try {
+            reveno.config().snapshotting().interval(SNAP_INTERVAL);
+            reveno.startup();
 
-        Assert.assertEquals(0, tempDir.listFiles((dir, name) -> name.startsWith("snp")).length);
-        generateAndSendCommands(reveno, 1_005);
-        // yeah, this is really weird, should think about better approach
-        Thread.sleep(SNAP_INTERVAL * 10);
+            Assert.assertEquals(0, tempDir.listFiles((dir, name) -> name.startsWith("snp")).length);
+            generateAndSendCommands(reveno, 1_005);
 
-        if (snapshotter == null) {
-            Assert.assertTrue(tempDir.listFiles((dir, name) -> name.startsWith("snp")).length > 0);
+            if (snapshotter == null) {
+                RevenoUtils.waitFor(() -> tempDir.listFiles((dir, name) -> name.startsWith("snp")).length > 0, 1000);
+            }
+            reveno.shutdown();
+
+            reveno = createEngine(consumer);
+            reveno.startup();
+
+            Assert.assertEquals(1_005, reveno.query().select(AccountView.class).size());
+            Assert.assertEquals(1_005, reveno.query().select(OrderView.class).size());
+        } finally {
+            reveno.shutdown();
         }
-        reveno.shutdown();
-
-        reveno = createEngine(consumer);
-        reveno.startup();
-
-        Assert.assertEquals(1_005, reveno.query().select(AccountView.class).size());
-        Assert.assertEquals(1_005, reveno.query().select(OrderView.class).size());
-
-        reveno.shutdown();
     }
 
     public void testSnapshottingEvery(RepositoryDataSerializer repoSerializer, RepositorySnapshotter snapshotter) throws Exception {
@@ -127,49 +127,51 @@ public class SnapshottingTest extends RevenoBaseTest {
             }
         };
         Reveno reveno = createEngine(consumer);
-        reveno.config().snapshotting().atShutdown(false);
-        reveno.config().snapshotting().every(1002);
-        reveno.startup();
+        try {
+            reveno.config().snapshotting().atShutdown(false);
+            reveno.config().snapshotting().every(1002);
+            reveno.startup();
 
-        generateAndSendCommands(reveno, 10_005);
+            generateAndSendCommands(reveno, 10_005);
 
-        Assert.assertEquals(10_005, reveno.query().select(AccountView.class).size());
-        Assert.assertEquals(10_005, reveno.query().select(OrderView.class).size());
+            Assert.assertEquals(10_005, reveno.query().select(AccountView.class).size());
+            Assert.assertEquals(10_005, reveno.query().select(OrderView.class).size());
 
-        reveno.shutdown();
+            reveno.shutdown();
 
-        if (snapshotter == null) {
-            Assert.assertEquals(19, tempDir.listFiles((dir, name) -> name.startsWith("snp")).length);
+            if (snapshotter == null) {
+                Assert.assertEquals(19, tempDir.listFiles((dir, name) -> name.startsWith("snp")).length);
+            }
+
+            reveno = createEngine(consumer);
+            reveno.startup();
+
+            Assert.assertEquals(10_005, reveno.query().select(AccountView.class).size());
+            Assert.assertEquals(10_005, reveno.query().select(OrderView.class).size());
+
+            generateAndSendCommands(reveno, 3);
+
+            reveno.shutdown();
+
+            if (snapshotter == null) {
+                Arrays.asList(tempDir.listFiles((dir, name) -> name.startsWith("snp"))).forEach(File::delete);
+            } else if (snapshotter instanceof InMemorySnapshotter) {
+                ((InMemorySnapshotter) snapshotter).lastIdentifier = null;
+                ((InMemorySnapshotter) snapshotter).lastJournalVersion = -1;
+            }
+
+            reveno = createEngine(consumer);
+            Waiter accountCreatedEvent = listenFor(reveno, AccountCreatedEvent.class);
+            Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class);
+            reveno.startup();
+
+            Assert.assertEquals(10_008, reveno.query().select(AccountView.class).size());
+            Assert.assertEquals(10_008, reveno.query().select(OrderView.class).size());
+            Assert.assertFalse(accountCreatedEvent.isArrived(1));
+            Assert.assertFalse(orderCreatedEvent.isArrived(1));
+        } finally {
+            reveno.shutdown();
         }
-
-        reveno = createEngine(consumer);
-        reveno.startup();
-
-        Assert.assertEquals(10_005, reveno.query().select(AccountView.class).size());
-        Assert.assertEquals(10_005, reveno.query().select(OrderView.class).size());
-
-        generateAndSendCommands(reveno, 3);
-
-        reveno.shutdown();
-
-        if (snapshotter == null) {
-            Arrays.asList(tempDir.listFiles((dir, name) -> name.startsWith("snp"))).forEach(File::delete);
-        } else if (snapshotter instanceof InMemorySnapshotter) {
-            ((InMemorySnapshotter)snapshotter).lastIdentifier = null;
-            ((InMemorySnapshotter)snapshotter).lastJournalVersion = -1;
-        }
-
-        reveno = createEngine(consumer);
-        Waiter accountCreatedEvent = listenFor(reveno, AccountCreatedEvent.class);
-        Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class);
-        reveno.startup();
-
-        Assert.assertEquals(10_008, reveno.query().select(AccountView.class).size());
-        Assert.assertEquals(10_008, reveno.query().select(OrderView.class).size());
-        Assert.assertFalse(accountCreatedEvent.isArrived(1));
-        Assert.assertFalse(orderCreatedEvent.isArrived(1));
-
-        reveno.shutdown();
     }
 
 

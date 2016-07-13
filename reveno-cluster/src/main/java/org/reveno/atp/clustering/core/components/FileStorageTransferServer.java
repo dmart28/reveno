@@ -28,6 +28,7 @@ import org.reveno.atp.core.api.storage.JournalsStorage;
 import org.reveno.atp.core.api.storage.SnapshotStorage;
 import org.reveno.atp.core.storage.FileSystemStorage;
 import org.reveno.atp.utils.Exceptions;
+import org.reveno.atp.utils.RevenoUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,7 +133,7 @@ public class FileStorageTransferServer implements StorageTransferServer {
 
     protected boolean waitForData(SocketChannel conn, ByteBuffer buffer) throws IOException {
         short[] bytesread = { 0 };
-        return Utils.waitFor(() -> {
+        return RevenoUtils.waitFor(() -> {
             int read = readSilent(conn, buffer);
             if (read != -1)
                 bytesread[0] += read;

@@ -28,18 +28,6 @@ import java.util.function.Supplier;
 
 public abstract class Utils {
 
-    public static boolean waitFor(Supplier<Boolean> condition, long timeoutNanos) {
-        long start = System.nanoTime();
-        boolean result = false;
-        while (System.nanoTime() - start < timeoutNanos) {
-            result = condition.get();
-            if (result) break;
-
-            LockSupport.parkNanos(1);
-        }
-        return result;
-    }
-
     public static int[] getFreePorts(int portNumber) {
         try {
             int[] result = new int[portNumber];

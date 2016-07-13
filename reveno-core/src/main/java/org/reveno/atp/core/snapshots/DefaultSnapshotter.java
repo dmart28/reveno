@@ -40,7 +40,9 @@ public class DefaultSnapshotter implements RepositorySnapshotter {
 
 	@Override
 	public SnapshotIdentifier prepare() {
-		return storage.nextTempSnapshotStore();
+		SnapshotIdentifier si = storage.nextTempSnapshotStore();
+		LOG.debug("Prepared default snapshot {}", si);
+		return si;
 	}
 
 	@Override
@@ -51,6 +53,7 @@ public class DefaultSnapshotter implements RepositorySnapshotter {
 		}
 		SnapshotStore snap = (SnapshotStore) identifier;
 		storage.move(snap, storage.nextSnapshotAfter(lastJournalVersion));
+		LOG.debug("Moved default repository snapshot {}", snap);
 	}
 
 	@Override

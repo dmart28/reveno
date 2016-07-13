@@ -131,7 +131,7 @@ public abstract class VersionedFileUtils {
 		File folder = new File(directory);
 		File[] listOfFiles = folder.listFiles();
 
-		Collections.addAll(list, listOfFiles);
+		Collections.addAll(list, listOfFiles == null ? new File[0] : listOfFiles);
 		return list.stream();
 	}
 
