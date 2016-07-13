@@ -143,8 +143,8 @@ public class ClusterEngine extends Engine {
         isStarted = false;
         failoverExecutor.stop();
         storageTransferServer.shutdown();
-        buffer.disconnect();
         cluster.disconnect();
+        buffer.disconnect();
 
         super.shutdown();
     }

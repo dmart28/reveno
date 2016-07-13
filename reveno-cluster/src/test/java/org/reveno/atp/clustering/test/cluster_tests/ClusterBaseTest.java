@@ -47,14 +47,17 @@ public class ClusterBaseTest extends RevenoBaseTest {
         Assert.assertTrue(RevenoUtils.waitFor(() -> engine2.query().findO(AccountView.class, accountId).isPresent(), sec(TIMEOUT_SECS)));
         Assert.assertTrue(RevenoUtils.waitFor(() -> engine3.query().findO(AccountView.class, accountId).isPresent(), sec(TIMEOUT_SECS)));
 
+        long e1Id = engine1.clusterStateInfo().currentView().viewId();
         int failed = generateAndSendCommands(engine1, 10_000, i -> {
             if (i == 6000) {
                 engine2.shutdown();
+                RevenoUtils.waitFor(() -> e1Id != engine1.clusterStateInfo().currentView().viewId(), Integer.MAX_VALUE);
             }
         });
 
-        // even though we successfully passed to pipe, some events were failed somewhere in the middle
-        Assert.assertTrue(engine1.query().select(OrderView.class).size() < 10_000);
+        // we fail and then reorganize again - nothing should be left
+        Assert.assertTrue(engine1.query().select(OrderView.class).size() == 10_000);
+        Assert.assertEquals(0, failed);
 
         engine1.shutdown();
         engine3.shutdown();
