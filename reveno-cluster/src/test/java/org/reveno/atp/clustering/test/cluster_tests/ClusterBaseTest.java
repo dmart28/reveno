@@ -51,13 +51,15 @@ public class ClusterBaseTest extends RevenoBaseTest {
         int failed = generateAndSendCommands(engine1, 10_000, i -> {
             if (i == 6000) {
                 engine2.shutdown();
-                RevenoUtils.waitFor(() -> e1Id != engine1.clusterStateInfo().currentView().viewId(), Integer.MAX_VALUE);
+                RevenoUtils.waitFor(() -> e1Id != engine1.clusterStateInfo().currentView().viewId()
+                        && !engine1.clusterStateInfo().isBlocked()
+                        && engine1.clusterStateInfo().isMaster(), Integer.MAX_VALUE);
             }
         });
 
         // we fail and then reorganize again - nothing should be left
-        Assert.assertTrue(engine1.query().select(OrderView.class).size() == 10_000);
         Assert.assertEquals(0, failed);
+        Assert.assertTrue(engine1.query().select(OrderView.class).size() == 10_000);
 
         engine1.shutdown();
         engine3.shutdown();
