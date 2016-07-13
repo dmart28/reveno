@@ -12,6 +12,7 @@ import org.reveno.atp.clustering.core.providers.UnicastAllProvider;
 import org.reveno.atp.clustering.util.Utils;
 import org.reveno.atp.core.api.channel.Buffer;
 import org.reveno.atp.core.serialization.ProtostuffSerializer;
+import org.reveno.atp.utils.MeasureUtils;
 import org.reveno.atp.utils.RevenoUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,13 @@ public class JGroupsTest {
         Assert.assertTrue(cluster1.isConnected());
         Assert.assertTrue(cluster2.isConnected());
         Assert.assertTrue(cluster3.isConnected());
+
+        Assert.assertTrue(RevenoUtils.waitFor(() ->
+                provider1.retrieveCluster().view().viewId() ==
+                        provider2.retrieveCluster().view().viewId(), TEST_TIMEOUT));
+        Assert.assertTrue(RevenoUtils.waitFor(() ->
+                provider2.retrieveCluster().view().viewId() ==
+                        provider3.retrieveCluster().view().viewId(), TEST_TIMEOUT));
 
         AtomicInteger count = new AtomicInteger();
         cluster1.gateway().receive(TestMessage.TYPE, m -> { LOG.info("MSG1:{}", m); count.incrementAndGet(); });
@@ -82,6 +90,13 @@ public class JGroupsTest {
         buffer2.connect();
         provider3.retrieveCluster().connect();
         buffer3.connect();
+
+        Assert.assertTrue(RevenoUtils.waitFor(() ->
+                provider1.retrieveCluster().view().viewId() ==
+                        provider2.retrieveCluster().view().viewId(), TEST_TIMEOUT));
+        Assert.assertTrue(RevenoUtils.waitFor(() ->
+                provider2.retrieveCluster().view().viewId() ==
+                        provider3.retrieveCluster().view().viewId(), TEST_TIMEOUT));
 
         TestMessage message = new TestMessage("Hello world!");
         ProtostuffSerializer serializer = new ProtostuffSerializer();
@@ -167,6 +182,6 @@ public class JGroupsTest {
         }
     }
 
-    protected static final long TEST_TIMEOUT = 30_000l * 1_000_000;
+    protected static final long TEST_TIMEOUT = MeasureUtils.sec(30);
     protected static final Logger LOG = LoggerFactory.getLogger(JGroupsTest.class);
 }
