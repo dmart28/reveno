@@ -188,5 +188,5 @@ public class ClusterBaseTest extends RevenoBaseTest {
     }
 
     protected static final Logger LOG = LoggerFactory.getLogger(ClusterBaseTest.class);
-    protected static final int TIMEOUT_SECS = 40;
+    protected static final int TIMEOUT_SECS = 120;
 }

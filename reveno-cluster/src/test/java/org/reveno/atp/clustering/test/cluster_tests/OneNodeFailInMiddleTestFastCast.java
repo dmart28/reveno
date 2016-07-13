@@ -4,6 +4,7 @@ import org.junit.Test;
 import org.reveno.atp.clustering.core.providers.MulticastAllProvider;
 import org.reveno.atp.clustering.test.common.ClusterEngineWrapper;
 import org.reveno.atp.clustering.test.common.ClusterTestUtils;
+import org.reveno.atp.utils.MeasureUtils;
 
 import java.util.function.Consumer;
 
@@ -17,6 +18,7 @@ public class OneNodeFailInMiddleTestFastCast extends ClusterBaseTest {
             e.clusterConfiguration().multicast().host("229.9.9.10");
             e.clusterConfiguration().multicast().port(47368);
             e.clusterConfiguration().multicast().sendRetries(Integer.MAX_VALUE);
+            e.clusterConfiguration().electionTimeouts().voteTimeoutNanos(MeasureUtils.sec(15));
         };
         oneNodeFailInMiddleTest(() -> ClusterTestUtils.createClusterEngines(3, forEach, MulticastAllProvider::new));
     }
