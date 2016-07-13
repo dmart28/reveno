@@ -97,9 +97,9 @@ public class SnapshottingTest extends RevenoBaseTest {
         Reveno reveno = createEngine(consumer);
         try {
             reveno.config().snapshotting().interval(SNAP_INTERVAL);
+            Assert.assertEquals(0, tempDir.listFiles((dir, name) -> name.startsWith("snp")).length);
             reveno.startup();
 
-            Assert.assertEquals(0, tempDir.listFiles((dir, name) -> name.startsWith("snp")).length);
             generateAndSendCommands(reveno, 1_005);
 
             if (snapshotter == null) {
