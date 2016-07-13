@@ -102,12 +102,12 @@ public class ClusterEngine extends Engine {
 
         final CountDownLatch failoverWaiter = new CountDownLatch(1);
         clusterProvider.initialize(configuration);
-        this.buffer = clusterProvider.retrieveBuffer();
-        this.cluster = clusterProvider.retrieveCluster();
-        this.failoverManager = new ClusterFailoverManager(this.serializer, buffer);
+        buffer = clusterProvider.retrieveBuffer();
+        cluster = clusterProvider.retrieveCluster();
+        failoverManager = new ClusterFailoverManager(this.serializer, buffer);
 
         if (storageTransferServer == null) {
-            this.storageTransferServer = new FileStorageTransferServer(configuration, (FileSystemStorage) journalsStorage);
+            storageTransferServer = new FileStorageTransferServer(configuration, (FileSystemStorage) journalsStorage);
         }
 
         super.startup();
@@ -195,6 +195,11 @@ public class ClusterEngine extends Engine {
         @Override
         public boolean isBlocked() {
             return failoverManager != null && failoverManager.isBlocked();
+        }
+
+        @Override
+        public long electionId() {
+            return failoverExecutor.electionId();
         }
 
         @Override

@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 public class FailoverExecutor {
@@ -130,6 +131,9 @@ public class FailoverExecutor {
         return lastView;
     }
 
+    public long electionId() {
+        return elections.get();
+    }
 
     protected void onClusterEvent(ClusterEvent event) {
         if (event == ClusterEvent.MEMBERSHIP_CHANGED) {
@@ -288,6 +292,7 @@ public class FailoverExecutor {
     }
 
     private void notifyListener() {
+        elections.incrementAndGet();
         if (failoverListener != null) {
             failoverListener.run();
         }
@@ -356,6 +361,7 @@ public class FailoverExecutor {
     protected ClusterExecutor<ClusterState, Void> clusterStateCollector;
     protected ClusterExecutor<Boolean, StorageTransferModelSync.TransferContext> modelSynchronizer;
     protected Runnable failoverListener;
+    protected AtomicLong elections = new AtomicLong(0);
 
     protected Marshaller marshaller;
     protected final ThreadPoolExecutor electorExecutor;

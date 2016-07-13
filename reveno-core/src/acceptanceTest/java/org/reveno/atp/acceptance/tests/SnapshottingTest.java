@@ -17,6 +17,7 @@ import org.reveno.atp.core.serialization.DefaultJavaSerializer;
 import org.reveno.atp.core.serialization.ProtostuffSerializer;
 import org.reveno.atp.core.snapshots.DefaultSnapshotter;
 import org.reveno.atp.core.storage.FileSystemStorage;
+import org.reveno.atp.utils.MeasureUtils;
 import org.reveno.atp.utils.RevenoUtils;
 
 import java.io.File;
@@ -102,7 +103,7 @@ public class SnapshottingTest extends RevenoBaseTest {
             generateAndSendCommands(reveno, 1_005);
 
             if (snapshotter == null) {
-                RevenoUtils.waitFor(() -> tempDir.listFiles((dir, name) -> name.startsWith("snp")).length > 0, 1000);
+                RevenoUtils.waitFor(() -> tempDir.listFiles((dir, name) -> name.startsWith("snp")).length > 0, MeasureUtils.sec(1));
             }
             reveno.shutdown();
 

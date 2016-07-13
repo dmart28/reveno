@@ -47,13 +47,13 @@ public class ClusterBaseTest extends RevenoBaseTest {
         Assert.assertTrue(RevenoUtils.waitFor(() -> engine2.query().findO(AccountView.class, accountId).isPresent(), sec(TIMEOUT_SECS)));
         Assert.assertTrue(RevenoUtils.waitFor(() -> engine3.query().findO(AccountView.class, accountId).isPresent(), sec(TIMEOUT_SECS)));
 
-        long e1Id = engine1.clusterStateInfo().currentView().viewId();
+        long viewId = engine1.clusterStateInfo().currentView().viewId();
+        long electionId = engine1.clusterStateInfo().electionId();
         int failed = generateAndSendCommands(engine1, 10_000, i -> {
             if (i == 6000) {
                 engine2.shutdown();
-                RevenoUtils.waitFor(() -> e1Id != engine1.clusterStateInfo().currentView().viewId()
-                        && !engine1.clusterStateInfo().isBlocked()
-                        && engine1.clusterStateInfo().isMaster(), Integer.MAX_VALUE);
+                RevenoUtils.waitFor(() -> viewId != engine1.clusterStateInfo().currentView().viewId()
+                        && electionId != engine1.clusterStateInfo().electionId(), sec(Integer.MAX_VALUE));
             }
         });
 
