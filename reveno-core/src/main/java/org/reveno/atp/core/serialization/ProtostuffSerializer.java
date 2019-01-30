@@ -171,7 +171,7 @@ public class ProtostuffSerializer implements RepositoryDataSerializer, Transacti
 		zeroCopyLinkBuffer.withBuffer(buffer);
 		lowCopyProtostuffOutput.buffer = zeroCopyLinkBuffer;
 
-		long crc = crcNames.get(tc.getClass());
+		long crc = crcNames.getLong(tc.getClass());
         ProtoTransactionTypeHolder ptth = registeredCrc.get(crc);
 		if (ptth.crcCollision) {
 			byte[] key = sha1Names.get(tc.getClass());

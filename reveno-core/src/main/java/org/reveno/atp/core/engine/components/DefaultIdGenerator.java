@@ -16,8 +16,8 @@
 
 package org.reveno.atp.core.engine.components;
 
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import org.reveno.atp.commons.ByteArrayWrapper;
-import org.reveno.atp.commons.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
@@ -165,12 +165,12 @@ public class DefaultIdGenerator implements IdGenerator, BiConsumer<DefaultIdGene
 	}
 
 	public interface Object2LongMapEx<T> extends Object2LongMap<T> {
-		long getOrDefault(T key, long value);
+		long getOrDefault(Object key, long value);
 	}
 
 	public static class Object2LongOpenHashMapEx<T> extends Object2LongOpenHashMap<T> implements Object2LongMapEx<T> {
 		@Override
-		public long getOrDefault(T key, long value) {
+		public long getOrDefault(Object key, long value) {
 			if (this.containsKey(key)) {
 				return this.getLong(key);
 			} else {

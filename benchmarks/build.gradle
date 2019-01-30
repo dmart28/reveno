@@ -1,14 +1,24 @@
-plugins {
-    id 'me.champeau.gradle.jmh' version '0.3.0'
+buildscript {
+    repositories {
+        jcenter()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "me.champeau.gradle:jmh-gradle-plugin:0.4.8"
+    }
 }
 
+apply plugin: "me.champeau.gradle.jmh"
+
 jmh {
-    jmhVersion = '1.12'
+    jmhVersion = '1.21'
 }
 
 dependencies {
     jmh project(":reveno-core")
     compile project(":reveno-core")
-    compile 'org.openjdk.jmh:jmh-core:1.12'
-    compile 'org.openjdk.jmh:jmh-generator-annprocess:1.12'
+    compile 'org.openjdk.jmh:jmh-core:1.21'
+    compile 'org.openjdk.jmh:jmh-generator-annprocess:1.21'
 }

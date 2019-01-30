@@ -246,6 +246,11 @@ public final class ZeroCopyBufferInput implements Input {
         return ByteString.copyFrom(this.readByteArray());
     }
 
+    @Override
+    public void readBytes(ByteBuffer byteBuffer) throws IOException {
+
+    }
+
     public byte[] readByteArray() throws IOException {
         int length = this.readRawVarint32();
         if (length < 0) {

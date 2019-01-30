@@ -15,7 +15,7 @@ rootProject.gradle.projectsEvaluated {
 	if (!javaSubprojects.isEmpty()) {
 		rootProject.task("aggregateJavadocs", type: Javadoc) {
 			title = '<h1>Reveno Framework </h1>'
-			options.bottom = '<i>Copyright &#169; 2015 Artem Dmitriev. All Rights Reserved.</i>'
+			options.bottom = '<i>Copyright &#169; 2018 Artem Dmitriev. All Rights Reserved.</i>'
 			description = 'Aggregates Javadoc API documentation of all subprojects.'
 			group = JavaBasePlugin.DOCUMENTATION_GROUP
 			dependsOn javaSubprojects.javadoc
@@ -67,21 +67,16 @@ allprojects {
 		}
 	}
 
-	task wrapper(type: Wrapper) {
-		gradleVersion = '2.6'
-	}
-
 	tasks.withType(Javadoc) {
 		options.addStringOption('Xdoclint:none', '-quiet')
-		options.setMemberLevel(org.gradle.external.javadoc.JavadocMemberLevel.PUBLIC)
+		options.setMemberLevel(JavadocMemberLevel.PUBLIC)
 	}
 
 	javadoc {
 		title = '<h1>Reveno Framework </h1>'
 
-		options.bottom = '<i>Copyright &#169; 2015 Artem Dmitriev. All Rights Reserved.</i>'
+		options.bottom = '<i>Copyright &#169; 2018 Artem Dmitriev. All Rights Reserved.</i>'
 		options.addStringOption('XDignore.symbol.file', '-quiet')
-		include '**/clustering/**'
 		include '**/api/**'
 		include '**/commons/**'
 		include '**/core/**'
@@ -92,12 +87,10 @@ allprojects {
 	}
 
 	task javadocJar(type: Jar, dependsOn: javadoc) {
-		classifier = 'javadoc'
 		from javadoc.destinationDir
 	}
 
 	task sourcesJar(type: Jar) {
-		classifier = 'sources'
 		from sourceSets.main.allSource
 	}
 

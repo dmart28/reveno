@@ -96,7 +96,7 @@ public class SnapshotBasedModelRepository implements TxRepository {
 
 	@Override
 	public void rollback() {
-		added.forEach((k, v) -> v.forEach(id -> repository.remove(k, id)));
+		added.forEach((k, v) -> v.forEach((long id) -> repository.remove(k, id)));
 		snapshotted.forEach((k,v) -> v.forEach((id, e) -> repository.store(id, (Class<Object>)k, e)));
 		isTransaction = false;
 	}
