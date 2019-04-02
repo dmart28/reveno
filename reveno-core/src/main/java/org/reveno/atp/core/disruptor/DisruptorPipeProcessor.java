@@ -1,19 +1,3 @@
-/** 
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.core.disruptor;
 
 import com.lmax.disruptor.*;
@@ -31,14 +15,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
 public abstract class DisruptorPipeProcessor<T extends Destroyable> implements PipeProcessor<T> {
-	
+    protected static final Logger log = LoggerFactory.getLogger(DisruptorPipeProcessor.class);
+    protected volatile boolean isStarted = false;
+    protected Disruptor<T> disruptor;
+    protected List<ProcessorHandler<T>[]> handlers = new ArrayList<>();
+
 	abstract CpuConsumption cpuConsumption();
 	
 	abstract int bufferSize();
@@ -47,15 +35,15 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 	
 	abstract EventFactory<T> eventFactory();
 	
-	abstract ExecutorService executor();
+	abstract ThreadFactory threadFactory();
 	
 	abstract void startupInterceptor();
 
 	@Override
 	public void start() {
-		if (isStarted) throw new IllegalStateException("The Pipe Processor is alredy started.");
+		if (isStarted) throw new IllegalStateException("The Pipe Processor is already started.");
 		
-		disruptor = new Disruptor(eventFactory(), bufferSize(), executor(),
+		disruptor = new Disruptor(eventFactory(), bufferSize(), threadFactory(),
 				singleProducer() ? ProducerType.SINGLE : ProducerType.MULTI,
 				createWaitStrategy());
 
@@ -73,7 +61,6 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 		
 		isStarted = false;
 		disruptor.shutdown();
-		executor().shutdown();
 		log.info("Stopped.");
 	}
 
@@ -141,10 +128,5 @@ public abstract class DisruptorPipeProcessor<T extends Destroyable> implements P
 		}	
 		return acs;
 	}
-	
-	protected volatile boolean isStarted = false;
-	protected Disruptor<T> disruptor;
-	protected List<ProcessorHandler<T>[]> handlers = new ArrayList<>();
-	protected static final Logger log = LoggerFactory.getLogger(DisruptorPipeProcessor.class);
 
 }

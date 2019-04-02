@@ -7,7 +7,8 @@ buildscript {
 }
 
 //apply plugin: 'nebula-aggregate-javadocs'
-import org.gradle.api.*
+
+import org.gradle.api.Project
 
 Project rootProject = project.rootProject
 rootProject.gradle.projectsEvaluated {

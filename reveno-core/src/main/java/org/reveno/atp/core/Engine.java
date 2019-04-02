@@ -1,19 +1,3 @@
-/** 
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.core;
 
 import org.reveno.atp.api.*;
@@ -75,8 +59,49 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 public class Engine implements Reveno {
-	
-	public Engine(FoldersStorage foldersStorage, JournalsStorage journalsStorage,
+    protected static final Logger log = LoggerFactory.getLogger(Engine.class);
+    protected final ThreadFactory executor =  new NamedThreadFactory("tx");
+    protected final ThreadFactory eventExecutor = new NamedThreadFactory("evn");
+    protected final ScheduledExecutorService snapshotterIntervalExecutor = Executors.newSingleThreadScheduledExecutor();
+    protected final TxRepositoryFactory factory = repositoryData -> {
+        final TxRepository repository = createRepository();
+        if (repositoryData != null) {
+            repository.load(repositoryData.getData());
+        }
+        return repository;
+    };
+    protected volatile boolean isStarted = false;
+
+    protected TxRepository repository;
+    protected SerializersChain serializer;
+    protected SystemStateRestorer restorer;
+    protected ViewsProcessor viewsProcessor;
+    protected WorkflowEngine workflowEngine;
+    protected EventPublisher eventPublisher;
+    protected TransactionPipeProcessor<ProcessorContext> processor;
+    protected PipeProcessor<Event> eventProcessor;
+    protected JournalsManager journalsManager;
+    protected EngineWorkflowContext workflowContext;
+    protected ViewsDefaultStorage viewsStorage;
+    protected RepositorySnapshotter restoreWith;
+    protected ClassLoader classLoader;
+    protected JournalsStorage journalsStorage;
+    protected FoldersStorage foldersStorage;
+    protected SnapshotStorage snapshotStorage;
+    protected SnapshottersManager snapshotsManager;
+
+    protected EventsInfoSerializer eventsSerializer = new SimpleEventsSerializer();
+    protected TransactionCommitInfo.Builder txBuilder = new TransactionCommitInfoImpl.PojoBuilder();
+    protected EventsCommitInfo.Builder eventBuilder = new EventsCommitInfoImpl.PojoBuilder();
+    protected EventHandlersManager eventsManager = new EventHandlersManager();
+    protected ViewsManager viewsManager = new ViewsManager();
+    protected TransactionsManager transactionsManager = new TransactionsManager();
+    protected CommandsManager commandsManager = new CommandsManager();
+    protected InterceptorCollection interceptors = new InterceptorCollection();
+    protected DefaultIdGenerator idGenerator = new DefaultIdGenerator();
+    protected RevenoConfiguration config = new RevenoConfiguration();
+
+    public Engine(FoldersStorage foldersStorage, JournalsStorage journalsStorage,
 			SnapshotStorage snapshotStorage, ClassLoader classLoader) {
 		this.classLoader = classLoader;
 		this.foldersStorage = foldersStorage;
@@ -340,10 +365,6 @@ public class Engine implements Reveno {
 		return interceptors;
 	}
 
-	public boolean isClustered() {
-		return !failoverManager().isSingleNode();
-	}
-
 	protected void postInit() {
 		if (config.revenoSnapshotting().interval() > 0) {
 			snapshotterIntervalExecutor.scheduleAtFixedRate(() -> {
@@ -371,7 +392,15 @@ public class Engine implements Reveno {
 	protected WriteableRepository repository() {
 		return new HashMapRepository(config.mapCapacity(), config.mapLoadFactor());
 	}
-	
+
+	protected FailoverManager failoverManager() {
+		return new UnclusteredFailoverManager();
+	}
+
+	public boolean isClustered() {
+		return !failoverManager().isSingleNode();
+	}
+
 	protected void init() {
 		repository = factory.create(loadLastSnapshot());
 		viewsStorage = new ViewsDefaultStorage(config.mapCapacity(), config.mapLoadFactor());
@@ -404,13 +433,13 @@ public class Engine implements Reveno {
 				.orElse(0L);
 	}
 
-	protected Optional<RepositoryData> loadLastSnapshot() {
+	protected RepositoryData loadLastSnapshot() {
 		if (restoreWith != null && restoreWith.hasAny()) {
-			return Optional.of(restoreWith.load());
+			return restoreWith.load();
 		}
-		return Optional.ofNullable(snapshotsManager.getAll().stream()
+		return snapshotsManager.getAll().stream()
 						.filter(RepositorySnapshotter::hasAny).findFirst()
-						.map(RepositorySnapshotter::load).orElse(null));
+						.map(RepositorySnapshotter::load).orElse(null);
 	}
 	
 	protected void connectSystemHandlers() {
@@ -442,53 +471,4 @@ public class Engine implements Reveno {
 			s.commit(journalsStorage.getLastStoreVersion(), id);
 		});
 	}
-
-	protected FailoverManager failoverManager() {
-		return new UnclusteredFailoverManager();
-	}
-
-	protected volatile boolean isStarted = false;
-	protected TxRepository repository;
-	protected SerializersChain serializer;
-	protected SystemStateRestorer restorer;
-	protected ViewsProcessor viewsProcessor;
-	protected WorkflowEngine workflowEngine;
-	protected EventPublisher eventPublisher;
-	protected TransactionPipeProcessor<ProcessorContext> processor;
-	protected PipeProcessor<Event> eventProcessor;
-	protected JournalsManager journalsManager;
-	protected EngineWorkflowContext workflowContext;
-	protected ViewsDefaultStorage viewsStorage;
-
-	protected RepositorySnapshotter restoreWith;
-
-	protected EventsInfoSerializer eventsSerializer = new SimpleEventsSerializer();
-	protected TransactionCommitInfo.Builder txBuilder = new TransactionCommitInfoImpl.PojoBuilder();
-	protected EventsCommitInfo.Builder eventBuilder = new EventsCommitInfoImpl.PojoBuilder();
-	protected EventHandlersManager eventsManager = new EventHandlersManager();
-	protected ViewsManager viewsManager = new ViewsManager();
-	protected TransactionsManager transactionsManager = new TransactionsManager();
-	protected CommandsManager commandsManager = new CommandsManager();
-	protected InterceptorCollection interceptors = new InterceptorCollection();
-	
-	protected DefaultIdGenerator idGenerator = new DefaultIdGenerator();
-	
-	protected RevenoConfiguration config = new RevenoConfiguration();
-	protected ClassLoader classLoader;
-	protected JournalsStorage journalsStorage;
-	protected FoldersStorage foldersStorage;
-	protected SnapshotStorage snapshotStorage;
-	protected SnapshottersManager snapshotsManager;
-	
-	protected final ExecutorService executor = Executors.newFixedThreadPool(7, new NamedThreadFactory("tx"));
-	protected final ExecutorService eventExecutor = Executors.newFixedThreadPool(3, new NamedThreadFactory("evn"));
-	protected final ScheduledExecutorService snapshotterIntervalExecutor = Executors.newSingleThreadScheduledExecutor();
-	protected static final Logger log = LoggerFactory.getLogger(Engine.class);
-	
-	protected final TxRepositoryFactory factory = (repositoryData) -> {
-		final TxRepository repository = createRepository();
-		repositoryData.ifPresent(d -> repository.load(d.data));
-		return repository;
-	};
-	
 }

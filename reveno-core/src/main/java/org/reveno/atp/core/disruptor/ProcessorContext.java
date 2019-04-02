@@ -1,19 +1,3 @@
-/** 
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.core.disruptor;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
@@ -32,208 +16,231 @@ import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings("rawtypes")
 public class ProcessorContext implements Destroyable {
-	
 	@Contended
 	private long time = 0L;
+	@Contended
+	private boolean skipViews = false;
+	private boolean isSystem = false;
+	@Contended
+	private long systemFlag = 0L;
+	@Contended
+	private long transactionId;
+	@Contended
+	private CompletableFuture future;
+	@Contended
+	private boolean isHasResult;
+	@Contended
+	private Object commandResult;
+	@Contended
+	private boolean isAborted;
+	@Contended
+	private final List<Object> transactions = new ArrayList<>();
+	@Contended
+	private boolean isRestore;
+	@Contended
+	private boolean isSync;
+	@Contended
+	private final List<Object> commands = new ArrayList<>();
+	@Contended
+	private final List<Object> events = new ArrayList<>();
+	@Contended
+	private EventMetadata eventMetadata;
+	@Contended
+	private boolean isReplicated;
+	@Contended
+	private final TransactionCommitInfo commitInfo;
+	private Throwable abortIssue;
+	private final RestoreableEventBus defaultEventBus = new ProcessContextEventBus();
+	private RestoreableEventBus eventBus = defaultEventBus;
+	private Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> markedRecords = MapUtils.linkedFastRepo();
+
+	public ProcessorContext(TransactionCommitInfo commitInfo) {
+		this.commitInfo = commitInfo;
+	}
+
 	public long time() {
 		return time;
 	}
+
+	public boolean isSkipViews() {
+		return skipViews;
+	}
+
+	public boolean isSystem() {
+		return isSystem;
+	}
+
+	public long systemFlag() {
+		return systemFlag;
+	}
+
+	public EventBus defaultEventBus() {
+		return defaultEventBus;
+	}
+
+	public long transactionId() {
+		return transactionId;
+	}
+
+	public CompletableFuture future() {
+		return future;
+	}
+
+	public boolean isHasResult() {
+		return isHasResult;
+	}
+
+	public boolean isAborted() {
+		return isAborted;
+	}
+
+	public Throwable abortIssue() {
+		return abortIssue;
+	}
+
+	public void commandResult(Object commandResult) {
+		this.commandResult = commandResult;
+	}
+
+	public boolean isRestore() {
+		return isRestore;
+	}
+
+	public boolean isSync() {
+		return isSync;
+	}
+
+	public boolean isReplicated() {
+		return isReplicated;
+	}
+
+	public List<Object> getCommands() {
+		return commands;
+	}
+
+	public List<Object> getTransactions() {
+		return transactions;
+	}
+
+	public List<Object> getEvents() {
+		return events;
+	}
+
+	public Object commandResult() {
+		return commandResult;
+	}
+
+	public RestoreableEventBus eventBus() {
+		return eventBus;
+	}
+
+	public EventMetadata eventMetadata() {
+		return eventMetadata;
+	}
+
+	public TransactionCommitInfo commitInfo() {
+		return commitInfo;
+	}
+
+	public Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> getMarkedRecords() {
+		return markedRecords;
+	}
+
 	public ProcessorContext time(long time) {
 		this.time = time;
 		return this;
 	}
 
-	@Contended
-	private boolean skipViews = false;
-	public boolean isSkipViews() {
-		return skipViews;
-	}
 	public ProcessorContext skipViews() {
 		this.skipViews = true;
 		return this;
 	}
 
-	private boolean isSystem = false;
-	public boolean isSystem() {
-		return isSystem;
+	public ProcessorContext replicated() {
+		isReplicated = true;
+		return this;
 	}
-	@Contended
-	private long systemFlag = 0L;
-	public long systemFlag() {
-		return systemFlag;
-	}
+
 	public ProcessorContext systemFlag(long systemFlag) {
 		this.isSystem = true;
 		this.systemFlag = systemFlag;
 		return this;
 	}
-	
-	private final RestoreableEventBus defaultEventBus = new ProcessContextEventBus();
-	public EventBus defaultEventBus() {
-		return defaultEventBus;
-	}
-	
-	@Contended
-	private long transactionId; 
-	public long transactionId() {
-		return transactionId;
-	}
+
 	public ProcessorContext transactionId(long transactionId) {
 		this.transactionId = transactionId;
 		return this;
 	}
 
-	@Contended
-	private CompletableFuture future;
-	public CompletableFuture future() {
-		return future;
-	}
 	public ProcessorContext future(CompletableFuture future) {
 		this.future = future;
 		return this;
 	}
-	
-	@Contended
-	private boolean hasResult;
-	public boolean hasResult() {
-		return hasResult;
-	}
+
 	public ProcessorContext withResult() {
-		this.hasResult = true;
+		this.isHasResult = true;
 		return this;
 	}
-	
-	@Contended
-	private Object commandResult;
-	public Object commandResult() {
-		return commandResult;
-	}
-	public void commandResult(Object commandResult) {
-		this.commandResult = commandResult;
-	}
-	
-	@Contended
-	private boolean isAborted;
-	private Throwable abortIssue;
-	public boolean isAborted() {
-		return isAborted;
-	}
-	public Throwable abortIssue() {
-		return abortIssue;
-	}
+
 	public void abort(Throwable abortIssue) {
 		this.isAborted = true;
 		this.abortIssue = abortIssue;
 	}
-	
-	@Contended
-	private boolean isReplicated;
-	public boolean isReplicated() {
-		return isReplicated;
-	}
-	public ProcessorContext replicated() {
-		isReplicated = true;
-		return this;
-	}
-	
-	@Contended
-	private boolean isRestore;
-	public boolean isRestore() {
-		return isRestore;
-	}
+
 	public ProcessorContext restore() {
 		isRestore = true;
 		return this;
 	}
 
-	@Contended
-	private boolean isSync;
-	public boolean isSync() {
-		return isSync;
-	}
 	public ProcessorContext sync() {
 		this.isSync = true;
 		return this;
 	}
-	
-	@Contended
-	private final List<Object> commands = new ArrayList<>();
-	public List<Object> getCommands() {
-		return commands;
-	}
+
 	public ProcessorContext addCommand(Object cmd) {
 		commands.add(cmd);
 		return this;
 	}
+
 	public ProcessorContext addCommands(List<Object> cmds) {
 		commands.addAll(cmds);
 		return this;
 	}
-	
-	@Contended
-	private final List<Object> transactions = new ArrayList<>();
-	public List<Object> getTransactions() {
-		return transactions;
-	}
+
 	public ProcessorContext addTransactions(List<Object> transactions) {
 		this.transactions.addAll(transactions);
 		return this;
 	}
-	
-	@Contended
-	private final List<Object> events = new ArrayList<>();
-	public List<Object> getEvents() {
-		return events;
-	}
-	
-	private RestoreableEventBus eventBus = defaultEventBus;
-	public RestoreableEventBus eventBus() {
-		return eventBus;
-	}
+
 	public ProcessorContext eventBus(RestoreableEventBus eventBus) {
 		this.eventBus = eventBus;
 		return this;
 	}
-	
-	@Contended
-	private EventMetadata eventMetadata;
-	public EventMetadata eventMetadata() {
-		return eventMetadata;
-	}
+
 	public ProcessorContext eventMetadata(EventMetadata eventMetadata) {
 		this.eventMetadata = eventMetadata;
 		return this;
 	}
 
-	private Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> markedRecords = MapUtils.linkedFastRepo();
-	public Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> getMarkedRecords() {
-		return markedRecords;
-	}
 	public ProcessorContext setMarkedRecords(Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> markedRecords) {
 		this.markedRecords = markedRecords;
 		return this;
-	}
-
-	@Contended
-	private final TransactionCommitInfo commitInfo;
-	public TransactionCommitInfo commitInfo() {
-		return commitInfo;
 	}
 	
 	public ProcessorContext reset() {
 		transactionId = 0L;
 		systemFlag = 0L;
 		isSystem = false;
+		isReplicated = false;
 		skipViews = false;
 		commands.clear();
 		transactions.clear();
 		events.clear();
 		markedRecords.values().forEach(Long2ObjectLinkedOpenHashMap::clear);
-		hasResult = false;
+		isHasResult = false;
 		isAborted = false;
 		isSync = false;
 		isRestore = false;
-		isReplicated = false;
 		abortIssue = null;
 		future = null;
 		commandResult = null;
@@ -245,10 +252,6 @@ public class ProcessorContext implements Destroyable {
 	
 	public void destroy() {
 		reset();
-	}
-	
-	public ProcessorContext(TransactionCommitInfo commitInfo) {
-		this.commitInfo = commitInfo;
 	}
 	
 	protected class ProcessContextEventBus implements RestoreableEventBus {

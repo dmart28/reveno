@@ -8,8 +8,6 @@ import org.reveno.atp.acceptance.model.Account;
 import org.reveno.atp.acceptance.model.Order;
 import org.reveno.atp.api.transaction.TransactionContext;
 
-import java.util.Optional;
-
 public class RollbackTransactions {
 
 	public static void rollbackCreateAccount(CreateAccount tx, TransactionContext ctx) {

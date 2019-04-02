@@ -1,19 +1,3 @@
-/** 
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.core.storage;
 
 import org.reveno.atp.core.RevenoConfiguration.RevenoJournalingConfiguration;
@@ -31,16 +15,38 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.file.*;
-import java.util.*;
+import java.nio.file.DirectoryIteratorException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static org.reveno.atp.utils.VersionedFileUtils.*;
-import static org.reveno.atp.utils.VersionedFileUtils.parseVersionedFile;
 
 public class FileSystemStorage implements FoldersStorage, JournalsStorage, SnapshotStorage {
+	protected static final Logger LOG = LoggerFactory.getLogger(FileSystemStorage.class);
+	protected static final String TRANSACTION_PREFIX = "tx";
+	protected static final String SNAPSHOT_PREFIX = "snp";
+	protected static final String EVENTS_PREFIX = "evn";
+	protected static final String VOLUME_TRANSACTION_PREFIX = "v_" + TRANSACTION_PREFIX;
+	protected static final String VOLUME_EVENTS_PREFIX = "v_" + EVENTS_PREFIX;
+	protected static final int PAGE_SIZE = UnsafeUtils.getUnsafe().pageSize();
+	protected static final byte[] BLANK_PAGE = new byte[PAGE_SIZE];
+	protected final File baseDir;
+	protected final RevenoJournalingConfiguration config;
+
+	public FileSystemStorage(File baseDir, RevenoJournalingConfiguration config) {
+		if (!baseDir.exists()) {
+			baseDir.mkdirs();
+		}
+		this.baseDir = baseDir;
+		this.config = config;
+	}
 
 	@Override
 	public Channel channel(String address) {
@@ -346,24 +352,4 @@ public class FileSystemStorage implements FoldersStorage, JournalsStorage, Snaps
 		}
 	}
 
-	public FileSystemStorage(File baseDir, RevenoJournalingConfiguration config) {
-		if (!baseDir.exists()) {
-			baseDir.mkdirs();
-		}
-		this.baseDir = baseDir;
-		this.config = config;
-	}
-
-	protected final File baseDir;
-	protected final RevenoJournalingConfiguration config;
-	protected static final String TRANSACTION_PREFIX = "tx";
-	protected static final String SNAPSHOT_PREFIX = "snp";
-	protected static final String EVENTS_PREFIX = "evn";
-	protected static final String VOLUME_TRANSACTION_PREFIX = "v_" + TRANSACTION_PREFIX;
-	protected static final String VOLUME_EVENTS_PREFIX = "v_" + EVENTS_PREFIX;
-
-	protected static final int PAGE_SIZE = UnsafeUtils.getUnsafe().pageSize();
-	protected static final byte[] BLANK_PAGE = new byte[PAGE_SIZE];
-
-	protected static final Logger LOG = LoggerFactory.getLogger(FileSystemStorage.class);
 }

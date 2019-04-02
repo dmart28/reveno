@@ -1,25 +1,8 @@
-/** 
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.core.engine;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.commands.Result;
-import org.reveno.atp.api.exceptions.ReplicationFailedException;
 import org.reveno.atp.api.transaction.TransactionInterceptor;
 import org.reveno.atp.api.transaction.TransactionStage;
 import org.reveno.atp.commons.BoolBiConsumer;
@@ -37,8 +20,79 @@ import java.util.function.Consumer;
 import java.util.function.LongSupplier;
 
 public class InputHandlers {
+	private static final EmptyResult EMPTY_RESULT = new EmptyResult();
+	protected WorkflowContext services;
+	protected TransactionExecutor txExecutor;
+	protected LongSupplier nextTransactionId;
+	protected LongSupplier transactionId;
+	protected ProcessorContext ctxJ;
+	protected List<TransactionInterceptor> replicationInterceptors;
+	protected List<TransactionInterceptor> transactionInterceptors;
+	protected List<TransactionInterceptor> journalingInterceptors;
+	private boolean changedClassLoaderReplicator = false;
+	private boolean endOfBatch = false;
+	private boolean changedClassLoaderJournaler = false;
+	private Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> markedEntitiesStore;
 
-	public static final EmptyResult EMPTY_RESULT = new EmptyResult();
+	protected final Consumer<Buffer> journalerConsumer = b -> {
+		ctxJ.commitInfo().transactionId(ctxJ.transactionId()).time(ctxJ.time()).transactionCommits(ctxJ.getTransactions());
+		services.serializer().serialize(ctxJ.commitInfo(), b);
+	};
+	protected final BoolBiConsumer<ProcessorContext> replicator = (c, eob) -> {
+		if (!changedClassLoaderReplicator) {
+			changeClassLoaderIfRequired();
+			changedClassLoaderReplicator = true;
+		}
+	};
+	protected final BoolBiConsumer<ProcessorContext> transactionImmutableExecutor = (c, eob) -> {
+		Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> old = null;
+		if (endOfBatch) {
+			markedEntitiesStore = c.getMarkedRecords();
+		} else if (markedEntitiesStore != null && !eob) {
+			old = c.getMarkedRecords();
+			c.setMarkedRecords(markedEntitiesStore);
+		}
+		try {
+			txExecutor.executeCommands(c, services);
+		} finally {
+			if (old != null) {
+				c.setMarkedRecords(old);
+				c.skipViews();
+			}
+			endOfBatch = eob;
+		}
+	};
+	protected final BoolBiConsumer<ProcessorContext> transactionMutableExecutor = (c, eob) -> {
+		txExecutor.executeCommands(c, services);
+	};
+
+	protected final BoolBiConsumer<ProcessorContext> journaler = (c, eob) -> {
+		rollIfRequired(c.transactionId());
+		this.ctxJ = c;
+		if (!changedClassLoaderJournaler) {
+			changeClassLoaderIfRequired();
+			changedClassLoaderJournaler = true;
+		}
+		services.transactionJournaler().writeData(journalerConsumer, eob);
+	};
+	protected final BoolBiConsumer<ProcessorContext> viewsImmutableUpdater = (c, eob) -> {
+		if (!c.isSkipViews()) {
+			services.viewsProcessor().process(c.getMarkedRecords());
+		}
+	};
+	protected final BoolBiConsumer<ProcessorContext> viewsMutableUpdater = (c, eob) -> {
+		services.viewsProcessor().process(c.getMarkedRecords());
+	};
+	protected final BoolBiConsumer<ProcessorContext> eventsPublisher = (c, eob) -> {
+		if (c.isReplicated()) {
+			services.eventPublisher().replicateEvents(c.transactionId());
+		} else {
+			if (c.getEvents().size() > 0) {
+				services.eventPublisher().publishEvents(c.isRestore(), c.transactionId(),
+						c.eventMetadata(), c.getEvents().toArray());
+			}
+		}
+	};
 
 	@SuppressWarnings("unchecked")
 	public void ex(ProcessorContext c, boolean filter, boolean eob, TransactionStage stage,
@@ -91,16 +145,18 @@ public class InputHandlers {
 	}
 	
 	public void transactionImmutableExecution(ProcessorContext c, boolean endOfBatch) {
-		if (!c.isRestore() && !c.isSync())
+		if (!c.isRestore() && !c.isSync()) {
 			c.transactionId(nextTransactionId.getAsLong());
+		}
 
 		ex(c, !c.isSync(), endOfBatch, TransactionStage.TRANSACTION, transactionInterceptors,
 				transactionImmutableExecutor);
 	}
 
 	public void transactionMutableExecution(ProcessorContext c, boolean endOfBatch) {
-		if (!c.isRestore() && !c.isSync())
+		if (!c.isRestore() && !c.isSync()) {
 			c.transactionId(nextTransactionId.getAsLong());
+		}
 
 		ex(c, !c.isSync(), endOfBatch, TransactionStage.TRANSACTION, transactionInterceptors,
 				transactionMutableExecutor);
@@ -130,7 +186,7 @@ public class InputHandlers {
 				c.future().complete(new EmptyResult(c.abortIssue()));
 			}
 			else {
-				if (c.hasResult())
+				if (c.isHasResult())
 					c.future().complete(new Result<>(c.commandResult()));
 				else
 					c.future().complete(EMPTY_RESULT);
@@ -140,86 +196,6 @@ public class InputHandlers {
 	
 	public void destroy() {
 	}
-
-	protected WorkflowContext services;
-	protected TransactionExecutor txExecutor;
-	protected LongSupplier nextTransactionId;
-	protected LongSupplier transactionId;
-	protected ProcessorContext ctxJ;
-	protected List<TransactionInterceptor> replicationInterceptors;
-	protected List<TransactionInterceptor> transactionInterceptors;
-	protected List<TransactionInterceptor> journalingInterceptors;
-
-	protected final Consumer<Buffer> journalerConsumer = b -> {
-		ctxJ.commitInfo().transactionId(ctxJ.transactionId()).time(ctxJ.time()).transactionCommits(ctxJ.getTransactions());
-		services.serializer().serialize(ctxJ.commitInfo(), b);
-	};
-
-	private boolean changedClassLoaderReplicator = false;
-	protected final BoolBiConsumer<ProcessorContext> replicator = (c, eob) -> {
-		if (!changedClassLoaderReplicator) {
-			changeClassLoaderIfRequired();
-			changedClassLoaderReplicator = true;
-		}
-
-		// TODO probably it's better to send generated transactionId by master node
-		if (!services.failoverManager().replicate(b -> services.serializer().serializeCommands(c.getCommands(), b)))
-			c.abort(new ReplicationFailedException());
-	};
-
-	private boolean endOfBatch = false;
-	private Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> markedEntitiesStore;
-	protected final BoolBiConsumer<ProcessorContext> transactionImmutableExecutor = (c, eob) -> {
-		Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> old = null;
-		if (endOfBatch) {
-			markedEntitiesStore = c.getMarkedRecords();
-		} else if (markedEntitiesStore != null && !eob) {
-			old = c.getMarkedRecords();
-			c.setMarkedRecords(markedEntitiesStore);
-		}
-		try {
-			txExecutor.executeCommands(c, services);
-		} finally {
-			if (old != null) {
-				c.setMarkedRecords(old);
-				c.skipViews();
-			}
-			endOfBatch = eob;
-		}
-	};
-
-	protected final BoolBiConsumer<ProcessorContext> transactionMutableExecutor = (c, eob) -> {
-		txExecutor.executeCommands(c, services);
-	};
-
-	private boolean changedClassLoaderJournaler = false;
-	protected final BoolBiConsumer<ProcessorContext> journaler = (c, eob) -> {
-		rollIfRequired(c.transactionId());
-		this.ctxJ = c;
-		if (!changedClassLoaderJournaler) {
-			changeClassLoaderIfRequired();
-			changedClassLoaderJournaler = true;
-		}
-		services.transactionJournaler().writeData(journalerConsumer, eob);
-	};
-	protected final BoolBiConsumer<ProcessorContext> viewsImmutableUpdater = (c, eob) -> {
-		if (!c.isSkipViews()) {
-			services.viewsProcessor().process(c.getMarkedRecords());
-		}
-	};
-	protected final BoolBiConsumer<ProcessorContext> viewsMutableUpdater = (c, eob) -> {
-		services.viewsProcessor().process(c.getMarkedRecords());
-	};
-	protected final BoolBiConsumer<ProcessorContext> eventsPublisher = (c, eob) -> {
-		if (c.isReplicated()) {
-			services.eventPublisher().replicateEvents(c.transactionId());
-		} else {
-			if (c.getEvents().size() > 0) {
-				services.eventPublisher().publishEvents(c.isRestore(), c.transactionId(),
-						c.eventMetadata(), c.getEvents().toArray());
-			}
-		}
-	};
 
 	protected void interceptors(TransactionStage stage, List<TransactionInterceptor> interceptors, ProcessorContext c) {
 		if (!c.isRestore() && interceptors.size() > 0)

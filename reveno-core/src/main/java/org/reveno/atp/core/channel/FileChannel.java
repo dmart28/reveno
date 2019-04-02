@@ -1,19 +1,3 @@
-/**
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.core.channel;
 
 import org.reveno.atp.api.ChannelOptions;
@@ -34,6 +18,24 @@ import java.util.function.Consumer;
 import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
 
 public class FileChannel implements Channel {
+	public static final int MAX_VALUE = Integer.MAX_VALUE - 8;
+	protected static final ByteBuffer ZERO = java.nio.ByteBuffer.allocate(0);
+	private static final Logger log = LoggerFactory.getLogger(FileChannel.class);
+
+	protected final File file;
+	protected ChannelWriter writer;
+	protected RandomAccessFile raf;
+	protected java.nio.channels.FileChannel channel;
+
+	protected ChannelOptions channelOptions = ChannelOptions.BUFFERING_VM;
+	protected boolean isPreallocated = false;
+	protected int extendDelta = MeasureUtils.kb(128);
+
+	protected long position = 0L;
+	protected long size = 0L;
+	protected long mmapBufferGeneration = 0;
+	protected ByteBuffer buffer = ByteBuffer.allocateDirect(MeasureUtils.kb(32));
+	protected ChannelBuffer revenoBuffer;
 
 	@Override
 	public long size() {
@@ -232,25 +234,6 @@ public class FileChannel implements Channel {
 			throw new RuntimeException(e);
 		}
 	}
-	
-	protected final File file;
-	protected ChannelWriter writer;
-	protected RandomAccessFile raf;
-    protected java.nio.channels.FileChannel channel;
-
-	protected ChannelOptions channelOptions = ChannelOptions.BUFFERING_VM;
-	protected boolean isPreallocated = false;
-	protected int extendDelta = MeasureUtils.kb(128);
-
-	protected long position = 0L;
-	protected long size = 0L;
-	protected long mmapBufferGeneration = 0;
-	protected ByteBuffer buffer = ByteBuffer.allocateDirect(MeasureUtils.kb(32));
-	protected ChannelBuffer revenoBuffer;
-
-	protected static final ByteBuffer ZERO = java.nio.ByteBuffer.allocate(0);
-	private static final Logger log = LoggerFactory.getLogger(FileChannel.class);
-	public static final int MAX_VALUE = Integer.MAX_VALUE - 8;
 
 
 	abstract class ChannelWriter {

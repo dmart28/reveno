@@ -41,17 +41,17 @@ public class SerializersTest {
 		final User u2 = new User("Maxim", 28);
 		
 		RepositoryData data = new RepositoryData(new HashMap<>());
-		data.data.put(User.class, new HashMap<>());
-		data.data.get(User.class).put(1L, u1);
-		data.data.get(User.class).put(2L, u2);
+		data.getData().put(User.class, new HashMap<>());
+		data.getData().get(User.class).put(1L, u1);
+		data.getData().get(User.class).put(2L, u2);
 
         ChannelBuffer buffer = new ChannelBuffer(java.nio.ByteBuffer.allocate(1024 * 1024));
 		rdSer.serialize(data, buffer);
         buffer.getBuffer().flip();
 		data = rdSer.deserialize(buffer);
 		
-		Assert.assertEquals(u1, data.data.get(User.class).get(1L));
-		Assert.assertEquals(u2, data.data.get(User.class).get(2L));
+		Assert.assertEquals(u1, data.getData().get(User.class).get(1L));
+		Assert.assertEquals(u2, data.getData().get(User.class).get(2L));
 		
 		buffer.clear();
 		

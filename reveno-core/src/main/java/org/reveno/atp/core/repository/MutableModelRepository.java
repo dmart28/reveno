@@ -1,19 +1,3 @@
-/** 
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.core.repository;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -31,34 +15,50 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import static org.reveno.atp.utils.MeasureUtils.kb;
 
 public class MutableModelRepository implements TxRepository, Destroyable {
+	protected static final Logger log = LoggerFactory.getLogger(MutableModelRepository.class);
+	protected int stashedObjects = 0;
+	protected final Map<Class<?>, LongOpenHashSet> stashed = MapUtils.fastSetRepo();
+	protected final WriteableRepository repository;
+	protected final Serializer serializer;
+	protected final ClassLoader classLoader;
+	protected final Buffer buffer = new ChannelBuffer(ByteBuffer.allocateDirect(kb(128)));
+	protected final ThreadLocal<Boolean> isTransaction = ThreadLocal.withInitial(() -> false);
+
+	public MutableModelRepository(WriteableRepository repository, Serializer serializer, ClassLoader classLoader) {
+		this.repository = repository;
+		this.serializer = serializer;
+		this.classLoader = classLoader;
+	}
 
 	@Override
 	public <T> T store(long entityId, T entity) {
 		repository.store(entityId, entity);
-		if (isTransaction.get() && entity != null)
+		if (isTransaction.get() && entity != null) {
 			saveEntityState(entityId, entity.getClass(), entity, EntityRecoveryState.REMOVE);
+		}
 		return entity;
 	}
 	
 	@Override
 	public <T> T store(long entityId, Class<? super T> type, T entity) {
 		repository.store(entityId, type, entity);
-		if (isTransaction.get() && entity != null)
+		if (isTransaction.get() && entity != null) {
 			saveEntityState(entityId, type, entity, EntityRecoveryState.REMOVE);
+		}
 		return entity;
 	}
 
 	@Override
 	public <T> T remove(Class<T> entityClass, long entityId) {
 		T entity = repository.remove(entityClass, entityId);
-		if (isTransaction.get() && entity != null)
+		if (isTransaction.get() && entity != null) {
 			saveEntityState(entityId, entityClass, entity, EntityRecoveryState.ADD);
+		}
 		return entity;
 	}
 
@@ -71,8 +71,9 @@ public class MutableModelRepository implements TxRepository, Destroyable {
 	public <T> T get(Class<T> entityType, long id) {
 		T entity = repository.get(entityType, id);
 		
-		if (isTransaction.get() && entity != null)
+		if (isTransaction.get() && entity != null) {
 			saveEntityState(id, entityType, entity, EntityRecoveryState.UPDATE);
+		}
 		return entity;
 	}
 	
@@ -89,8 +90,9 @@ public class MutableModelRepository implements TxRepository, Destroyable {
 	@Override
 	public Map<Long, Object> getEntities(Class<?> entityType) {
 		Map<Long, Object> entities = repository.getEntities(entityType);
-		if (isTransaction.get())
+		if (isTransaction.get()) {
 			entities.forEach((id, e) -> saveEntityState(id, entityType, e, EntityRecoveryState.UPDATE));
+		}
 		return entities;
 	}
 	
@@ -134,8 +136,9 @@ public class MutableModelRepository implements TxRepository, Destroyable {
 					}
 				}
 				Object entity = serializer.deserializeObject(buffer);
-				if (type == null)
+				if (type == null) {
 					type = entity.getClass();
+				}
 
 				switch (state) {
 				case ADD:
@@ -161,8 +164,9 @@ public class MutableModelRepository implements TxRepository, Destroyable {
 	protected boolean saveEntityState(long entityId, Class<?> type, Object entity, EntityRecoveryState state) {
 		LongOpenHashSet stashedEntities = stashed.get(type);
 		if (!stashedEntities.contains(entityId)) {
-			if (!serializer.isRegistered(entity.getClass()))
+			if (!serializer.isRegistered(entity.getClass())) {
 				serializer.registerTransactionType(entity.getClass());
+			}
 			marshallEntity(entityId, type, entity, state);
 			stashedEntities.add(entityId);
 			return true;
@@ -194,26 +198,7 @@ public class MutableModelRepository implements TxRepository, Destroyable {
 	public MutableModelRepository(WriteableRepository repository, Serializer serializer) {
 		this(repository, serializer, MutableModelRepository.class.getClassLoader());
 	}
-	
-	public MutableModelRepository(WriteableRepository repository, Serializer serializer, ClassLoader classLoader) {
-		this.repository = repository;
-		this.serializer = serializer;
-		this.classLoader = classLoader;
-	}
-	
-	protected int stashedObjects = 0;
-	protected final Map<Class<?>, LongOpenHashSet> stashed = MapUtils.fastSetRepo();
-	protected final WriteableRepository repository;
-	protected final Serializer serializer;
-	protected final ClassLoader classLoader;
-	protected final Buffer buffer = new ChannelBuffer(ByteBuffer.allocateDirect(kb(128)));
-	protected final ThreadLocal<Boolean> isTransaction = new ThreadLocal<Boolean>() {
-		protected Boolean initialValue() {
-			return false;
-		}
-	};
-	protected static final Logger log = LoggerFactory.getLogger(MutableModelRepository.class);
-	
+
 	public enum EntityRecoveryState {
 		ADD((byte)1), REMOVE((byte)2), UPDATE((byte)3);
 		
