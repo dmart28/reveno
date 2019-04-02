@@ -1,19 +1,3 @@
-/**
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.api.dynamic;
 
 import net.bytebuddy.ByteBuddy;
@@ -35,10 +19,24 @@ import java.util.function.BiFunction;
 
 @SuppressWarnings("all")
 public class DirectTransactionBuilder {
-	
+	protected static final Logger log = LoggerFactory.getLogger(DirectTransactionBuilder.class);
 	protected static final String PACKAGE = "org.reveno.atp.api.dynamic.";
 	protected static final String COMMAND_NAME_PREFIX = "DynamicCommand_";
 	protected static final String TRANSACTION_NAME_PREFIX = "DynamicTransaction_";
+
+	protected String name;
+	protected Set<Class<?>> entityTypes = new HashSet<>();
+	protected Optional<Class<?>> entityReturnIdType = Optional.empty();
+	protected Class<? extends AbstractDynamicCommand> dynamicCommand;
+	protected Class<? extends AbstractDynamicTransaction> dynamicTransaction;
+	protected Optional<BiFunction<AbstractDynamicCommand, CommandContext, Object>> commandInterceptor = Optional.empty();
+	protected Optional<BiFunction<AbstractDynamicCommand, CommandContext, Boolean>> commandConditionInterceptor = Optional.empty();
+
+	protected BiConsumer<AbstractDynamicTransaction, TransactionContext> transactionHandler;
+	protected SerializersChain serializer;
+	protected TransactionsManager transactionsManager;
+	protected CommandsManager commandsManager;
+	protected ClassLoader classLoader;
 
 	public DirectTransactionBuilder(String name, BiConsumer<AbstractDynamicTransaction, TransactionContext> handler,
 			SerializersChain serializer, TransactionsManager transactionsManager, CommandsManager commandsManager,
@@ -146,21 +144,5 @@ public class DirectTransactionBuilder {
 			return Optional.empty();
 		}
 	}
-	
-	protected String name;
-	protected Set<Class<?>> entityTypes = new HashSet<>();
-	protected Optional<Class<?>> entityReturnIdType = Optional.empty();
-	protected Class<? extends AbstractDynamicCommand> dynamicCommand;
-	protected Class<? extends AbstractDynamicTransaction> dynamicTransaction;
-	protected Optional<BiFunction<AbstractDynamicCommand, CommandContext, Object>> commandInterceptor = Optional.empty();
-	protected Optional<BiFunction<AbstractDynamicCommand, CommandContext, Boolean>> commandConditionInterceptor = Optional.empty();
-	
-	protected BiConsumer<AbstractDynamicTransaction, TransactionContext> transactionHandler;
-	protected SerializersChain serializer;
-	protected TransactionsManager transactionsManager;
-	protected CommandsManager commandsManager;
-	protected ClassLoader classLoader;
-
-	protected static final Logger log = LoggerFactory.getLogger(DirectTransactionBuilder.class);
 	
 }

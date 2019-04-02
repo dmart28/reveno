@@ -1,19 +1,3 @@
-/** 
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.core;
 
 import org.reveno.atp.api.ChannelOptions;
@@ -22,11 +6,20 @@ import org.reveno.atp.api.Configuration;
 import static org.reveno.atp.utils.MeasureUtils.kb;
 
 public class RevenoConfiguration implements Configuration {
+	protected RevenoSnapshotConfiguration snapshotting = new RevenoSnapshotConfiguration();
+	protected RevenoDisruptorConfiguration disruptor = new RevenoDisruptorConfiguration();
+	protected RevenoJournalingConfiguration journaling = new RevenoJournalingConfiguration();
+	protected CpuConsumption cpuConsumption = CpuConsumption.NORMAL;
+	protected ModelType modelType = ModelType.IMMUTABLE;
+	protected int mapCapacity = 524288;
+	protected float mapLoadFactor = 0.75f;
+	protected MutableModelFailover mutableModelFailover = MutableModelFailover.SNAPSHOTS;
 
 	@Override
 	public SnapshotConfiguration snapshotting() {
 		return revenoSnapshotting();
 	}
+
 	public RevenoSnapshotConfiguration revenoSnapshotting() {
 		return snapshotting;
 	}
@@ -35,6 +28,7 @@ public class RevenoConfiguration implements Configuration {
 	public DisruptorConfiguration disruptor() {
 		return revenoDisruptor();
 	}
+
 	public RevenoDisruptorConfiguration revenoDisruptor() {
 		return disruptor;
 	}
@@ -43,6 +37,7 @@ public class RevenoConfiguration implements Configuration {
 	public JournalingConfiguration journaling() {
 		return journaling;
 	}
+
 	public RevenoJournalingConfiguration revenoJournaling() {
 		return journaling;
 	}
@@ -82,6 +77,7 @@ public class RevenoConfiguration implements Configuration {
 	public void mapCapacity(int capacity) {
 		this.mapCapacity = capacity;
 	}
+
 	public int mapCapacity() {
 		return mapCapacity;
 	}
@@ -90,6 +86,7 @@ public class RevenoConfiguration implements Configuration {
 	public void mapLoadFactor(float loadFactor) {
 		this.mapLoadFactor = loadFactor;
 	}
+
 	public float mapLoadFactor() {
 		return mapLoadFactor;
 	}
@@ -97,24 +94,18 @@ public class RevenoConfiguration implements Configuration {
 	public CpuConsumption cpuConsumption() {
 		return cpuConsumption;
 	}
-	
-	protected RevenoSnapshotConfiguration snapshotting = new RevenoSnapshotConfiguration();
-	protected RevenoDisruptorConfiguration disruptor = new RevenoDisruptorConfiguration();
-	protected RevenoJournalingConfiguration journaling = new RevenoJournalingConfiguration();
-	protected CpuConsumption cpuConsumption = CpuConsumption.NORMAL;
-	protected ModelType modelType = ModelType.IMMUTABLE;
-	protected int mapCapacity = 524288;
-	protected float mapLoadFactor = 0.75f;
-	protected MutableModelFailover mutableModelFailover = MutableModelFailover.SNAPSHOTS;
 
-	
 	public static class RevenoSnapshotConfiguration implements SnapshotConfiguration {
+		private boolean snapshotAtShutdown = false;
+		private long snapshotEvery = -1;
+		private long interval = -1;
 
 		@Override
 		public SnapshotConfiguration atShutdown(boolean takeSnapshot) {
 			this.snapshotAtShutdown = takeSnapshot;
 			return this;
 		}
+
 		public boolean atShutdown() {
 			return snapshotAtShutdown;
 		}
@@ -124,6 +115,7 @@ public class RevenoConfiguration implements Configuration {
 			this.snapshotEvery = transactionCount;
 			return this;
 		}
+
 		public long every() {
 			return snapshotEvery;
 		}
@@ -133,16 +125,14 @@ public class RevenoConfiguration implements Configuration {
 			this.interval = millis;
 			return this;
 		}
+
 		public long interval() {
 			return interval;
 		}
-		
-		private boolean snapshotAtShutdown = false;
-		private long snapshotEvery = -1;
-		private long interval = -1;
 	}
 	
 	public static class RevenoDisruptorConfiguration implements DisruptorConfiguration {
+		private int bufferSize = 1024;
 
 		@Override
 		public DisruptorConfiguration bufferSize(int bufferSize) {
@@ -152,15 +142,19 @@ public class RevenoConfiguration implements Configuration {
 			this.bufferSize = bufferSize;
 			return this;
 		}
+
 		public int bufferSize() {
 			return bufferSize;
 		}
-		
-		private int bufferSize = 1024;
-		
 	}
 
 	public static class RevenoJournalingConfiguration implements JournalingConfiguration {
+		protected static final int MIN_MAX_OBJECT_SIZE = 64;
+		protected long txSize = 0L, eventsSize = 0L;
+		protected int volumes = 3;
+		protected int minVolumes = 1;
+		protected int maxObjectSize = kb(128);
+		protected ChannelOptions channelOptions = ChannelOptions.BUFFERING_VM;
 
 		@Override
 		public JournalingConfiguration maxObjectSize(int size) {
@@ -169,6 +163,7 @@ public class RevenoConfiguration implements Configuration {
 			this.maxObjectSize = size;
 			return this;
 		}
+
 		public int maxObjectSize() {
 			return maxObjectSize;
 		}
@@ -179,12 +174,15 @@ public class RevenoConfiguration implements Configuration {
 			this.eventsSize = eventsSize;
 			return this;
 		}
+
 		public long txSize() {
 			return txSize;
 		}
+
 		public long eventsSize() {
 			return eventsSize;
 		}
+
 		public boolean isPreallocated() {
 			return txSize != 0 || eventsSize != 0;
 		}
@@ -194,6 +192,7 @@ public class RevenoConfiguration implements Configuration {
 			this.volumes = volumes;
 			return this;
 		}
+
 		public int volumes() {
 			return volumes;
 		}
@@ -203,6 +202,7 @@ public class RevenoConfiguration implements Configuration {
 			this.minVolumes = volumes;
 			return this;
 		}
+
 		public int minVolumes() {
 			return minVolumes;
 		}
@@ -212,17 +212,10 @@ public class RevenoConfiguration implements Configuration {
 			this.channelOptions = options;
 			return this;
 		}
+
 		public ChannelOptions channelOptions() {
 			return channelOptions;
 		}
-
-		protected long txSize = 0L, eventsSize = 0L;
-		protected int volumes = 3;
-		protected int minVolumes = 1;
-		protected int maxObjectSize = kb(128);
-		protected ChannelOptions channelOptions = ChannelOptions.BUFFERING_VM;
-
-		protected static final int MIN_MAX_OBJECT_SIZE = 64;
 	}
 	
 }

@@ -1,19 +1,3 @@
-/** 
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.core.snapshots;
 
 import org.reveno.atp.api.RepositorySnapshotter;
@@ -26,7 +10,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DefaultSnapshotter implements RepositorySnapshotter {
-	
+	protected static final Logger LOG = LoggerFactory.getLogger(DefaultSnapshotter.class);
+	protected final SnapshotStorage storage;
+	protected final RepositoryDataSerializer[] serializers;
+
+	public DefaultSnapshotter(
+			SnapshotStorage storage,
+			RepositoryDataSerializer... serializers) {
+		this.storage = storage;
+		this.serializers = serializers;
+	}
+
 	@Override
 	public SnapshotIdentifier lastSnapshot() {
 		return storage.getLastSnapshotStore();
@@ -103,17 +97,5 @@ public class DefaultSnapshotter implements RepositorySnapshotter {
 		}
 		return null;
 	}
-
-	public DefaultSnapshotter(
-			SnapshotStorage storage,
-			RepositoryDataSerializer... serializers) {
-		this.storage = storage;
-		this.serializers = serializers;
-	}
-
-	
-	protected final SnapshotStorage storage;
-	protected final RepositoryDataSerializer[] serializers;
-	protected static final Logger LOG = LoggerFactory.getLogger(DefaultSnapshotter.class);
 
 }

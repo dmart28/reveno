@@ -1,19 +1,3 @@
-/** 
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.core.channel;
 
 import org.reveno.atp.core.api.channel.Buffer;
@@ -26,15 +10,15 @@ import java.util.function.Supplier;
 import static org.reveno.atp.utils.UnsafeUtils.destroyDirectBuffer;
 
 public class ChannelBuffer implements Buffer {
-
+	protected static final Logger log = LoggerFactory.getLogger(ChannelBuffer.class);
 	protected Supplier<ByteBuffer> reader;
 	protected Supplier<ByteBuffer> extender;
-
 	protected ByteBuffer buffer;
-
-	public ByteBuffer getBuffer() {
-		return buffer;
-	}
+	protected int sizePosition = -1;
+	protected int writerMark = 0;
+	protected int nextLimitOnAutoextend = 0;
+	protected int startedLimitAfterAutoextend = 0;
+	protected boolean intentionalLimit = false;
 
 	public ChannelBuffer(ByteBuffer buffer) {
 		this.buffer = buffer;
@@ -46,6 +30,10 @@ public class ChannelBuffer implements Buffer {
 		this.buffer = buffer;
 		this.extender = extender;
 		this.reader = reader;
+	}
+
+	public ByteBuffer getBuffer() {
+		return buffer;
 	}
 
 	@Override
@@ -302,12 +290,4 @@ public class ChannelBuffer implements Buffer {
             nextLimitOnAutoextend = 0;
         }
 	}
-
-	protected int sizePosition = -1;
-	protected int writerMark = 0;
-	protected int nextLimitOnAutoextend = 0;
-	protected int startedLimitAfterAutoextend = 0;
-	protected boolean intentionalLimit = false;
-
-	protected static final Logger log = LoggerFactory.getLogger(ChannelBuffer.class);
 }

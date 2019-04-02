@@ -1,19 +1,3 @@
-/** 
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.core.engine.components;
 
 import org.reveno.atp.api.Configuration.ModelType;
@@ -24,16 +8,22 @@ import org.reveno.atp.api.domain.WriteableRepository;
 import org.reveno.atp.api.transaction.EventBus;
 import org.reveno.atp.api.transaction.TransactionContext;
 import org.reveno.atp.core.api.IdGenerator;
-import org.reveno.atp.core.api.SystemInfo;
 import org.reveno.atp.core.disruptor.ProcessorContext;
 import org.reveno.atp.core.engine.WorkflowContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class TransactionExecutor {
+    protected static final Logger log = LoggerFactory.getLogger(TransactionExecutor.class);
+    protected RecordingRepository repository = new RecordingRepository();
+    protected InnerCommandContext commandContext = new InnerCommandContext();
+    protected InnerTransactionContext transactionContext = new InnerTransactionContext();
 
 	public void executeCommands(ProcessorContext c, WorkflowContext services) {
 		List<Object> cmds = c.getCommands();
@@ -55,7 +45,7 @@ public class TransactionExecutor {
 					Object result = services.commandsManager().execute(cmds.get(i), commandContext);
 					repository.enableReadMark();
 					executeTransactions(services, txs, index);
-					if (c.hasResult())
+					if (c.isHasResult())
 						c.commandResult(result);
 					index = txs.size();
 				}
@@ -104,11 +94,6 @@ public class TransactionExecutor {
 			c.accept(i.previous());
 		}
 	}
-	
-	protected RecordingRepository repository = new RecordingRepository();
-	protected InnerCommandContext commandContext = new InnerCommandContext();
-	protected InnerTransactionContext transactionContext = new InnerTransactionContext();
-	protected static final Logger log = LoggerFactory.getLogger(TransactionExecutor.class);
 		
 	protected static class InnerCommandContext implements CommandContext {
 		public Repository repository;

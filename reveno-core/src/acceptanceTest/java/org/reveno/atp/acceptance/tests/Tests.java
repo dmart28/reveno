@@ -1,19 +1,3 @@
-/** 
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.acceptance.tests;
 
 import org.junit.Assert;
@@ -32,16 +16,13 @@ import org.reveno.atp.acceptance.model.Account;
 import org.reveno.atp.acceptance.model.Order.OrderType;
 import org.reveno.atp.acceptance.views.AccountView;
 import org.reveno.atp.acceptance.views.OrderView;
-import org.reveno.atp.api.ChannelOptions;
 import org.reveno.atp.api.Configuration.ModelType;
 import org.reveno.atp.api.Configuration.MutableModelFailover;
 import org.reveno.atp.api.Reveno;
 import org.reveno.atp.api.commands.EmptyResult;
 import org.reveno.atp.api.domain.Repository;
-import org.reveno.atp.core.serialization.DefaultJavaSerializer;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;

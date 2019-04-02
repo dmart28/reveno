@@ -1,19 +1,3 @@
-/** 
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.core.data;
 
 import org.reveno.atp.core.api.Journaler;
@@ -26,6 +10,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 public class DefaultJournaler implements Journaler {
+	protected static final Logger log = LoggerFactory.getLogger(DefaultJournaler.class);
+	protected AtomicReference<Channel> channel = new AtomicReference<>();
+	protected AtomicReference<Channel> oldChannel = new AtomicReference<>();
+	protected volatile Runnable rolledHandler;
+	protected volatile boolean isWriting = false;
 
 	@Override
 	public void writeData(Consumer<Buffer> writer, boolean endOfBatch) {
@@ -100,9 +89,4 @@ public class DefaultJournaler implements Journaler {
 			throw new RuntimeException("Journaler must be in writing mode.");
 	}
 
-	protected AtomicReference<Channel> channel = new AtomicReference<>();
-	protected AtomicReference<Channel> oldChannel = new AtomicReference<>();
-	protected volatile Runnable rolledHandler;
-	protected volatile boolean isWriting = false;
-	protected static final Logger log = LoggerFactory.getLogger(DefaultJournaler.class);
 }

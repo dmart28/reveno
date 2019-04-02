@@ -2,6 +2,7 @@ package org.reveno.atp.core.benchmarks;
 
 import org.openjdk.jmh.annotations.*;
 import org.reveno.atp.api.Configuration;
+import org.reveno.atp.commons.NamedThreadFactory;
 import org.reveno.atp.core.EngineWorkflowContext;
 import org.reveno.atp.core.RevenoConfiguration;
 import org.reveno.atp.core.UnclusteredFailoverManager;
@@ -23,14 +24,13 @@ import org.reveno.atp.core.views.ViewsDefaultStorage;
 import org.reveno.atp.core.views.ViewsManager;
 import org.reveno.atp.core.views.ViewsProcessor;
 
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.SECONDS)
-@Warmup(iterations = 15, time = 1, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
+@Warmup(iterations = 15, time = 1)
+@Measurement(iterations = 10, time = 1)
 public class ViewsMappingBenchmark {
 
     private BenchmarkWorkflowEngine workflowEngine;
@@ -65,7 +65,7 @@ public class ViewsMappingBenchmark {
                         context.transactionCommitBuilder(),
                         Configuration.CpuConsumption.HIGH,
                         512,
-                        Executors.newFixedThreadPool(3)),
+                        new NamedThreadFactory("bt")),
                 context, Configuration.ModelType.IMMUTABLE);
         context.repository().store(1, new Counter(1));
         cmd = new IncrementCounter(1, 1);

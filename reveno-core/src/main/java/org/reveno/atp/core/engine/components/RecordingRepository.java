@@ -1,19 +1,3 @@
-/** 
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.core.engine.components;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
@@ -31,8 +15,10 @@ import java.util.Set;
  * 
  */
 public class RecordingRepository implements WriteableRepository {
-
+	protected static final Object EMPTY = new Object();
 	private WriteableRepository underlyingRepo;
+	protected Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> markedRecords;
+	protected boolean readMarking = true;
 	
 	public RecordingRepository underlying(WriteableRepository repository) {
 		this.underlyingRepo = repository;
@@ -76,7 +62,7 @@ public class RecordingRepository implements WriteableRepository {
 	public RepositoryData getData() {
 		RepositoryData data = underlyingRepo.getData();
 		if (readMarking) {
-			data.data.forEach((k, v) -> markedRecords.get(k).putAll(v));
+			data.getData().forEach((k, v) -> markedRecords.get(k).putAll(v));
 		}
 		return data;
 	}
@@ -123,9 +109,5 @@ public class RecordingRepository implements WriteableRepository {
 	public Set<Class<?>> getEntityTypes() {
 		return underlyingRepo.getEntityTypes();
 	}
-	
-	protected Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> markedRecords;
-	protected boolean readMarking = true;
-	protected static final Object EMPTY = new Object();
 	
 }

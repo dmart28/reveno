@@ -1,19 +1,3 @@
-/** 
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.core.engine;
 
 import org.reveno.atp.api.Configuration.ModelType;
@@ -35,7 +19,13 @@ import java.util.function.Supplier;
 
 @SuppressWarnings("unchecked")
 public class WorkflowEngine {
-	
+	protected volatile long lastTransactionId;
+	protected volatile boolean started = false;
+	protected ModelType modelType;
+	protected WorkflowContext context;
+	protected PipeProcessorFailoverWrapper inputProcessor;
+	protected final InputHandlers handlers;
+
 	public WorkflowEngine(TransactionPipeProcessor<ProcessorContext> inputProcessor, WorkflowContext context,
 			ModelType modelType) {
 		this.modelType = modelType;
@@ -61,6 +51,7 @@ public class WorkflowEngine {
 			context.journalsManager().roll(getLastTransactionId());
 		});
 		context.failoverManager().onReplicationMessage(inputProcessor::executeFailover);
+
 
 		started = true;
 	}
@@ -105,13 +96,6 @@ public class WorkflowEngine {
 		}
 	}
 
-	protected volatile long lastTransactionId;
-	protected volatile boolean started = false;
-	protected ModelType modelType;
-	protected WorkflowContext context;
-	protected PipeProcessorFailoverWrapper inputProcessor;
-	protected final InputHandlers handlers;
-
 	protected class PipeProcessorFailoverWrapper implements TransactionPipeProcessor<ProcessorContext> {
 
 		@Override
@@ -122,14 +106,6 @@ public class WorkflowEngine {
 		@Override
 		public <R> CompletableFuture<Result<R>> execute(Object command) {
 			return execute(() -> pipe.execute(command));
-		}
-
-		public void executeFailover(List<Object> commands) {
-			if (!failoverManager().isMaster()) {
-				pipe.process((c, f) -> {
-					c.reset().addCommands(commands).replicated().future(f);
-				});
-			}
 		}
 
 		@Override
@@ -172,6 +148,14 @@ public class WorkflowEngine {
 			return pipe.pipe(handler);
 		}
 
+		public void executeFailover(List<Object> commands) {
+			if (!failoverManager().isMaster()) {
+				pipe.process((c, f) -> {
+					c.reset().addCommands(commands).replicated().future(f);
+				});
+			}
+		}
+
 		protected <R> R execute(Supplier<R> r) {
 			if (!failoverManager().isBlocked() && failoverManager().isMaster() && started) {
 				return r.get();
@@ -187,6 +171,7 @@ public class WorkflowEngine {
 
 		protected FailoverManager failoverManager() {
 			return context.failoverManager();
+
 		}
 
 		public PipeProcessorFailoverWrapper(TransactionPipeProcessor<ProcessorContext> pipe) {
