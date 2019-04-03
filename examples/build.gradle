@@ -1,13 +1,13 @@
 subprojects {
-	apply plugin: "java"
-	apply plugin: "idea"
+    apply plugin: "java"
+    apply plugin: "idea"
 
-	dependencies {
-		compile project(":reveno-core")
-	}
+    dependencies {
+        compile project(":reveno-core")
+    }
 
-	javadoc {
-		enabled = false
-	}
+    javadoc {
+        enabled = false
+    }
 }
 

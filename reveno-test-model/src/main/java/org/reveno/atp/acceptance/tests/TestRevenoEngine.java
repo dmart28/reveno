@@ -7,21 +7,21 @@ import java.io.File;
 
 public class TestRevenoEngine extends Engine {
 
-	public TestRevenoEngine(File baseDir) {
-		super(baseDir);
-	}
-	
-	public synchronized void roll(Runnable r) {
-		journalsManager.roll(0, r);
-	}
-	
-	public void syncAll() {
-		workflowEngine.getPipe().sync();
-		eventPublisher.getPipe().sync();
-	}
+    public TestRevenoEngine(File baseDir) {
+        super(baseDir);
+    }
 
-	public JournalsStorage getJournalsStorage() {
-		return journalsStorage;
-	}
+    public synchronized void roll(Runnable r) {
+        journalsManager.roll(0, r);
+    }
+
+    public void syncAll() {
+        workflowEngine.getPipe().sync();
+        eventPublisher.getPipe().sync();
+    }
+
+    public JournalsStorage getJournalsStorage() {
+        return journalsStorage;
+    }
 
 }

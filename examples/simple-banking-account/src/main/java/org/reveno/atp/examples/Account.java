@@ -8,10 +8,6 @@ public class Account {
     public final long balance;
     public final Currency currency;
 
-    public Account add(long amount) {
-        return new Account(name, balance + amount, currency);
-    }
-
     public Account(String name, long initialBalance) {
         this(name, initialBalance, Currency.getInstance("USD"));
     }
@@ -20,6 +16,10 @@ public class Account {
         this.name = name;
         this.balance = initialBalance;
         this.currency = currency;
+    }
+
+    public Account add(long amount) {
+        return new Account(name, balance + amount, currency);
     }
 
 }

@@ -11,10 +11,10 @@ import java.util.concurrent.CompletableFuture;
 
 public interface TransactionPipeProcessor<T extends Destroyable> extends PipeProcessor<T> {
 
-	CompletableFuture<EmptyResult> process(List<Object> commands);
-	
-	<R> CompletableFuture<Result<R>> execute(Object command);
-	
-	void executeRestore(RestoreableEventBus eventBus, TransactionCommitInfo transaction);
-	
+    CompletableFuture<EmptyResult> process(List<Object> commands);
+
+    <R> CompletableFuture<Result<R>> execute(Object command);
+
+    void executeRestore(RestoreableEventBus eventBus, TransactionCommitInfo transaction);
+
 }

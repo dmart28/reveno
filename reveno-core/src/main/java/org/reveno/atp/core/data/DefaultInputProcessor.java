@@ -16,44 +16,41 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class DefaultInputProcessor implements InputProcessor, Closeable {
-	protected static final Logger log = LoggerFactory.getLogger(DefaultInputProcessor.class);
+    protected static final Logger log = LoggerFactory.getLogger(DefaultInputProcessor.class);
 
-	protected JournalsStorage storage;
+    protected JournalsStorage storage;
 
-	@Override
-	public void process(final long fromVersion, final Consumer<Buffer> consumer, JournalType type) {
-		List<Channel> chs = Arrays.stream(stores(fromVersion)).map((js) -> type == JournalType.EVENTS ?
-				js.getEventsCommitsAddress() : js.getTransactionCommitsAddress())
-				.map(storage::channel).collect(Collectors.toList());
-		ChannelReader bufferReader = new ChannelReader(chs);
-		bufferReader.iterator().forEachRemaining(b -> {
-			try {
-				while (b.isAvailable()) {
-					consumer.accept(b);
-				}
-			}
-			catch (BufferOutOfBoundsException ignored) {
-				log.info("End of volume was reached ({})", b.readerPosition());
-			}
-			catch (Exception e) {
-				log.error(e.getMessage(), e);
-			}
-			finally {
-				if (b != null)
-					b.release();
-			}
-		});
-	}
-	
-	@Override 
-	public void close() {
-	}
-	
-	public DefaultInputProcessor(JournalsStorage storage) {
-		this.storage = storage;
-	}
+    public DefaultInputProcessor(JournalsStorage storage) {
+        this.storage = storage;
+    }
 
-	protected JournalStore[] stores(long fromVersion) {
-		return storage.getStoresAfterVersion(fromVersion);
-	}
+    @Override
+    public void process(final long fromVersion, final Consumer<Buffer> consumer, JournalType type) {
+        List<Channel> chs = Arrays.stream(stores(fromVersion)).map((js) -> type == JournalType.EVENTS ?
+                js.getEventsCommitsAddress() : js.getTransactionCommitsAddress())
+                .map(storage::channel).collect(Collectors.toList());
+        ChannelReader bufferReader = new ChannelReader(chs);
+        bufferReader.iterator().forEachRemaining(b -> {
+            try {
+                while (b.isAvailable()) {
+                    consumer.accept(b);
+                }
+            } catch (BufferOutOfBoundsException ignored) {
+                log.info("End of volume was reached ({})", b.readerPosition());
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            } finally {
+                if (b != null)
+                    b.release();
+            }
+        });
+    }
+
+    @Override
+    public void close() {
+    }
+
+    protected JournalStore[] stores(long fromVersion) {
+        return storage.getStoresAfterVersion(fromVersion);
+    }
 }

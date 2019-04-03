@@ -79,7 +79,7 @@ public class ZeroCopyLinkBuffer extends LinkBuffer {
         buffer.writeByte((byte) ((int) (value >>> 32)));
         buffer.writeByte((byte) ((int) (value >>> 40)));
         buffer.writeByte((byte) ((int) (value >>> 48)));
-        buffer.writeByte((byte)((int)(value >>> 56)));
+        buffer.writeByte((byte) ((int) (value >>> 56)));
         return this;
     }
 
@@ -88,17 +88,13 @@ public class ZeroCopyLinkBuffer extends LinkBuffer {
         // TODO too costly operation
         byte[] buf = new byte[5];
         int locPtr = 0;
-        while (true)
-        {
-            if ((value & ~0x7F) == 0)
-            {
+        while (true) {
+            if ((value & ~0x7F) == 0) {
                 buf[locPtr++] = (byte) value;
                 // thing;
                 buffer.writeBytes(buf, 0, locPtr);
                 return this;
-            }
-            else
-            {
+            } else {
                 buf[locPtr++] = (byte) ((value & 0x7F) | 0x80);
                 value >>>= 7;
             }
@@ -111,16 +107,12 @@ public class ZeroCopyLinkBuffer extends LinkBuffer {
         byte[] buf = new byte[10];
         int locPtr = 0;
 
-        while (true)
-        {
-            if ((value & ~0x7FL) == 0)
-            {
+        while (true) {
+            if ((value & ~0x7FL) == 0) {
                 buf[locPtr++] = (byte) value;
                 buffer.writeBytes(buf, 0, locPtr);
                 return this;
-            }
-            else
-            {
+            } else {
                 buf[locPtr++] = (byte) (((int) value & 0x7F) | 0x80);
                 value >>>= 7;
             }

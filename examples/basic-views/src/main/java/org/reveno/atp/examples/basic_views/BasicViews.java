@@ -14,17 +14,16 @@ import java.util.List;
 
 public class BasicViews {
 
-    protected static final Logger LOG = LoggerFactory.getLogger(BasicViews.class);
-
     public static final long PRECISION = 10000;
     public static final BigDecimal PRECISION_BD = new BigDecimal(PRECISION);
+    protected static final Logger LOG = LoggerFactory.getLogger(BasicViews.class);
 
     public static void main(String[] args) throws Exception {
         Reveno reveno = new Engine(args[0]);
         reveno.config().mutableModel();
 
         reveno.domain().transaction("createTrader", (tx, ctx) ->
-            ctx.repo().store(tx.id(), new Trader(tx.id()))
+                ctx.repo().store(tx.id(), new Trader(tx.id()))
         ).uniqueIdFor(Trader.class).command();
         reveno.domain().transaction("createOrder", (tx, ctx) -> {
             ctx.repo().remap(Trader.class, tx.arg("trId"), (id, t) -> t.orders.add(tx.id()));
@@ -39,7 +38,7 @@ public class BasicViews {
         reveno.startup();
 
         long traderId = reveno.executeSync("createTrader");
-        long orderId = reveno.executeSync("createOrder", MapUtils.map("trId", traderId, "size", 1000L, "price", (long)(3.14 * PRECISION)));
+        long orderId = reveno.executeSync("createOrder", MapUtils.map("trId", traderId, "size", 1000L, "price", (long) (3.14 * PRECISION)));
 
         TraderView trader = reveno.query().find(TraderView.class, traderId);
         LOG.info("Trader: {}", trader);

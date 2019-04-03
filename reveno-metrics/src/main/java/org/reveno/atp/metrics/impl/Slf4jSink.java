@@ -8,25 +8,24 @@ import java.util.Date;
 
 public class Slf4jSink implements Sink {
 
-	@Override
-	public void init() {
-	}
+    protected static Logger LOG = LoggerFactory.getLogger(Slf4jSink.class);
 
-	@Override
-	public void send(String name, String value, long timestamp) {
-		LOG.info("[" + new Date(timestamp * 1000) + "] " + name + ": " + value);
-	}
+    @Override
+    public void init() {
+    }
 
-	@Override
-	public void close() {
-	}
+    @Override
+    public void send(String name, String value, long timestamp) {
+        LOG.info("[" + new Date(timestamp * 1000) + "] " + name + ": " + value);
+    }
 
-	@Override
-	public boolean isAvailable() {
-		return true;
-	}
+    @Override
+    public void close() {
+    }
 
-	
-	protected static Logger LOG = LoggerFactory.getLogger(Slf4jSink.class);
-	
+    @Override
+    public boolean isAvailable() {
+        return true;
+    }
+
 }

@@ -8,7 +8,7 @@ public class MathUtils {
             if (Math.pow(2, ++i) > size)
                 break;
         }
-        return (int)Math.pow(2, i);
+        return (int) Math.pow(2, i);
     }
 
 }

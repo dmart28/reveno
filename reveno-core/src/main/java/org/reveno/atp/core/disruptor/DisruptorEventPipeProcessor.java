@@ -9,54 +9,54 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadFactory;
 
 public class DisruptorEventPipeProcessor extends DisruptorPipeProcessor<Event> {
-	protected static final EventFactory<Event> eventFactory = Event::new;
-	protected final CpuConsumption cpuConsumption;
-	protected final int bufferSize;
-	protected final ThreadFactory threadFactory;
+    protected static final EventFactory<Event> eventFactory = Event::new;
+    protected final CpuConsumption cpuConsumption;
+    protected final int bufferSize;
+    protected final ThreadFactory threadFactory;
 
-	public DisruptorEventPipeProcessor(CpuConsumption cpuConsumption, int bufferSize, ThreadFactory threadFactory) {
-		this.cpuConsumption = cpuConsumption;
-		this.bufferSize = bufferSize;
-		this.threadFactory = threadFactory;
-	}
+    public DisruptorEventPipeProcessor(CpuConsumption cpuConsumption, int bufferSize, ThreadFactory threadFactory) {
+        this.cpuConsumption = cpuConsumption;
+        this.bufferSize = bufferSize;
+        this.threadFactory = threadFactory;
+    }
 
-	@Override
-	public void sync() {
-		CompletableFuture<?> res = process((e,f) -> e.reset().flag(EventPublisher.SYNC_FLAG).syncFuture(f));
-		try {
-			res.get();
-		} catch (Throwable t) {
-			log.error("sync", t);
-		}
-	}
+    @Override
+    public void sync() {
+        CompletableFuture<?> res = process((e, f) -> e.reset().flag(EventPublisher.SYNC_FLAG).syncFuture(f));
+        try {
+            res.get();
+        } catch (Throwable t) {
+            log.error("sync", t);
+        }
+    }
 
-	@Override
-	public CpuConsumption cpuConsumption() {
-		return cpuConsumption;
-	}
-	
-	@Override
-	public int bufferSize() {
-		return bufferSize;
-	}
+    @Override
+    public CpuConsumption cpuConsumption() {
+        return cpuConsumption;
+    }
 
-	@Override
-	boolean singleProducer() {
-		return false;
-	}
+    @Override
+    public int bufferSize() {
+        return bufferSize;
+    }
 
-	@Override
-	public EventFactory<Event> eventFactory() {
-		return eventFactory;
-	}
+    @Override
+    boolean singleProducer() {
+        return false;
+    }
 
-	@Override
-	public ThreadFactory threadFactory() {
-		return threadFactory;
-	}
+    @Override
+    public EventFactory<Event> eventFactory() {
+        return eventFactory;
+    }
 
-	@Override
-	void startupInterceptor() {
-	}
-	
+    @Override
+    public ThreadFactory threadFactory() {
+        return threadFactory;
+    }
+
+    @Override
+    void startupInterceptor() {
+    }
+
 }

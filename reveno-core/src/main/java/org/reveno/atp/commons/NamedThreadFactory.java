@@ -34,8 +34,8 @@ public class NamedThreadFactory implements ThreadFactory {
      * of <code>prefix</code>.
      *
      * @param prefix Thread name prefix. Never use a value of "pool" as in that
-     *      case you might as well have used
-     *      {@link java.util.concurrent.Executors#defaultThreadFactory()}.
+     *               case you might as well have used
+     *               {@link java.util.concurrent.Executors#defaultThreadFactory()}.
      */
     public NamedThreadFactory(String prefix) {
         SecurityManager s = System.getSecurityManager();

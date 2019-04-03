@@ -4,16 +4,16 @@ import org.reveno.atp.api.domain.Repository;
 
 public interface CommandContext {
 
-	Repository repo();
-	
-	long id(Class<?> entityType);
+    Repository repo();
 
-	CommandContext executeTxAction(Object transactionAction);
+    long id(Class<?> entityType);
 
-	@Deprecated
+    CommandContext executeTxAction(Object transactionAction);
+
+    @Deprecated
 	/*
 	  Use {@link #executeTxAction(Object)} instead.
 	 */
-	CommandContext executeTransaction(Object transactionAction);
-	
+    CommandContext executeTransaction(Object transactionAction);
+
 }

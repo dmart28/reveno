@@ -8,7 +8,7 @@ import java.io.OutputStream;
  * Currently, it's usage is limited only for zero-copy with ObjectOutputStream.
  */
 public class RevenoBufferOutputStream extends OutputStream {
-    protected final Buffer buffer ;
+    protected final Buffer buffer;
 
     public RevenoBufferOutputStream(Buffer buffer) {
         this.buffer = buffer;

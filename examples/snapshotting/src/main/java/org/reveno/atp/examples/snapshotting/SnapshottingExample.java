@@ -77,7 +77,7 @@ public class SnapshottingExample {
     /**
      * Since this model classes don't implement Serializable interface, they will be
      * snapshotted using Protostuff serializer, not Java default.
-     *
+     * <p>
      * You can make it Serializable and check the result by yourself.
      */
     public static class Trader {

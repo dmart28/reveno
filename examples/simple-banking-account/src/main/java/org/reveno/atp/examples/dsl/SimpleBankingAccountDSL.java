@@ -11,6 +11,8 @@ import static org.reveno.atp.utils.MapUtils.map;
 
 public class SimpleBankingAccountDSL {
 
+    protected static final Logger LOG = LoggerFactory.getLogger(SimpleBankingAccountDSL.class);
+
     public static Reveno init(String folder) {
         Reveno reveno = new Engine(folder);
         reveno.domain()
@@ -48,7 +50,5 @@ public class SimpleBankingAccountDSL {
 
         reveno.shutdown();
     }
-
-    protected static final Logger LOG = LoggerFactory.getLogger(SimpleBankingAccountDSL.class);
 
 }

@@ -29,119 +29,118 @@ public class DefaultIdGenerator implements IdGenerator, BiConsumer<DefaultIdGene
         crcNames.defaultReturnValue(-1L);
     }
 
-	@Override
-	public void context(CommandContext context) {
-		this.context = context;
-	}
+    @Override
+    public void context(CommandContext context) {
+        this.context = context;
+    }
 
-	@Override
-	public long next(Class<?> entityType) {
-		registerIfRequired(entityType);
+    @Override
+    public long next(Class<?> entityType) {
+        registerIfRequired(entityType);
 
-		byte[] sha = null;
-		long crc = crcNames.getLong(entityType);
-		if (crc == -1) {
-			crc = 0;
-			sha = sha1Names.get(entityType);
-		}
-		IdsBundle bundle = context.repo().get(IdsBundle.class, 0L);
-		long lastId = lastIds.getOrDefault(entityType, 0L);
-		long id = lastId + (bundle != null ? bundle.get(sha, crc) + 1 : 1);
-		lastIds.put(entityType, lastId + 1);
+        byte[] sha = null;
+        long crc = crcNames.getLong(entityType);
+        if (crc == -1) {
+            crc = 0;
+            sha = sha1Names.get(entityType);
+        }
+        IdsBundle bundle = context.repo().get(IdsBundle.class, 0L);
+        long lastId = lastIds.getOrDefault(entityType, 0L);
+        long id = lastId + (bundle != null ? bundle.get(sha, crc) + 1 : 1);
+        lastIds.put(entityType, lastId + 1);
 
-		context.executeTxAction(new NextIdTransaction(null, id, crc, sha));
-		return id;
-	}
-	
-	@Override
-	public void accept(DefaultIdGenerator.NextIdTransaction t, TransactionContext u) {
-		if (lastIds.size() > 0)
-			lastIds.clear();
-		u.repo().merge(0, IdsBundle.class,
-				() -> new IdsBundle().store(t, t.id),
-				(id, b) -> b.store(t, t.id));
-	}
+        context.executeTxAction(new NextIdTransaction(null, id, crc, sha));
+        return id;
+    }
 
-	protected void registerIfRequired(Class<?> entityType) {
-		if (!sha1Names.containsKey(entityType)) {
-			byte[] shaKey = sha1(entityType.getName());
-			long crc = crc32(entityType.getName());
-			if (!registeredCrc.containsKey(crc)) {
-				registeredCrc.put(crc, entityType);
-				crcNames.put(entityType, crc);
-			}
-			sha1Names.put(entityType, shaKey);
-		}
-	}
-	
-	public static class IdsBundle implements Serializable {
-		private static final long serialVersionUID = 1L;
+    @Override
+    public void accept(DefaultIdGenerator.NextIdTransaction t, TransactionContext u) {
+        if (lastIds.size() > 0)
+            lastIds.clear();
+        u.repo().merge(0, IdsBundle.class,
+                () -> new IdsBundle().store(t, t.id),
+                (id, b) -> b.store(t, t.id));
+    }
 
-		public long get(long crc) {
-			return crcIds.getOrDefault(crc, 0L);
-		}
+    protected void registerIfRequired(Class<?> entityType) {
+        if (!sha1Names.containsKey(entityType)) {
+            byte[] shaKey = sha1(entityType.getName());
+            long crc = crc32(entityType.getName());
+            if (!registeredCrc.containsKey(crc)) {
+                registeredCrc.put(crc, entityType);
+                crcNames.put(entityType, crc);
+            }
+            sha1Names.put(entityType, shaKey);
+        }
+    }
 
-		public long get(byte[] sha) {
-			Long l;
-			return (l = shaIds.get(sha)) == null ? 0 : l;
-		}
+    public static class IdsBundle implements Serializable {
+        private static final long serialVersionUID = 1L;
+        protected Long2LongOpenHashMap crcIds = new Long2LongOpenHashMap();
+        protected HashMap<ByteArrayWrapper, Long> shaIds = new HashMap<>();
 
-		public long get(byte[] sha, long crc) {
-			if (sha != null) {
-				return get(sha);
-			} else {
-				return get(crc);
-			}
-		}
-		
-		public IdsBundle store(long crc, long id) {
-			crcIds.put(crc, id);
-			return this;
-		}
+        public long get(long crc) {
+            return crcIds.getOrDefault(crc, 0L);
+        }
 
-		/*
-			Quite not GC friendly, but SHA1 would be used only on CRC32 collision, hence - VERY rarely
-		 */
-		public IdsBundle store(byte[] sha, long id) {
-			shaIds.put(new ByteArrayWrapper(sha), id);
-			return this;
-		}
+        public long get(byte[] sha) {
+            Long l;
+            return (l = shaIds.get(sha)) == null ? 0 : l;
+        }
 
-		public IdsBundle store(NextIdTransaction t, long id) {
-			if (t.entityType != null) {
-				// for compatibility only, not used in runtime
-				byte[] shaKey = sha1(t.entityType.getName());
-				long crc = crc32(t.entityType.getName());
-				shaIds.put(new ByteArrayWrapper(shaKey), id);
-				crcIds.put(crc, id);
-				return this;
-			} else if (t.typeSha1 != null) {
-				return store(t.typeSha1, id);
-			} else {
-				return store(t.typeCrc, id);
-			}
-		}
+        public long get(byte[] sha, long crc) {
+            if (sha != null) {
+                return get(sha);
+            } else {
+                return get(crc);
+            }
+        }
 
-		protected Long2LongOpenHashMap crcIds = new Long2LongOpenHashMap();
-		protected HashMap<ByteArrayWrapper, Long> shaIds = new HashMap<>();
-	}
-	
-	public static class NextIdTransaction implements Serializable {
-		//@Deprecated
-		public Class<?> entityType;
-		public long id;
-		public long typeCrc;
-		public byte[] typeSha1;
-		
-		public NextIdTransaction(Class<?> entityType, long id, long typeCrc, byte[] typeSha1) {
-			this.entityType = entityType;
-			this.id = id;
-			this.typeCrc = typeCrc;
-			this.typeSha1 = typeSha1;
-		}
+        public IdsBundle store(long crc, long id) {
+            crcIds.put(crc, id);
+            return this;
+        }
 
-		public NextIdTransaction() {
-		}
-	}
+        /*
+            Quite not GC friendly, but SHA1 would be used only on CRC32 collision, hence - VERY rarely
+         */
+        public IdsBundle store(byte[] sha, long id) {
+            shaIds.put(new ByteArrayWrapper(sha), id);
+            return this;
+        }
+
+        public IdsBundle store(NextIdTransaction t, long id) {
+            if (t.entityType != null) {
+                // for compatibility only, not used in runtime
+                byte[] shaKey = sha1(t.entityType.getName());
+                long crc = crc32(t.entityType.getName());
+                shaIds.put(new ByteArrayWrapper(shaKey), id);
+                crcIds.put(crc, id);
+                return this;
+            } else if (t.typeSha1 != null) {
+                return store(t.typeSha1, id);
+            } else {
+                return store(t.typeCrc, id);
+            }
+        }
+    }
+
+    public static class NextIdTransaction implements Serializable {
+        //@Deprecated
+        public Class<?> entityType;
+        public long id;
+        public long typeCrc;
+        public byte[] typeSha1;
+
+        public NextIdTransaction(Class<?> entityType, long id, long typeCrc, byte[] typeSha1) {
+            this.entityType = entityType;
+            this.id = id;
+            this.typeCrc = typeCrc;
+            this.typeSha1 = typeSha1;
+        }
+
+        public NextIdTransaction() {
+        }
+    }
 
 }

@@ -36,6 +36,13 @@ public class ViewsMappingBenchmark {
     private BenchmarkWorkflowEngine workflowEngine;
     private IncrementCounter cmd;
 
+    public static void main(String[] args) throws Exception {
+        ViewsMappingBenchmark b = new ViewsMappingBenchmark();
+        b.init();
+        b.benchmark();
+        b.tearDown();
+    }
+
     @Setup
     public void init() throws Exception {
         EngineWorkflowContext context = new EngineWorkflowContext();
@@ -116,13 +123,6 @@ public class ViewsMappingBenchmark {
             this.amount = amount;
             this.id = id;
         }
-    }
-
-    public static void main(String[] args) throws Exception {
-        ViewsMappingBenchmark b = new ViewsMappingBenchmark();
-        b.init();
-        b.benchmark();
-        b.tearDown();
     }
 
 }

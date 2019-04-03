@@ -7,7 +7,8 @@ public class PreallocatedMultipleUnbufferedIOTest extends BasePreallocatedTest {
 
     @Test
     public void test() throws Exception {
-        testPreallocatedJournals(EXTRA_SMALL_FILE, ChannelOptions.UNBUFFERED_IO, r -> {});
+        testPreallocatedJournals(EXTRA_SMALL_FILE, ChannelOptions.UNBUFFERED_IO, r -> {
+        });
     }
 
 }

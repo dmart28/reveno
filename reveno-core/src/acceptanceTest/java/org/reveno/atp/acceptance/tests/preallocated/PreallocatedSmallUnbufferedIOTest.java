@@ -12,7 +12,8 @@ public class PreallocatedSmallUnbufferedIOTest extends BasePreallocatedTest {
 
     @Test
     public void testJavaSerializer() throws Exception {
-        testPreallocatedJournals(SMALL_FILE, ChannelOptions.UNBUFFERED_IO, r -> {}, true);
+        testPreallocatedJournals(SMALL_FILE, ChannelOptions.UNBUFFERED_IO, r -> {
+        }, true);
     }
 
 }

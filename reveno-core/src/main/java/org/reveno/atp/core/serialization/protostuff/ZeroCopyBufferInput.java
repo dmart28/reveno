@@ -11,10 +11,10 @@ import java.nio.ByteBuffer;
  * parts of it is kindly taken from Protostuff source code.
  */
 public final class ZeroCopyBufferInput implements Input {
+    public final boolean decodeNestedMessageAsGroup;
     private final Buffer buffer;
     private int lastTag = 0;
     private int packedLimit = 0;
-    public final boolean decodeNestedMessageAsGroup;
 
     public ZeroCopyBufferInput(Buffer buffer, boolean protostuffMessage) {
         this.buffer = buffer;
@@ -138,7 +138,7 @@ public final class ZeroCopyBufferInput implements Input {
                 throw new ProtobufException("CodedInput encountered an embedded string or bytes that misreported its size.");
             }
 
-            this.packedLimit = (int)this.buffer.readerPosition() + length;
+            this.packedLimit = (int) this.buffer.readerPosition() + length;
         }
 
     }

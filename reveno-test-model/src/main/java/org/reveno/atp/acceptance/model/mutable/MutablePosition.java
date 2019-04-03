@@ -9,66 +9,65 @@ import java.util.List;
 
 public class MutablePosition implements Position {
 
-	private final long id;
-	private final String symbol;
-	private final long accountId;
-	private ArrayList<Fill> fills = new ArrayList<>();
-	
-	public long id() {
-		return id;
-	}
-	
-	public String symbol() {
-		return symbol;
-	}
-	
-	public long accountId() {
-		return accountId;
-	}
-	
-	public List<Fill> fills() {
-		return fills;
-	}
-	
-	public Position addFill(Fill fill) {
-		this.fills.add(fill);
-		return this;
-	}
-	
-	public Position addFills(Collection<Fill> fills) {
-		this.fills.addAll(fills);
-		return this;
-	}
-	
-	public boolean buy() {
-		return sum() > 0;
-	}
-	
-	public boolean isComplete() {
-		return sum() == 0L;
-	}
+    public static final PositionFactory FACTORY = new PositionFactory() {
+        @Override
+        public Position create(long id, String symbol, long accountId, Fill fill) {
+            return new MutablePosition(id, symbol, accountId, fill);
+        }
+    };
+    private final long id;
+    private final String symbol;
+    private final long accountId;
+    private ArrayList<Fill> fills = new ArrayList<>();
 
-	public long sum() {
-		return fills.stream().mapToLong(f -> f.size()).sum();
-	}
-	
-	public MutablePosition(long id, String symbol, long accountId, Fill fill) {
-		this.id = id;
-		this.symbol = symbol;
-		this.accountId = accountId;
-		this.fills.add(fill);
-	}
+    public MutablePosition(long id, String symbol, long accountId, Fill fill) {
+        this.id = id;
+        this.symbol = symbol;
+        this.accountId = accountId;
+        this.fills.add(fill);
+    }
 
-	@Override
-	public boolean isImmutable() {
-		return false;
-	}
-	
-	public static final PositionFactory FACTORY = new PositionFactory() {
-		@Override
-		public Position create(long id, String symbol, long accountId, Fill fill) {
-			return new MutablePosition(id, symbol, accountId, fill);
-		}
-	};
-	
+    public long id() {
+        return id;
+    }
+
+    public String symbol() {
+        return symbol;
+    }
+
+    public long accountId() {
+        return accountId;
+    }
+
+    public List<Fill> fills() {
+        return fills;
+    }
+
+    public Position addFill(Fill fill) {
+        this.fills.add(fill);
+        return this;
+    }
+
+    public Position addFills(Collection<Fill> fills) {
+        this.fills.addAll(fills);
+        return this;
+    }
+
+    public boolean buy() {
+        return sum() > 0;
+    }
+
+    public boolean isComplete() {
+        return sum() == 0L;
+    }
+
+    public long sum() {
+        return fills.stream().mapToLong(f -> f.size()).sum();
+    }
+
+    @Override
+    public boolean isImmutable() {
+        return false;
+    }
+
 }

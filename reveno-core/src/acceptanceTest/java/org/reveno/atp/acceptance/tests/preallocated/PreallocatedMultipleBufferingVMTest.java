@@ -7,7 +7,8 @@ public class PreallocatedMultipleBufferingVMTest extends BasePreallocatedTest {
 
     @Test
     public void test() throws Exception {
-        testPreallocatedJournals(EXTRA_SMALL_FILE, ChannelOptions.BUFFERING_VM, r -> {});
+        testPreallocatedJournals(EXTRA_SMALL_FILE, ChannelOptions.BUFFERING_VM, r -> {
+        });
     }
 
 }

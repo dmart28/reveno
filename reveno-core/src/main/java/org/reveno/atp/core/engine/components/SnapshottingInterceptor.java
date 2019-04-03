@@ -22,92 +22,92 @@ import java.util.List;
 import java.util.concurrent.*;
 
 public class SnapshottingInterceptor implements TransactionInterceptor {
-	protected static final Logger LOG = LoggerFactory.getLogger(SnapshottingInterceptor.class);
-	public static final long SNAPSHOTTING_FLAG = 0x345;
-	protected RevenoConfiguration configuration;
-	protected SnapshottersManager snapshotsManager;
-	protected JournalsStorage journalsStorage;
-	protected SnapshotStorage snapshotStorage;
-	protected JournalsManager journalsManager;
-	protected final ExecutorService executor = Executors.newSingleThreadExecutor();
-	protected long counter = 1L;
-	protected NonBlockingHashMapLong<SnapshotIdentifier[]> snapshots = new NonBlockingHashMapLong<>();
-	protected NonBlockingHashMapLong<Future<?>> futures = new NonBlockingHashMapLong<>();
+    public static final long SNAPSHOTTING_FLAG = 0x345;
+    protected static final Logger LOG = LoggerFactory.getLogger(SnapshottingInterceptor.class);
+    protected final ExecutorService executor = Executors.newSingleThreadExecutor();
+    protected RevenoConfiguration configuration;
+    protected SnapshottersManager snapshotsManager;
+    protected JournalsStorage journalsStorage;
+    protected SnapshotStorage snapshotStorage;
+    protected JournalsManager journalsManager;
+    protected long counter = 1L;
+    protected NonBlockingHashMapLong<SnapshotIdentifier[]> snapshots = new NonBlockingHashMapLong<>();
+    protected NonBlockingHashMapLong<Future<?>> futures = new NonBlockingHashMapLong<>();
 
-	@Override
-	public void intercept(long transactionId, long time, long systemFlag, WriteableRepository repository, TransactionStage stage) {
-		if (stage == TransactionStage.TRANSACTION) {
-			if ((systemFlag & SNAPSHOTTING_FLAG) == SNAPSHOTTING_FLAG ||
-					(configuration.revenoSnapshotting().every() > 0 && counter++ % configuration.revenoSnapshotting().every() == 0)) {
-				asyncSnapshot(repository.getData(), transactionId);
-				if (configuration.modelType() == Configuration.ModelType.MUTABLE) {
-					try {
-						futures.remove(transactionId).get();
-					} catch (InterruptedException | ExecutionException ignored) {
-					}
-				}
-			}
-		} else if (stage == TransactionStage.JOURNALING && snapshots.containsKey(transactionId)) {
-			if (configuration.modelType() != Configuration.ModelType.MUTABLE) {
-				try {
-					futures.remove(transactionId).get();
-				} catch (InterruptedException | ExecutionException e) {
-					return;
-				}
-			}
-			try {
-				SnapshotIdentifier[] ids = snapshots.remove(transactionId);
-				final List<RepositorySnapshotter> snaps = snapshotsManager.getAll();
-				final long lastJournalVersion = journalsStorage.getLastStoreVersion();
-				for (int i = 0; i < ids.length; i++) {
-					snaps.get(i).commit(lastJournalVersion, ids[i]);
-				}
-			} finally {
-				journalsManager.roll(transactionId);
-			}
-		}
-	}
-	
-	@Override
-	public void destroy() {
-		if (!executor.isShutdown()) {
-			executor.shutdown();
-			try {
-				executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-			} catch (InterruptedException e) {
-				LOG.error(e.getMessage(), e);
-			}
-		}
-	}
+    public SnapshottingInterceptor(RevenoConfiguration configuration,
+                                   SnapshottersManager snapshotsManager, SnapshotStorage snapshotStorage,
+                                   JournalsStorage journalsStorage, JournalsManager journalsManager) {
+        this.configuration = configuration;
+        this.snapshotsManager = snapshotsManager;
+        this.journalsManager = journalsManager;
+        this.journalsStorage = journalsStorage;
+        this.snapshotStorage = snapshotStorage;
+    }
 
-	private void asyncSnapshot(RepositoryData data, long transactionId) {
-		data.getData().computeIfAbsent(SystemInfo.class, k -> new HashMap<>()).put(0L, new SystemInfo(transactionId));
-		final List<RepositorySnapshotter> snaps = snapshotsManager.getAll();
-		final SnapshotIdentifier[] ids = new SnapshotIdentifier[snaps.size()];
+    @Override
+    public void intercept(long transactionId, long time, long systemFlag, WriteableRepository repository, TransactionStage stage) {
+        if (stage == TransactionStage.TRANSACTION) {
+            if ((systemFlag & SNAPSHOTTING_FLAG) == SNAPSHOTTING_FLAG ||
+                    (configuration.revenoSnapshotting().every() > 0 && counter++ % configuration.revenoSnapshotting().every() == 0)) {
+                asyncSnapshot(repository.getData(), transactionId);
+                if (configuration.modelType() == Configuration.ModelType.MUTABLE) {
+                    try {
+                        futures.remove(transactionId).get();
+                    } catch (InterruptedException | ExecutionException ignored) {
+                    }
+                }
+            }
+        } else if (stage == TransactionStage.JOURNALING && snapshots.containsKey(transactionId)) {
+            if (configuration.modelType() != Configuration.ModelType.MUTABLE) {
+                try {
+                    futures.remove(transactionId).get();
+                } catch (InterruptedException | ExecutionException e) {
+                    return;
+                }
+            }
+            try {
+                SnapshotIdentifier[] ids = snapshots.remove(transactionId);
+                final List<RepositorySnapshotter> snaps = snapshotsManager.getAll();
+                final long lastJournalVersion = journalsStorage.getLastStoreVersion();
+                for (int i = 0; i < ids.length; i++) {
+                    snaps.get(i).commit(lastJournalVersion, ids[i]);
+                }
+            } finally {
+                journalsManager.roll(transactionId);
+            }
+        }
+    }
 
-		for (int i = 0; i < snaps.size(); i++) {
-			ids[i] = snaps.get(i).prepare();
-		}
-		futures.put(transactionId, executor.submit(() -> {
-			for (int i = 0; i < snaps.size(); i++) {
-				try {
-					snaps.get(i).snapshot(data, ids[i]);
-				} catch (Throwable t) {
-					LOG.error(t.getMessage(), t);
-				}
-			}
-		}));
-		snapshots.put(transactionId, ids);
-	}
-	
-	public SnapshottingInterceptor(RevenoConfiguration configuration,
-								   SnapshottersManager snapshotsManager, SnapshotStorage snapshotStorage,
-								   JournalsStorage journalsStorage, JournalsManager journalsManager) {
-		this.configuration = configuration;
-		this.snapshotsManager = snapshotsManager;
-		this.journalsManager = journalsManager;
-		this.journalsStorage = journalsStorage;
-		this.snapshotStorage = snapshotStorage;
-	}
+    @Override
+    public void destroy() {
+        if (!executor.isShutdown()) {
+            executor.shutdown();
+            try {
+                executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            } catch (InterruptedException e) {
+                LOG.error(e.getMessage(), e);
+            }
+        }
+    }
+
+    private void asyncSnapshot(RepositoryData data, long transactionId) {
+        data.getData().computeIfAbsent(SystemInfo.class, k -> new HashMap<>()).put(0L, new SystemInfo(transactionId));
+        final List<RepositorySnapshotter> snaps = snapshotsManager.getAll();
+        final SnapshotIdentifier[] ids = new SnapshotIdentifier[snaps.size()];
+
+        for (int i = 0; i < snaps.size(); i++) {
+            ids[i] = snaps.get(i).prepare();
+        }
+        futures.put(transactionId, executor.submit(() -> {
+            for (int i = 0; i < snaps.size(); i++) {
+                try {
+                    snaps.get(i).snapshot(data, ids[i]);
+                } catch (Throwable t) {
+                    LOG.error(t.getMessage(), t);
+                }
+            }
+        }));
+        snapshots.put(transactionId, ids);
+    }
 
 }

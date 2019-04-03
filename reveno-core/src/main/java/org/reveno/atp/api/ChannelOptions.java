@@ -6,7 +6,7 @@ public enum ChannelOptions {
      * operations, but at the same time the least fault tolerant. Means some
      * direct buffer will be created for the write operations, with eventual
      * batched flushes on disk.
-     *
+     * <p>
      * In case of VM crash, significant amount of transactions might be lost.
      */
     BUFFERING_VM,

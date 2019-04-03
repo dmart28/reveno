@@ -11,37 +11,37 @@ import org.reveno.atp.core.snapshots.SnapshottersManager;
 import org.reveno.atp.core.views.ViewsProcessor;
 
 public interface WorkflowContext {
-	
-	RevenoConfiguration configuration();
 
-	ClassLoader classLoader();
+    RevenoConfiguration configuration();
 
-	IdGenerator idGenerator();
-	
-	SerializersChain serializer();
-	
-	TxRepository repository();
-	
-	ViewsProcessor viewsProcessor();
+    ClassLoader classLoader();
 
-	FailoverManager failoverManager();
+    IdGenerator idGenerator();
 
-	TransactionsManager transactionsManager();
-	
-	CommandsManager commandsManager();
-	
-	InterceptorCollection interceptorCollection();
-	
-	
-	EventPublisher eventPublisher();
-	
-	
-	TransactionCommitInfo.Builder transactionCommitBuilder();
-	
-	Journaler transactionJournaler();
-	
-	JournalsManager journalsManager();
+    SerializersChain serializer();
 
-	SnapshottersManager snapshotsManager();
-	
+    TxRepository repository();
+
+    ViewsProcessor viewsProcessor();
+
+    FailoverManager failoverManager();
+
+    TransactionsManager transactionsManager();
+
+    CommandsManager commandsManager();
+
+    InterceptorCollection interceptorCollection();
+
+
+    EventPublisher eventPublisher();
+
+
+    TransactionCommitInfo.Builder transactionCommitBuilder();
+
+    Journaler transactionJournaler();
+
+    JournalsManager journalsManager();
+
+    SnapshottersManager snapshotsManager();
+
 }

@@ -16,7 +16,7 @@ public class Examples {
         reveno.config().mutableModel();
         reveno.config().mutableModelFailover(Configuration.MutableModelFailover.COMPENSATING_ACTIONS);
         reveno.domain().transaction("createAccount",
-                (t,c) -> c.repo().store(t.id(), new Account(t.id(), t.longArg("balance"))))
+                (t, c) -> c.repo().store(t.id(), new Account(t.id(), t.longArg("balance"))))
                 .uniqueIdFor(Account.class)
                 .conditionalCommand((cmd, c) -> cmd.longArg("balance") >= 0L).command();
 

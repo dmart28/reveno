@@ -9,14 +9,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InterceptorCollection {
-	private Byte2ObjectMap<List<TransactionInterceptor>> interceptors = new Byte2ObjectOpenHashMap<>();
-	
-	public List<TransactionInterceptor> getInterceptors(TransactionStage stage) {
-		return interceptors.computeIfAbsent(stage.getType(), k -> new ArrayList<>());
-	}
-	
-	public void add(TransactionStage stage, TransactionInterceptor interceptor) {
-		getInterceptors(stage).add(interceptor);
-	}
-	
+    private Byte2ObjectMap<List<TransactionInterceptor>> interceptors = new Byte2ObjectOpenHashMap<>();
+
+    public List<TransactionInterceptor> getInterceptors(TransactionStage stage) {
+        return interceptors.computeIfAbsent(stage.getType(), k -> new ArrayList<>());
+    }
+
+    public void add(TransactionStage stage, TransactionInterceptor interceptor) {
+        getInterceptors(stage).add(interceptor);
+    }
+
 }

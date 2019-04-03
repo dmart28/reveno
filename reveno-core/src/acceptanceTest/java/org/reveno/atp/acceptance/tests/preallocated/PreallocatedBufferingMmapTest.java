@@ -12,7 +12,8 @@ public class PreallocatedBufferingMmapTest extends BasePreallocatedTest {
 
     @Test
     public void testJavaSerializer() throws Exception {
-        testPreallocatedJournals(LARGE_FILE, ChannelOptions.BUFFERING_MMAP_OS, r -> {}, true);
+        testPreallocatedJournals(LARGE_FILE, ChannelOptions.BUFFERING_MMAP_OS, r -> {
+        }, true);
     }
 
 }

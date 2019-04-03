@@ -178,6 +178,11 @@ public class SnapshottingTest extends RevenoBaseTest {
 
     public static class InMemorySnapshotter implements RepositorySnapshotter {
 
+        protected Buffer buffer = new NettyBasedBuffer(false);
+        protected volatile SnapshotIdentifier lastIdentifier;
+        protected volatile long lastJournalVersion;
+        protected ProtostuffSerializer serializer = new ProtostuffSerializer();
+
         @Override
         public SnapshotIdentifier lastSnapshot() {
             return lastIdentifier;
@@ -210,11 +215,6 @@ public class SnapshottingTest extends RevenoBaseTest {
             buffer.setReaderPosition(0);
             return serializer.deserialize(buffer);
         }
-
-        protected Buffer buffer = new NettyBasedBuffer(false);
-        protected volatile SnapshotIdentifier lastIdentifier;
-        protected volatile long lastJournalVersion;
-        protected ProtostuffSerializer serializer = new ProtostuffSerializer();
 
         private class DefaultSnapshotIdentifier implements SnapshotIdentifier {
             @Override

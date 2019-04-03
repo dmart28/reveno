@@ -4,8 +4,8 @@ import org.reveno.atp.core.api.Destroyable;
 
 public interface Histogram extends Sinkable, Destroyable {
 
-	Histogram update(long value);
-	
-	boolean isReady();
-	
+    Histogram update(long value);
+
+    boolean isReady();
+
 }

@@ -12,6 +12,8 @@ import java.util.concurrent.ExecutionException;
 
 public class SimpleBankingAccount {
 
+    protected static final Logger LOG = LoggerFactory.getLogger(SimpleBankingAccount.class);
+
     public static Reveno init(String folder) {
         Reveno reveno = new Engine(folder);
         reveno.domain().command(AddToBalanceCommand.class, AddToBalanceCommand::handler);
@@ -45,13 +47,22 @@ public class SimpleBankingAccount {
         LOG.info("Balance of Account {}: {}", id, reveno.query().find(AccountView.class, id).balance);
     }
 
+    public interface CurrencyConverter {
+        long convert(Currency from, Currency to, long amount);
+    }
+
     /**
      * In current example it pays role of both Command and Transaction Action.
      */
     public static class CreateAccount {
-        public long id;
         public final String name;
         public final Currency currency;
+        public long id;
+
+        public CreateAccount(String name, Currency currency) {
+            this.name = name;
+            this.currency = currency;
+        }
 
         /*
          * Command handler.
@@ -73,17 +84,19 @@ public class SimpleBankingAccount {
         public static void handler(CreateAccount tx, TransactionContext ctx) {
             ctx.repo().store(tx.id, new Account(tx.name, 0, tx.currency));
         }
-
-        public CreateAccount(String name, Currency currency) {
-            this.name = name;
-            this.currency = currency;
-        }
     }
 
     public static class AddToBalanceCommand {
+        protected static final CurrencyConverter converter = new DumbCurrencyConverter();
         public final long accountId;
         public final long amount;
         public final Currency currency;
+
+        public AddToBalanceCommand(long accountId, long amount, Currency currency) {
+            this.accountId = accountId;
+            this.amount = amount;
+            this.currency = currency;
+        }
 
         public static void handler(AddToBalanceCommand cmd, CommandContext ctx) {
             if (!ctx.repo().has(Account.class, cmd.accountId)) {
@@ -93,34 +106,20 @@ public class SimpleBankingAccount {
 
             ctx.executeTxAction(new AddToBalance(cmd.accountId, converter.convert(cmd.currency, account.currency, cmd.amount)));
         }
-
-        public AddToBalanceCommand(long accountId, long amount, Currency currency) {
-            this.accountId = accountId;
-            this.amount = amount;
-            this.currency = currency;
-        }
-
-        protected static final CurrencyConverter converter = new DumbCurrencyConverter();
     }
 
     public static class AddToBalance {
         public final long accountId;
         public final long amount;
 
-        public static void handler(AddToBalance tx, TransactionContext ctx) {
-            ctx.repo().remap(tx.accountId, Account.class, (id, a) -> a.add(tx.amount));
-        }
-
         public AddToBalance(long accountId, long amount) {
             this.accountId = accountId;
             this.amount = amount;
         }
-    }
 
-    protected static final Logger LOG = LoggerFactory.getLogger(SimpleBankingAccount.class);
-
-    public interface CurrencyConverter {
-        long convert(Currency from, Currency to, long amount);
+        public static void handler(AddToBalance tx, TransactionContext ctx) {
+            ctx.repo().remap(tx.accountId, Account.class, (id, a) -> a.add(tx.amount));
+        }
     }
 
     public static class DumbCurrencyConverter implements CurrencyConverter {

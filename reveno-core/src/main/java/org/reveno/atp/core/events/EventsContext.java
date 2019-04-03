@@ -6,12 +6,12 @@ import org.reveno.atp.core.api.serialization.EventsInfoSerializer;
 
 public interface EventsContext {
 
-	Journaler eventsJournaler();
-	
-	EventsCommitInfo.Builder eventsCommitBuilder();
-	
-	EventsInfoSerializer serializer();
-	
-	EventHandlersManager manager();
-	
+    Journaler eventsJournaler();
+
+    EventsCommitInfo.Builder eventsCommitBuilder();
+
+    EventsInfoSerializer serializer();
+
+    EventHandlersManager manager();
+
 }

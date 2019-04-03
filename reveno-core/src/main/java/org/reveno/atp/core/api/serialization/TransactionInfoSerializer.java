@@ -6,13 +6,13 @@ import org.reveno.atp.core.api.channel.Buffer;
 import java.util.List;
 
 public interface TransactionInfoSerializer extends Serializer {
-	
-	void serialize(TransactionCommitInfo info, Buffer buffer);
-	
-	TransactionCommitInfo deserialize(TransactionCommitInfo.Builder builder, Buffer buffer);
-	
-	void serializeCommands(List<Object> commands, Buffer buffer);
-	
-	List<Object> deserializeCommands(Buffer buffer);
-	
+
+    void serialize(TransactionCommitInfo info, Buffer buffer);
+
+    TransactionCommitInfo deserialize(TransactionCommitInfo.Builder builder, Buffer buffer);
+
+    void serializeCommands(List<Object> commands, Buffer buffer);
+
+    List<Object> deserializeCommands(Buffer buffer);
+
 }

@@ -7,10 +7,10 @@ import java.util.stream.Stream;
 
 public class ViewBase {
 
-	protected QueryManager query;
-	
-	static <T> Stream<T> sops(Optional<T> opt) {
-	    return opt.map(Stream::of).orElseGet(Stream::empty);
-	}
-	
+    protected QueryManager query;
+
+    static <T> Stream<T> sops(Optional<T> opt) {
+        return opt.map(Stream::of).orElseGet(Stream::empty);
+    }
+
 }

@@ -4,10 +4,10 @@ import org.reveno.atp.api.domain.WriteableRepository;
 
 public interface TxRepository extends WriteableRepository {
 
-	void begin();
-	
-	void commit();
-	
-	void rollback();
-	
+    void begin();
+
+    void commit();
+
+    void rollback();
+
 }

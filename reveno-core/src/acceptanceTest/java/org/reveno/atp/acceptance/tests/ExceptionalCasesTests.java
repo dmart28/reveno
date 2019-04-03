@@ -20,159 +20,159 @@ import java.util.List;
 
 public class ExceptionalCasesTests extends RevenoBaseTest {
 
-	@Test
-	public void testEventsCommitsFileCorrupted() throws Exception {
-		TestRevenoEngine reveno = createEngine();
-		try {
-			reveno.startup();
+    protected static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ExceptionalCasesTests.class);
 
-			generateAndSendCommands(reveno, 5_000);
+    @Test
+    public void testEventsCommitsFileCorrupted() throws Exception {
+        TestRevenoEngine reveno = createEngine();
+        try {
+            reveno.startup();
 
-			Assert.assertEquals(5_000, reveno.query().select(AccountView.class).size());
-			Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
+            generateAndSendCommands(reveno, 5_000);
 
-			reveno.shutdown();
+            Assert.assertEquals(5_000, reveno.query().select(AccountView.class).size());
+            Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
 
-			eraseRandomBuffer(findFirstFile("evn"));
+            reveno.shutdown();
 
-			reveno = createEngine();
-			Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class, 2000);
-			reveno.startup();
+            eraseRandomBuffer(findFirstFile("evn"));
 
-			Assert.assertEquals(5_000, reveno.query().select(AccountView.class).size());
-			Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
+            reveno = createEngine();
+            Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class, 2000);
+            reveno.startup();
 
-			Assert.assertTrue(orderCreatedEvent.isArrived(10));
+            Assert.assertEquals(5_000, reveno.query().select(AccountView.class).size());
+            Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
 
-			reveno.shutdown();
+            Assert.assertTrue(orderCreatedEvent.isArrived(10));
 
-			reveno = createEngine();
-			Waiter accountCreatedEvent = listenFor(reveno, AccountCreatedEvent.class, 1);
-			orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class, 1);
-			reveno.startup();
+            reveno.shutdown();
 
-			Assert.assertEquals(5_000, reveno.query().select(AccountView.class).size());
-			Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
+            reveno = createEngine();
+            Waiter accountCreatedEvent = listenFor(reveno, AccountCreatedEvent.class, 1);
+            orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class, 1);
+            reveno.startup();
 
-			try {
-				Assert.assertFalse(accountCreatedEvent.isArrived());
-				Assert.assertFalse(orderCreatedEvent.isArrived());
-				Assert.assertEquals(1, accountCreatedEvent.getCount());
-				Assert.assertEquals(1, orderCreatedEvent.getCount());
-			} catch (Throwable t) {
-				Logger.getLogger(ExceptionalCasesTests.class).info(tempDir.getAbsolutePath());
-				dontDelete = true;
-				throw new RuntimeException(t);
-			}
-		} finally {
-			reveno.shutdown();
-		}
-	}
-	
-	@Test
-	public void testTransactionCommitsFileCorrupted() throws Exception {
-		TestRevenoEngine reveno = createEngine();
-		try {
-			reveno.startup();
+            Assert.assertEquals(5_000, reveno.query().select(AccountView.class).size());
+            Assert.assertEquals(5_000, reveno.query().select(OrderView.class).size());
 
-			generateAndSendCommands(reveno, 5_000);
+            try {
+                Assert.assertFalse(accountCreatedEvent.isArrived());
+                Assert.assertFalse(orderCreatedEvent.isArrived());
+                Assert.assertEquals(1, accountCreatedEvent.getCount());
+                Assert.assertEquals(1, orderCreatedEvent.getCount());
+            } catch (Throwable t) {
+                Logger.getLogger(ExceptionalCasesTests.class).info(tempDir.getAbsolutePath());
+                dontDelete = true;
+                throw new RuntimeException(t);
+            }
+        } finally {
+            reveno.shutdown();
+        }
+    }
 
-			reveno.syncAll();
-			reveno.shutdown();
+    @Test
+    public void testTransactionCommitsFileCorrupted() throws Exception {
+        TestRevenoEngine reveno = createEngine();
+        try {
+            reveno.startup();
 
-			eraseRandomBuffer(findFirstFile("tx"));
-			eraseRandomBuffer(findFirstFile("evn"));
+            generateAndSendCommands(reveno, 5_000);
 
-			reveno = createEngine();
-			reveno.startup();
+            reveno.syncAll();
+            reveno.shutdown();
 
-			Assert.assertTrue(5_000 > reveno.query().select(OrderView.class).size());
+            eraseRandomBuffer(findFirstFile("tx"));
+            eraseRandomBuffer(findFirstFile("evn"));
 
-			Collection<AccountView> accs = reveno.query().select(AccountView.class, a -> a.accountId == 1);
+            reveno = createEngine();
+            reveno.startup();
 
-			if (accs.size() != 0) {
-				Assert.assertEquals(accs.size(), 1);
-				Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class, 1);
-				AccountView acc = accs.iterator().next();
-				long orderId = sendCommandSync(reveno, new NewOrderCommand(acc.accountId, null,
-						"TEST/TEST", 134000, 1000, OrderType.MARKET));
-				acc = reveno.query().find(AccountView.class, acc.accountId);
-				LOG.info("Account orders: " + acc.orders().size() + ", " + acc.orders.size());
-				Assert.assertTrue(acc.orders().stream().filter(o -> o.id == orderId).findFirst().isPresent());
-				// in very rare cases we might get result, but event didn't came to pipe, so
-				// even though we syncAll(), the event might come to pipe after syncAll().
-				Assert.assertTrue(orderCreatedEvent.isArrived());
-			}
+            Assert.assertTrue(5_000 > reveno.query().select(OrderView.class).size());
 
-			reveno.syncAll();
-			reveno.shutdown();
+            Collection<AccountView> accs = reveno.query().select(AccountView.class, a -> a.accountId == 1);
 
-			reveno = createEngine();
-			Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class, 1);
-			reveno.startup();
+            if (accs.size() != 0) {
+                Assert.assertEquals(accs.size(), 1);
+                Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class, 1);
+                AccountView acc = accs.iterator().next();
+                long orderId = sendCommandSync(reveno, new NewOrderCommand(acc.accountId, null,
+                        "TEST/TEST", 134000, 1000, OrderType.MARKET));
+                acc = reveno.query().find(AccountView.class, acc.accountId);
+                LOG.info("Account orders: " + acc.orders().size() + ", " + acc.orders.size());
+                Assert.assertTrue(acc.orders().stream().filter(o -> o.id == orderId).findFirst().isPresent());
+                // in very rare cases we might get result, but event didn't came to pipe, so
+                // even though we syncAll(), the event might come to pipe after syncAll().
+                Assert.assertTrue(orderCreatedEvent.isArrived());
+            }
 
-			if (accs.size() != 0) {
-				AccountView acc = reveno.query().find(AccountView.class, 1L);
-				Assert.assertTrue(acc.orders().stream().filter(o -> o.symbol.equals("TEST/TEST")).findFirst().isPresent());
-			}
+            reveno.syncAll();
+            reveno.shutdown();
 
-			try {
-				Assert.assertFalse(orderCreatedEvent.isArrived());
-			} catch (Throwable t) {
-				Logger.getLogger(ExceptionalCasesTests.class).info(tempDir.getAbsolutePath());
-				dontDelete = true;
-				throw new RuntimeException(t);
-			}
-		} finally {
-			reveno.shutdown();
-		}
-	}
+            reveno = createEngine();
+            Waiter orderCreatedEvent = listenFor(reveno, OrderCreatedEvent.class, 1);
+            reveno.startup();
 
-	@Test
-	public void testNoPartialReplayOfCommandBatch() throws Exception {
-		TestRevenoEngine reveno = createEngine();
-		try {
-			reveno.startup();
+            if (accs.size() != 0) {
+                AccountView acc = reveno.query().find(AccountView.class, 1L);
+                Assert.assertTrue(acc.orders().stream().filter(o -> o.symbol.equals("TEST/TEST")).findFirst().isPresent());
+            }
 
-			sendCommandSync(reveno, new CreateNewAccountCommand("USD", 1000_000L));
+            try {
+                Assert.assertFalse(orderCreatedEvent.isArrived());
+            } catch (Throwable t) {
+                Logger.getLogger(ExceptionalCasesTests.class).info(tempDir.getAbsolutePath());
+                dontDelete = true;
+                throw new RuntimeException(t);
+            }
+        } finally {
+            reveno.shutdown();
+        }
+    }
 
-			List<Object> commands = new ArrayList<>();
-			commands.add(new CreateNewAccountCommand("USD", 1000_000L));
+    @Test
+    public void testNoPartialReplayOfCommandBatch() throws Exception {
+        TestRevenoEngine reveno = createEngine();
+        try {
+            reveno.startup();
 
-			for (int i = 0; i < 10; i++) {
-				commands.add(new NewOrderCommand(2L, null, "EUR/USD", 134000, 1000, OrderType.MARKET));
-			}
+            sendCommandSync(reveno, new CreateNewAccountCommand("USD", 1000_000L));
 
-			reveno.performCommands(commands).get();
+            List<Object> commands = new ArrayList<>();
+            commands.add(new CreateNewAccountCommand("USD", 1000_000L));
 
-			AccountView account = reveno.query().find(AccountView.class, 1L);
-			Assert.assertEquals(0, account.orders().size());
-			account = reveno.query().find(AccountView.class, 2L);
-			Assert.assertEquals(10, account.orders().size());
+            for (int i = 0; i < 10; i++) {
+                commands.add(new NewOrderCommand(2L, null, "EUR/USD", 134000, 1000, OrderType.MARKET));
+            }
 
-			reveno.shutdown();
+            reveno.performCommands(commands).get();
 
-			eraseBuffer(findFirstFile("tx"), 0.9);
+            AccountView account = reveno.query().find(AccountView.class, 1L);
+            Assert.assertEquals(0, account.orders().size());
+            account = reveno.query().find(AccountView.class, 2L);
+            Assert.assertEquals(10, account.orders().size());
 
-			reveno = createEngine();
-			reveno.startup();
+            reveno.shutdown();
 
-			Assert.assertTrue(reveno.query().findO(AccountView.class, 1L).isPresent());
-			Assert.assertFalse(reveno.query().findO(AccountView.class, 2L).isPresent());
-		} finally {
-			reveno.shutdown();
-		}
-	}
+            eraseBuffer(findFirstFile("tx"), 0.9);
 
-	protected void eraseRandomBuffer(File file) throws Exception {
-		eraseBuffer(file, 0.8);
-	}
+            reveno = createEngine();
+            reveno.startup();
 
-	protected void eraseBuffer(File file, double ratio) throws Exception {
-		try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
-			raf.setLength((long)((raf.length() * ratio)));
-		}
-	}
+            Assert.assertTrue(reveno.query().findO(AccountView.class, 1L).isPresent());
+            Assert.assertFalse(reveno.query().findO(AccountView.class, 2L).isPresent());
+        } finally {
+            reveno.shutdown();
+        }
+    }
 
-	protected static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ExceptionalCasesTests.class);
+    protected void eraseRandomBuffer(File file) throws Exception {
+        eraseBuffer(file, 0.8);
+    }
+
+    protected void eraseBuffer(File file, double ratio) throws Exception {
+        try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
+            raf.setLength((long) ((raf.length() * ratio)));
+        }
+    }
 }
