@@ -8,12 +8,8 @@ import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 
 public abstract class UnsafeUtils {
-
-	public static Unsafe getUnsafe() {
-		return unsafe;
-	}
-
 	private static final Unsafe unsafe;
+
 	static {
 		try {
 			Field field = Unsafe.class.getDeclaredField("theUnsafe");
@@ -24,9 +20,14 @@ public abstract class UnsafeUtils {
 		}
 	}
 
+	public static Unsafe getUnsafe() {
+		return unsafe;
+	}
+
 	public static void destroyDirectBuffer(ByteBuffer toBeDestroyed) {
-		if (!toBeDestroyed.isDirect())
-            return;
+		if (!toBeDestroyed.isDirect()) {
+			return;
+		}
 
 		Method cleanerMethod;
 		try {

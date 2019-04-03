@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class RepositoryData implements Serializable {
 	private static final long serialVersionUID = 5311358734940295761L;
-	private Map<Class<?>, Map<Long, Object>> data;
+	private final Map<Class<?>, Map<Long, Object>> data;
 
 	public RepositoryData(Map<Class<?>, Map<Long, Object>> data) {
 		this.data = data;

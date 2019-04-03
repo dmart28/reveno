@@ -5,7 +5,6 @@ import io.netty.buffer.PooledByteBufAllocator;
 import org.reveno.atp.core.api.channel.Buffer;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 import static org.reveno.atp.utils.MeasureUtils.kb;
 

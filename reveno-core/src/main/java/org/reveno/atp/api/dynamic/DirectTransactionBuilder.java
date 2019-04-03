@@ -24,19 +24,19 @@ public class DirectTransactionBuilder {
 	protected static final String COMMAND_NAME_PREFIX = "DynamicCommand_";
 	protected static final String TRANSACTION_NAME_PREFIX = "DynamicTransaction_";
 
-	protected String name;
-	protected Set<Class<?>> entityTypes = new HashSet<>();
+	protected final String name;
+	protected final Set<Class<?>> entityTypes = new HashSet<>();
 	protected Optional<Class<?>> entityReturnIdType = Optional.empty();
 	protected Class<? extends AbstractDynamicCommand> dynamicCommand;
 	protected Class<? extends AbstractDynamicTransaction> dynamicTransaction;
 	protected Optional<BiFunction<AbstractDynamicCommand, CommandContext, Object>> commandInterceptor = Optional.empty();
 	protected Optional<BiFunction<AbstractDynamicCommand, CommandContext, Boolean>> commandConditionInterceptor = Optional.empty();
 
-	protected BiConsumer<AbstractDynamicTransaction, TransactionContext> transactionHandler;
-	protected SerializersChain serializer;
-	protected TransactionsManager transactionsManager;
-	protected CommandsManager commandsManager;
-	protected ClassLoader classLoader;
+	protected final BiConsumer<AbstractDynamicTransaction, TransactionContext> transactionHandler;
+	protected final SerializersChain serializer;
+	protected final TransactionsManager transactionsManager;
+	protected final CommandsManager commandsManager;
+	protected final ClassLoader classLoader;
 
 	public DirectTransactionBuilder(String name, BiConsumer<AbstractDynamicTransaction, TransactionContext> handler,
 			SerializersChain serializer, TransactionsManager transactionsManager, CommandsManager commandsManager,

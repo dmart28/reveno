@@ -22,7 +22,7 @@ public class ChannelBuffer implements Buffer {
 
 	public ChannelBuffer(ByteBuffer buffer) {
 		this.buffer = buffer;
-		this.extender = () -> this.cloneExtended(buffer.limit());
+		this.extender = () -> cloneExtended(buffer.limit());
 		this.reader = () -> buffer;
 	}
 

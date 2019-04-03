@@ -5,6 +5,13 @@ import java.util.Map;
 public class AbstractDynamicCommand {
 	protected Map<String, Object> args;
 
+	public AbstractDynamicCommand() {
+	}
+
+	public AbstractDynamicCommand(Map<String, Object> args) {
+		this.args = args;
+	}
+
 	public AbstractDynamicCommand args(Map<String, Object> args) {
 		this.args = args;
 		return this;
@@ -86,13 +93,6 @@ public class AbstractDynamicCommand {
 
 	public boolean bool() {
 		return (boolean) arg();
-	}
-	
-	public AbstractDynamicCommand() {
-	}
-	
-	public AbstractDynamicCommand(Map<String, Object> args) {
-		this.args = args;
 	}
 	
 }

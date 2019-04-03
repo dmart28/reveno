@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class AbstractDynamicTransaction {
-	protected Object2LongOpenHashMap<Class<?>> ids = new Object2LongOpenHashMap<Class<?>>();
+	protected Object2LongOpenHashMap<Class<?>> ids = new Object2LongOpenHashMap<>();
 	protected Map<String, Object> args = new LinkedHashMap<>();
 
 	public AbstractDynamicTransaction() {

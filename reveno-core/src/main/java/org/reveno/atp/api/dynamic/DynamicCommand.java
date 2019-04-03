@@ -3,8 +3,8 @@ package org.reveno.atp.api.dynamic;
 import java.util.Map;
 
 public class DynamicCommand {
-	protected Class<? extends AbstractDynamicCommand> commandType;
-	protected Class<? extends AbstractDynamicTransaction> transactionType;
+	protected final Class<? extends AbstractDynamicCommand> commandType;
+	protected final Class<? extends AbstractDynamicTransaction> transactionType;
 
 	public DynamicCommand(Class<? extends AbstractDynamicCommand> commandType, Class<? extends AbstractDynamicTransaction> transactionType) {
 		this.commandType = commandType;

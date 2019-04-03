@@ -34,7 +34,13 @@ public interface EventsManager {
 	
 	
 	class EventMetadata {
-		private boolean isRestore;
+		private final boolean isRestore;
+		private final long transactionTime;
+
+		public EventMetadata(boolean isRestore, long transactionTime) {
+			this.isRestore = isRestore;
+			this.transactionTime = transactionTime;
+		}
 
 		/**
 		 * Identifies whether it's the first time event is fired. Normally, events are not fired during
@@ -46,8 +52,6 @@ public interface EventsManager {
 		public boolean isRestore() {
 			return isRestore;
 		}
-		
-		private long transactionTime;
 
 		/**
 		 * Time at which transaction was executed and journaled in millis.
@@ -56,11 +60,7 @@ public interface EventsManager {
 		public long getTransactionTime() {
 			return transactionTime;
 		}
-		
-		public EventMetadata(boolean isRestore, long transactionTime) {
-			this.isRestore = isRestore;
-			this.transactionTime = transactionTime;
-		}
+
 	}
 	
 }

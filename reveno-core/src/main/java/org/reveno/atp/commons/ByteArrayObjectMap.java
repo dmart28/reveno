@@ -12,7 +12,7 @@ import org.reveno.atp.core.api.channel.Buffer;
  * @param <T>
  */
 public class ByteArrayObjectMap<T> {
-    private Node root = new Node();
+    private final Node root = new Node();
 
     public void put(byte[] key, T value) {
         Node n = root;

@@ -1,6 +1,7 @@
 package org.reveno.atp.commons;
 
 import java.util.Iterator;
+import java.util.Objects;
 
 /**
  * Range of two long numbers. It is used for replaying process, to mark unprocessed
@@ -9,6 +10,9 @@ import java.util.Iterator;
  * @author Artem Dmitriev <art.dm.ser@gmail.com>
  */
 public final class LongRange implements Iterable<Long>, Comparable<LongRange> {
+	private static final LongRange[] EMPTY = new LongRange[0];
+	public final long start;
+	public final long end;
 
 	public LongRange(long start, long end) {
 		this.start = start;
@@ -31,8 +35,9 @@ public final class LongRange implements Iterable<Long>, Comparable<LongRange> {
 	}
 	
 	public LongRange[] split(long value) {
-		if (start == end)
-			return new LongRange[0];
+		if (start == end) {
+			return EMPTY;
+		}
 		if (value > start && value < end)
 			return new LongRange[] { new LongRange(start, value - 1), new LongRange(value + 1, end) };
 		else if (value == start) 
@@ -75,37 +80,21 @@ public final class LongRange implements Iterable<Long>, Comparable<LongRange> {
 	}
 
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (int) (end ^ (end >>> 32));
-		result = prime * result + (int) (start ^ (start >>> 32));
-		return result;
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		LongRange longs = (LongRange) o;
+		return start == longs.start &&
+				end == longs.end;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		LongRange other = (LongRange) obj;
-		if (end != other.end)
-			return false;
-		if (start != other.start)
-			return false;
-		return true;
+	public int hashCode() {
+		return Objects.hash(start, end);
 	}
 
 	@Override
 	public int compareTo(LongRange o) {
-		if (this.start > o.start) return 1;
-		if (this.start < o.start) return -1;
-		return 0;
+		return Long.compare(this.start, o.start);
 	}
-	
-	public final long start;
-	public final long end;
 }
