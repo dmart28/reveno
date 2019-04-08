@@ -25,26 +25,23 @@ public abstract class UnsafeUtils {
     }
 
     public static void destroyDirectBuffer(ByteBuffer toBeDestroyed) {
-        if (!toBeDestroyed.isDirect()) {
-            return;
-        }
+        if (toBeDestroyed.isDirect()) {
+            Method cleanerMethod;
+            try {
+                cleanerMethod = toBeDestroyed.getClass().getMethod("cleaner");
 
-        Method cleanerMethod;
-        try {
-            cleanerMethod = toBeDestroyed.getClass().getMethod("cleaner");
-
-            cleanerMethod.setAccessible(true);
-            Object cleaner = cleanerMethod.invoke(toBeDestroyed);
-            if (cleaner != null) {
-                Method cleanMethod = cleaner.getClass().getMethod("clean");
-                cleanMethod.setAccessible(true);
-                cleanMethod.invoke(cleaner);
+                cleanerMethod.setAccessible(true);
+                Object cleaner = cleanerMethod.invoke(toBeDestroyed);
+                if (cleaner != null) {
+                    Method cleanMethod = cleaner.getClass().getMethod("clean");
+                    cleanMethod.setAccessible(true);
+                    cleanMethod.invoke(cleaner);
+                }
+            } catch (NoSuchMethodException | SecurityException
+                    | IllegalAccessException | IllegalArgumentException
+                    | InvocationTargetException e) {
+                //throw new RuntimeException(e);
             }
-        } catch (NoSuchMethodException | SecurityException
-                | IllegalAccessException | IllegalArgumentException
-                | InvocationTargetException e) {
-            //throw new RuntimeException(e);
         }
-
     }
 }

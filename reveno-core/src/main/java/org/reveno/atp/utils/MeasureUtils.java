@@ -15,7 +15,7 @@ public abstract class MeasureUtils {
     }
 
     public static long sec(int secs) {
-        return secs * 1000 * 1_000_000l;
+        return secs * 1000 * 1_000_000L;
     }
 
     public static long sec(double secs) {

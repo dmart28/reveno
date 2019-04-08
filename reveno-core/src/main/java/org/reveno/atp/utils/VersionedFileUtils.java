@@ -21,8 +21,7 @@ import java.util.stream.Stream;
  *
  */
 public abstract class VersionedFileUtils {
-
-    public static final String LONG_FORMAT = "%020d";
+    private static final String LONG_FORMAT = "%020d";
 
     public static String nextVersionFile(File baseDir, String prefix) {
         return nextVersionFile(baseDir, prefix, null, "");
@@ -67,10 +66,7 @@ public abstract class VersionedFileUtils {
 
     public static VersionedFile lastVersionedFile(File baseDir, String prefix) {
         Optional<String> o = lastVersionFile(baseDir, prefix);
-        if (o.isPresent())
-            return parseVersionedFile(o.get());
-        else
-            return null;
+        return o.map(VersionedFileUtils::parseVersionedFile).orElse(null);
     }
 
     public static VersionedFile parseVersionedFile(String fileName) {
@@ -187,7 +183,4 @@ public abstract class VersionedFileUtils {
             return String.format("[%s,%s]", name, version);
         }
     }
-
-    //protected static final SimpleDateFormat FORMAT = new SimpleDateFormat("yyyy_MM_dd");
-
 }
