@@ -1,19 +1,3 @@
-/**
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.core.views;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
@@ -29,380 +13,381 @@ import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 public class OnDemandViewsContext implements MappingContext {
+    protected ViewsStorage storage;
+    protected ViewsManager manager;
+    protected ViewsProcessor processor;
+    protected Class<?> viewType;
+    protected long id;
+    protected Repository repository;
+    protected Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> marked;
 
-	@Override
-	public <V> V get(Class<V> viewType, long id) {
-		if (viewType == this.viewType && id == this.id) {
-			return storage.find(viewType, id);
-		}
-		
-		Class<?> entityType = manager.resolveEntityType(viewType);
-		Object entity;
-		if (repository == null) {
-			entity = marked.get(entityType).get(id);
-		} else {
-			entity = repository.get(entityType, id);
-		}
-		if (entity != null) {
-			processor.map(entityType, id, entity);
-			if (repository == null) {
-				marked.get(entityType).remove(id);
-			}
-		}
-		return storage.find(viewType, id);
-	}
+    public OnDemandViewsContext(ViewsProcessor processor, ViewsStorage storage, ViewsManager manager) {
+        this.processor = processor;
+        this.manager = manager;
+        this.storage = storage;
+    }
 
-	@Override
-	public <V> List<V> link(long[] ids, Class<V> viewType) {
-		return new LinkViewList<>(ids, viewType);
-	}
+    @Override
+    public <V> V get(Class<V> viewType, long id) {
+        if (viewType == this.viewType && id == this.id) {
+            return storage.find(viewType, id);
+        }
 
-	@Override
-	public <V> Set<V> linkSet(long[] ids, Class<V> viewType) {
-		return new LinkViewSet<>(ids, viewType);
-	}
+        Class<?> entityType = manager.resolveEntityType(viewType);
+        Object entity;
+        if (repository == null) {
+            entity = marked.get(entityType).get(id);
+        } else {
+            entity = repository.get(entityType, id);
+        }
+        if (entity != null) {
+            processor.map(entityType, id, entity);
+            if (repository == null) {
+                marked.get(entityType).remove(id);
+            }
+        }
+        return storage.find(viewType, id);
+    }
 
-	@Override
-	public <V> List<V> link(Stream<Long> ids, Class<V> viewType) {
-		return new LinkViewList<>(ids.mapToLong(i->i).toArray(), viewType);
-	}
+    @Override
+    public <V> List<V> link(long[] ids, Class<V> viewType) {
+        return new LinkViewList<>(ids, viewType);
+    }
 
-	@Override
-	public <V> Set<V> linkSet(Stream<Long> ids, Class<V> viewType) {
-		return new LinkViewSet<>(ids.mapToLong(i->i).toArray(), viewType);
-	}
+    @Override
+    public <V> Set<V> linkSet(long[] ids, Class<V> viewType) {
+        return new LinkViewSet<>(ids, viewType);
+    }
 
-	@Override
-	public <V> List<V> link(LongCollection ids, Class<V> viewType) {
-		return new LinkViewList<>(ids.toLongArray(), viewType);
-	}
+    @Override
+    public <V> List<V> link(Stream<Long> ids, Class<V> viewType) {
+        return new LinkViewList<>(ids.mapToLong(i -> i).toArray(), viewType);
+    }
 
-	@Override
-	public <V> Set<V> linkSet(LongCollection ids, Class<V> viewType) {
-		return new LinkViewSet<>(ids.toLongArray(), viewType);
-	}
+    @Override
+    public <V> Set<V> linkSet(Stream<Long> ids, Class<V> viewType) {
+        return new LinkViewSet<>(ids.mapToLong(i -> i).toArray(), viewType);
+    }
 
-	@Override
-	public <V> Supplier<V> link(Class<V> viewType, long id) {
-		return () -> Optional.ofNullable(storage.find(viewType, id)).orElseGet(() -> null);
-	}
-	
-	protected Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> marked;
-	public void marked(Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> marked) {
-		this.marked = marked;
-	}
-	
-	protected Repository repository;
-	public void repositorySource(Repository repository) {
-		this.repository = repository;
-	}
-	
-	protected long id;
-	public void currentId(long id) {
-		this.id = id;
-	}
-	protected Class<?> viewType;
-	public void currentViewType(Class<?> viewType) {
-		this.viewType = viewType;
-	}
-	
-	public OnDemandViewsContext(ViewsProcessor processor, ViewsStorage storage, ViewsManager manager) {
-		this.processor = processor;
-		this.manager = manager;
-		this.storage = storage;
-	}
+    @Override
+    public <V> List<V> link(LongCollection ids, Class<V> viewType) {
+        return new LinkViewList<>(ids.toLongArray(), viewType);
+    }
 
-	protected ViewsStorage storage;
-	protected ViewsManager manager;
-	protected ViewsProcessor processor;
-	
-	protected class LinkViewList<V> implements List<V> {
-		protected final long[] ids;
-		protected final Class<V> viewType;
-		
-		public LinkViewList(long[] ids, Class<V> viewType) {
-			this.ids = ids;
-			this.viewType = viewType;
-		}
+    @Override
+    public <V> Set<V> linkSet(LongCollection ids, Class<V> viewType) {
+        return new LinkViewSet<>(ids.toLongArray(), viewType);
+    }
 
-		@Override
-		public int size() {
-			return ids.length;
-		}
+    @Override
+    public <V> Supplier<V> link(Class<V> viewType, long id) {
+        return () -> Optional.ofNullable(storage.find(viewType, id)).orElse(null);
+    }
 
-		@Override
-		public boolean isEmpty() {
-			return ids.length == 0;
-		}
+    public void marked(Map<Class<?>, Long2ObjectLinkedOpenHashMap<Object>> marked) {
+        this.marked = marked;
+    }
 
-		@Override
-		public boolean contains(Object o) {
-			V v;
-			for (long id1 : ids) {
-				if ((v = storage.find(viewType, id1)) != null && v.equals(o))
-					return true;
-			}
-			return false;
-		}
+    public void repositorySource(Repository repository) {
+        this.repository = repository;
+    }
 
-		@Override
-		public Iterator<V> iterator() {
-			return new ViewListIterator(0);
-		}
+    public void currentId(long id) {
+        this.id = id;
+    }
 
-		@SuppressWarnings("unchecked")
-		@Override
-		public Object[] toArray() {
-			V[] arr = (V[]) Array.newInstance(viewType, ids.length);
-			V v;
-			for (int i = 0; i < arr.length; i++) {
-				arr[i] = (v = storage.find(viewType, ids[i])) != null ? v : null;
-			}
-			return arr;
-		}
+    public void currentViewType(Class<?> viewType) {
+        this.viewType = viewType;
+    }
 
-		@SuppressWarnings("unchecked")
-		@Override
-		public <T> T[] toArray(T[] a) {
-			if (a.length < ids.length) 
-				a = (T[]) Array.newInstance(a.getClass(), ids.length);
-			V v;
-			for (int i = 0; i < a.length; i++) {
-				a[i] = (v = storage.find(viewType, ids[i])) != null ? (T) v : null;
-			}
-			return a;
-		}
 
-		@Override
-		public boolean add(V e) {
-			throw new UnsupportedOperationException("The List is read-only!");
-		}
+    protected class LinkViewList<V> implements List<V> {
+        protected final long[] ids;
+        protected final Class<V> viewType;
 
-		@Override
-		public boolean remove(Object o) {
-			throw new UnsupportedOperationException("The List is read-only!");
-		}
-		
-		@Override
-		public boolean containsAll(Collection<?> c) {
-			return c.stream().allMatch(this::contains);
-		}
+        public LinkViewList(long[] ids, Class<V> viewType) {
+            this.ids = ids;
+            this.viewType = viewType;
+        }
 
-		@Override
-		public boolean addAll(Collection<? extends V> c) {
-			throw new UnsupportedOperationException("The List is read-only!");
-		}
+        @Override
+        public int size() {
+            return ids.length;
+        }
 
-		@Override
-		public boolean addAll(int index, Collection<? extends V> c) {
-			throw new UnsupportedOperationException("The List is read-only!");
-		}
+        @Override
+        public boolean isEmpty() {
+            return ids.length == 0;
+        }
 
-		@Override
-		public boolean removeAll(Collection<?> c) {
-			throw new UnsupportedOperationException("The List is read-only!");
-		}
+        @Override
+        public boolean contains(Object o) {
+            V v;
+            for (long id1 : ids) {
+                if ((v = storage.find(viewType, id1)) != null && v.equals(o))
+                    return true;
+            }
+            return false;
+        }
 
-		@Override
-		public boolean retainAll(Collection<?> c) {
-			throw new UnsupportedOperationException("The List is read-only!");
-		}
+        @Override
+        public Iterator<V> iterator() {
+            return new ViewListIterator(0);
+        }
 
-		@Override
-		public void clear() {
-		}
+        @SuppressWarnings("unchecked")
+        @Override
+        public Object[] toArray() {
+            V[] arr = (V[]) Array.newInstance(viewType, ids.length);
+            V v;
+            for (int i = 0; i < arr.length; i++) {
+                arr[i] = (v = storage.find(viewType, ids[i])) != null ? v : null;
+            }
+            return arr;
+        }
 
-		@Override
-		public V get(int index) {
-			V v;
-			return (v = storage.find(viewType, ids[index])) != null ? v : null;
-		}
+        @SuppressWarnings("unchecked")
+        @Override
+        public <T> T[] toArray(T[] a) {
+            if (a.length < ids.length)
+                a = (T[]) Array.newInstance(a.getClass(), ids.length);
+            V v;
+            for (int i = 0; i < a.length; i++) {
+                a[i] = (v = storage.find(viewType, ids[i])) != null ? (T) v : null;
+            }
+            return a;
+        }
 
-		@Override
-		public V set(int index, V element) {
-			throw new UnsupportedOperationException("The List is read-only!");
-		}
+        @Override
+        public boolean add(V e) {
+            throw new UnsupportedOperationException("The List is read-only!");
+        }
 
-		@Override
-		public void add(int index, V element) {
-			throw new UnsupportedOperationException("The List is read-only!");
-		}
+        @Override
+        public boolean remove(Object o) {
+            throw new UnsupportedOperationException("The List is read-only!");
+        }
 
-		@Override
-		public V remove(int index) {
-			throw new UnsupportedOperationException("The List is read-only!");
-		}
+        @Override
+        public boolean containsAll(Collection<?> c) {
+            return c.stream().allMatch(this::contains);
+        }
 
-		@Override
-		public int indexOf(Object o) {
-			V v;
-			for (int i = 0; i < ids.length; i++)
-				if ((v = storage.find(viewType, ids[i])) != null && v.equals(o))
-					return i;
-			return 0;
-		}
+        @Override
+        public boolean addAll(Collection<? extends V> c) {
+            throw new UnsupportedOperationException("The List is read-only!");
+        }
 
-		@Override
-		public int lastIndexOf(Object o) {
-			V v;
-			for (int i = ids.length - 1; i <= 0; i--)
-				if ((v = storage.find(viewType, ids[i])) != null && v.equals(o))
-					return i;
-			return 0;
-		}
+        @Override
+        public boolean addAll(int index, Collection<? extends V> c) {
+            throw new UnsupportedOperationException("The List is read-only!");
+        }
 
-		@Override
-		public ListIterator<V> listIterator() {
-			return new ViewListIterator(0);
-		}
+        @Override
+        public boolean removeAll(Collection<?> c) {
+            throw new UnsupportedOperationException("The List is read-only!");
+        }
 
-		@Override
-		public ListIterator<V> listIterator(int index) {
-			if (index < 0 || index >= ids.length) 
-				throw new IllegalArgumentException("index out of bounds of ids array.");
-			return new ViewListIterator(index);
-		}
+        @Override
+        public boolean retainAll(Collection<?> c) {
+            throw new UnsupportedOperationException("The List is read-only!");
+        }
 
-		@Override
-		public List<V> subList(int fromIndex, int toIndex) {
-			long[] newIds = new long[toIndex - fromIndex + 1];
-			System.arraycopy(ids, fromIndex, newIds, 0, newIds.length);
-			return new LinkViewList<V>(newIds, viewType);
-		}
-		
-		private class ViewListIterator implements ListIterator<V> {
-			protected int index = 0;
-			
-			public ViewListIterator(int index) {
-				this.index = index;
-			}
-			
-			@Override
-			public boolean hasNext() {
-				return ids.length - 1 >= index;
-			}
+        @Override
+        public void clear() {
+        }
 
-			@Override
-			public V next() {
-				return LinkViewList.this.get(index++);
-			}
+        @Override
+        public V get(int index) {
+            V v;
+            return (v = storage.find(viewType, ids[index])) != null ? v : null;
+        }
 
-			@Override
-			public boolean hasPrevious() {
-				return index > 0;
-			}
+        @Override
+        public V set(int index, V element) {
+            throw new UnsupportedOperationException("The List is read-only!");
+        }
 
-			@Override
-			public V previous() {
-				return LinkViewList.this.get(index--);
-			}
+        @Override
+        public void add(int index, V element) {
+            throw new UnsupportedOperationException("The List is read-only!");
+        }
 
-			@Override
-			public int nextIndex() {
-				return hasNext() ? index + 1 : ids.length;
-			}
+        @Override
+        public V remove(int index) {
+            throw new UnsupportedOperationException("The List is read-only!");
+        }
 
-			@Override
-			public int previousIndex() {
-				return hasPrevious() ? index - 1 : 0;
-			}
+        @Override
+        public int indexOf(Object o) {
+            V v;
+            for (int i = 0; i < ids.length; i++)
+                if ((v = storage.find(viewType, ids[i])) != null && v.equals(o))
+                    return i;
+            return 0;
+        }
 
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException("The List is read-only!");
-			}
+        @Override
+        public int lastIndexOf(Object o) {
+            V v;
+            for (int i = ids.length - 1; i <= 0; i--)
+                if ((v = storage.find(viewType, ids[i])) != null && v.equals(o))
+                    return i;
+            return 0;
+        }
 
-			@Override
-			public void set(V e) {
-				throw new UnsupportedOperationException("The List is read-only!");
-			}
+        @Override
+        public ListIterator<V> listIterator() {
+            return new ViewListIterator(0);
+        }
 
-			@Override
-			public void add(V e) {
-				throw new UnsupportedOperationException("The List is read-only!");
-			}
-			
-		}
+        @Override
+        public ListIterator<V> listIterator(int index) {
+            if (index < 0 || index >= ids.length)
+                throw new IllegalArgumentException("index out of bounds of ids array.");
+            return new ViewListIterator(index);
+        }
 
-		@Override
-		public String toString() {
-			Iterator<V> it = listIterator();
-			if (! it.hasNext())
-				return "[]";
+        @Override
+        public List<V> subList(int fromIndex, int toIndex) {
+            long[] newIds = new long[toIndex - fromIndex + 1];
+            System.arraycopy(ids, fromIndex, newIds, 0, newIds.length);
+            return new LinkViewList<V>(newIds, viewType);
+        }
 
-			StringBuilder sb = new StringBuilder();
-			sb.append('[');
-			for (;;) {
-				V e = it.next();
-				sb.append(e == this ? "(this Collection)" : e);
-				if (! it.hasNext())
-					return sb.append(']').toString();
-				sb.append(',').append(' ');
-			}
-		}
-	}
-	
-	protected class LinkViewSet<V> extends LinkViewList<V> implements Set<V> {
-		
-		public LinkViewSet(long[] ids, Class<V> viewType) {
-			super(LongStream.of(ids).distinct().toArray(), viewType);
-		}
+        @Override
+        public String toString() {
+            Iterator<V> it = listIterator();
+            if (!it.hasNext())
+                return "[]";
 
-		@Override
-		public Iterator<V> iterator() {
-			return new SetIterator();
-		}
+            StringBuilder sb = new StringBuilder();
+            sb.append('[');
+            for (; ; ) {
+                V e = it.next();
+                sb.append(e == this ? "(this Collection)" : e);
+                if (!it.hasNext())
+                    return sb.append(']').toString();
+                sb.append(',').append(' ');
+            }
+        }
 
-		@Override
-		public boolean add(V e) {
-			throw new UnsupportedOperationException("The Set is read-only!");
-		}
+        private class ViewListIterator implements ListIterator<V> {
+            protected int index = 0;
 
-		@Override
-		public boolean remove(Object o) {
-			throw new UnsupportedOperationException("The Set is read-only!");
-		}
+            public ViewListIterator(int index) {
+                this.index = index;
+            }
 
-		@Override
-		public boolean addAll(Collection<? extends V> c) {
-			throw new UnsupportedOperationException("The Set is read-only!");
-		}
+            @Override
+            public boolean hasNext() {
+                return ids.length - 1 >= index;
+            }
 
-		@Override
-		public boolean retainAll(Collection<?> c) {
-			throw new UnsupportedOperationException("The Set is read-only!");
-		}
+            @Override
+            public V next() {
+                return LinkViewList.this.get(index++);
+            }
 
-		@Override
-		public boolean removeAll(Collection<?> c) {
-			throw new UnsupportedOperationException("The Set is read-only!");
-		}
+            @Override
+            public boolean hasPrevious() {
+                return index > 0;
+            }
 
-		@Override
-		public void clear() {
-			throw new UnsupportedOperationException("The Set is read-only!");
-		}
-		
-		@Override
-		public Spliterator<V> spliterator() {
-			return Spliterators.spliterator(this, Spliterator.DISTINCT);
-		}
+            @Override
+            public V previous() {
+                return LinkViewList.this.get(index--);
+            }
 
-		protected class SetIterator implements Iterator<V> {
-			protected int index = 0;
+            @Override
+            public int nextIndex() {
+                return hasNext() ? index + 1 : ids.length;
+            }
 
-			@Override
-			public boolean hasNext() {
-				return ids.length - 1 >= index;
-			}
+            @Override
+            public int previousIndex() {
+                return hasPrevious() ? index - 1 : 0;
+            }
 
-			@Override
-			public V next() {
-				return LinkViewSet.this.get(index++);
-			}
-			
-		}
-		
-	}
-	
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException("The List is read-only!");
+            }
+
+            @Override
+            public void set(V e) {
+                throw new UnsupportedOperationException("The List is read-only!");
+            }
+
+            @Override
+            public void add(V e) {
+                throw new UnsupportedOperationException("The List is read-only!");
+            }
+
+        }
+    }
+
+    protected class LinkViewSet<V> extends LinkViewList<V> implements Set<V> {
+
+        public LinkViewSet(long[] ids, Class<V> viewType) {
+            super(LongStream.of(ids).distinct().toArray(), viewType);
+        }
+
+        @Override
+        public Iterator<V> iterator() {
+            return new SetIterator();
+        }
+
+        @Override
+        public boolean add(V e) {
+            throw new UnsupportedOperationException("The Set is read-only!");
+        }
+
+        @Override
+        public boolean remove(Object o) {
+            throw new UnsupportedOperationException("The Set is read-only!");
+        }
+
+        @Override
+        public boolean addAll(Collection<? extends V> c) {
+            throw new UnsupportedOperationException("The Set is read-only!");
+        }
+
+        @Override
+        public boolean retainAll(Collection<?> c) {
+            throw new UnsupportedOperationException("The Set is read-only!");
+        }
+
+        @Override
+        public boolean removeAll(Collection<?> c) {
+            throw new UnsupportedOperationException("The Set is read-only!");
+        }
+
+        @Override
+        public void clear() {
+            throw new UnsupportedOperationException("The Set is read-only!");
+        }
+
+        @Override
+        public Spliterator<V> spliterator() {
+            return Spliterators.spliterator(this, Spliterator.DISTINCT);
+        }
+
+        protected class SetIterator implements Iterator<V> {
+            protected int index = 0;
+
+            @Override
+            public boolean hasNext() {
+                return ids.length - 1 >= index;
+            }
+
+            @Override
+            public V next() {
+                return LinkViewSet.this.get(index++);
+            }
+
+        }
+
+    }
+
 }

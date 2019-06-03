@@ -1,19 +1,3 @@
-/**
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.core.api.channel;
 
 import java.nio.ByteBuffer;
@@ -22,72 +6,72 @@ import java.nio.ByteBuffer;
 public interface Buffer {
 
     int readerPosition();
-    
+
     int writerPosition();
 
     int limit();
 
-	long capacity();
-	
-	int length();
-	
-	int remaining();
-	
-	void clear();
-	
-	void release();
-	
-	boolean isAvailable();
+    long capacity();
+
+    int length();
+
+    int remaining();
+
+    void clear();
+
+    void release();
+
+    boolean isAvailable();
 
     void setReaderPosition(int position);
-    
+
     void setWriterPosition(int position);
 
     void writeByte(byte b);
 
-	void writeBytes(byte[] bytes);
+    void writeBytes(byte[] bytes);
 
     void writeBytes(byte[] buffer, int offset, int count);
-	
-	void writeLong(long value);
-	
-	void writeInt(int value);
+
+    void writeLong(long value);
+
+    void writeInt(int value);
 
     void writeShort(short s);
-	
-	void writeFromBuffer(ByteBuffer buffer);
+
+    void writeFromBuffer(ByteBuffer buffer);
 
     ByteBuffer writeToBuffer();
 
     byte readByte();
-	
-	byte[] readBytes(int length);
-	
-	void readBytes(byte[] data, int offset, int length);
-	
-	long readLong();
-	
-	int readInt();
+
+    byte[] readBytes(int length);
+
+    void readBytes(byte[] data, int offset, int length);
+
+    long readLong();
+
+    int readInt();
 
     short readShort();
 
-	
-	void markReader();
-	
-	void markWriter();
-	
-	void resetReader();
-	
-	void resetWriter();
+
+    void markReader();
+
+    void markWriter();
+
+    void resetReader();
+
+    void resetWriter();
 
 
-	void limitNext(int count);
+    void limitNext(int count);
 
-	void resetNextLimit();
+    void resetNextLimit();
 
-	void markSize();
+    void markSize();
 
-	int sizeMarkPosition();
+    int sizeMarkPosition();
 
-	void writeSize();
+    void writeSize();
 }

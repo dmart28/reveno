@@ -1,109 +1,101 @@
 buildscript {
-	repositories { jcenter() }
+    repositories { jcenter() }
 
-	dependencies {
-		classpath 'com.netflix.nebula:gradle-aggregate-javadocs-plugin:2.2.+'
-	}
+    dependencies {
+        classpath 'com.netflix.nebula:gradle-aggregate-javadocs-plugin:2.2.+'
+    }
 }
 
 //apply plugin: 'nebula-aggregate-javadocs'
-import org.gradle.api.*
 
 Project rootProject = project.rootProject
 rootProject.gradle.projectsEvaluated {
-	Set<Project> javaSubprojects = rootProject.subprojects.findAll { subproject -> subproject.plugins.hasPlugin(JavaPlugin) }
-	if (!javaSubprojects.isEmpty()) {
-		rootProject.task("aggregateJavadocs", type: Javadoc) {
-			title = '<h1>Reveno Framework </h1>'
-			options.bottom = '<i>Copyright &#169; 2015 Artem Dmitriev. All Rights Reserved.</i>'
-			description = 'Aggregates Javadoc API documentation of all subprojects.'
-			group = JavaBasePlugin.DOCUMENTATION_GROUP
-			dependsOn javaSubprojects.javadoc
+    Set<Project> javaSubprojects = rootProject.subprojects.findAll { subproject -> subproject.plugins.hasPlugin(JavaPlugin) }
+    if (!javaSubprojects.isEmpty()) {
+        rootProject.task("aggregateJavadocs", type: Javadoc) {
+            title = '<h1>Reveno Framework </h1>'
+            options.bottom = '<i>Copyright &#169; 2019 Artem Dmitriev. All Rights Reserved.</i>'
+            description = 'Aggregates Javadoc API documentation of all subprojects.'
+            group = JavaBasePlugin.DOCUMENTATION_GROUP
+            dependsOn javaSubprojects.javadoc
 
-			source javaSubprojects.javadoc.source
-			destinationDir rootProject.file("$rootProject.buildDir/docs/javadoc")
-			classpath = rootProject.files(javaSubprojects.javadoc.classpath)
-		}
-	}
+            source javaSubprojects.javadoc.source
+            destinationDir rootProject.file("$rootProject.buildDir/docs/javadoc")
+            classpath = rootProject.files(javaSubprojects.javadoc.classpath)
+        }
+    }
 }
 
 allprojects {
-	apply plugin: "java"
-	apply plugin: "idea"
-	apply plugin: "eclipse"
-	apply plugin: "maven"
+    apply plugin: "java"
+    apply plugin: "idea"
+    apply plugin: "maven"
+    apply plugin: 'signing'
 
-	group = 'org.reveno'
-	version = "$revenoVersion"
+    group = 'org.reveno'
+    version = "$revenoVersion"
 
-	repositories {
-		mavenLocal()
-		mavenCentral()
-	}
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
 
-	dependencies {
-		compile "org.slf4j:slf4j-api:$slf4jVersion"
-		compile "org.slf4j:slf4j-log4j12:$log4jVersion"
+    dependencies {
+        compile "org.slf4j:slf4j-api:$slf4jVersion"
+        compile "org.slf4j:slf4j-log4j12:$log4jVersion"
 
-		testCompile "com.google.guava:guava:$guavaVersion"
-		testCompile "junit:junit:$junitVersion"
-		testCompile "org.easymock:easymock:$easymockVersion"
-	}
+        testCompile "com.google.guava:guava:$guavaVersion"
+        testCompile "junit:junit:$junitVersion"
+        testCompile "org.easymock:easymock:$easymockVersion"
+    }
 
-	def forks = Math.max(1, (int) (Runtime.runtime.availableProcessors()))
+    def forks = Math.max(1, (int) (Runtime.runtime.availableProcessors()))
 
-	test {
-		minHeapSize = "256m"
-		maxHeapSize = "256m"
-		maxParallelForks = forks
-		forkEvery = 1
-		systemProperty 'protostuff.runtime.collection_schema_on_repeated_fields', 'true'
+    test {
+        minHeapSize = "256m"
+        maxHeapSize = "256m"
+        maxParallelForks = forks
+        forkEvery = 1
+        systemProperty 'protostuff.runtime.collection_schema_on_repeated_fields', 'true'
 
-		testLogging {
-			showExceptions = true
-			showCauses = true
-			showStackTraces = true
-			events "passed", "skipped", "failed", "standardOut", "standardError"
-		}
-	}
+        testLogging {
+            showExceptions = true
+            showCauses = true
+            showStackTraces = true
+            events "passed", "skipped", "failed", "standardOut", "standardError"
+        }
+    }
 
-	task wrapper(type: Wrapper) {
-		gradleVersion = '2.6'
-	}
+    tasks.withType(Javadoc) {
+        options.addStringOption('Xdoclint:none', '-quiet')
+        options.setMemberLevel(JavadocMemberLevel.PUBLIC)
+    }
 
-	tasks.withType(Javadoc) {
-		options.addStringOption('Xdoclint:none', '-quiet')
-		options.setMemberLevel(org.gradle.external.javadoc.JavadocMemberLevel.PUBLIC)
-	}
+    javadoc {
+        title = '<h1>Reveno Framework </h1>'
 
-	javadoc {
-		title = '<h1>Reveno Framework </h1>'
+        options.bottom = '<i>Copyright &#169; 2019 Artem Dmitriev. All Rights Reserved.</i>'
+        options.addStringOption('XDignore.symbol.file', '-quiet')
+        include '**/api/**'
+        include '**/commons/**'
+        include '**/core/**'
+        include '**/utils/**'
+        include '**/metrics/**'
+        exclude '**/acceptance/**'
+        exclude '**/test/**'
+    }
 
-		options.bottom = '<i>Copyright &#169; 2015 Artem Dmitriev. All Rights Reserved.</i>'
-		options.addStringOption('XDignore.symbol.file', '-quiet')
-		include '**/clustering/**'
-		include '**/api/**'
-		include '**/commons/**'
-		include '**/core/**'
-		include '**/utils/**'
-		include '**/metrics/**'
-		exclude '**/acceptance/**'
-		exclude '**/test/**'
-	}
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        from javadoc.destinationDir
+    }
 
-	task javadocJar(type: Jar, dependsOn: javadoc) {
-		classifier = 'javadoc'
-		from javadoc.destinationDir
-	}
+    task sourcesJar(type: Jar) {
+        from sourceSets.main.allSource
+    }
 
-	task sourcesJar(type: Jar) {
-		classifier = 'sources'
-		from sourceSets.main.allSource
-	}
+    artifacts {
+        archives sourcesJar, javadocJar
+    }
 
-	artifacts {
-		archives sourcesJar, javadocJar
-	}
-
-	defaultTasks 'clean', 'build'
+    defaultTasks 'clean', 'build'
 }

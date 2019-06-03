@@ -12,7 +12,7 @@ import static org.reveno.atp.examples.events.BasicEvents.*;
  * This example shows simple example of dealing with events
  * in Reveno. Events are always published from Transaction Actions, and executed by handlers,
  * which in it's turn can be either sync or async.
- *
+ * <p>
  * In this example we will have async Event Handler, which is executed by thread
  * pool, thus with no ordering guarantees. After events executes successfully, Reveno
  * journals that fact, so on replay they will not be fired again.
@@ -40,7 +40,7 @@ public class AsyncEvents {
     }
 
     protected static void init(Reveno reveno) {
-        reveno.domain().transaction("createAccount", (t,c) -> {
+        reveno.domain().transaction("createAccount", (t, c) -> {
             c.repo().store(t.id(), new BasicEvents.Account(t.id(), t.longArg("balance")));
         }).uniqueIdFor(Account.class).conditionalCommand((cmd, c) -> cmd.longArg("balance") >= 0l).command();
 

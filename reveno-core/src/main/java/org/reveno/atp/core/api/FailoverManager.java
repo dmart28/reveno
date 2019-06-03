@@ -1,17 +1,17 @@
-/** 
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+/**
+ * Copyright (c) 2015 The original author or authors
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.reveno.atp.core.api;
@@ -23,25 +23,25 @@ import java.util.function.Consumer;
 
 public interface FailoverManager {
 
-	default boolean isSingleNode() {
-		return false;
-	}
-	
-	boolean isMaster();
-	
-	boolean isBlocked();
+    default boolean isSingleNode() {
+        return false;
+    }
+
+    boolean isMaster();
+
+    boolean isBlocked();
 
 
-	void onReplicationMessage(Consumer<List<Object>> failoverHandler);
-	
-	void addOnBlocked(Runnable handler);
-	
-	void addOnUnblocked(Runnable handler);
-	
-	
-	boolean replicate(Consumer<Buffer> bufferWriter);
+    void onReplicationMessage(Consumer<List<Object>> failoverHandler);
 
-	long unprocessedCount();
+    void addOnBlocked(Runnable handler);
 
-	void processPendingMessages();
+    void addOnUnblocked(Runnable handler);
+
+
+    boolean replicate(Consumer<Buffer> bufferWriter);
+
+    long unprocessedCount();
+
+    void processPendingMessages();
 }

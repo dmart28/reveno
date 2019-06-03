@@ -1,19 +1,3 @@
-/**
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.examples.basic_views;
 
 import org.reveno.atp.api.Reveno;
@@ -30,17 +14,16 @@ import java.util.List;
 
 public class BasicViews {
 
-    protected static final Logger LOG = LoggerFactory.getLogger(BasicViews.class);
-
     public static final long PRECISION = 10000;
     public static final BigDecimal PRECISION_BD = new BigDecimal(PRECISION);
+    protected static final Logger LOG = LoggerFactory.getLogger(BasicViews.class);
 
     public static void main(String[] args) throws Exception {
         Reveno reveno = new Engine(args[0]);
         reveno.config().mutableModel();
 
         reveno.domain().transaction("createTrader", (tx, ctx) ->
-            ctx.repo().store(tx.id(), new Trader(tx.id()))
+                ctx.repo().store(tx.id(), new Trader(tx.id()))
         ).uniqueIdFor(Trader.class).command();
         reveno.domain().transaction("createOrder", (tx, ctx) -> {
             ctx.repo().remap(Trader.class, tx.arg("trId"), (id, t) -> t.orders.add(tx.id()));
@@ -55,7 +38,7 @@ public class BasicViews {
         reveno.startup();
 
         long traderId = reveno.executeSync("createTrader");
-        long orderId = reveno.executeSync("createOrder", MapUtils.map("trId", traderId, "size", 1000L, "price", (long)(3.14 * PRECISION)));
+        long orderId = reveno.executeSync("createOrder", MapUtils.map("trId", traderId, "size", 1000L, "price", (long) (3.14 * PRECISION)));
 
         TraderView trader = reveno.query().find(TraderView.class, traderId);
         LOG.info("Trader: {}", trader);

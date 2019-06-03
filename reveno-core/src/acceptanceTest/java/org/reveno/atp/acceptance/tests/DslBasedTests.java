@@ -21,7 +21,7 @@ public class DslBasedTests extends RevenoBaseTest {
                 d.repo().merge(c.longArg(), Account.class, () -> new Account().add(c.longArg("amount")),
                         (id, e) -> e.add(c.longArg("amount"))))
                 .command();
-        reveno.domain().viewMapper(Account.class, Account.class, (a,b,c) -> b);
+        reveno.domain().viewMapper(Account.class, Account.class, (a, b, c) -> b);
 
         reveno.startup();
 

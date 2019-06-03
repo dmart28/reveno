@@ -7,7 +7,8 @@ public class PreallocatedMultipleBufferingMmapTest extends BasePreallocatedTest 
 
     @Test
     public void test() throws Exception {
-        testPreallocatedJournals(EXTRA_SMALL_FILE, ChannelOptions.BUFFERING_MMAP_OS, r -> {});
+        testPreallocatedJournals(EXTRA_SMALL_FILE, ChannelOptions.BUFFERING_MMAP_OS, r -> {
+        });
     }
 
 }

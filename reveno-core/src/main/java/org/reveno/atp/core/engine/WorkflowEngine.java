@@ -1,19 +1,3 @@
-/** 
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.core.engine;
 
 import org.reveno.atp.api.Configuration.ModelType;
@@ -35,165 +19,166 @@ import java.util.function.Supplier;
 
 @SuppressWarnings("unchecked")
 public class WorkflowEngine {
-	
-	public WorkflowEngine(TransactionPipeProcessor<ProcessorContext> inputProcessor, WorkflowContext context,
-			ModelType modelType) {
-		this.modelType = modelType;
-		this.context = context;
-		this.inputProcessor = new PipeProcessorFailoverWrapper(inputProcessor);
-		this.handlers = new InputHandlers(context, this::nextTransactionId, this::getLastTransactionId);
-	}
-	
-	public void init() {
-		PipeProcessor<ProcessorContext> pipe;
-		if (context.failoverManager().isSingleNode()) {
-			pipe = inputProcessor;
-		} else {
-			pipe = inputProcessor.pipe(handlers::replication);
-		}
-		buildPipe(pipe);
-		inputProcessor.start();
-		context.failoverManager().addOnBlocked(() -> {
-			getPipe().sync();
-			context.eventPublisher().getPipe().sync();
-		});
-		context.failoverManager().addOnUnblocked(() -> {
-			context.journalsManager().roll(getLastTransactionId());
-		});
-		context.failoverManager().onReplicationMessage(inputProcessor::executeFailover);
+    protected final InputHandlers handlers;
+    protected volatile long lastTransactionId;
+    protected volatile boolean started = false;
+    protected ModelType modelType;
+    protected WorkflowContext context;
+    protected PipeProcessorFailoverWrapper inputProcessor;
 
-		started = true;
-	}
+    public WorkflowEngine(TransactionPipeProcessor<ProcessorContext> inputProcessor, WorkflowContext context,
+                          ModelType modelType) {
+        this.modelType = modelType;
+        this.context = context;
+        this.inputProcessor = new PipeProcessorFailoverWrapper(inputProcessor);
+        this.handlers = new InputHandlers(context, this::nextTransactionId, this::getLastTransactionId);
+    }
 
-	public void shutdown() {
-		started = false;
+    public void init() {
+        PipeProcessor<ProcessorContext> pipe;
+        if (context.failoverManager().isSingleNode()) {
+            pipe = inputProcessor;
+        } else {
+            pipe = inputProcessor.pipe(handlers::replication);
+        }
+        buildPipe(pipe);
+        inputProcessor.start();
+        context.failoverManager().addOnBlocked(() -> {
+            getPipe().sync();
+            context.eventPublisher().getPipe().sync();
+        });
+        context.failoverManager().addOnUnblocked(() -> {
+            context.journalsManager().roll(getLastTransactionId());
+        });
+        context.failoverManager().onReplicationMessage(inputProcessor::executeFailover);
 
-		context.failoverManager().processPendingMessages();
-		inputProcessor.shutdown();
-		handlers.destroy();
-	}
-	
-	public TransactionPipeProcessor<ProcessorContext> getPipe() {
-		return inputProcessor;
-	}
 
-	public long getLastTransactionId() {
-		return lastTransactionId;
-	}
+        started = true;
+    }
 
-	public void setLastTransactionId(long lastTransactionId) {
-		this.lastTransactionId = lastTransactionId;
-	}
+    public void shutdown() {
+        started = false;
 
-	protected long nextTransactionId() {
-		return ++lastTransactionId;
-	}
+        context.failoverManager().processPendingMessages();
+        inputProcessor.shutdown();
+        handlers.destroy();
+    }
 
-	protected void buildPipe(PipeProcessor<ProcessorContext> pipe) {
-		if (modelType == ModelType.MUTABLE) {
-			pipe.then((c, eof) -> {
-				handlers.transactionMutableExecution(c, eof);
-				if (!c.isAborted())
-					handlers.viewsMutableUpdate(c, eof);
-			})
-					.then(handlers::journaling)
-					.then(handlers::result, handlers::eventsPublishing);
-		} else {
-			pipe.then(handlers::transactionImmutableExecution)
-					.then(handlers::journaling, handlers::viewsImmutableUpdate)
-					.then(handlers::result, handlers::eventsPublishing);
-		}
-	}
+    public TransactionPipeProcessor<ProcessorContext> getPipe() {
+        return inputProcessor;
+    }
 
-	protected volatile long lastTransactionId;
-	protected volatile boolean started = false;
-	protected ModelType modelType;
-	protected WorkflowContext context;
-	protected PipeProcessorFailoverWrapper inputProcessor;
-	protected final InputHandlers handlers;
+    public long getLastTransactionId() {
+        return lastTransactionId;
+    }
 
-	protected class PipeProcessorFailoverWrapper implements TransactionPipeProcessor<ProcessorContext> {
+    public void setLastTransactionId(long lastTransactionId) {
+        this.lastTransactionId = lastTransactionId;
+    }
 
-		@Override
-		public CompletableFuture<EmptyResult> process(List<Object> commands) {
-			return execute(() -> pipe.process(commands));
-		}
+    protected long nextTransactionId() {
+        return ++lastTransactionId;
+    }
 
-		@Override
-		public <R> CompletableFuture<Result<R>> execute(Object command) {
-			return execute(() -> pipe.execute(command));
-		}
+    protected void buildPipe(PipeProcessor<ProcessorContext> pipe) {
+        if (modelType == ModelType.MUTABLE) {
+            pipe.then((c, eof) -> {
+                handlers.transactionMutableExecution(c, eof);
+                if (!c.isAborted())
+                    handlers.viewsMutableUpdate(c, eof);
+            })
+                    .then(handlers::journaling)
+                    .then(handlers::result, handlers::eventsPublishing);
+        } else {
+            pipe.then(handlers::transactionImmutableExecution)
+                    .then(handlers::journaling, handlers::viewsImmutableUpdate)
+                    .then(handlers::result, handlers::eventsPublishing);
+        }
+    }
 
-		public void executeFailover(List<Object> commands) {
-			if (!failoverManager().isMaster()) {
-				pipe.process((c, f) -> {
-					c.reset().addCommands(commands).replicated().future(f);
-				});
-			}
-		}
+    protected class PipeProcessorFailoverWrapper implements TransactionPipeProcessor<ProcessorContext> {
 
-		@Override
-		public <R> CompletableFuture<R> process(BiConsumer<ProcessorContext, CompletableFuture<R>> consumer) {
-			return execute(() -> pipe.process(consumer));
-		}
+        protected TransactionPipeProcessor<ProcessorContext> pipe;
 
-		@Override
-		public void executeRestore(RestoreableEventBus eventBus, TransactionCommitInfo transaction) {
-			pipe.executeRestore(eventBus, transaction);
-		}
+        public PipeProcessorFailoverWrapper(TransactionPipeProcessor<ProcessorContext> pipe) {
+            this.pipe = pipe;
+        }
 
-		@Override
-		public void start() {
-			pipe.start();
-		}
+        @Override
+        public CompletableFuture<EmptyResult> process(List<Object> commands) {
+            return execute(() -> pipe.process(commands));
+        }
 
-		@Override
-		public void stop() {
-			pipe.stop();
-		}
+        @Override
+        public <R> CompletableFuture<Result<R>> execute(Object command) {
+            return execute(() -> pipe.execute(command));
+        }
 
-		@Override
-		public void sync() {
-			pipe.sync();
-		}
+        @Override
+        public <R> CompletableFuture<R> process(BiConsumer<ProcessorContext, CompletableFuture<R>> consumer) {
+            return execute(() -> pipe.process(consumer));
+        }
 
-		@Override
-		public void shutdown() {
-			pipe.shutdown();
-		}
+        @Override
+        public void executeRestore(RestoreableEventBus eventBus, TransactionCommitInfo transaction) {
+            pipe.executeRestore(eventBus, transaction);
+        }
 
-		@Override
-		public boolean isStarted() {
-			return pipe.isStarted();
-		}
+        @Override
+        public void start() {
+            pipe.start();
+        }
 
-		@Override
-		public PipeProcessor<ProcessorContext> pipe(ProcessorHandler<ProcessorContext>... handler) {
-			return pipe.pipe(handler);
-		}
+        @Override
+        public void stop() {
+            pipe.stop();
+        }
 
-		protected <R> R execute(Supplier<R> r) {
-			if (!failoverManager().isBlocked() && failoverManager().isMaster() && started) {
-				return r.get();
-			} else {
-				throw failoverError();
-			}
-		}
+        @Override
+        public void sync() {
+            pipe.sync();
+        }
 
-		protected FailoverRulesException failoverError() {
-			return new FailoverRulesException(String.format("Pipeline not available [master: %s;blocked: %s;started: %s]",
-					failoverManager().isMaster(), failoverManager().isBlocked(), started));
-		}
+        @Override
+        public void shutdown() {
+            pipe.shutdown();
+        }
 
-		protected FailoverManager failoverManager() {
-			return context.failoverManager();
-		}
+        @Override
+        public boolean isStarted() {
+            return pipe.isStarted();
+        }
 
-		public PipeProcessorFailoverWrapper(TransactionPipeProcessor<ProcessorContext> pipe) {
-			this.pipe = pipe;
-		}
+        @Override
+        public PipeProcessor<ProcessorContext> pipe(ProcessorHandler<ProcessorContext>... handler) {
+            return pipe.pipe(handler);
+        }
 
-		protected TransactionPipeProcessor<ProcessorContext> pipe;
-	}
+        public void executeFailover(List<Object> commands) {
+            if (!failoverManager().isMaster()) {
+                pipe.process((c, f) -> {
+                    c.reset().addCommands(commands).replicated().future(f);
+                });
+            }
+        }
+
+        protected <R> R execute(Supplier<R> r) {
+            if (!failoverManager().isBlocked() && failoverManager().isMaster() && started) {
+                return r.get();
+            } else {
+                throw failoverError();
+            }
+        }
+
+        protected FailoverRulesException failoverError() {
+            return new FailoverRulesException(String.format("Pipeline not available [master: %s;blocked: %s;started: %s]",
+                    failoverManager().isMaster(), failoverManager().isBlocked(), started));
+        }
+
+        protected FailoverManager failoverManager() {
+            return context.failoverManager();
+
+        }
+    }
 
 }

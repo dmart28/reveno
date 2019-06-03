@@ -1,19 +1,3 @@
-/**
- *  Copyright (c) 2015 The original author or authors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package org.reveno.atp.metrics.impl;
 
 import org.slf4j.Logger;
@@ -40,17 +24,27 @@ public class PickledGraphite {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PickledGraphite.class);
     private final static int DEFAULT_BATCH_SIZE = 100;
-
-    private int batchSize;
-    // graphite expects a python-pickled list of nested tuples.
-    private List<MetricTuple> metrics = new LinkedList<MetricTuple>();
-
     private final String hostname;
     private final int port;
     private final InetSocketAddress address;
     private final SocketFactory socketFactory;
     private final Charset charset;
-
+    /**
+     * Minimally necessary pickle opcodes.
+     */
+    private final char
+            MARK = '(',
+            STOP = '.',
+            LONG = 'L',
+            STRING = 'S',
+            APPEND = 'a',
+            LIST = 'l',
+            TUPLE = 't',
+            QUOTE = '\'',
+            LF = '\n';
+    private int batchSize;
+    // graphite expects a python-pickled list of nested tuples.
+    private List<MetricTuple> metrics = new LinkedList<MetricTuple>();
     private Socket socket;
     private Writer writer;
     private int failures;
@@ -59,8 +53,7 @@ public class PickledGraphite {
      * Creates a new client which connects to the given address using the default {@link SocketFactory}. This defaults
      * to a batchSize of 100
      *
-     * @param address
-     *            the address of the Carbon server
+     * @param address the address of the Carbon server
      */
     public PickledGraphite(InetSocketAddress address) {
         this(address, DEFAULT_BATCH_SIZE);
@@ -69,10 +62,8 @@ public class PickledGraphite {
     /**
      * Creates a new client which connects to the given address using the default {@link SocketFactory}.
      *
-     * @param address
-     *            the address of the Carbon server
-     * @param batchSize
-     *            how many metrics are bundled into a single pickle request to graphite
+     * @param address   the address of the Carbon server
+     * @param batchSize how many metrics are bundled into a single pickle request to graphite
      */
     public PickledGraphite(InetSocketAddress address, int batchSize) {
         this(address, SocketFactory.getDefault(), batchSize);
@@ -81,12 +72,9 @@ public class PickledGraphite {
     /**
      * Creates a new client which connects to the given address and socket factory.
      *
-     * @param address
-     *            the address of the Carbon server
-     * @param socketFactory
-     *            the socket factory
-     * @param batchSize
-     *            how many metrics are bundled into a single pickle request to graphite
+     * @param address       the address of the Carbon server
+     * @param socketFactory the socket factory
+     * @param batchSize     how many metrics are bundled into a single pickle request to graphite
      */
     public PickledGraphite(InetSocketAddress address, SocketFactory socketFactory, int batchSize) {
         this(address, socketFactory, UTF_8, batchSize);
@@ -95,14 +83,10 @@ public class PickledGraphite {
     /**
      * Creates a new client which connects to the given address and socket factory using the given character set.
      *
-     * @param address
-     *            the address of the Carbon server
-     * @param socketFactory
-     *            the socket factory
-     * @param charset
-     *            the character set used by the server
-     * @param batchSize
-     *            how many metrics are bundled into a single pickle request to graphite
+     * @param address       the address of the Carbon server
+     * @param socketFactory the socket factory
+     * @param charset       the character set used by the server
+     * @param batchSize     how many metrics are bundled into a single pickle request to graphite
      */
     public PickledGraphite(InetSocketAddress address, SocketFactory socketFactory, Charset charset, int batchSize) {
         this.address = address;
@@ -117,10 +101,8 @@ public class PickledGraphite {
      * Creates a new client which connects to the given address using the default {@link SocketFactory}. This defaults
      * to a batchSize of 100
      *
-     * @param hostname
-     *            the hostname of the Carbon server
-     * @param port
-     *            the port of the Carbon server
+     * @param hostname the hostname of the Carbon server
+     * @param port     the port of the Carbon server
      */
     public PickledGraphite(String hostname, int port) {
         this(hostname, port, DEFAULT_BATCH_SIZE);
@@ -129,12 +111,9 @@ public class PickledGraphite {
     /**
      * Creates a new client which connects to the given address using the default {@link SocketFactory}.
      *
-     * @param hostname
-     *            the hostname of the Carbon server
-     * @param port
-     *            the port of the Carbon server
-     * @param batchSize
-     *            how many metrics are bundled into a single pickle request to graphite
+     * @param hostname  the hostname of the Carbon server
+     * @param port      the port of the Carbon server
+     * @param batchSize how many metrics are bundled into a single pickle request to graphite
      */
     public PickledGraphite(String hostname, int port, int batchSize) {
         this(hostname, port, SocketFactory.getDefault(), batchSize);
@@ -143,14 +122,10 @@ public class PickledGraphite {
     /**
      * Creates a new client which connects to the given address and socket factory.
      *
-     * @param hostname
-     *            the hostname of the Carbon server
-     * @param port
-     *            the port of the Carbon server
-     * @param socketFactory
-     *            the socket factory
-     * @param batchSize
-     *            how many metrics are bundled into a single pickle request to graphite
+     * @param hostname      the hostname of the Carbon server
+     * @param port          the port of the Carbon server
+     * @param socketFactory the socket factory
+     * @param batchSize     how many metrics are bundled into a single pickle request to graphite
      */
     public PickledGraphite(String hostname, int port, SocketFactory socketFactory, int batchSize) {
         this(hostname, port, socketFactory, UTF_8, batchSize);
@@ -159,16 +134,11 @@ public class PickledGraphite {
     /**
      * Creates a new client which connects to the given address and socket factory using the given character set.
      *
-     * @param hostname
-     *            the hostname of the Carbon server
-     * @param port
-     *            the port of the Carbon server
-     * @param socketFactory
-     *            the socket factory
-     * @param charset
-     *            the character set used by the server
-     * @param batchSize
-     *            how many metrics are bundled into a single pickle request to graphite
+     * @param hostname      the hostname of the Carbon server
+     * @param port          the port of the Carbon server
+     * @param socketFactory the socket factory
+     * @param charset       the character set used by the server
+     * @param batchSize     how many metrics are bundled into a single pickle request to graphite
      */
     public PickledGraphite(String hostname, int port, SocketFactory socketFactory, Charset charset, int batchSize) {
         this.address = null;
@@ -178,7 +148,7 @@ public class PickledGraphite {
         this.charset = charset;
         this.batchSize = batchSize;
     }
-    
+
     public void connect() throws IllegalStateException, IOException {
         if (isConnected()) {
             throw new IllegalStateException("Already connected");
@@ -194,7 +164,7 @@ public class PickledGraphite {
         this.socket = socketFactory.createSocket(address.getAddress(), address.getPort());
         this.writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), charset));
     }
-    
+
     public boolean isConnected() {
         return socket != null && socket.isConnected() && !socket.isClosed();
     }
@@ -206,14 +176,10 @@ public class PickledGraphite {
      * <p/>
      * And add it to the list of metrics. If we reach the batch size, write them out.
      *
-     * @param name
-     *            the name of the metric
-     * @param value
-     *            the value of the metric
-     * @param timestamp
-     *            the timestamp of the metric
-     * @throws IOException
-     *             if there was an error sending the metric
+     * @param name      the name of the metric
+     * @param value     the value of the metric
+     * @param timestamp the timestamp of the metric
+     * @throws IOException if there was an error sending the metric
      */
     public void send(String name, String value, long timestamp) throws IOException {
         metrics.add(new MetricTuple(sanitize(name), timestamp, sanitize(value)));
@@ -222,14 +188,14 @@ public class PickledGraphite {
             writeMetrics();
         }
     }
-    
+
     public void flush() throws IOException {
         writeMetrics();
         if (writer != null) {
             writer.flush();
         }
     }
-    
+
     public void close() throws IOException {
         try {
             flush();
@@ -245,7 +211,7 @@ public class PickledGraphite {
             this.writer = null;
         }
     }
-    
+
     public int getFailures() {
         return failures;
     }
@@ -260,7 +226,7 @@ public class PickledGraphite {
             try {
                 byte[] payload = pickleMetrics(metrics);
                 byte[] header = ByteBuffer.allocate(4).putInt(payload.length).array();
-                
+
                 OutputStream outputStream = socket.getOutputStream();
                 outputStream.write(header);
                 outputStream.write(payload);
@@ -280,20 +246,6 @@ public class PickledGraphite {
 
         }
     }
-
-    /**
-     * Minimally necessary pickle opcodes.
-     */
-    private final char
-            MARK = '(',
-            STOP = '.',
-            LONG = 'L',
-            STRING = 'S',
-            APPEND = 'a',
-            LIST = 'l',
-            TUPLE = 't',
-            QUOTE = '\'',
-            LF = '\n';
 
     /**
      * See: http://readthedocs.org/docs/graphite/en/1.0/feeding-carbon.html
@@ -350,6 +302,10 @@ public class PickledGraphite {
         return out.toByteArray();
     }
 
+    protected String sanitize(String s) {
+        return WHITESPACE.matcher(s).replaceAll("-");
+    }
+
     static class MetricTuple {
         String name;
         long timestamp;
@@ -360,10 +316,6 @@ public class PickledGraphite {
             this.timestamp = timestamp;
             this.value = value;
         }
-    }
-
-    protected String sanitize(String s) {
-        return WHITESPACE.matcher(s).replaceAll("-");
     }
 
 }

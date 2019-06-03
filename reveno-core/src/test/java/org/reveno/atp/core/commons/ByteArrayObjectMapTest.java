@@ -17,7 +17,7 @@ public class ByteArrayObjectMapTest {
 
         map.put(key1, "Hello world!");
         Assert.assertEquals("Hello world!", map.get(key1));
-        Assert.assertEquals(null, map.get(Arrays.copyOfRange(key1, 0, 6)));
+        Assert.assertNull(map.get(Arrays.copyOfRange(key1, 0, 6)));
     }
 
 }

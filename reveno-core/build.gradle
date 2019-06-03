@@ -3,49 +3,34 @@ apply plugin: 'signing'
 apply plugin: 'maven-publish'
 
 sourceSets {
-	perfTest {
-		java {
-			srcDir 'java'
-		}
-		resources {
-			srcDir 'resources'
-		}
-		compileClasspath = sourceSets.main.output + configurations.perfTestCompile
-		runtimeClasspath = output + sourceSets.main.output + configurations.perfTestRuntime
-	}
-	acceptanceTest {
-		java {
-			srcDir 'java'
-		}
-		resources {
-			srcDir 'resources'
-		}
-	}
-	test {
-		java {
-			srcDirs = ['src/test/java', 'src/acceptanceTest/java']
-		}
-	}
-}
-
-configurations {
-	perfTestCompile.extendsFrom compile, testCompile
-	perfTestRuntime.extendsFrom runtime, perfTestCompile, testRuntime
+    acceptanceTest {
+        java {
+            srcDir 'java'
+        }
+        resources {
+            srcDir 'resources'
+        }
+    }
+    test {
+        java {
+            srcDirs = ['src/test/java', 'src/acceptanceTest/java']
+        }
+    }
 }
 
 jar {
-	manifest {
-		name = 'org.reveno.reveno-core'
-		instruction 'Bundle-Vendor', 'Reveno'
-		instruction 'Bundle-Description', 'Reveno: Event-Sourced transaction processing framework'
-		instruction 'Bundle-DocURL', 'http://reveno.org'
-	}
+    manifest {
+        name = 'org.reveno.reveno-core'
+        instruction 'Bundle-Vendor', 'Reveno'
+        instruction 'Bundle-Description', 'Reveno: high-performance event-sourcing framework'
+        instruction 'Bundle-DocURL', 'https://reveno.org'
+    }
 }
 
 task fooJar(type: Jar) {
-	manifest = osgiManifest {
-		instruction 'Bundle-Vendor', 'Reveno'
-	}
+    manifest = osgiManifest {
+        instruction 'Bundle-Vendor', 'Reveno'
+    }
 }
 
 task sourceJar(type: Jar) {
@@ -55,9 +40,9 @@ task sourceJar(type: Jar) {
 publishing {
     publications {
         mavenJava(MavenPublication) {
-						groupId 'org.reveno'
-						artifactId 'reveno-core'
-						version "$revenoVersion"
+            groupId 'org.reveno'
+            artifactId 'reveno-core'
+            version "$revenoVersion"
             from components.java
 
             artifact sourceJar {
@@ -68,78 +53,67 @@ publishing {
 }
 
 dependencies {
-	compile "it.unimi.dsi:fastutil:$fastutilVersion"
-	compile "com.lmax:disruptor:$disruptorVersion"
-	compile "io.protostuff:protostuff-uberjar:$protostuffVersion"
-	compile "io.netty:netty-buffer:$nettyVersion"
-	compile "net.bytebuddy:byte-buddy:$byteBuddyVersion"
-	compile "com.github.stephenc.high-scale-lib:high-scale-lib:$highScaleLibVersion"
+    compile "it.unimi.dsi:fastutil:$fastutilVersion"
+    compile "com.lmax:disruptor:$disruptorVersion"
+    compile "io.protostuff:protostuff-uberjar:$protostuffVersion"
+    compile "io.netty:netty-buffer:$nettyVersion"
+    compile "net.bytebuddy:byte-buddy:$byteBuddyVersion"
+    compile "com.github.stephenc.high-scale-lib:high-scale-lib:$highScaleLibVersion"
 
-	testCompile project(":reveno-test-model")
+    testCompile project(":reveno-test-model")
 
-	acceptanceTestCompile project(":reveno-test-model")
-	acceptanceTestCompile "com.google.guava:guava:$guavaVersion"
-	acceptanceTestCompile "junit:junit:$junitVersion"
-	acceptanceTestCompile "org.easymock:easymock:$easymockVersion"
-
-	perfTestCompile project(":reveno-test-model")
+    acceptanceTestCompile project(":reveno-test-model")
+    acceptanceTestCompile "com.google.guava:guava:$guavaVersion"
+    acceptanceTestCompile "junit:junit:$junitVersion"
+    acceptanceTestCompile "org.easymock:easymock:$easymockVersion"
 }
 
 signing {
-	required { gradle.taskGraph.hasTask("uploadArchives") }
-	sign configurations.archives
-}
-
-idea {
-	module {
-		//and some extra test source dirs
-		testSourceDirs += file('src/perfTest/java')
-		generatedSourceDirs += file('src/perfTest/java')
-		scopes.TEST.plus += [ configurations.perfTestCompile ]
-	}
+    required { gradle.taskGraph.hasTask("uploadArchives") }
+    sign configurations.archives
 }
 
 uploadArchives {
-	repositories {
-		mavenDeployer {
-			beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-			repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-				authentication(userName: hasProperty('ossrhUsername')?ossrhUsername:'', password: hasProperty('ossrhPassword')?ossrhPassword:'')
-			}
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
 
-			snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-				authentication(userName: hasProperty('ossrhUsername')?ossrhUsername:'', password: hasProperty('ossrhPassword')?ossrhPassword:'')
-			}
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
 
-			pom.project {
-				name 'Reveno Core'
-				packaging 'jar'
-				// optionally artifactId can be defined here
-				description 'Reveno framework core engine.'
-				url 'http://reveno.org'
+            pom.project {
+                name 'Reveno Core'
+                packaging 'jar'
+                // optionally artifactId can be defined here
+                description 'Reveno framework core engine.'
+                url 'https://reveno.org'
 
-				scm {
-					connection 'scm:git:https://github.com/dmart28/reveno.git'
-					developerConnection 'scm:git:git@github.com:dmart28/reveno.git'
-					url 'https://github.com/dmart28/reveno'
-				}
+                scm {
+                    connection 'scm:git:https://github.com/dmart28/reveno.git'
+                    developerConnection 'scm:git:git@github.com:dmart28/reveno.git'
+                    url 'https://github.com/dmart28/reveno'
+                }
 
-				licenses {
-					license {
-						name 'The Apache License, Version 2.0'
-						url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-					}
-				}
+                licenses {
+                    license {
+                        name 'The Apache License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
 
-				developers {
-					developer {
-						id 'dmart28'
-						name 'Artem Dmitriev'
-						email 'artem@reveno.org'
-					}
-				}
-			}
-		}
-	}
+                developers {
+                    developer {
+                        id 'dmart28'
+                        name 'Artem Dmitriev'
+                        email 'me@tema.im'
+                    }
+                }
+            }
+        }
+    }
 }

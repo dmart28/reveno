@@ -12,7 +12,8 @@ public class PreallocatedSmallBufferingOSTest extends BasePreallocatedTest {
 
     @Test
     public void testJavaSerializer() throws Exception {
-        testPreallocatedJournals(SMALL_FILE, ChannelOptions.BUFFERING_OS, r -> {}, true);
+        testPreallocatedJournals(SMALL_FILE, ChannelOptions.BUFFERING_OS, r -> {
+        }, true);
     }
 
 }

@@ -12,7 +12,8 @@ public class PreallocatedBufferingVMTest extends BasePreallocatedTest {
 
     @Test
     public void testJavaSerializer() throws Exception {
-        testPreallocatedJournals(LARGE_FILE, ChannelOptions.BUFFERING_VM, r -> {}, true);
+        testPreallocatedJournals(LARGE_FILE, ChannelOptions.BUFFERING_VM, r -> {
+        }, true);
     }
 
 }

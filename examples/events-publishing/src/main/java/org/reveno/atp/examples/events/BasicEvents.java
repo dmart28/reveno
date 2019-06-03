@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
  * This example shows simple example of dealing with events
  * in Reveno. Events are always published from Transaction Actions, and executed by handlers,
  * which in it's turn can be either sync or async.
- *
+ * <p>
  * In this example we will have sync Event Handler, which guarantees ordering
  * and executed by single thread only. After events executes successfully, Reveno
  * journals that fact, so on replay they will not be fired again.
@@ -36,7 +36,7 @@ public class BasicEvents {
     }
 
     protected static void init(Reveno reveno) {
-        reveno.domain().transaction("createAccount", (t,c) -> {
+        reveno.domain().transaction("createAccount", (t, c) -> {
             c.repo().store(t.id(), new Account(t.id(), t.longArg("balance")));
         }).uniqueIdFor(Account.class).conditionalCommand((cmd, c) -> cmd.longArg("balance") >= 0L).command();
 
