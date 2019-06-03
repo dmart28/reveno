@@ -1,6 +1,7 @@
 apply plugin: 'osgi'
-apply plugin: 'signing'
+apply plugin: 'java-library'
 apply plugin: 'maven-publish'
+apply plugin: 'signing'
 
 sourceSets {
     acceptanceTest {
@@ -33,10 +34,6 @@ task fooJar(type: Jar) {
     }
 }
 
-task sourceJar(type: Jar) {
-    from sourceSets.main.allJava
-}
-
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -45,8 +42,50 @@ publishing {
             version "$revenoVersion"
             from components.java
 
-            artifact sourceJar {
-                classifier "sources"
+            artifact sourcesJar {
+                classifier 'sources'
+            }
+            artifact javadocJar {
+                classifier 'javadoc'
+            }
+
+            pom {
+                name = 'Reveno Core'
+                packaging = 'jar'
+                description = 'Reveno framework core engine.'
+                url = 'https://reveno.org'
+
+                scm {
+                    connection = 'scm:git:https://github.com/dmart28/reveno.git'
+                    developerConnection = 'scm:git:git@github.com:dmart28/reveno.git'
+                    url = 'https://github.com/dmart28/reveno'
+                }
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'dmart28'
+                        name = 'Artem Dmitriev'
+                        email = 'me@tema.im'
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+            credentials {
+                username = "$ossrhUsername"
+                password = "$ossrhPassword"
             }
         }
     }
@@ -70,50 +109,5 @@ dependencies {
 
 signing {
     required { gradle.taskGraph.hasTask("uploadArchives") }
-    sign configurations.archives
-}
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            pom.project {
-                name 'Reveno Core'
-                packaging 'jar'
-                // optionally artifactId can be defined here
-                description 'Reveno framework core engine.'
-                url 'https://reveno.org'
-
-                scm {
-                    connection 'scm:git:https://github.com/dmart28/reveno.git'
-                    developerConnection 'scm:git:git@github.com:dmart28/reveno.git'
-                    url 'https://github.com/dmart28/reveno'
-                }
-
-                licenses {
-                    license {
-                        name 'The Apache License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id 'dmart28'
-                        name 'Artem Dmitriev'
-                        email 'me@tema.im'
-                    }
-                }
-            }
-        }
-    }
+    sign publishing.publications.mavenJava
 }

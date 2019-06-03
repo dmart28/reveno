@@ -1,6 +1,7 @@
 apply plugin: 'osgi'
 apply plugin: 'signing'
 apply plugin: 'maven-publish'
+apply plugin: 'maven'
 
 dependencies {
   compile project(":reveno-core")
