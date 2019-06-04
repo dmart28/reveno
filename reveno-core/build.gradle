@@ -19,6 +19,22 @@ sourceSets {
     }
 }
 
+dependencies {
+    compile "it.unimi.dsi:fastutil:$fastutilVersion"
+    compile "com.lmax:disruptor:$disruptorVersion"
+    compile "io.protostuff:protostuff-uberjar:$protostuffVersion"
+    compile "io.netty:netty-buffer:$nettyVersion"
+    compile "net.bytebuddy:byte-buddy:$byteBuddyVersion"
+    compile "com.github.stephenc.high-scale-lib:high-scale-lib:$highScaleLibVersion"
+
+    testCompile project(":reveno-test-model")
+
+    acceptanceTestCompile project(":reveno-test-model")
+    acceptanceTestCompile "com.google.guava:guava:$guavaVersion"
+    acceptanceTestCompile "junit:junit:$junitVersion"
+    acceptanceTestCompile "org.easymock:easymock:$easymockVersion"
+}
+
 jar {
     manifest {
         name = 'org.reveno.reveno-core'
@@ -34,20 +50,29 @@ task fooJar(type: Jar) {
     }
 }
 
+task sourcesJar(type: Jar) {
+    archiveClassifier = 'sources'
+    from sourceSets.main.allJava
+}
+
+task javadocJar(type: Jar) {
+    archiveClassifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar, javadocJar
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
             groupId 'org.reveno'
             artifactId 'reveno-core'
-            version "$revenoVersion"
             from components.java
 
-            artifact sourcesJar {
-                classifier 'sources'
-            }
-            artifact javadocJar {
-                classifier 'javadoc'
-            }
+            artifact sourcesJar
+            artifact javadocJar
 
             pom {
                 name = 'Reveno Core'
@@ -91,23 +116,6 @@ publishing {
     }
 }
 
-dependencies {
-    compile "it.unimi.dsi:fastutil:$fastutilVersion"
-    compile "com.lmax:disruptor:$disruptorVersion"
-    compile "io.protostuff:protostuff-uberjar:$protostuffVersion"
-    compile "io.netty:netty-buffer:$nettyVersion"
-    compile "net.bytebuddy:byte-buddy:$byteBuddyVersion"
-    compile "com.github.stephenc.high-scale-lib:high-scale-lib:$highScaleLibVersion"
-
-    testCompile project(":reveno-test-model")
-
-    acceptanceTestCompile project(":reveno-test-model")
-    acceptanceTestCompile "com.google.guava:guava:$guavaVersion"
-    acceptanceTestCompile "junit:junit:$junitVersion"
-    acceptanceTestCompile "org.easymock:easymock:$easymockVersion"
-}
-
 signing {
-    required { gradle.taskGraph.hasTask("uploadArchives") }
     sign publishing.publications.mavenJava
 }

@@ -31,7 +31,6 @@ allprojects {
     apply plugin: "idea"
 
     group = 'org.reveno'
-    version = "$revenoVersion"
 
     repositories {
         mavenLocal()
@@ -81,18 +80,6 @@ allprojects {
         include '**/metrics/**'
         exclude '**/acceptance/**'
         exclude '**/test/**'
-    }
-
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        from javadoc.destinationDir
-    }
-
-    task sourcesJar(type: Jar) {
-        from sourceSets.main.allSource
-    }
-
-    artifacts {
-        archives sourcesJar, javadocJar
     }
 
     defaultTasks 'clean', 'build'
